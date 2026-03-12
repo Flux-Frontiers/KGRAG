@@ -1,0 +1,163 @@
+# kgrag - Knowledge Graph Builder for Python Codebases
+#
+# kgrag is a tool that builds searchable knowledge graphs from Python repositories.
+# It analyzes Python code to extract semantic relationships between modules, classes,
+# functions, and methods, creating a comprehensive graph representation that can be
+# queried using natural language.
+#
+# Key Features:
+# - AST-based code analysis with semantic understanding
+# - Support for multiple storage backends (SQLite, LanceDB)
+# - Natural language querying capabilities
+# - Code snippet extraction and visualization
+# - MCP (Model Context Protocol) server integration
+# - Streamlit-based web interface for exploration
+#
+# The tool is designed for developers who want to understand large codebases,
+# perform code analysis, or build AI-powered development tools.
+#
+# Author: Eric G. Suchanek, PhD
+# Last Revision: 2026-03-12 17:27:42
+#
+
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "kg-rag"
+version = "0.1.0"
+description = "Orchestration layer for the KGRAG(tm) components."
+authors = ["Eric G. Suchanek, PhD <suchanek@mac.com>"]
+license = "Elastic-2.0"
+readme = "README.md"
+homepage = "https://github.com/Flux-Frontiers/kg_rag"
+repository = "https://github.com/Flux-Frontiers/kg_rag"
+keywords = ["knowledge-graph", "code-analysis", "ast", "lancedb", "sqlite", "semantic-search", "kgrag"]
+classifiers = [
+    "Development Status :: 1 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+packages = [{ include = "kg_rag", from = "src" }]
+
+[tool.poetry.dependencies]
+python = ">=3.12,<3.14"
+lancedb = ">=0.29.0"
+numpy = ">=1.24.0"
+sentence-transformers = ">=2.7.0"
+streamlit = { version = ">=1.35.0", optional = true }
+pyvis = { version = ">=0.3.2", optional = true }
+pandas = ">=2.0.0"
+rich = "^14.3.3"
+click = ">=8.1.0"
+mcp = ">=1.0.0"
+plotly = { version = ">=5.14.0", optional = true }
+pyvista = { version = ">=0.44.0", extras = ["jupyter"], optional = true }
+pyvistaqt = { version = ">=0.11.0", optional = true }
+PyQt5 = { version = ">=5.15.0", optional = true }
+param = { version = ">=2.0.0", optional = true }
+markdown = { version = ">=3.6", optional = true }
+trame-vtk = { version = ">=2.0.0", optional = true }
+doc-kg = { git = "https://github.com/Flux-Frontiers/doc_kg.git", optional = true }
+
+[tool.poetry.extras]
+viz = ["streamlit", "pyvis", "plotly"]
+backends = ["doc-kg"]
+viz3d = ["pyvista", "pyvistaqt", "PyQt5", "param", "markdown", "trame-vtk"]
+
+[tool.poetry.group.viz3d]
+optional = true
+
+[tool.poetry.group.viz3d.dependencies]
+pyvista = { version = ">=0.44.0", extras = ["jupyter"] }
+pyvistaqt = ">=0.11.0"
+PyQt5 = ">=5.15.0"
+param = ">=2.0.0"
+markdown = ">=3.6"
+trame-vtk = ">=2.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=8.0.0"
+pytest-cov = ">=5.0.0"
+ruff = ">=0.4.0"
+mypy = ">=1.10.0"
+pre-commit = "^4.5.1"
+detect-secrets = "^1.5.0"
+pylint = "^4.0.5"
+pdoc = ">=14.0.0"
+code-kg = { git = "https://github.com/Flux-Frontiers/code_kg.git", extras = ["mcp"] }
+
+
+
+[tool.poetry.scripts]
+kgrag              = "kg_rag.cli.main:cli"
+kgrag-mcp          = "kg_rag.mcp_server:main"
+kgrag-register     = "kg_rag.cli.cmd_registry:register"
+kgrag-unregister   = "kg_rag.cli.cmd_registry:unregister"
+kgrag-list         = "kg_rag.cli.cmd_registry:list_kgs"
+kgrag-info         = "kg_rag.cli.cmd_registry:info"
+kgrag-status       = "kg_rag.cli.cmd_registry:status"
+kgrag-scan         = "kg_rag.cli.cmd_registry:scan"
+kgrag-query        = "kg_rag.cli.cmd_query:query"
+kgrag-pack         = "kg_rag.cli.cmd_query:pack"
+kgrag-analyze      = "kg_rag.cli.cmd_analyze:analyze"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = false
+ignore_missing_imports = true
+mypy_path = "src"
+explicit_package_bases = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+
+[tool.pylint.messages_control]
+disable = ["all"]
+enable = [
+    "cyclic-import",           # R0401
+    "broad-exception-caught",  # W0718
+    "cell-var-from-loop",      # W0640
+    "undefined-variable",      # E0602
+    "import-outside-toplevel", # C0415
+]
+
+[tool.codekg]
+# Directories to include in the knowledge graph build and analysis.
+# When unset, all directories are indexed.
+include = ["src"]
+# Directories to exclude at every depth during the file walk.
+# Combined with the built-in SKIP_DIRS (.git, .venv, __pycache__, etc.).
+# exclude = ["tests", "benchmarks"]
+
+[tool.dockg]
+# Exclude directories from the knowledge graph by default.
+exclude = [".dockg", ".codekg", "src", ".git", ".venv", "venv", "__pycache__", 
+".mypy_cache", ".pytest_cache", "bundles", "dist"]
+
+[tool.poe.tasks.docs]
+help = "Generate project documentation and user guide PDFs"
+sequence = [
+  { shell = "cd src && pdoc --o ../docs --logo ./logo.png kgrag_kg" },
+]
+
+[tool.poe.tasks.wiki]
+help = "Generate and publish GitHub wiki from docs/"
+cmd = "python scripts/generate_wiki.py"
+
+[tool.poe.tasks.wiki-preview]
+help = "Preview wiki generation without publishing"
+cmd = "python scripts/generate_wiki.py --dry-run"

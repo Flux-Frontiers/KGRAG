@@ -1,0 +1,33 @@
+{
+  "mcpServers": {
+    "copilot-memory": {
+      "command": "node",
+      "args": [
+        "/Users/egs/.claude/copilot/mcp-servers/copilot-memory/dist/index.js"
+      ],
+      "env": {
+        "MEMORY_PATH": "/Users/egs/.claude/memory",
+        "WORKSPACE_ID": "code_kg"
+      }
+    },
+    "skills-copilot": {
+      "command": "node",
+      "args": [
+        "/Users/egs/.claude/copilot/mcp-servers/skills-copilot/dist/index.js"
+      ],
+      "env": {
+        "LOCAL_SKILLS_PATH": "./.claude/skills"
+      }
+    },
+    "task-copilot": {
+      "command": "node",
+      "args": [
+        "/Users/egs/.claude/copilot/mcp-servers/task-copilot/dist/index.js"
+      ],
+      "env": {
+        "TASK_DB_PATH": "/Users/egs/.claude/tasks",
+        "WORKSPACE_ID": "code_kg"
+      }
+    }
+  }
+}
