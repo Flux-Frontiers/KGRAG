@@ -12,7 +12,7 @@ from rich.console import Console
 from rich.table import Table
 from rich import box
 
-from kg_rag.cli.main import cli
+from kg_rag.cli.group import cli
 from kg_rag.cli.options import context_option, k_option, kind_option, registry_option
 from kg_rag.orchestrator import KGRAG
 from kg_rag.primitives import KGKind

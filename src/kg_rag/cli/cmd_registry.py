@@ -12,7 +12,7 @@ from rich.console import Console
 from rich.table import Table
 from rich import box
 
-from kg_rag.cli.main import cli
+from kg_rag.cli.group import cli
 from kg_rag.cli.options import kind_option, registry_option
 from kg_rag.primitives import KGEntry, KGKind
 from kg_rag.registry import KGRegistry, default_registry_path

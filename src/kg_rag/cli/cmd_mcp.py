@@ -9,7 +9,7 @@ from pathlib import Path
 
 import click
 
-from kg_rag.cli.main import cli
+from kg_rag.cli.group import cli
 from kg_rag.cli.options import registry_option
 
 
