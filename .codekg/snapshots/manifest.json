@@ -1,0 +1,79 @@
+{
+  "format": "1.0",
+  "last_update": "2026-03-12T22:50:03.142588+00:00",
+  "snapshots": [
+    {
+      "key": "86c4acfa750605734e9dd62b4bfdcf7a7e0efe8a",
+      "branch": "main",
+      "timestamp": "2026-03-12T22:47:53.905028+00:00",
+      "version": "0.1.0",
+      "file": "86c4acfa750605734e9dd62b4bfdcf7a7e0efe8a.json",
+      "metrics": {
+        "total_nodes": 1023,
+        "total_edges": 1239,
+        "meaningful_nodes": 104,
+        "docstring_coverage": 0.7879999999999999,
+        "node_counts": {
+          "class": 13,
+          "function": 20,
+          "method": 53,
+          "module": 18,
+          "symbol": 919
+        },
+        "edge_counts": {
+          "ATTR_ACCESS": 365,
+          "CALLS": 306,
+          "CONTAINS": 86,
+          "IMPORTS": 136,
+          "INHERITS": 6,
+          "RESOLVES_TO": 340
+        },
+        "critical_issues": 1,
+        "complexity_median": 5
+      },
+      "deltas": {
+        "vs_previous": null,
+        "vs_baseline": null
+      }
+    },
+    {
+      "key": "212b03b02d1a469aeb18d602ec601b7cb43397d7",
+      "branch": "main",
+      "timestamp": "2026-03-12T22:50:03.138946+00:00",
+      "version": "0.1.0",
+      "file": "212b03b02d1a469aeb18d602ec601b7cb43397d7.json",
+      "metrics": {
+        "total_nodes": 1023,
+        "total_edges": 1239,
+        "meaningful_nodes": 104,
+        "docstring_coverage": 0.7879999999999999,
+        "node_counts": {
+          "class": 13,
+          "function": 20,
+          "method": 53,
+          "module": 18,
+          "symbol": 919
+        },
+        "edge_counts": {
+          "ATTR_ACCESS": 365,
+          "CALLS": 306,
+          "CONTAINS": 86,
+          "IMPORTS": 136,
+          "INHERITS": 6,
+          "RESOLVES_TO": 340
+        },
+        "critical_issues": 1,
+        "complexity_median": 5
+      },
+      "deltas": {
+        "vs_previous": null,
+        "vs_baseline": {
+          "nodes": 0,
+          "edges": 0,
+          "coverage_delta": 0.0,
+          "critical_issues_delta": 0
+        }
+      }
+    }
+  ]
+}

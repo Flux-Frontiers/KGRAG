@@ -205,3 +205,19 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# CodeKG generated artifacts — databases are transient/reproducible, snapshots are tracked
+# MUST include .codekg/snapshots!
+# This is the correct pattern
+.codekg/lancedb/
+.codekg/lancedb-*
+.codekg/graph.sqlite
+.codekg/graph.sqlite*
+.codekg/models
+
+# DocKG generated artifacts — same pattern as CodeKG; snapshots will be tracked once added
+.dockg/lancedb/
+.dockg/lancedb-*
+.dockg/graph.sqlite
+.dockg/graph.sqlite*
+.dockg/models
