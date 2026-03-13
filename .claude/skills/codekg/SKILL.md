@@ -15,12 +15,12 @@ CodeKG indexes Python repos into a hybrid knowledge graph (SQLite + LanceDB) and
 
 ```bash
 # With MCP server support
-poetry add "code-kg[mcp] @ git+https://github.com/Flux-Frontiers/code_kg.git"
+poetry add "code-kg @ git+https://github.com/Flux-Frontiers/code_kg.git"
 ```
 
 Adds to `pyproject.toml`:
 ```toml
-code-kg = { git = "https://github.com/Flux-Frontiers/code_kg.git", extras = ["mcp"] }
+code-kg = { git = "https://github.com/Flux-Frontiers/code_kg.git", extras = ["viz"] }
 ```
 
 ## Build the Knowledge Graph
