@@ -3,14 +3,17 @@ cmd_registry.py
 
 Registry management commands: register, unregister, list, info, status, scan.
 """
+
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import click
-from rich.console import Console
-from rich.table import Table
 from rich import box
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
 
 from kg_rag.cli.group import cli
 from kg_rag.cli.options import kind_option, registry_option
@@ -18,6 +21,45 @@ from kg_rag.primitives import KGEntry, KGKind
 from kg_rag.registry import KGRegistry, default_registry_path
 
 console = Console()
+
+# Map KG marker directory name → kind string
+_KG_MARKERS: dict[str, str] = {
+    ".codekg": "code",
+    ".dockg": "doc",
+    ".metakg": "meta",
+}
+
+
+def _find_kg_dirs(root: Path) -> list[dict]:
+    """Walk *root* for KG database directories, skipping hidden subdirectories.
+
+    For each non-hidden directory encountered, checks for the presence of
+    ``.codekg``, ``.dockg``, and ``.metakg`` child directories.  Hidden dirs
+    (names starting with ``"."``) are pruned from traversal so we never
+    descend into ``.git``, ``.venv``, or a neighbour repo's own KG dirs.
+
+    :param root: Directory to walk.
+    :return: List of dicts with keys ``kind``, ``repo``, ``sqlite``, ``lancedb``.
+    """
+    found: list[dict] = []
+    for dirpath, dirnames, _ in os.walk(root):
+        current = Path(dirpath)
+        for marker, kind in _KG_MARKERS.items():
+            kg_dir = current / marker
+            if kg_dir.is_dir():
+                sqlite = kg_dir / "graph.sqlite"
+                lancedb_dir = kg_dir / "lancedb"
+                found.append(
+                    {
+                        "kind": kind,
+                        "repo": current,
+                        "sqlite": sqlite if sqlite.exists() else None,
+                        "lancedb": lancedb_dir if lancedb_dir.exists() else None,
+                    }
+                )
+        # Prune hidden directories so we never recurse into them
+        dirnames[:] = [d for d in dirnames if not d.startswith(".")]
+    return found
 
 
 @cli.command("register")
@@ -159,7 +201,6 @@ def info(name_or_id, registry):
         console.print(f"[red]Not found[/red]: {name_or_id!r}")
         raise SystemExit(1)
 
-    from rich.panel import Panel
     lines = [
         f"[bold]ID[/bold]       : {entry.id}",
         f"[bold]Name[/bold]     : {entry.name}",
@@ -231,25 +272,7 @@ def scan(root_path, auto_register, registry):
     root = Path(root_path).resolve()
     console.print(f"Scanning [bold]{root}[/bold] for KG databases...")
 
-    found = []
-    markers = {
-        ".codekg": "code",
-        ".dockg": "doc",
-        ".metakg": "meta",
-    }
-
-    for marker, kind in markers.items():
-        for db_dir in root.rglob(marker):
-            if db_dir.is_dir():
-                repo = db_dir.parent
-                sqlite = db_dir / "graph.sqlite"
-                lancedb = db_dir / "lancedb"
-                found.append({
-                    "kind": kind,
-                    "repo": repo,
-                    "sqlite": sqlite if sqlite.exists() else None,
-                    "lancedb": lancedb if lancedb.exists() else None,
-                })
+    found = _find_kg_dirs(root)
 
     if not found:
         console.print("[yellow]No KG databases found.[/yellow]")
@@ -287,4 +310,4 @@ def scan(root_path, auto_register, registry):
                 reg.register(entry)
                 console.print(f"[green]Registered[/green] [bold]{name}[/bold]")
     else:
-        console.print(f"\nRun with [bold]--auto-register[/bold] to register all discovered KGs.")
+        console.print("\nRun with [bold]--auto-register[/bold] to register all discovered KGs.")

@@ -3,6 +3,7 @@ codekg_adapter.py
 
 Adapter wrapping the code_kg.CodeKG class.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -19,13 +20,13 @@ class CodeKGAdapter(KGAdapter):
 
     def __init__(self, entry: KGEntry) -> None:
         super().__init__(entry)
-        self._kg = None
+        self._kg: Any = None
 
     def _load(self):
         if self._kg is not None:
             return
         try:
-            from code_kg.kg import CodeKG
+            from code_kg.kg import CodeKG  # pylint: disable=import-outside-toplevel
         except ImportError as e:
             raise ImportError(
                 "code-kg is not installed. Install it with: pip install code-kg"
@@ -45,7 +46,8 @@ class CodeKGAdapter(KGAdapter):
         :return: True if this adapter can serve queries.
         """
         try:
-            import code_kg  # noqa: F401
+            import code_kg  # noqa: F401  # pylint: disable=import-outside-toplevel
+
             return self.entry.is_built
         except ImportError:
             return False
@@ -62,16 +64,18 @@ class CodeKGAdapter(KGAdapter):
         hits = []
         for hit in result.ranked_hits[:k]:
             node = hit.node
-            hits.append(CrossHit(
-                kg_name=self.entry.name,
-                kg_kind=KGKind.CODE,
-                node_id=node.id,
-                name=node.name,
-                kind=node.kind,
-                score=hit.score,
-                summary=node.docstring or "",
-                source_path=node.module_path or "",
-            ))
+            hits.append(
+                CrossHit(
+                    kg_name=self.entry.name,
+                    kg_kind=KGKind.CODE,
+                    node_id=node.id,
+                    name=node.name,
+                    kind=node.kind,
+                    score=hit.score,
+                    summary=node.docstring or "",
+                    source_path=node.module_path or "",
+                )
+            )
         return hits
 
     def pack(self, q: str, k: int = 8, context: int = 5) -> list[CrossSnippet]:
@@ -86,16 +90,18 @@ class CodeKGAdapter(KGAdapter):
         pack = self._kg.pack(q, k=k, context=context)
         snippets = []
         for s in pack.snippets:
-            snippets.append(CrossSnippet(
-                kg_name=self.entry.name,
-                kg_kind=KGKind.CODE,
-                node_id=s.node_id,
-                source_path=s.path,
-                content=s.text,
-                score=s.score,
-                lineno=s.lineno,
-                end_lineno=s.end_lineno,
-            ))
+            snippets.append(
+                CrossSnippet(
+                    kg_name=self.entry.name,
+                    kg_kind=KGKind.CODE,
+                    node_id=s.node_id,
+                    source_path=s.path,
+                    content=s.text,
+                    score=s.score,
+                    lineno=s.lineno,
+                    end_lineno=s.end_lineno,
+                )
+            )
         return snippets
 
     def stats(self) -> dict[str, Any]:
@@ -111,5 +117,5 @@ class CodeKGAdapter(KGAdapter):
                 "edge_count": s.edge_count(),
                 "kind": "code",
             }
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             return {"kind": "code", "error": "stats unavailable"}

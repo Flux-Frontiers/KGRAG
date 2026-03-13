@@ -1,0 +1,29 @@
+feat(cli): add kgrag init command, MCP docs, pre-commit, and promote KG backends to main deps
+
+Introduces `kgrag init` — a one-shot command that auto-detects applicable
+KG layers (code/doc) for a repository, builds each via the appropriate
+backend CLI (codekg/dockg), and registers all successfully-built layers
+in the KGRAG registry. Supports --layer, --name, --wipe, and --registry
+flags with a Rich summary table on completion.
+
+Promotes code-kg and doc-kg from dev/optional-extra dependencies to
+required main dependencies, removing the `backends` extra group. Updates
+both backends to their latest HEAD commits (doc-kg 0.3.0).
+
+Refactors the scan command to use a new shared _find_kg_dirs() helper
+that correctly prunes hidden directories when walking for KG databases.
+
+Bumps package version to 0.2.0 and rewrites README with full project
+documentation (badges, architecture diagram, CLI reference, quick start).
+
+Adds docs/MCP.md with full MCP server reference (tools, client config,
+troubleshooting). Replaces the CodeKG-only setup-mcp.md Claude command
+with setup-kgrag-mcp.md covering the full KGRAG MCP setup workflow.
+Adds kgrag MCP server entry to .mcp.json for this repository.
+
+Ports .pre-commit-config.yaml and .secrets.baseline from code_kg;
+fixes pylint (import-outside-toplevel, broad-exception-caught), mypy
+(Any annotation for lazy _kg attribute, variable name uniqueness in
+mcp_server.py), and ruff formatting across adapter and server modules.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
