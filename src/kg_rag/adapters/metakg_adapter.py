@@ -3,6 +3,7 @@ metakg_adapter.py
 
 Adapter wrapping the metakg package.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -19,17 +20,17 @@ class MetaKGAdapter(KGAdapter):
 
     def __init__(self, entry: KGEntry) -> None:
         super().__init__(entry)
-        self._kg = None
+        self._kg: Any = None
 
     def _load(self):
         if self._kg is not None:
             return
         try:
-            from metakg.orchestrator import MetaKGOrchestrator
+            from metakg.orchestrator import (  # pylint: disable=import-outside-toplevel
+                MetaKGOrchestrator,
+            )
         except ImportError as e:
-            raise ImportError(
-                "metakg is not installed."
-            ) from e
+            raise ImportError("metakg is not installed.") from e
         entry = self.entry
         self._kg = MetaKGOrchestrator(
             repo_root=str(entry.repo_path),
@@ -43,7 +44,8 @@ class MetaKGAdapter(KGAdapter):
         :return: True if this adapter can serve queries.
         """
         try:
-            import metakg  # noqa: F401
+            import metakg  # noqa: F401  # pylint: disable=import-outside-toplevel
+
             return self.entry.is_built
         except ImportError:
             return False
@@ -61,18 +63,20 @@ class MetaKGAdapter(KGAdapter):
             hits = []
             for hit in (result.ranked_hits if hasattr(result, "ranked_hits") else [])[:k]:
                 node = hit.node if hasattr(hit, "node") else hit
-                hits.append(CrossHit(
-                    kg_name=self.entry.name,
-                    kg_kind=KGKind.META,
-                    node_id=getattr(node, "id", str(node)),
-                    name=getattr(node, "name", str(node)),
-                    kind=getattr(node, "kind", "pathway"),
-                    score=getattr(hit, "score", 0.0),
-                    summary=getattr(node, "description", "") or "",
-                    source_path=getattr(node, "source", "") or "",
-                ))
+                hits.append(
+                    CrossHit(
+                        kg_name=self.entry.name,
+                        kg_kind=KGKind.META,
+                        node_id=getattr(node, "id", str(node)),
+                        name=getattr(node, "name", str(node)),
+                        kind=getattr(node, "kind", "pathway"),
+                        score=getattr(hit, "score", 0.0),
+                        summary=getattr(node, "description", "") or "",
+                        source_path=getattr(node, "source", "") or "",
+                    )
+                )
             return hits
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             return []
 
     def pack(self, q: str, k: int = 8, context: int = 5) -> list[CrossSnippet]:
@@ -88,16 +92,18 @@ class MetaKGAdapter(KGAdapter):
             pack = self._kg.pack(q, k=k)
             snippets = []
             for s in getattr(pack, "snippets", []):
-                snippets.append(CrossSnippet(
-                    kg_name=self.entry.name,
-                    kg_kind=KGKind.META,
-                    node_id=getattr(s, "node_id", ""),
-                    source_path=getattr(s, "path", ""),
-                    content=getattr(s, "text", str(s)),
-                    score=getattr(s, "score", 0.0),
-                ))
+                snippets.append(
+                    CrossSnippet(
+                        kg_name=self.entry.name,
+                        kg_kind=KGKind.META,
+                        node_id=getattr(s, "node_id", ""),
+                        source_path=getattr(s, "path", ""),
+                        content=getattr(s, "text", str(s)),
+                        score=getattr(s, "score", 0.0),
+                    )
+                )
             return snippets
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             return []
 
     def stats(self) -> dict[str, Any]:

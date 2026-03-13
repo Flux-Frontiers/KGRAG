@@ -28,7 +28,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "kg-rag"
-version = "0.1.0"
+version = "0.2.0"
 description = "Orchestration layer for the KGRAG(tm) components."
 authors = ["Eric G. Suchanek, PhD <suchanek@mac.com>"]
 license = "Elastic-2.0"
@@ -62,11 +62,11 @@ PyQt5 = { version = ">=5.15.0", optional = true }
 param = { version = ">=2.0.0", optional = true }
 markdown = { version = ">=3.6", optional = true }
 trame-vtk = { version = ">=2.0.0", optional = true }
-doc-kg = { git = "https://github.com/Flux-Frontiers/doc_kg.git", optional = true }
+doc-kg = { git = "https://github.com/Flux-Frontiers/doc_kg.git" }
+code-kg = { git = "https://github.com/Flux-Frontiers/code_kg.git" }
 
 [tool.poetry.extras]
 viz = ["streamlit", "pyvis", "plotly"]
-backends = ["doc-kg"]
 viz3d = ["pyvista", "pyvistaqt", "PyQt5", "param", "markdown", "trame-vtk"]
 
 [tool.poetry.group.viz3d]
@@ -89,7 +89,6 @@ pre-commit = "^4.5.1"
 detect-secrets = "^1.5.0"
 pylint = "^4.0.5"
 pdoc = ">=14.0.0"
-code-kg = { git = "https://github.com/Flux-Frontiers/code_kg.git", extras = ["mcp"] }
 
 
 
@@ -101,6 +100,7 @@ kgrag-unregister   = "kg_rag.cli.cmd_registry:unregister"
 kgrag-list         = "kg_rag.cli.cmd_registry:list_kgs"
 kgrag-info         = "kg_rag.cli.cmd_registry:info"
 kgrag-status       = "kg_rag.cli.cmd_registry:status"
+kgrag-init         = "kg_rag.cli.cmd_init:init"
 kgrag-scan         = "kg_rag.cli.cmd_registry:scan"
 kgrag-query        = "kg_rag.cli.cmd_query:query"
 kgrag-pack         = "kg_rag.cli.cmd_query:pack"
@@ -145,7 +145,7 @@ include = ["src"]
 
 [tool.dockg]
 # Exclude directories from the knowledge graph by default.
-exclude = [".dockg", ".codekg", "src", ".git", ".venv", "venv", "__pycache__", 
+exclude = [".dockg", ".codekg", "src", ".git", ".venv", "venv", "__pycache__",
 ".mypy_cache", ".pytest_cache", "bundles", "dist"]
 
 [tool.poe.tasks.docs]
