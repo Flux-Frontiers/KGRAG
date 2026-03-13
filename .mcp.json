@@ -42,6 +42,10 @@
         "mcp",
         "--repo", "/Users/egs/repos/kgrag"
       ]
+    },
+    "kgrag": {
+      "command": "/Users/egs/repos/kgrag/.venv/bin/kgrag",
+      "args": ["mcp"]
     }
   }
 }

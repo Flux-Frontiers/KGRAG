@@ -3,6 +3,8 @@ kg_rag — cross-KG registry and federated query layer.
 
 Manages CodeKG, DocKG, and MetaKG instances as a unified corpus.
 """
+
+from kg_rag.orchestrator import KGRAG
 from kg_rag.primitives import (
     CrossHit,
     CrossQueryResult,
@@ -13,7 +15,6 @@ from kg_rag.primitives import (
     RegistryStats,
 )
 from kg_rag.registry import KGRegistry
-from kg_rag.orchestrator import KGRAG
 
 __all__ = [
     "KGRAG",
@@ -26,3 +27,5 @@ __all__ = [
     "CrossSnippet",
     "CrossSnippetPack",
 ]
+
+__version__ = "0.2.0"

@@ -11,8 +11,10 @@ Tools exposed:
     kgrag_list()                — List all registered KGs
     kgrag_info(name)            — Detailed info for a single KG
 """
+
 from __future__ import annotations
 
+import asyncio
 import json
 from pathlib import Path
 from typing import Any
@@ -22,6 +24,7 @@ from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
 
 from kg_rag.orchestrator import KGRAG
+from kg_rag.primitives import KGKind
 from kg_rag.registry import KGRegistry, default_registry_path
 
 
@@ -57,9 +60,7 @@ def _make_server(registry_path: Path | None = None) -> Server:
                 description="Detailed information about a registered KG by name or id.",
                 inputSchema={
                     "type": "object",
-                    "properties": {
-                        "name": {"type": "string", "description": "KG name or UUID."}
-                    },
+                    "properties": {"name": {"type": "string", "description": "KG name or UUID."}},
                     "required": ["name"],
                 },
             ),
@@ -126,9 +127,8 @@ def _make_server(registry_path: Path | None = None) -> Server:
         if name == "kgrag_list":
             kind_filter = arguments.get("kind")
             with KGRegistry(db_path=reg_path) as reg:
-                from kg_rag.primitives import KGKind
                 entries = reg.list(kind=KGKind.from_str(kind_filter) if kind_filter else None)
-            data = [
+            list_data = [
                 {
                     "name": e.name,
                     "kind": e.kind.value,
@@ -142,14 +142,16 @@ def _make_server(registry_path: Path | None = None) -> Server:
                 }
                 for e in entries
             ]
-            return [TextContent(type="text", text=json.dumps(data, indent=2))]
+            return [TextContent(type="text", text=json.dumps(list_data, indent=2))]
 
         if name == "kgrag_info":
             name_or_id = arguments["name"]
             with KGRegistry(db_path=reg_path) as reg:
                 entry = reg.get(name_or_id)
             if entry is None:
-                return [TextContent(type="text", text=json.dumps({"error": f"Not found: {name_or_id}"}))]
+                return [
+                    TextContent(type="text", text=json.dumps({"error": f"Not found: {name_or_id}"}))
+                ]
             data = {
                 "id": entry.id,
                 "name": entry.name,
@@ -171,14 +173,13 @@ def _make_server(registry_path: Path | None = None) -> Server:
             q = arguments["q"]
             k = int(arguments.get("k", 8))
             kinds_raw = arguments.get("kinds")
-            from kg_rag.primitives import KGKind
             kinds = [KGKind.from_str(kk) for kk in kinds_raw] if kinds_raw else None
             with KGRAG(registry_path=reg_path) as kgrag:
-                result = kgrag.query(q, k=k, kinds=kinds)
-            data = {
-                "query": result.query,
-                "total_hits": result.total_hits,
-                "kgs_queried": result.kgs_queried,
+                query_result = kgrag.query(q, k=k, kinds=kinds)
+            query_data = {
+                "query": query_result.query,
+                "total_hits": query_result.total_hits,
+                "kgs_queried": query_result.kgs_queried,
                 "hits": [
                     {
                         "kg": h.kg_name,
@@ -190,21 +191,20 @@ def _make_server(registry_path: Path | None = None) -> Server:
                         "summary": h.summary,
                         "source_path": h.source_path,
                     }
-                    for h in result.hits
+                    for h in query_result.hits
                 ],
             }
-            return [TextContent(type="text", text=json.dumps(data, indent=2))]
+            return [TextContent(type="text", text=json.dumps(query_data, indent=2))]
 
         if name == "kgrag_pack":
             q = arguments["q"]
             k = int(arguments.get("k", 8))
             context = int(arguments.get("context", 5))
             kinds_raw = arguments.get("kinds")
-            from kg_rag.primitives import KGKind
             kinds = [KGKind.from_str(kk) for kk in kinds_raw] if kinds_raw else None
             with KGRAG(registry_path=reg_path) as kgrag:
-                result = kgrag.pack(q, k=k, context=context, kinds=kinds)
-            return [TextContent(type="text", text=result.render())]
+                pack_result = kgrag.pack(q, k=k, context=context, kinds=kinds)
+            return [TextContent(type="text", text=pack_result.render())]
 
         return [TextContent(type="text", text=json.dumps({"error": f"Unknown tool: {name}"}))]
 
@@ -218,8 +218,6 @@ def main(host: str = "localhost", port: int = 8765, registry_path: Path | None =
     :param port: Server port (unused for stdio transport).
     :param registry_path: Override registry path.
     """
-    import asyncio
-
     server = _make_server(registry_path=registry_path)
 
     async def _run():
