@@ -21,7 +21,6 @@
 #
 
 
-
 [build-system]
 requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"
@@ -112,6 +111,16 @@ kgrag-pack         = "kg_rag.cli.cmd_query:pack"
 kgrag-analyze      = "kg_rag.cli.cmd_analyze:analyze"
 kgrag-viz          = "kg_rag.cli.cmd_viz:viz"
 
+[tool.pylint.messages_control]
+disable = ["all"]
+enable = [
+    "cyclic-import",           # R0401
+    "broad-exception-caught",  # W0718
+    "cell-var-from-loop",      # W0640
+    "undefined-variable",      # E0602
+    "import-outside-toplevel", # C0415
+]
+
 [tool.ruff]
 line-length = 100
 target-version = "py312"
@@ -130,14 +139,6 @@ explicit_package_bases = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-v --tb=short"
-
-[tool.pylint.messages_control]
-disable = ["all"]
-enable = [
-    "cyclic-import",           # R0401
-    "cell-var-from-loop",      # W0640
-    "undefined-variable",      # E0602
-]
 
 [tool.codekg]
 # Directories to include in the knowledge graph build and analysis.
