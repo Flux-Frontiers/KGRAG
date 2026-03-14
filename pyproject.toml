@@ -70,9 +70,6 @@ pip = "^26.0.1"
 [tool.poetry.extras]
 viz = ["streamlit", "pyvis", "plotly"]
 viz3d = ["pyvista", "pyvistaqt", "PyQt5", "param", "markdown", "trame-vtk"]
-doc-kg = ["doc-kg"]
-dock-kg = ["doc-kg"]
-code-kg = ["code-kg"]
 
 
 [tool.poetry.group.viz3d]
