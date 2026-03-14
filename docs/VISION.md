@@ -6,7 +6,7 @@ KGRAG orchestrates multiple knowledge graph backends under a single, coherent co
 
 - **CodeKG** — Semantic + structural analysis of Python code
 - **DocKG** — Semantic + structural analysis of markdown documentation
-- **MetaKG** — Domain-specific knowledge graphs
+- **MetaKG** — Domain-specific knowledge graphs (metabolic pathways in biochemistry)
 - **KGRAG** — The unifying registry, CLI, and federated query layer
 
 Instead of switching tools for each KG type, developers and agents work with one registry and one query interface.
