@@ -116,3 +116,82 @@ class DocKGAdapter(KGAdapter):
             }
         except Exception:  # pylint: disable=broad-exception-caught
             return {"kind": "doc", "error": "stats unavailable"}
+
+    def analyze(self) -> str:
+        """Run full corpus analysis on this DocKG.
+
+        Uses DocKGAnalyzer to compute baseline metrics, per-document structure,
+        semantic coverage (topic/entity/keyword), hot chunks, and issues/strengths.
+
+        :return: Markdown-formatted analysis report.
+        """
+        self._load()
+        try:
+            from doc_kg.dockg_thorough_analysis import (  # pylint: disable=import-outside-toplevel
+                DocKGAnalyzer,
+            )
+            from rich.console import Console  # pylint: disable=import-outside-toplevel
+
+            analyzer = DocKGAnalyzer(self._kg, console=Console(quiet=True))
+            result = analyzer.run_analysis()
+
+            stats = result.get("stats", {})
+            cov = result.get("semantic_coverage", {})
+            lines: list[str] = [
+                "# DocKG Analysis Report",
+                "",
+                f"**KG:** `{self.entry.name}`  |  **corpus:** `{self.entry.repo_path}`",
+                "",
+                "## Baseline",
+                "",
+                f"- Total nodes: **{stats.get('total_nodes', 'n/a')}**",
+                f"- Total edges: **{stats.get('total_edges', 'n/a')}**",
+                "",
+                "## Semantic Coverage",
+                "",
+                f"- Topic coverage:   **{cov.get('topic_coverage', 0.0):.1%}**",
+                f"- Entity coverage:  **{cov.get('entity_coverage', 0.0):.1%}**",
+                f"- Keyword coverage: **{cov.get('keyword_coverage', 0.0):.1%}**",
+                "",
+                "## Top Documents by Chunk Count",
+                "",
+                "| File | Chunks | Sections | References | Semantic Links |",
+                "|---|---:|---:|---:|---:|",
+            ]
+            for m in result.get("document_metrics", [])[:15]:
+                lines.append(
+                    f"| `{m['file_path']}` | {m['chunks']} | {m['sections']}"
+                    f" | {m['refs_out']} | {m['semantic_links']} |"
+                )
+            lines.append("")
+
+            hot = result.get("hot_chunks", [])
+            if hot:
+                lines += [
+                    "## Hot Chunks",
+                    "",
+                    "| Chunk ID | File | Semantic Links | References |",
+                    "|---|---|---:|---:|",
+                ]
+                for c in hot:
+                    lines.append(
+                        f"| `{c['id']}` | `{c['file_path']}`"
+                        f" | {c['semantic_links']} | {c['references']} |"
+                    )
+                lines.append("")
+
+            if result.get("issues"):
+                lines += ["## ⚠️ Issues", ""]
+                for item in result["issues"]:
+                    lines.append(f"- {item}")
+                lines.append("")
+
+            if result.get("strengths"):
+                lines += ["## ✅ Strengths", ""]
+                for item in result["strengths"]:
+                    lines.append(f"- {item}")
+                lines.append("")
+
+            return "\n".join(lines)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            return f"# DocKG Analysis\n\nAnalysis failed: {exc}\n"
