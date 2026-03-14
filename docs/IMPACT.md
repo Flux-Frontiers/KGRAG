@@ -85,6 +85,7 @@ C++ powers systems software, game engines, scientific computing, embedded system
 - **GenomicsKG** — Gene ontologies, variant annotations, protein structures
 - **SchemaKG** — Database schemas, API specifications (OpenAPI, GraphQL)
 - **InfraKG** — Infrastructure-as-code (Terraform, Kubernetes manifests)
+- **TextKG** — Humanities and sacred text corpora: multiple translations of the same work registered as separate DocKG instances, federated for comparative analysis. A query like *"what did Augustine say about free will?"* returns ranked results across primary texts and patristic commentaries simultaneously, with full verse/section provenance. The same architecture works for any tradition — Bible, Quran, Talmud, Upanishads, Pali Canon — or for literary scholarship across editions and translations.
 
 Each new adapter plugs into the same registry, the same orchestrator, the same CLI, and the same MCP server. **The marginal cost of adding a new knowledge domain approaches zero.**
 
