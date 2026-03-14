@@ -131,7 +131,7 @@ KGRAG is offered as a **licensed framework** — a core orchestration and federa
 - Access to roadmap steering (feature request prioritization)
 - OEM/embedding rights (for ISV use cases — see OEM license)
 
-**Pricing:** Custom — contact sales@flux-frontiers.org
+**Pricing:** Custom — contact sales@flux-frontiers.com
 
 **Typical range:** $2,500–$25,000/month depending on deployment scope and modules
 
@@ -315,7 +315,7 @@ kgrag trial activate --email your@email.com
 
 The trial period provides full Developer tier capabilities. At the end of the trial, the installation transitions to a read-only mode that allows querying existing KGs but disallows registering new ones until a license is activated.
 
-Enterprise evaluations can be arranged as 90-day pilots with dedicated support. Contact sales@flux-frontiers.org.
+Enterprise evaluations can be arranged as 90-day pilots with dedicated support. Contact sales@flux-frontiers.com.
 
 ---
 
@@ -353,12 +353,12 @@ KG Modules follow semantic versioning. The KGRAG framework specifies minimum com
 
 | Purpose | Contact |
 |---------|---------|
-| Trial and purchase | sales@flux-frontiers.org |
-| Technical support | support@flux-frontiers.org |
-| Partnership and OEM | partners@flux-frontiers.org |
-| Security vulnerabilities | security@flux-frontiers.org |
+| Trial and purchase | sales@flux-frontiers.com |
+| Technical support | support@flux-frontiers.com |
+| Partnership and OEM | partners@flux-frontiers.com |
+| Security vulnerabilities | security@flux-frontiers.com |
 
-**Web:** https://flux-frontiers.org/kgrag
+**Web:** https://flux-frontiers.com/kgrag
 **GitHub:** https://github.com/Flux-Frontiers/KGRAG
 
 ---
