@@ -273,3 +273,156 @@ class TestMetaKGAdapterPackGraceful:
 
         snippets = adapter.pack("query")
         assert snippets == []
+
+
+# ---------------------------------------------------------------------------
+# analyze() — all adapters
+# ---------------------------------------------------------------------------
+
+
+class TestCodeKGAdapterAnalyze:
+    def test_analyze_returns_string(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.CODE, with_sqlite=True)
+        mock_kg = MagicMock()
+        mock_kg.analyze.return_value = "# CodeKG Analysis\n\nSome report."
+
+        adapter = CodeKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        report = adapter.analyze()
+        assert isinstance(report, str)
+        assert len(report) > 0
+        mock_kg.analyze.assert_called_once()
+
+    def test_analyze_graceful_on_error(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.CODE, with_sqlite=True)
+        mock_kg = MagicMock()
+        mock_kg.analyze.side_effect = RuntimeError("analysis boom")
+
+        adapter = CodeKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        report = adapter.analyze()
+        assert "Analysis failed" in report
+
+
+class TestDocKGAdapterAnalyze:
+    def test_analyze_returns_markdown(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.DOC, with_sqlite=True)
+
+        mock_analyzer_result = {
+            "timestamp": "2026-01-01T00:00:00+00:00",
+            "elapsed_seconds": 0.5,
+            "stats": {"total_nodes": 200, "total_edges": 1500},
+            "semantic_coverage": {
+                "topic_coverage": 0.95,
+                "entity_coverage": 0.70,
+                "keyword_coverage": 0.98,
+            },
+            "document_metrics": [
+                {
+                    "file_path": "docs/README.md",
+                    "chunks": 10,
+                    "sections": 5,
+                    "refs_out": 3,
+                    "semantic_links": 42,
+                }
+            ],
+            "hot_chunks": [],
+            "issues": ["Low entity coverage"],
+            "strengths": ["Strong topic coverage"],
+        }
+        mock_analyzer = MagicMock()
+        mock_analyzer.run_analysis.return_value = mock_analyzer_result
+
+        mock_kg = MagicMock()
+        adapter = DocKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        with patch("kg_rag.adapters.dockg_adapter.DocKGAdapter._load"):
+            with patch("doc_kg.dockg_thorough_analysis.DocKGAnalyzer") as MockAnalyzer:
+                MockAnalyzer.return_value = mock_analyzer
+                report = adapter.analyze()
+
+        assert "# DocKG Analysis Report" in report
+        assert "200" in report  # total nodes
+        assert "95.0%" in report  # topic coverage
+        assert "Low entity coverage" in report
+        assert "Strong topic coverage" in report
+
+    def test_analyze_graceful_on_import_error(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.DOC, with_sqlite=True)
+        mock_kg = MagicMock()
+        adapter = DocKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        with patch("kg_rag.adapters.dockg_adapter.DocKGAdapter._load"):
+            with patch.dict("sys.modules", {"doc_kg.dockg_thorough_analysis": None}):
+                report = adapter.analyze()
+
+        assert "# DocKG Analysis" in report
+        assert "failed" in report.lower() or "error" in report.lower()
+
+
+class TestMetaKGAdapterAnalyze:
+    def test_analyze_unavailable_returns_message(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.META)  # no sqlite -> not built
+        with patch.dict("sys.modules", {"metakg": None}):
+            adapter = MetaKGAdapter(entry)
+            report = adapter.analyze()
+        assert "# MetaKG Analysis Report" in report
+        assert "unavailable" in report
+
+    def test_analyze_delegates_to_orchestrator_analyze(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.META, with_sqlite=True)
+        mock_kg = MagicMock()
+        mock_kg.analyze.return_value = "## Pathway Summary\n\nAll pathways healthy."
+
+        mock_metakg = MagicMock()
+        adapter = MetaKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        with patch.dict("sys.modules", {"metakg": mock_metakg}):
+            report = adapter.analyze()
+
+        assert "# MetaKG Analysis Report" in report
+        assert "Pathway Summary" in report
+
+    def test_analyze_fallback_stats_when_no_orchestrator_analyze(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.META, with_sqlite=True)
+        mock_kg = MagicMock(spec=[])  # no analyze() method
+
+        mock_metakg = MagicMock()
+        adapter = MetaKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        with patch.dict("sys.modules", {"metakg": mock_metakg}):
+            report = adapter.analyze()
+
+        assert "# MetaKG Analysis Report" in report
+        assert "Summary" in report
+
+
+class TestMetaKGAdapterStats:
+    def test_stats_unavailable_when_not_built(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.META)
+        with patch.dict("sys.modules", {"metakg": None}):
+            adapter = MetaKGAdapter(entry)
+            s = adapter.stats()
+        assert s["kind"] == "meta"
+        assert s["status"] == "unavailable"
+
+    def test_stats_includes_counts_when_orchestrator_provides_them(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.META, with_sqlite=True)
+        mock_kg = MagicMock()
+        mock_kg.stats.return_value = {"total_nodes": 55, "total_edges": 120}
+
+        mock_metakg = MagicMock()
+        adapter = MetaKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        with patch.dict("sys.modules", {"metakg": mock_metakg}):
+            s = adapter.stats()
+
+        assert s["node_count"] == 55
+        assert s["edge_count"] == 120

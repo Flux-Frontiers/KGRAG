@@ -106,8 +106,76 @@ class MetaKGAdapter(KGAdapter):
             return []
 
     def stats(self) -> dict[str, Any]:
-        """Return basic statistics about this MetaKG instance.
+        """Return statistics about this MetaKG instance.
 
-        :return: Dict with availability status.
+        Attempts to retrieve node and edge counts from the underlying
+        MetaKGOrchestrator. Falls back to availability-only status if the
+        orchestrator does not expose a stats API.
+
+        :return: Dict with kind, status, and where available node_count/edge_count.
         """
-        return {"kind": "meta", "status": "available" if self.is_available() else "unavailable"}
+        base: dict[str, Any] = {
+            "kind": "meta",
+            "status": "available" if self.is_available() else "unavailable",
+        }
+        if not self.is_available():
+            return base
+        try:
+            self._load()
+            raw = (
+                self._kg.stats()
+                if callable(getattr(self._kg, "stats", None))
+                else {}
+            )
+            if isinstance(raw, dict):
+                base["node_count"] = raw.get("node_count") or raw.get("total_nodes", "n/a")
+                base["edge_count"] = raw.get("edge_count") or raw.get("total_edges", "n/a")
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
+        return base
+
+    def analyze(self) -> str:
+        """Run analysis on this MetaKG instance and return a Markdown report.
+
+        Delegates to the MetaKGOrchestrator's ``analyze()`` method when available.
+        Falls back to a stats-based summary report when the underlying library
+        does not expose a dedicated analyzer.
+
+        :return: Markdown-formatted analysis report.
+        """
+        header = (
+            "# MetaKG Analysis Report\n\n"
+            f"**KG:** `{self.entry.name}`  |  **repo:** `{self.entry.repo_path}`\n"
+        )
+        if not self.is_available():
+            return header + "\n**Status:** unavailable — metakg library not installed.\n"
+
+        try:
+            self._load()
+            # Prefer a dedicated analyze() on the orchestrator if it exists
+            if callable(getattr(self._kg, "analyze", None)):
+                result = self._kg.analyze()
+                if isinstance(result, str):
+                    return header + "\n" + result
+                if isinstance(result, dict):
+                    import json  # pylint: disable=import-outside-toplevel
+                    return header + "\n```json\n" + json.dumps(result, indent=2) + "\n```\n"
+
+            # Fallback: stats-based summary
+            s = self.stats()
+            lines: list[str] = [
+                header,
+                "## Summary",
+                "",
+                f"- **Status:** {s.get('status', 'unknown')}",
+                f"- **Node count:** {s.get('node_count', 'n/a')}",
+                f"- **Edge count:** {s.get('edge_count', 'n/a')}",
+                "",
+                "> Detailed analysis requires the MetaKGOrchestrator to expose an"
+                " `analyze()` method. Implement `MetaKGOrchestrator.analyze()` in"
+                " the metakg package to enable full reporting.",
+                "",
+            ]
+            return "\n".join(lines)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            return header + f"\nAnalysis failed: {exc}\n"
