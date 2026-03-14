@@ -1,6 +1,6 @@
 {
   "format": "1.0",
-  "last_update": "2026-03-14T05:27:56.606094+00:00",
+  "last_update": "2026-03-14T05:28:35.069747+00:00",
   "snapshots": [
     {
       "key": "86c4acfa750605734e9dd62b4bfdcf7a7e0efe8a",
@@ -315,6 +315,45 @@
       "timestamp": "2026-03-14T05:27:56.604642+00:00",
       "version": "0.2.0",
       "file": "d4152dd28ed9b9141a11b26f9420705c32ec076e.json",
+      "metrics": {
+        "total_nodes": 1526,
+        "total_edges": 1793,
+        "meaningful_nodes": 126,
+        "docstring_coverage": 0.778,
+        "node_counts": {
+          "class": 13,
+          "function": 38,
+          "method": 53,
+          "module": 22,
+          "symbol": 1400
+        },
+        "edge_counts": {
+          "ATTR_ACCESS": 550,
+          "CALLS": 496,
+          "CONTAINS": 104,
+          "IMPORTS": 178,
+          "INHERITS": 6,
+          "RESOLVES_TO": 459
+        },
+        "critical_issues": 3,
+        "complexity_median": 8
+      },
+      "deltas": {
+        "vs_previous": null,
+        "vs_baseline": {
+          "nodes": 503,
+          "edges": 554,
+          "coverage_delta": -0.009999999999999898,
+          "critical_issues_delta": 2
+        }
+      }
+    },
+    {
+      "key": "caa53a6f5b9d430492a369d19bc02103b23fe315",
+      "branch": "main",
+      "timestamp": "2026-03-14T05:28:35.069115+00:00",
+      "version": "0.2.0",
+      "file": "caa53a6f5b9d430492a369d19bc02103b23fe315.json",
       "metrics": {
         "total_nodes": 1526,
         "total_edges": 1793,
