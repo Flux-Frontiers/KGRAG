@@ -211,7 +211,207 @@ meaningful for your domain. At minimum include the three required elements above
 
 ---
 
-## Implementation Checklist
+## Snapshot System
+
+Snapshots are **temporal metric captures** — a point-in-time record of a KG's
+structural health, stored as versioned JSON files alongside the KG database.
+They answer the questions every engineering team needs: *Has the codebase grown?
+Did documentation coverage improve after last sprint? When did complexity spike?
+What was the state of the graph three months ago?*
+
+Snapshots are captured automatically by the pre-commit git hook after each
+build, and can be queried live via MCP tools (CodeKG) or CLI (both).
+
+---
+
+### Snapshot Data Model
+
+Both CodeKG and DocKG use a three-class structure. The fields are
+domain-adapted but the shape is consistent:
+
+#### `SnapshotMetrics` — the numbers captured
+
+| Field | CodeKG | DocKG |
+|-------|--------|-------|
+| `total_nodes` | All AST nodes | All graph nodes |
+| `total_edges` | All edges | All edges |
+| `meaningful_nodes` | Functions/classes/methods/modules | Chunks + sections |
+| `docstring_coverage` / `coverage_score` | % nodes with docstrings | Avg of topic/entity/keyword coverage |
+| `node_counts` | Dict by kind (function, class, …) | Dict by kind (chunk, section, …) |
+| `edge_counts` | Dict by relation (CALLS, IMPORTS, …) | Dict by relation (HAS_TOPIC, NEXT, …) |
+| `critical_issues` / `issues_count` | Count from `analyze_repo()` | Count from `DocKGAnalyzer` |
+| `complexity_median` | Median fan-in across functions | Median semantic_links across hot chunks |
+
+#### `SnapshotDelta` — change between two snapshots
+
+```
+nodes              int    — node count change (b − a)
+edges              int    — edge count change (b − a)
+coverage_delta     float  — coverage change (b − a), e.g. +0.05 = +5%
+critical_issues_delta / issues_delta  int  — issue count change
+```
+
+#### `Snapshot` — the full record
+
+```
+key / commit   str      — stable identifier (CodeKG: git tree hash; DocKG: commit hash)
+branch         str      — git branch name
+timestamp      str      — ISO 8601 UTC
+version        str      — KG library version (e.g. "0.8.1")
+metrics        SnapshotMetrics
+hotspots       list     — CodeKG: top fan-in functions; DocKG: hot chunks by semantic_links
+issues         list[str]— quality issue strings from analysis
+vs_previous    SnapshotDelta | None  — delta from previous snapshot
+vs_baseline    SnapshotDelta | None  — delta from oldest (baseline) snapshot
+```
+
+Snapshots are stored as individual JSON files in a versioned directory:
+- **CodeKG:** `.codekg/snapshots/<tree_hash>.json` + `manifest.json`
+- **DocKG:** `.dockg/snapshots/<commit>.json` + `manifest.json`
+
+---
+
+### Capturing Snapshots
+
+#### Automatic — pre-commit hook (recommended)
+
+Install once per repository. Snapshots are captured on every `git commit`
+without any manual steps:
+
+```bash
+codekg install-hooks   # installs .git/hooks/pre-commit for CodeKG
+dockg  install-hooks   # installs .git/hooks/pre-commit for DocKG
+```
+
+Skip capture for a single commit (e.g. docs-only change):
+```bash
+CODEKG_SKIP_SNAPSHOT=1 git commit -m "..."
+```
+
+#### Manual — CLI
+
+Seed after a fresh clone (run once after the initial `codekg build` / `dockg build`):
+
+```bash
+# CodeKG — uses git tree hash as key
+codekg snapshot save $(python -c "import importlib.metadata; \
+    print(importlib.metadata.version('code-kg'))") --repo .
+
+# DocKG — uses git commit hash as key
+dockg snapshot save $(python -c "import importlib.metadata; \
+    print(importlib.metadata.version('doc-kg'))") --repo .
+```
+
+---
+
+### Querying Snapshots
+
+#### CodeKG — MCP tools (3 tools, usable by AI agents)
+
+| Tool | Parameters | Description |
+|------|-----------|-------------|
+| `snapshot_list` | `limit=10`, `branch=""` | List snapshots newest-first; includes freshness indicator comparing snapshot node count to current DB |
+| `snapshot_show` | `key="latest"` | Full snapshot detail by tree-hash key, or `"latest"` for most recent; includes `vs_previous` and `vs_baseline` deltas |
+| `snapshot_diff` | `key_a`, `key_b` | Side-by-side comparison: metrics for both snapshots, computed delta (b − a) for nodes/edges/coverage/issues |
+
+**Example MCP workflow (via Claude Code):**
+```
+snapshot_list()                           → get keys for interesting commits
+snapshot_show(key="latest")               → inspect current state + deltas
+snapshot_diff(key_a="abc123", key_b="def456")  → compare sprint start vs end
+```
+
+#### CodeKG — CLI
+
+```bash
+codekg snapshot list [--limit N] [--branch main]
+codekg snapshot show <key>          # key = tree hash from list
+codekg snapshot show latest         # most recent
+codekg snapshot diff <key_a> <key_b>
+```
+
+#### DocKG — CLI
+
+```bash
+dockg snapshot list [--limit N] [--json]
+dockg snapshot show <commit>        # commit hash from list
+dockg snapshot diff <commit_a> <commit_b> [--json]
+```
+
+DocKG snapshot output (tabular):
+```
+Commit     Branch       Version    Nodes  Edges  Coverage
+----------+------------+----------+------+------+---------
+a1b2c3d4e5 main         0.3.0      2106   13671  88.5%
+f6g7h8i9j0 feature/x    0.3.0      1980   12900  85.2%
+```
+
+---
+
+### Snapshot-Driven Architecture Reviews
+
+Snapshots enable engineering practices that would otherwise require manual
+measurement:
+
+**Sprint retrospectives:**
+```bash
+# How did the codebase change this sprint?
+codekg snapshot diff <sprint-start-key> latest
+```
+
+**Coverage regression detection:**
+```bash
+# Did docstring coverage drop after the refactor?
+snapshot_diff(key_a="pre-refactor", key_b="post-refactor")
+# → coverage_delta: -0.12  ← 12% drop, needs attention
+```
+
+**Trend visualization:**
+```bash
+codekg viz-timeline    # plots node count, edge count, coverage across all snapshots
+```
+
+**CI/CD integration:**
+```bash
+# In CI pipeline: fail if coverage drops more than 5%
+codekg snapshot diff <baseline-key> latest --json | \
+  python -c "import sys,json; d=json.load(sys.stdin); \
+  sys.exit(1 if d['delta']['coverage_delta'] < -0.05 else 0)"
+```
+
+---
+
+### Snapshot Requirements for New Adapters
+
+Every new KG module **should** implement snapshot support. It is not enforced by
+an abstract method in `KGAdapter` (snapshots are an operational concern, not a
+query concern), but it is a **strong expectation** for production-grade adapters.
+
+**Minimum viable snapshot implementation:**
+
+1. A `SnapshotManager` class (or reuse the one from `code_kg.snapshots` /
+   `doc_kg.snapshots` if the metrics map cleanly)
+2. A `snapshot save` CLI subcommand that captures current metrics and writes a
+   JSON file to `.<kind>kg/snapshots/`
+3. `snapshot list`, `snapshot show`, `snapshot diff` CLI subcommands
+4. MCP tools: `snapshot_list`, `snapshot_show`, `snapshot_diff` (following the
+   CodeKG naming convention)
+5. A pre-commit hook installed by `<kind>kg install-hooks`
+
+**Metrics to capture (domain-adapted):**
+
+| Metric | Description |
+|--------|-------------|
+| `total_nodes` | All nodes in the graph |
+| `total_edges` | All edges in the graph |
+| `meaningful_nodes` | Semantically indexed nodes |
+| `coverage_score` | Domain coverage quality metric (0.0–1.0) |
+| `issues_count` | Count of quality issues from `analyze()` |
+| `complexity_median` | Domain-appropriate complexity signal |
+| `node_counts` | Breakdown by node kind |
+| `edge_counts` | Breakdown by edge relation |
+
+---
 
 When building a new adapter (e.g., `TypeScriptKGAdapter`):
 
