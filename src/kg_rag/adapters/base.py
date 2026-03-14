@@ -3,6 +3,7 @@ base.py
 
 Abstract adapter protocol for all KG backends.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

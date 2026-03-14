@@ -6,12 +6,10 @@ is_available / query / pack / stats on each adapter type.
 External KG libraries (code_kg, doc_kg, metakg) are mocked so these
 tests run without any heavyweight dependencies installed.
 """
+
 from __future__ import annotations
 
-from pathlib import Path
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 from kg_rag.adapters import make_adapter
 from kg_rag.adapters.codekg_adapter import CodeKGAdapter
@@ -19,10 +17,10 @@ from kg_rag.adapters.dockg_adapter import DocKGAdapter
 from kg_rag.adapters.metakg_adapter import MetaKGAdapter
 from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry, KGKind
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _entry(tmp_path, kind: KGKind, *, with_sqlite: bool = False) -> KGEntry:
     repo = tmp_path / "repo"
@@ -35,8 +33,10 @@ def _entry(tmp_path, kind: KGKind, *, with_sqlite: bool = False) -> KGEntry:
         db.touch()
         sqlite_path = db
     return KGEntry(
-        name="test-kg", kind=kind,
-        repo_path=repo, venv_path=venv,
+        name="test-kg",
+        kind=kind,
+        repo_path=repo,
+        venv_path=venv,
         sqlite_path=sqlite_path,
     )
 
@@ -44,6 +44,7 @@ def _entry(tmp_path, kind: KGKind, *, with_sqlite: bool = False) -> KGEntry:
 # ---------------------------------------------------------------------------
 # make_adapter factory
 # ---------------------------------------------------------------------------
+
 
 class TestMakeAdapter:
     def test_code_kind_returns_codekg_adapter(self, tmp_path):
@@ -71,6 +72,7 @@ class TestMakeAdapter:
 # CodeKGAdapter
 # ---------------------------------------------------------------------------
 
+
 class TestCodeKGAdapterIsAvailable:
     def test_unavailable_when_import_fails(self, tmp_path):
         entry = _entry(tmp_path, KGKind.CODE)
@@ -94,23 +96,20 @@ class TestCodeKGAdapterIsAvailable:
 
 
 class TestCodeKGAdapterQuery:
-    def _make_mock_hit(self, name="foo", score=0.9, docstring="doc", module="src/f.py"):
-        node = MagicMock()
-        node.id = f"fn:{module}:{name}"
-        node.name = name
-        node.kind = "function"
-        node.docstring = docstring
-        node.module_path = module
-        hit = MagicMock()
-        hit.node = node
-        hit.score = score
-        return hit
+    def _make_node(self, name="foo", score=0.9, docstring="doc", module="src/f.py"):
+        return {
+            "id": f"fn:{module}:{name}",
+            "name": name,
+            "kind": "function",
+            "docstring": docstring,
+            "module_path": module,
+            "relevance": {"score": score},
+        }
 
     def test_query_returns_cross_hits(self, tmp_path):
         entry = _entry(tmp_path, KGKind.CODE, with_sqlite=True)
-        mock_hit = self._make_mock_hit()
         mock_result = MagicMock()
-        mock_result.ranked_hits = [mock_hit]
+        mock_result.nodes = [self._make_node()]
 
         mock_kg = MagicMock()
         mock_kg.query.return_value = mock_result
@@ -127,9 +126,8 @@ class TestCodeKGAdapterQuery:
 
     def test_query_respects_k_limit(self, tmp_path):
         entry = _entry(tmp_path, KGKind.CODE, with_sqlite=True)
-        mock_hits = [self._make_mock_hit(name=f"fn{i}", score=float(i)) for i in range(10)]
         mock_result = MagicMock()
-        mock_result.ranked_hits = mock_hits
+        mock_result.nodes = [self._make_node(name=f"fn{i}", score=float(i)) for i in range(10)]
 
         mock_kg = MagicMock()
         mock_kg.query.return_value = mock_result
@@ -145,16 +143,13 @@ class TestCodeKGAdapterPack:
     def test_pack_returns_cross_snippets(self, tmp_path):
         entry = _entry(tmp_path, KGKind.CODE, with_sqlite=True)
 
-        mock_snippet = MagicMock()
-        mock_snippet.node_id = "fn:src/foo.py:bar"
-        mock_snippet.path = "src/foo.py"
-        mock_snippet.text = "def bar(): pass"
-        mock_snippet.score = 0.85
-        mock_snippet.lineno = 10
-        mock_snippet.end_lineno = 12
-
+        node = {
+            "id": "fn:src/foo.py:bar",
+            "relevance": {"score": 0.85},
+            "snippet": {"path": "src/foo.py", "text": "def bar(): pass", "start": 10, "end": 12},
+        }
         mock_pack = MagicMock()
-        mock_pack.snippets = [mock_snippet]
+        mock_pack.nodes = [node]
         mock_kg = MagicMock()
         mock_kg.pack.return_value = mock_pack
 
@@ -175,8 +170,7 @@ class TestCodeKGAdapterStats:
     def test_stats_returns_dict(self, tmp_path):
         entry = _entry(tmp_path, KGKind.CODE, with_sqlite=True)
         mock_store = MagicMock()
-        mock_store.node_count.return_value = 42
-        mock_store.edge_count.return_value = 99
+        mock_store.stats.return_value = {"meaningful_nodes": 42, "total_edges": 99}
         mock_kg = MagicMock()
         mock_kg.store = mock_store
 
@@ -191,7 +185,7 @@ class TestCodeKGAdapterStats:
     def test_stats_graceful_on_error(self, tmp_path):
         entry = _entry(tmp_path, KGKind.CODE, with_sqlite=True)
         mock_kg = MagicMock()
-        mock_kg.store.node_count.side_effect = RuntimeError("db error")
+        mock_kg.store.stats.side_effect = RuntimeError("db error")
 
         adapter = CodeKGAdapter(entry)
         adapter._kg = mock_kg
@@ -204,6 +198,7 @@ class TestCodeKGAdapterStats:
 # ---------------------------------------------------------------------------
 # DocKGAdapter
 # ---------------------------------------------------------------------------
+
 
 class TestDocKGAdapterIsAvailable:
     def test_unavailable_when_import_fails(self, tmp_path):
@@ -224,18 +219,17 @@ class TestDocKGAdapterQuery:
     def test_query_returns_cross_hits(self, tmp_path):
         entry = _entry(tmp_path, KGKind.DOC, with_sqlite=True)
 
-        node = MagicMock()
-        node.id = "chunk:docs/foo.md:intro"
-        node.name = "intro"
-        node.kind = "chunk"
-        node.summary = "Overview section"
-        node.path = "docs/foo.md"
-        hit = MagicMock()
-        hit.node = node
-        hit.score = 0.75
-
+        node = {
+            "id": "chunk:docs/foo.md:intro",
+            "name": "intro",
+            "kind": "chunk",
+            "title": "Overview section",
+            "text": "Overview section text",
+            "file_path": "docs/foo.md",
+            "relevance": {"score": 0.75},
+        }
         mock_result = MagicMock()
-        mock_result.ranked_hits = [hit]
+        mock_result.nodes = [node]
         mock_kg = MagicMock()
         mock_kg.query.return_value = mock_result
 
@@ -251,6 +245,7 @@ class TestDocKGAdapterQuery:
 # ---------------------------------------------------------------------------
 # MetaKGAdapter
 # ---------------------------------------------------------------------------
+
 
 class TestMetaKGAdapterIsAvailable:
     def test_unavailable_when_import_fails(self, tmp_path):

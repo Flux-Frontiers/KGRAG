@@ -3,13 +3,13 @@ cmd_analyze.py
 
 Cross-KG analysis command.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
 
-import click
-from rich.console import Console
 from rich import box
+from rich.console import Console
 
 from kg_rag.cli.group import cli
 from kg_rag.cli.options import kind_option, registry_option
@@ -39,6 +39,7 @@ def analyze(kind, registry):
         return
 
     from rich.table import Table
+
     table = Table(title="Cross-KG Analysis", box=box.ROUNDED, show_lines=True)
     table.add_column("Name", style="bold cyan")
     table.add_column("Kind", style="magenta")
@@ -57,8 +58,6 @@ def analyze(kind, registry):
     console.print(table)
 
     total_nodes = sum(
-        v.get("node_count", 0)
-        for v in stats_map.values()
-        if isinstance(v.get("node_count"), int)
+        v.get("node_count", 0) for v in stats_map.values() if isinstance(v.get("node_count"), int)
     )
     console.print(f"\n[bold]Total indexed nodes across all KGs:[/bold] {total_nodes}")

@@ -1,4 +1,5 @@
 """Adapters for individual KG backends."""
+
 from kg_rag.adapters.base import KGAdapter
 from kg_rag.adapters.codekg_adapter import CodeKGAdapter
 from kg_rag.adapters.dockg_adapter import DocKGAdapter

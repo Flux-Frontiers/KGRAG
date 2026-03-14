@@ -380,6 +380,26 @@ Run tests:
 poetry run pytest -v
 ```
 
+### Knowledge Graph Snapshots
+
+The pre-commit hook (`.git/hooks/pre-commit`) automatically captures metrics
+snapshots for both CodeKG and DocKG before every commit. After an initial
+`codekg build` or `dockg build`, no manual steps are needed — snapshots are
+staged and included in the commit automatically.
+
+To seed the snapshot directories on a fresh clone (run once after building each KG):
+
+```bash
+codekg snapshot save $(python -c "import importlib.metadata; print(importlib.metadata.version('code-kg'))") --repo .
+dockg  snapshot save $(python -c "import importlib.metadata; print(importlib.metadata.version('doc-kg'))")  --repo .
+```
+
+Skip snapshot capture for a single commit:
+
+```bash
+CODEKG_SKIP_SNAPSHOT=1 git commit ...
+```
+
 ---
 
 ## Related Projects

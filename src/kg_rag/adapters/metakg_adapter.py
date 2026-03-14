@@ -33,9 +33,8 @@ class MetaKGAdapter(KGAdapter):
             raise ImportError("metakg is not installed.") from e
         entry = self.entry
         self._kg = MetaKGOrchestrator(
-            repo_root=str(entry.repo_path),
             db_path=str(entry.sqlite_path) if entry.sqlite_path else None,
-            lancedb_path=str(entry.lancedb_path) if entry.lancedb_path else None,
+            lancedb_dir=str(entry.lancedb_path) if entry.lancedb_path else None,
         )
 
     def is_available(self) -> bool:

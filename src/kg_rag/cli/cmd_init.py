@@ -15,6 +15,7 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+from datetime import date
 from pathlib import Path
 
 import click
@@ -24,6 +25,7 @@ from rich.table import Table
 
 from kg_rag.cli.group import cli
 from kg_rag.cli.options import registry_option
+from kg_rag.config import read_pyproject_version
 from kg_rag.primitives import KGEntry, KGKind
 from kg_rag.registry import KGRegistry
 
@@ -162,6 +164,7 @@ def init(repo_path, wipe, name_prefix, layers, registry):
         sqlite_path = kg_dir / "graph.sqlite"
         lancedb_path = kg_dir / "lancedb"
 
+        version = read_pyproject_version(repo)
         entry = KGEntry(
             name=name,
             kind=KGKind.from_str(kind),
@@ -169,6 +172,8 @@ def init(repo_path, wipe, name_prefix, layers, registry):
             venv_path=repo / ".venv",
             sqlite_path=sqlite_path if sqlite_path.exists() else None,
             lancedb_path=lancedb_path if lancedb_path.exists() else None,
+            version=version,
+            tags=[date.today().isoformat()],
         )
 
         with KGRegistry(db_path=Path(registry) if registry else None) as reg:

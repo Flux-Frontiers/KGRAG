@@ -33,9 +33,9 @@ class DocKGAdapter(KGAdapter):
         sqlite = str(entry.sqlite_path) if entry.sqlite_path else None
         lancedb = str(entry.lancedb_path) if entry.lancedb_path else None
         self._kg = DocKG(
-            repo_root=str(entry.repo_path),
+            corpus_root=str(entry.repo_path),
             db_path=sqlite or str(entry.repo_path / ".dockg" / "graph.sqlite"),
-            lancedb_path=lancedb or str(entry.repo_path / ".dockg" / "lancedb"),
+            lancedb_dir=lancedb or str(entry.repo_path / ".dockg" / "lancedb"),
         )
 
     def is_available(self) -> bool:
@@ -60,18 +60,18 @@ class DocKGAdapter(KGAdapter):
         self._load()
         result = self._kg.query(q, k=k)
         hits = []
-        for hit in result.ranked_hits[:k]:
-            node = hit.node
+        for node in result.nodes[:k]:
+            relevance = node.get("relevance") or {}
             hits.append(
                 CrossHit(
                     kg_name=self.entry.name,
                     kg_kind=KGKind.DOC,
-                    node_id=node.id,
-                    name=node.name,
-                    kind=getattr(node, "kind", "chunk"),
-                    score=hit.score,
-                    summary=getattr(node, "summary", "") or "",
-                    source_path=getattr(node, "path", "") or "",
+                    node_id=node["id"],
+                    name=node.get("name") or node.get("title", ""),
+                    kind=node.get("kind", "chunk"),
+                    score=relevance.get("score", 0.0),
+                    summary=node.get("text") or node.get("title", ""),
+                    source_path=node.get("file_path") or "",
                 )
             )
         return hits
@@ -87,15 +87,16 @@ class DocKGAdapter(KGAdapter):
         self._load()
         pack = self._kg.pack(q, k=k)
         snippets = []
-        for s in pack.snippets:
+        for node in pack.nodes:
+            relevance = node.get("relevance") or {}
             snippets.append(
                 CrossSnippet(
                     kg_name=self.entry.name,
                     kg_kind=KGKind.DOC,
-                    node_id=getattr(s, "node_id", ""),
-                    source_path=getattr(s, "path", ""),
-                    content=getattr(s, "text", str(s)),
-                    score=getattr(s, "score", 0.0),
+                    node_id=node["id"],
+                    source_path=node.get("file_path") or "",
+                    content=node.get("text") or "",
+                    score=relevance.get("score", 0.0),
                 )
             )
         return snippets
@@ -107,10 +108,10 @@ class DocKGAdapter(KGAdapter):
         """
         self._load()
         try:
-            s = self._kg.store
+            s = self._kg.store.stats()
             return {
-                "node_count": s.node_count() if hasattr(s, "node_count") else "n/a",
-                "edge_count": s.edge_count() if hasattr(s, "edge_count") else "n/a",
+                "node_count": s.get("total_nodes", "n/a"),
+                "edge_count": s.get("total_edges", "n/a"),
                 "kind": "doc",
             }
         except Exception:  # pylint: disable=broad-exception-caught
