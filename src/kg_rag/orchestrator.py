@@ -195,3 +195,17 @@ class KGRAG:
             except Exception as e:
                 out[entry.name] = {"available": False, "error": str(e)}
         return out
+
+    def analyze(self, kg_name: str) -> str:
+        """Run architectural analysis on a specific KG.
+
+        :param kg_name: Name of the registered KG to analyze.
+        :return: Markdown-formatted analysis report.
+        """
+        entry = self._registry.find_by_name(kg_name)
+        if entry is None:
+            return f"KG '{kg_name}' not found in registry."
+        adapter = self._get_adapter(entry)
+        if adapter is None:
+            return f"KG '{kg_name}' is not available (library not installed or DB not built)."
+        return adapter.analyze()
