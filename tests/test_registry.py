@@ -4,9 +4,9 @@ test_registry.py
 Unit tests for kg_rag.registry — KGRegistry and default_registry_path.
 All tests use isolated temp SQLite files (no ~/.kgrag pollution).
 """
+
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 import pytest
@@ -14,10 +14,10 @@ import pytest
 from kg_rag.primitives import KGEntry, KGKind, RegistryStats
 from kg_rag.registry import KGRegistry, default_registry_path
 
-
 # ---------------------------------------------------------------------------
 # default_registry_path
 # ---------------------------------------------------------------------------
+
 
 class TestDefaultRegistryPath:
     def test_default_points_to_home(self, monkeypatch):
@@ -35,6 +35,7 @@ class TestDefaultRegistryPath:
 # ---------------------------------------------------------------------------
 # KGRegistry — construction & schema
 # ---------------------------------------------------------------------------
+
 
 class TestKGRegistryInit:
     def test_creates_db_file(self, tmp_path):
@@ -60,6 +61,7 @@ class TestKGRegistryInit:
 # ---------------------------------------------------------------------------
 # register / get / find_by_name
 # ---------------------------------------------------------------------------
+
 
 class TestKGRegistryRegister:
     def test_register_and_get_by_name(self, tmp_registry, sample_entry):
@@ -114,10 +116,14 @@ class TestKGRegistryRegister:
         lancedb.mkdir()
 
         entry = KGEntry(
-            name="full-entry", kind=KGKind.DOC,
-            repo_path=repo, venv_path=venv,
-            sqlite_path=sqlite, lancedb_path=lancedb,
-            version="1.2.3", tags=["a", "b"],
+            name="full-entry",
+            kind=KGKind.DOC,
+            repo_path=repo,
+            venv_path=venv,
+            sqlite_path=sqlite,
+            lancedb_path=lancedb,
+            version="1.2.3",
+            tags=["a", "b"],
             metadata={"key": "val"},
         )
         tmp_registry.register(entry)
@@ -132,6 +138,7 @@ class TestKGRegistryRegister:
 # ---------------------------------------------------------------------------
 # unregister
 # ---------------------------------------------------------------------------
+
 
 class TestKGRegistryUnregister:
     def test_unregister_by_name(self, tmp_registry, sample_entry):
@@ -154,6 +161,7 @@ class TestKGRegistryUnregister:
 # update
 # ---------------------------------------------------------------------------
 
+
 class TestKGRegistryUpdate:
     def test_update_version(self, tmp_registry, sample_entry):
         tmp_registry.register(sample_entry)
@@ -174,6 +182,7 @@ class TestKGRegistryUpdate:
 # ---------------------------------------------------------------------------
 # list / iter / find_by_repo
 # ---------------------------------------------------------------------------
+
 
 class TestKGRegistryList:
     def _add_entries(self, reg, tmp_path):
@@ -231,6 +240,7 @@ class TestKGRegistryList:
 # stats
 # ---------------------------------------------------------------------------
 
+
 class TestKGRegistryStats:
     def test_empty_registry(self, tmp_registry):
         s = tmp_registry.stats()
@@ -274,6 +284,7 @@ class TestKGRegistryStats:
 # ---------------------------------------------------------------------------
 # Context manager
 # ---------------------------------------------------------------------------
+
 
 class TestKGRegistryContextManager:
     def test_context_manager(self, tmp_path):

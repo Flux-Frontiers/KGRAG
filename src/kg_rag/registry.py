@@ -6,14 +6,15 @@ KGRegistry — SQLite-backed system-wide registry for all KG instances.
 Default location: ~/.kgrag/registry.sqlite
 Override via KGRAG_REGISTRY env var or --registry CLI flag.
 """
+
 from __future__ import annotations
 
 import json
 import os
 import sqlite3
-from datetime import datetime
+from collections.abc import Iterator
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Iterator
 
 from kg_rag.primitives import KGEntry, KGKind, RegistryStats
 
@@ -109,7 +110,7 @@ class KGRegistry:
                 version=entry.version,
                 tags=entry.tags,
                 created_at=existing.created_at,
-                updated_at=datetime.utcnow(),
+                updated_at=datetime.now(UTC),
                 metadata=entry.metadata,
             )
         self._conn.execute(
@@ -165,7 +166,7 @@ class KGRegistry:
         for k, v in kwargs.items():
             if hasattr(entry, k):
                 setattr(entry, k, v)
-        entry.updated_at = datetime.utcnow()
+        entry.updated_at = datetime.now(UTC)
         return self.register(entry)
 
     # ------------------------------------------------------------------
@@ -190,9 +191,7 @@ class KGRegistry:
         :param name: Exact name of the KG entry.
         :return: KGEntry if found, None otherwise.
         """
-        row = self._conn.execute(
-            "SELECT * FROM kg_entries WHERE name = ?", (name,)
-        ).fetchone()
+        row = self._conn.execute("SELECT * FROM kg_entries WHERE name = ?", (name,)).fetchone()
         return self._row_to_entry(row) if row else None
 
     def find_by_repo(self, repo_path: Path | str) -> list[KGEntry]:
@@ -202,9 +201,7 @@ class KGRegistry:
         :return: List of matching KGEntry objects.
         """
         p = str(Path(repo_path).resolve())
-        rows = self._conn.execute(
-            "SELECT * FROM kg_entries WHERE repo_path = ?", (p,)
-        ).fetchall()
+        rows = self._conn.execute("SELECT * FROM kg_entries WHERE repo_path = ?", (p,)).fetchall()
         return [self._row_to_entry(r) for r in rows]
 
     def list(self, kind: KGKind | str | None = None) -> list[KGEntry]:
@@ -219,9 +216,7 @@ class KGRegistry:
                 "SELECT * FROM kg_entries WHERE kind = ? ORDER BY name", (k,)
             ).fetchall()
         else:
-            rows = self._conn.execute(
-                "SELECT * FROM kg_entries ORDER BY name"
-            ).fetchall()
+            rows = self._conn.execute("SELECT * FROM kg_entries ORDER BY name").fetchall()
         return [self._row_to_entry(r) for r in rows]
 
     def iter(self, kind: KGKind | None = None) -> Iterator[KGEntry]:
@@ -229,8 +224,7 @@ class KGRegistry:
 
         :param kind: Optional KGKind filter.
         """
-        for entry in self.list(kind=kind):
-            yield entry
+        yield from self.list(kind=kind)
 
     def stats(self) -> RegistryStats:
         """Compute summary statistics for the registry.

@@ -7,6 +7,7 @@ Registry management commands: register, unregister, list, info, status, scan.
 from __future__ import annotations
 
 import os
+from datetime import date
 from pathlib import Path
 
 import click
@@ -17,6 +18,7 @@ from rich.table import Table
 
 from kg_rag.cli.group import cli
 from kg_rag.cli.options import kind_option, registry_option
+from kg_rag.config import read_pyproject_version
 from kg_rag.primitives import KGEntry, KGKind
 from kg_rag.registry import KGRegistry, default_registry_path
 
@@ -100,6 +102,13 @@ def register(name, kind, repo_path, venv_path, sqlite_path, lancedb_path, versio
         candidate = repo / db_dir / "lancedb"
         lancedb_path = str(candidate) if candidate.exists() else None
 
+    # Auto-read version from pyproject.toml when not explicitly supplied
+    if version == "unknown":
+        version = read_pyproject_version(repo)
+
+    # Default to a datestamp tag when none are specified
+    resolved_tags = list(tags) if tags else [date.today().isoformat()]
+
     entry = KGEntry(
         name=name,
         kind=KGKind.from_str(kind),
@@ -108,7 +117,7 @@ def register(name, kind, repo_path, venv_path, sqlite_path, lancedb_path, versio
         sqlite_path=Path(sqlite_path) if sqlite_path else None,
         lancedb_path=Path(lancedb_path) if lancedb_path else None,
         version=version,
-        tags=list(tags),
+        tags=resolved_tags,
     )
 
     with KGRegistry(db_path=Path(registry) if registry else None) as reg:
@@ -298,14 +307,17 @@ def scan(root_path, auto_register, registry):
     if auto_register:
         with KGRegistry(db_path=Path(registry) if registry else None) as reg:
             for f in found:
-                name = f["repo"].name + "-" + f["kind"]
+                repo_dir: Path = f["repo"]
+                name = repo_dir.name + "-" + f["kind"]
                 entry = KGEntry(
                     name=name,
                     kind=KGKind.from_str(f["kind"]),
-                    repo_path=f["repo"],
-                    venv_path=f["repo"] / ".venv",
+                    repo_path=repo_dir,
+                    venv_path=repo_dir / ".venv",
                     sqlite_path=f["sqlite"],
                     lancedb_path=f["lancedb"],
+                    version=read_pyproject_version(repo_dir),
+                    tags=[date.today().isoformat()],
                 )
                 reg.register(entry)
                 console.print(f"[green]Registered[/green] [bold]{name}[/bold]")

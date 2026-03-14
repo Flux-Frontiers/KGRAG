@@ -37,7 +37,7 @@ class CodeKGAdapter(KGAdapter):
         self._kg = CodeKG(
             repo_root=str(entry.repo_path),
             db_path=sqlite or str(entry.repo_path / ".codekg" / "graph.sqlite"),
-            lancedb_path=lancedb or str(entry.repo_path / ".codekg" / "lancedb"),
+            lancedb_dir=lancedb or str(entry.repo_path / ".codekg" / "lancedb"),
         )
 
     def is_available(self) -> bool:
@@ -62,18 +62,18 @@ class CodeKGAdapter(KGAdapter):
         self._load()
         result = self._kg.query(q, k=k)
         hits = []
-        for hit in result.ranked_hits[:k]:
-            node = hit.node
+        for node in result.nodes[:k]:
+            relevance = node.get("relevance") or {}
             hits.append(
                 CrossHit(
                     kg_name=self.entry.name,
                     kg_kind=KGKind.CODE,
-                    node_id=node.id,
-                    name=node.name,
-                    kind=node.kind,
-                    score=hit.score,
-                    summary=node.docstring or "",
-                    source_path=node.module_path or "",
+                    node_id=node["id"],
+                    name=node.get("name", ""),
+                    kind=node.get("kind", ""),
+                    score=relevance.get("score", 0.0),
+                    summary=node.get("docstring") or "",
+                    source_path=node.get("module_path") or "",
                 )
             )
         return hits
@@ -89,17 +89,19 @@ class CodeKGAdapter(KGAdapter):
         self._load()
         pack = self._kg.pack(q, k=k, context=context)
         snippets = []
-        for s in pack.snippets:
+        for node in pack.nodes:
+            snippet = node.get("snippet") or {}
+            relevance = node.get("relevance") or {}
             snippets.append(
                 CrossSnippet(
                     kg_name=self.entry.name,
                     kg_kind=KGKind.CODE,
-                    node_id=s.node_id,
-                    source_path=s.path,
-                    content=s.text,
-                    score=s.score,
-                    lineno=s.lineno,
-                    end_lineno=s.end_lineno,
+                    node_id=node["id"],
+                    source_path=snippet.get("path", ""),
+                    content=snippet.get("text", ""),
+                    score=relevance.get("score", 0.0),
+                    lineno=snippet.get("start"),
+                    end_lineno=snippet.get("end"),
                 )
             )
         return snippets
@@ -111,10 +113,10 @@ class CodeKGAdapter(KGAdapter):
         """
         self._load()
         try:
-            s = self._kg.store
+            s = self._kg.store.stats()
             return {
-                "node_count": s.node_count(),
-                "edge_count": s.edge_count(),
+                "node_count": s.get("meaningful_nodes", s.get("total_nodes", "n/a")),
+                "edge_count": s.get("total_edges", "n/a"),
                 "kind": "code",
             }
         except Exception:  # pylint: disable=broad-exception-caught

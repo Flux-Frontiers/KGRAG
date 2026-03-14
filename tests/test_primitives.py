@@ -4,6 +4,7 @@ test_primitives.py
 Unit tests for kg_rag.primitives — KGKind, KGEntry, RegistryStats,
 CrossHit, CrossQueryResult, CrossSnippet, CrossSnippetPack.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -20,10 +21,10 @@ from kg_rag.primitives import (
     RegistryStats,
 )
 
-
 # ---------------------------------------------------------------------------
 # KGKind
 # ---------------------------------------------------------------------------
+
 
 class TestKGKind:
     def test_values(self):
@@ -54,6 +55,7 @@ class TestKGKind:
 # KGEntry
 # ---------------------------------------------------------------------------
 
+
 class TestKGEntry:
     def test_basic_construction(self, tmp_path):
         repo = tmp_path / "repo"
@@ -66,7 +68,8 @@ class TestKGEntry:
     def test_path_normalization(self, tmp_path):
         """__post_init__ must resolve paths to absolute Paths."""
         entry = KGEntry(
-            name="n", kind=KGKind.DOC,
+            name="n",
+            kind=KGKind.DOC,
             repo_path=str(tmp_path / "r"),
             venv_path=str(tmp_path / "v"),
         )
@@ -75,7 +78,8 @@ class TestKGEntry:
 
     def test_sqlite_path_normalization(self, tmp_path):
         entry = KGEntry(
-            name="n", kind=KGKind.CODE,
+            name="n",
+            kind=KGKind.CODE,
             repo_path=tmp_path,
             venv_path=tmp_path,
             sqlite_path=str(tmp_path / "graph.sqlite"),
@@ -85,7 +89,8 @@ class TestKGEntry:
 
     def test_lancedb_path_normalization(self, tmp_path):
         entry = KGEntry(
-            name="n", kind=KGKind.CODE,
+            name="n",
+            kind=KGKind.CODE,
             repo_path=tmp_path,
             venv_path=tmp_path,
             lancedb_path=str(tmp_path / "lancedb"),
@@ -102,8 +107,10 @@ class TestKGEntry:
 
     def test_is_built_false_path_missing(self, tmp_path):
         entry = KGEntry(
-            name="n", kind=KGKind.CODE,
-            repo_path=tmp_path, venv_path=tmp_path,
+            name="n",
+            kind=KGKind.CODE,
+            repo_path=tmp_path,
+            venv_path=tmp_path,
             sqlite_path=tmp_path / "nonexistent.sqlite",
         )
         assert entry.is_built is False
@@ -112,8 +119,10 @@ class TestKGEntry:
         db = tmp_path / "graph.sqlite"
         db.touch()
         entry = KGEntry(
-            name="n", kind=KGKind.CODE,
-            repo_path=tmp_path, venv_path=tmp_path,
+            name="n",
+            kind=KGKind.CODE,
+            repo_path=tmp_path,
+            venv_path=tmp_path,
             sqlite_path=db,
         )
         assert entry.is_built is True
@@ -122,8 +131,10 @@ class TestKGEntry:
         ldb = tmp_path / "lancedb"
         ldb.mkdir()
         entry = KGEntry(
-            name="n", kind=KGKind.CODE,
-            repo_path=tmp_path, venv_path=tmp_path,
+            name="n",
+            kind=KGKind.CODE,
+            repo_path=tmp_path,
+            venv_path=tmp_path,
             lancedb_path=ldb,
         )
         assert entry.is_built is True
@@ -150,6 +161,7 @@ class TestKGEntry:
 # RegistryStats
 # ---------------------------------------------------------------------------
 
+
 class TestRegistryStats:
     def test_construction(self, tmp_path):
         stats = RegistryStats(
@@ -167,21 +179,30 @@ class TestRegistryStats:
 # CrossHit
 # ---------------------------------------------------------------------------
 
+
 class TestCrossHit:
     def test_construction(self):
         hit = CrossHit(
-            kg_name="mykg", kg_kind=KGKind.CODE,
-            node_id="fn:src/foo.py:bar", name="bar",
-            kind="function", score=0.92,
-            summary="Does something", source_path="src/foo.py",
+            kg_name="mykg",
+            kg_kind=KGKind.CODE,
+            node_id="fn:src/foo.py:bar",
+            name="bar",
+            kind="function",
+            score=0.92,
+            summary="Does something",
+            source_path="src/foo.py",
         )
         assert hit.score == 0.92
         assert hit.kg_kind == KGKind.CODE
 
     def test_defaults(self):
         hit = CrossHit(
-            kg_name="kg", kg_kind=KGKind.DOC,
-            node_id="x", name="x", kind="chunk", score=0.5,
+            kg_name="kg",
+            kg_kind=KGKind.DOC,
+            node_id="x",
+            name="x",
+            kind="chunk",
+            score=0.5,
         )
         assert hit.summary == ""
         assert hit.source_path == ""
@@ -191,12 +212,18 @@ class TestCrossHit:
 # CrossQueryResult
 # ---------------------------------------------------------------------------
 
+
 class TestCrossQueryResult:
     def test_construction(self):
-        hit = CrossHit(kg_name="a", kg_kind=KGKind.CODE, node_id="n", name="n", kind="fn", score=1.0)
+        hit = CrossHit(
+            kg_name="a", kg_kind=KGKind.CODE, node_id="n", name="n", kind="fn", score=1.0
+        )
         result = CrossQueryResult(
-            query="foo", hits=[hit], by_kg={"a": [hit]},
-            total_hits=1, kgs_queried=1,
+            query="foo",
+            hits=[hit],
+            by_kg={"a": [hit]},
+            total_hits=1,
+            kgs_queried=1,
         )
         assert result.total_hits == 1
         assert "a" in result.by_kg
@@ -206,15 +233,18 @@ class TestCrossQueryResult:
 # CrossSnippet
 # ---------------------------------------------------------------------------
 
+
 class TestCrossSnippet:
     def test_construction(self):
         s = CrossSnippet(
-            kg_name="kg", kg_kind=KGKind.CODE,
+            kg_name="kg",
+            kg_kind=KGKind.CODE,
             node_id="fn:src/foo.py:bar",
             source_path="src/foo.py",
             content="def bar(): pass",
             score=0.8,
-            lineno=10, end_lineno=12,
+            lineno=10,
+            end_lineno=12,
         )
         assert s.lineno == 10
         assert s.content == "def bar(): pass"
@@ -229,6 +259,7 @@ class TestCrossSnippet:
 # ---------------------------------------------------------------------------
 # CrossSnippetPack.render
 # ---------------------------------------------------------------------------
+
 
 class TestCrossSnippetPackRender:
     def _make_pack(self, snippets):
@@ -246,7 +277,8 @@ class TestCrossSnippetPackRender:
 
     def test_render_with_snippet_no_lineno(self):
         s = CrossSnippet(
-            kg_name="mykg", kg_kind=KGKind.CODE,
+            kg_name="mykg",
+            kg_kind=KGKind.CODE,
             node_id="fn:src/foo.py:bar",
             source_path="src/foo.py",
             content="def bar(): pass",
@@ -261,20 +293,36 @@ class TestCrossSnippetPackRender:
 
     def test_render_with_lineno(self):
         s = CrossSnippet(
-            kg_name="mykg", kg_kind=KGKind.CODE,
+            kg_name="mykg",
+            kg_kind=KGKind.CODE,
             node_id="fn:src/foo.py:bar",
             source_path="src/foo.py",
             content="def bar(): pass",
             score=0.9,
-            lineno=5, end_lineno=7,
+            lineno=5,
+            end_lineno=7,
         )
         rendered = self._make_pack([s]).render()
         assert "src/foo.py:5-7" in rendered
 
     def test_render_multiple_snippets(self):
         snippets = [
-            CrossSnippet(kg_name="a", kg_kind=KGKind.CODE, node_id="x", source_path="a.py", content="aaa", score=0.9),
-            CrossSnippet(kg_name="b", kg_kind=KGKind.DOC, node_id="y", source_path="b.md", content="bbb", score=0.7),
+            CrossSnippet(
+                kg_name="a",
+                kg_kind=KGKind.CODE,
+                node_id="x",
+                source_path="a.py",
+                content="aaa",
+                score=0.9,
+            ),
+            CrossSnippet(
+                kg_name="b",
+                kg_kind=KGKind.DOC,
+                node_id="y",
+                source_path="b.md",
+                content="bbb",
+                score=0.7,
+            ),
         ]
         rendered = self._make_pack(snippets).render()
         assert "aaa" in rendered

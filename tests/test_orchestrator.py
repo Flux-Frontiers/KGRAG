@@ -4,9 +4,9 @@ test_orchestrator.py
 Unit tests for kg_rag.orchestrator.KGRAG.
 Adapters are mocked — no real KG libraries needed.
 """
+
 from __future__ import annotations
 
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -22,10 +22,10 @@ from kg_rag.primitives import (
 )
 from kg_rag.registry import KGRegistry
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_entry(tmp_path, name: str, kind: KGKind = KGKind.CODE) -> KGEntry:
     repo = tmp_path / name
@@ -46,15 +46,19 @@ def _mock_adapter(hits=None, snippets=None, available=True):
 
 def _make_hit(kg_name: str, score: float = 0.9) -> CrossHit:
     return CrossHit(
-        kg_name=kg_name, kg_kind=KGKind.CODE,
-        node_id="fn:src/foo.py:bar", name="bar",
-        kind="function", score=score,
+        kg_name=kg_name,
+        kg_kind=KGKind.CODE,
+        node_id="fn:src/foo.py:bar",
+        name="bar",
+        kind="function",
+        score=score,
     )
 
 
 def _make_snippet(kg_name: str, score: float = 0.9) -> CrossSnippet:
     return CrossSnippet(
-        kg_name=kg_name, kg_kind=KGKind.CODE,
+        kg_name=kg_name,
+        kg_kind=KGKind.CODE,
         node_id="fn:src/foo.py:bar",
         source_path="src/foo.py",
         content="def bar(): pass",
@@ -65,6 +69,7 @@ def _make_snippet(kg_name: str, score: float = 0.9) -> CrossSnippet:
 # ---------------------------------------------------------------------------
 # Construction & context manager
 # ---------------------------------------------------------------------------
+
 
 class TestKGRAGInit:
     def test_creates_registry(self, tmp_path):
@@ -80,6 +85,7 @@ class TestKGRAGInit:
 # ---------------------------------------------------------------------------
 # _resolve_entries
 # ---------------------------------------------------------------------------
+
 
 class TestResolveEntries:
     def test_returns_all_entries(self, tmp_path):
@@ -103,6 +109,7 @@ class TestResolveEntries:
 # ---------------------------------------------------------------------------
 # _get_adapter
 # ---------------------------------------------------------------------------
+
 
 class TestGetAdapter:
     def test_skips_unavailable_adapter_permissive(self, tmp_path):
@@ -135,6 +142,7 @@ class TestGetAdapter:
 # ---------------------------------------------------------------------------
 # query
 # ---------------------------------------------------------------------------
+
 
 class TestKGRAGQuery:
     def test_empty_registry_returns_empty_result(self, tmp_path):
@@ -216,6 +224,7 @@ class TestKGRAGQuery:
 # pack
 # ---------------------------------------------------------------------------
 
+
 class TestKGRAGPack:
     def test_pack_returns_snippet_pack(self, tmp_path):
         with KGRAG(registry_path=tmp_path / "reg.sqlite") as kgrag:
@@ -257,8 +266,10 @@ class TestKGRAGPack:
             e = _make_entry(tmp_path, "a")
             kgrag.registry.register(e)
             s = CrossSnippet(
-                kg_name="a", kg_kind=KGKind.CODE,
-                node_id="x", source_path="f.py",
+                kg_name="a",
+                kg_kind=KGKind.CODE,
+                node_id="x",
+                source_path="f.py",
                 content="def foo(): pass # this has several words",
                 score=0.5,
             )
@@ -272,6 +283,7 @@ class TestKGRAGPack:
 # ---------------------------------------------------------------------------
 # stats
 # ---------------------------------------------------------------------------
+
 
 class TestKGRAGStats:
     def test_stats_available(self, tmp_path):

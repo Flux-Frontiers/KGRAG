@@ -3,6 +3,7 @@ conftest.py
 
 Shared fixtures for the KGRAG test suite.
 """
+
 from __future__ import annotations
 
 from pathlib import Path

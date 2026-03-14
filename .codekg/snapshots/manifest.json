@@ -1,6 +1,6 @@
 {
   "format": "1.0",
-  "last_update": "2026-03-13T03:56:03.870663+00:00",
+  "last_update": "2026-03-14T05:03:46.969615+00:00",
   "snapshots": [
     {
       "key": "86c4acfa750605734e9dd62b4bfdcf7a7e0efe8a",
@@ -189,6 +189,84 @@
           "edges": 107,
           "coverage_delta": 0.010000000000000009,
           "critical_issues_delta": 1
+        }
+      }
+    },
+    {
+      "key": "3c95c474e9f25b681063e62a810679e12ebefa38",
+      "branch": "main",
+      "timestamp": "2026-03-14T04:53:15.074349+00:00",
+      "version": "0.2.0",
+      "file": "3c95c474e9f25b681063e62a810679e12ebefa38.json",
+      "metrics": {
+        "total_nodes": 1526,
+        "total_edges": 1793,
+        "meaningful_nodes": 126,
+        "docstring_coverage": 0.778,
+        "node_counts": {
+          "class": 13,
+          "function": 38,
+          "method": 53,
+          "module": 22,
+          "symbol": 1400
+        },
+        "edge_counts": {
+          "ATTR_ACCESS": 550,
+          "CALLS": 496,
+          "CONTAINS": 104,
+          "IMPORTS": 178,
+          "INHERITS": 6,
+          "RESOLVES_TO": 459
+        },
+        "critical_issues": 3,
+        "complexity_median": 8
+      },
+      "deltas": {
+        "vs_previous": null,
+        "vs_baseline": {
+          "nodes": 503,
+          "edges": 554,
+          "coverage_delta": -0.009999999999999898,
+          "critical_issues_delta": 2
+        }
+      }
+    },
+    {
+      "key": "808b02d0e3a95f5a4a3ca76b9c892782e1638e50",
+      "branch": "main",
+      "timestamp": "2026-03-14T05:03:46.969061+00:00",
+      "version": "0.2.0",
+      "file": "808b02d0e3a95f5a4a3ca76b9c892782e1638e50.json",
+      "metrics": {
+        "total_nodes": 1526,
+        "total_edges": 1793,
+        "meaningful_nodes": 126,
+        "docstring_coverage": 0.778,
+        "node_counts": {
+          "class": 13,
+          "function": 38,
+          "method": 53,
+          "module": 22,
+          "symbol": 1400
+        },
+        "edge_counts": {
+          "ATTR_ACCESS": 550,
+          "CALLS": 496,
+          "CONTAINS": 104,
+          "IMPORTS": 178,
+          "INHERITS": 6,
+          "RESOLVES_TO": 459
+        },
+        "critical_issues": 3,
+        "complexity_median": 8
+      },
+      "deltas": {
+        "vs_previous": null,
+        "vs_baseline": {
+          "nodes": 503,
+          "edges": 554,
+          "coverage_delta": -0.009999999999999898,
+          "critical_issues_delta": 2
         }
       }
     }

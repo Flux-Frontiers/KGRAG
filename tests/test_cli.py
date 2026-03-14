@@ -5,20 +5,19 @@ Unit tests for the KGRAG CLI using Click's CliRunner.
 Each test creates an isolated registry via --registry so it never
 touches ~/.kgrag.
 """
+
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
-import pytest
 from click.testing import CliRunner
 
 from kg_rag.cli.main import cli
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _runner():
     return CliRunner()
@@ -32,6 +31,7 @@ def _reg_opt(tmp_path: Path) -> list[str]:
 # ---------------------------------------------------------------------------
 # Top-level CLI
 # ---------------------------------------------------------------------------
+
 
 class TestCLITopLevel:
     def test_help(self):
@@ -54,6 +54,7 @@ class TestCLITopLevel:
 # kgrag list
 # ---------------------------------------------------------------------------
 
+
 class TestCLIList:
     def test_list_empty(self, tmp_path):
         result = _runner().invoke(cli, ["list"] + _reg_opt(tmp_path))
@@ -65,9 +66,16 @@ class TestCLIList:
         repo = tmp_path / "repo"
         repo.mkdir()
         # Register first
-        runner.invoke(cli, [
-            "register", "mykg", "code", str(repo),
-        ] + _reg_opt(tmp_path))
+        runner.invoke(
+            cli,
+            [
+                "register",
+                "mykg",
+                "code",
+                str(repo),
+            ]
+            + _reg_opt(tmp_path),
+        )
         # Then list
         result = runner.invoke(cli, ["list"] + _reg_opt(tmp_path))
         assert result.exit_code == 0
@@ -78,13 +86,21 @@ class TestCLIList:
 # kgrag register
 # ---------------------------------------------------------------------------
 
+
 class TestCLIRegister:
     def test_register_basic(self, tmp_path):
         repo = tmp_path / "repo"
         repo.mkdir()
-        result = _runner().invoke(cli, [
-            "register", "mykg", "code", str(repo),
-        ] + _reg_opt(tmp_path))
+        result = _runner().invoke(
+            cli,
+            [
+                "register",
+                "mykg",
+                "code",
+                str(repo),
+            ]
+            + _reg_opt(tmp_path),
+        )
         assert result.exit_code == 0
         assert "Registered" in result.output
         assert "mykg" in result.output
@@ -92,31 +108,56 @@ class TestCLIRegister:
     def test_register_with_tags(self, tmp_path):
         repo = tmp_path / "repo"
         repo.mkdir()
-        result = _runner().invoke(cli, [
-            "register", "taggedkg", "doc", str(repo),
-            "--tag", "alpha", "--tag", "beta",
-        ] + _reg_opt(tmp_path))
+        result = _runner().invoke(
+            cli,
+            [
+                "register",
+                "taggedkg",
+                "doc",
+                str(repo),
+                "--tag",
+                "alpha",
+                "--tag",
+                "beta",
+            ]
+            + _reg_opt(tmp_path),
+        )
         assert result.exit_code == 0
 
     def test_register_nonexistent_repo_fails(self, tmp_path):
-        result = _runner().invoke(cli, [
-            "register", "bad", "code", str(tmp_path / "no_such_dir"),
-        ] + _reg_opt(tmp_path))
+        result = _runner().invoke(
+            cli,
+            [
+                "register",
+                "bad",
+                "code",
+                str(tmp_path / "no_such_dir"),
+            ]
+            + _reg_opt(tmp_path),
+        )
         # Click's path validation should reject it
         assert result.exit_code != 0
 
     def test_register_invalid_kind_fails(self, tmp_path):
         repo = tmp_path / "repo"
         repo.mkdir()
-        result = _runner().invoke(cli, [
-            "register", "bad", "invalid_kind", str(repo),
-        ] + _reg_opt(tmp_path))
+        result = _runner().invoke(
+            cli,
+            [
+                "register",
+                "bad",
+                "invalid_kind",
+                str(repo),
+            ]
+            + _reg_opt(tmp_path),
+        )
         assert result.exit_code != 0
 
 
 # ---------------------------------------------------------------------------
 # kgrag unregister
 # ---------------------------------------------------------------------------
+
 
 class TestCLIUnregister:
     def _register(self, runner, tmp_path, name="mykg"):
@@ -141,6 +182,7 @@ class TestCLIUnregister:
 # kgrag info
 # ---------------------------------------------------------------------------
 
+
 class TestCLIInfo:
     def test_info_existing(self, tmp_path):
         runner = _runner()
@@ -162,6 +204,7 @@ class TestCLIInfo:
 # kgrag status
 # ---------------------------------------------------------------------------
 
+
 class TestCLIStatus:
     def test_status_empty_registry(self, tmp_path):
         result = _runner().invoke(cli, ["status"] + _reg_opt(tmp_path))
@@ -182,6 +225,7 @@ class TestCLIStatus:
 # ---------------------------------------------------------------------------
 # kgrag scan
 # ---------------------------------------------------------------------------
+
 
 class TestCLIScan:
     def test_scan_no_kgs(self, tmp_path):

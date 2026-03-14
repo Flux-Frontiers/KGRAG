@@ -3,14 +3,15 @@ cmd_query.py
 
 Cross-KG query and pack commands.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
 
 import click
+from rich import box
 from rich.console import Console
 from rich.table import Table
-from rich import box
 
 from kg_rag.cli.group import cli
 from kg_rag.cli.options import context_option, k_option, kind_option, registry_option
@@ -53,6 +54,7 @@ def query(query_text, k, kind, output_json, registry):
 
     if output_json:
         import json
+
         data = [
             {
                 "kg": h.kg_name,

@@ -7,6 +7,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Pre-commit snapshot hook** — `.git/hooks/pre-commit` now captures snapshots
+  for **both** CodeKG (`.codekg/snapshots/`) and DocKG (`.dockg/snapshots/`)
+  before every commit. Previously only CodeKG was snapshotted. The hook also
+  fixes a latent bug where a CodeKG snapshot failure would silently skip the
+  DocKG snapshot entirely; both failures are now non-fatal and emit a warning
+  instead. DocKG version is resolved from installed package metadata
+  (`importlib.metadata`) rather than a hard-coded path. Seed the initial DocKG
+  snapshot with `dockg snapshot save <version> --repo .` if `.dockg/snapshots/`
+  does not yet exist.
+
+### Added
+- `src/kg_rag/app.py` — Streamlit visualizer: cross-KG registry manager and
+  federated query explorer with three tabs (Registry, Query, Snippets) and
+  per-KG-kind colour coding.
+- `src/kg_rag/cli/cmd_viz.py` — `kgrag viz` CLI command that launches the
+  Streamlit app (forwards unknown flags to `streamlit run`).
+- `kgrag-viz` entry in `pyproject.toml` scripts so `poetry run kgrag viz`
+  works without the full CLI dispatcher.
+- `.claude/skills/kgrag-usage/` — new Claude Code skill with usage guide and
+  CLI reference for KGRAG federated queries.
+- `.vscode/settings.json` — workspace settings for the VSCode extension.
+
+### Changed
+- **Adapter API alignment** — all three adapters updated to match the new
+  dict-based result objects returned by the current CodeKG/DocKG/MetaKG
+  libraries:
+  - `CodeKGAdapter`: `result.ranked_hits` → `result.nodes`; `pack.snippets`
+    → `pack.nodes`; `store.node_count()/edge_count()` → `store.stats()`;
+    constructor kwarg `lancedb_path` → `lancedb_dir`.
+  - `DocKGAdapter`: same `result.nodes` / `pack.nodes` / `store.stats()`
+    pattern; constructor `repo_root` → `corpus_root`, `lancedb_path` →
+    `lancedb_dir`.
+  - `MetaKGAdapter`: removed `repo_root`, `lancedb_path` → `lancedb_dir`.
+- `cmd_registry.py` (`register`, `scan`) and `cmd_init.py` (`init`) now
+  auto-read the version from the target repo's `pyproject.toml` via
+  `read_pyproject_version()` (falls back to `"unknown"`) and default tags to
+  the current datestamp when none are supplied.
+- `.mcp.json` MCP server commands switched from absolute paths to relative
+  `.venv/bin/` paths and `--repo .` for portability across machines.
+- `pyproject.toml`: Python lower bound tightened to `>3.12` (excludes 3.12.0
+  itself); `kgrag-viz` script entry added; extras stanzas added for `doc-kg`
+  and `code-kg` optional groups.
+- `tests/test_adapters.py` updated to match the new dict-based adapter
+  interfaces (plain `dict` nodes instead of `MagicMock` attribute objects).
+- `config.py`: extracted `_load_toml()` helper (DRY) and added
+  `read_pyproject_version()` utility that reads `[project] version` (PEP 517)
+  or `[tool.poetry] version` from any `pyproject.toml`.
+- `orchestrator.py`, `registry.py`: `typing.Sequence` / `typing.Iterator`
+  → `collections.abc` equivalents (modern Python standard).
+- `README.md`: added *Knowledge Graph Snapshots* section documenting the
+  pre-commit hook, seeding commands, and the `CODEKG_SKIP_SNAPSHOT` escape hatch.
+
+### Fixed
+- `primitives.py`, `registry.py`: replaced deprecated `datetime.utcnow()`
+  with timezone-aware `datetime.now(UTC)` to avoid `DeprecationWarning` on
+  Python 3.12+ and ensure correct UTC semantics.
+
 ## [0.2.0] — 2026-03-12
 
 ### Added
