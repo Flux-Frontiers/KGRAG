@@ -254,7 +254,7 @@ critical_issues_delta / issues_delta  int  — issue count change
 #### `Snapshot` — the full record
 
 ```
-key / commit   str      — stable identifier (CodeKG: git tree hash; DocKG: commit hash)
+key / commit   str      — stable identifier (both CodeKG and DocKG: git tree hash from `git write-tree`)
 branch         str      — git branch name
 timestamp      str      — ISO 8601 UTC
 version        str      — KG library version (e.g. "0.8.1")
@@ -267,7 +267,7 @@ vs_baseline    SnapshotDelta | None  — delta from oldest (baseline) snapshot
 
 Snapshots are stored as individual JSON files in a versioned directory:
 - **CodeKG:** `.codekg/snapshots/<tree_hash>.json` + `manifest.json`
-- **DocKG:** `.dockg/snapshots/<commit>.json` + `manifest.json`
+- **DocKG:** `.dockg/snapshots/<tree_hash>.json` + `manifest.json`
 
 ---
 
@@ -285,7 +285,7 @@ dockg  install-hooks   # installs .git/hooks/pre-commit for DocKG
 
 Skip capture for a single commit (e.g. docs-only change):
 ```bash
-CODEKG_SKIP_SNAPSHOT=1 git commit -m "..."
+CODEKG_SKIP_SNAPSHOT=1 DOCKG_SKIP_SNAPSHOT=1 git commit -m "..."
 ```
 
 #### Manual — CLI
