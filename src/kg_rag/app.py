@@ -92,6 +92,7 @@ def _init_state() -> None:
         "registry_path": _DEFAULT_REGISTRY,
         "query_result": None,
         "pack_result": None,
+        "analysis_result": None,
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -498,7 +499,69 @@ def _tab_query(cfg: dict) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Tab 3 — Snippet pack
+# Tab 3 — Analysis
+# ---------------------------------------------------------------------------
+
+
+def _tab_analysis(cfg: dict) -> None:
+    """Render the Analysis tab."""
+    st.header("🧪 Analysis Control")
+
+    kgrag = cfg["kgrag"]
+    if cfg["reg_stats"].total == 0:
+        st.warning("No KGs registered. Add KGs via `kgrag init`.")
+        return
+
+    # Filter to code KGs only (analysis is primarily for code repos)
+    code_entries = [e for e in cfg["all_entries"] if e.kind == KGKind.CODE]
+    if not code_entries:
+        st.info("Analysis is available for CodeKG instances. No CodeKGs registered.")
+        return
+
+    col_kg, col_btn = st.columns([3, 1])
+    with col_kg:
+        selected_kg = st.selectbox(
+            "Select CodeKG to analyze",
+            options=[e.name for e in code_entries],
+            help="Choose a registered CodeKG instance to run analysis on",
+        )
+    with col_btn:
+        run_analysis_btn = st.button("▶ Run Analysis", type="primary", key="run_analysis_btn")
+
+    if run_analysis_btn and selected_kg:
+        with st.spinner(f"Analyzing {selected_kg}…"):
+            try:
+                analysis_md = kgrag.analyze(selected_kg)
+                st.session_state.analysis_result = {
+                    "kg_name": selected_kg,
+                    "markdown": analysis_md,
+                }
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                st.error(f"Analysis failed: {exc}")
+                return
+
+    result = st.session_state.get("analysis_result")
+    if result is None:
+        st.info("Select a CodeKG above and click **Run Analysis**.")
+        return
+
+    st.markdown("---")
+
+    # ── Analysis markdown ──────────────────────────────────────────────────
+    st.markdown(result["markdown"])
+
+    # ── Download buttons ───────────────────────────────────────────────────
+    st.markdown("---")
+    st.download_button(
+        "⬇ Download Markdown",
+        data=result["markdown"],
+        file_name=f"{result['kg_name']}_analysis.md",
+        mime="text/markdown",
+    )
+
+
+# ---------------------------------------------------------------------------
+# Tab 4 — Snippet pack
 # ---------------------------------------------------------------------------
 
 
@@ -643,10 +706,11 @@ def main() -> None:
         "Powered by [KGRAG](https://github.com/Flux-Frontiers/kgrag) · Streamlit."
     )
 
-    tab1, tab2, tab3 = st.tabs(
+    tab1, tab2, tab3, tab4 = st.tabs(
         [
             "📋 Registry",
             "🔍 Federated Query",
+            "🧪 Analysis",
             "📦 Snippet Pack",
         ]
     )
@@ -658,6 +722,9 @@ def main() -> None:
         _tab_query(cfg)
 
     with tab3:
+        _tab_analysis(cfg)
+
+    with tab4:
         _tab_snippets(cfg)
 
 

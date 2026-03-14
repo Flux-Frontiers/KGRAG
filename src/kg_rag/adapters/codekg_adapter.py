@@ -121,3 +121,14 @@ class CodeKGAdapter(KGAdapter):
             }
         except Exception:  # pylint: disable=broad-exception-caught
             return {"kind": "code", "error": "stats unavailable"}
+
+    def analyze(self) -> str:
+        """Run full architectural analysis on this CodeKG.
+
+        :return: Markdown-formatted analysis report.
+        """
+        self._load()
+        try:
+            return self._kg.analyze()
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            return f"Analysis failed: {exc}"
