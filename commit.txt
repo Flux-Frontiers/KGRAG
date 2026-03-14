@@ -1,29 +1,22 @@
-feat(cli): add kgrag init command, MCP docs, pre-commit, and promote KG backends to main deps
+feat(viz): add Streamlit visualizer, kgrag viz CLI, and adapter API alignment
 
-Introduces `kgrag init` — a one-shot command that auto-detects applicable
-KG layers (code/doc) for a repository, builds each via the appropriate
-backend CLI (codekg/dockg), and registers all successfully-built layers
-in the KGRAG registry. Supports --layer, --name, --wipe, and --registry
-flags with a Rich summary table on completion.
+Introduce a full Streamlit UI (`app.py`) with Registry, Query, and Snippets
+tabs for exploring the federated KG registry. Wire it up via a new `kgrag viz`
+CLI command (`cmd_viz.py`) and `kgrag-viz` script entry in `pyproject.toml`.
 
-Promotes code-kg and doc-kg from dev/optional-extra dependencies to
-required main dependencies, removing the `backends` extra group. Updates
-both backends to their latest HEAD commits (doc-kg 0.3.0).
+Update all three adapters (CodeKG, DocKG, MetaKG) to the new dict-based result
+API (`result.nodes`, `pack.nodes`, `store.stats()`), fixing constructor kwarg
+renames (`lancedb_path` → `lancedb_dir`, `repo_root` → `corpus_root`).
 
-Refactors the scan command to use a new shared _find_kg_dirs() helper
-that correctly prunes hidden directories when walking for KG databases.
-
-Bumps package version to 0.2.0 and rewrites README with full project
-documentation (badges, architecture diagram, CLI reference, quick start).
-
-Adds docs/MCP.md with full MCP server reference (tools, client config,
-troubleshooting). Replaces the CodeKG-only setup-mcp.md Claude command
-with setup-kgrag-mcp.md covering the full KGRAG MCP setup workflow.
-Adds kgrag MCP server entry to .mcp.json for this repository.
-
-Ports .pre-commit-config.yaml and .secrets.baseline from code_kg;
-fixes pylint (import-outside-toplevel, broad-exception-caught), mypy
-(Any annotation for lazy _kg attribute, variable name uniqueness in
-mcp_server.py), and ruff formatting across adapter and server modules.
+Additional improvements:
+- `config.py`: extract `_load_toml()` helper; add `read_pyproject_version()`
+- `cmd_registry.py` / `cmd_init.py`: auto-read version from pyproject.toml and
+  default tags to today's datestamp
+- `primitives.py` / `registry.py`: replace deprecated `datetime.utcnow()` with
+  timezone-aware `datetime.now(UTC)`
+- `.mcp.json`: switch to relative `.venv/bin/` paths and `--repo .` for
+  portability
+- Pre-commit hook extended to snapshot both CodeKG and DocKG before each commit
+- Add `.claude/skills/kgrag-usage/` Claude Code skill and `.vscode/settings.json`
 
 Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>

@@ -1,0 +1,120 @@
+{
+  "commit": "6b164317d71c473afba007ddf7ffe831a5649051",
+  "branch": "main",
+  "timestamp": "2026-03-14T05:03:47.466947+00:00",
+  "version": "0.3.0",
+  "metrics": {
+    "total_nodes": 830,
+    "total_edges": 4619,
+    "meaningful_nodes": 825,
+    "coverage_score": 0.9044117647058822,
+    "node_counts": {
+      "chunk": 136,
+      "document": 5,
+      "entity": 244,
+      "keyword": 236,
+      "section": 105,
+      "topic": 104
+    },
+    "edge_counts": {
+      "CONTAINS": 241,
+      "CO_OCCURS_WITH": 3174,
+      "HAS_KEYWORD": 499,
+      "HAS_TOPIC": 135,
+      "MENTIONS_ENTITY": 518,
+      "NEXT": 27,
+      "SIMILAR_TO": 25
+    },
+    "issues_count": 0,
+    "complexity_median": 14.0
+  },
+  "hotspots": [
+    {
+      "id": "chunk:docs/MCP.md:0009",
+      "file_path": "docs/MCP.md",
+      "label": "`kgrag_stats`",
+      "references": 0,
+      "semantic_links": 16,
+      "total_links": 16
+    },
+    {
+      "id": "chunk:docs/MCP.md:0010",
+      "file_path": "docs/MCP.md",
+      "label": "`kgrag_list`",
+      "references": 0,
+      "semantic_links": 15,
+      "total_links": 16
+    },
+    {
+      "id": "chunk:README.md:0000",
+      "file_path": "README.md",
+      "label": "chunk:0001",
+      "references": 0,
+      "semantic_links": 14,
+      "total_links": 15
+    },
+    {
+      "id": "chunk:analysis/kgrag_analysis_20260312.md:0033",
+      "file_path": "analysis/kgrag_analysis_20260312.md",
+      "label": "Data Persistence Storage Database",
+      "references": 0,
+      "semantic_links": 14,
+      "total_links": 14
+    },
+    {
+      "id": "chunk:docs/MCP.md:0016",
+      "file_path": "docs/MCP.md",
+      "label": "`kgrag_query`",
+      "references": 0,
+      "semantic_links": 14,
+      "total_links": 14
+    },
+    {
+      "id": "chunk:README.md:0004",
+      "file_path": "README.md",
+      "label": "Features",
+      "references": 0,
+      "semantic_links": 13,
+      "total_links": 14
+    },
+    {
+      "id": "chunk:README.md:0053",
+      "file_path": "README.md",
+      "label": "Project Structure",
+      "references": 0,
+      "semantic_links": 13,
+      "total_links": 14
+    },
+    {
+      "id": "chunk:analysis/kgrag_analysis_20260312.md:0006",
+      "file_path": "analysis/kgrag_analysis_20260312.md",
+      "label": "\ud83d\udd25 Fan-In Ranking",
+      "references": 0,
+      "semantic_links": 13,
+      "total_links": 14
+    },
+    {
+      "id": "chunk:analysis/kgrag_analysis_20260312.md:0035",
+      "file_path": "analysis/kgrag_analysis_20260312.md",
+      "label": "Graph Traversal Node Edge",
+      "references": 0,
+      "semantic_links": 13,
+      "total_links": 14
+    },
+    {
+      "id": "chunk:commit.txt:0001",
+      "file_path": "commit.txt",
+      "label": "chunk:0002",
+      "references": 0,
+      "semantic_links": 13,
+      "total_links": 14
+    }
+  ],
+  "vs_previous": null,
+  "vs_baseline": {
+    "nodes": 0,
+    "edges": 0,
+    "coverage_delta": 0.0,
+    "issues_delta": 0
+  }
+}

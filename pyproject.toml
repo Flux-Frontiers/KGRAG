@@ -45,7 +45,7 @@ classifiers = [
 packages = [{ include = "kg_rag", from = "src" }]
 
 [tool.poetry.dependencies]
-python = ">=3.12,<3.14"
+python = ">3.12,<3.14"
 lancedb = ">=0.29.0"
 numpy = ">=1.24.0"
 sentence-transformers = ">=2.7.0"
@@ -62,12 +62,18 @@ PyQt5 = { version = ">=5.15.0", optional = true }
 param = { version = ">=2.0.0", optional = true }
 markdown = { version = ">=3.6", optional = true }
 trame-vtk = { version = ">=2.0.0", optional = true }
+
 doc-kg = { git = "https://github.com/Flux-Frontiers/doc_kg.git" }
 code-kg = { git = "https://github.com/Flux-Frontiers/code_kg.git" }
+pip = "^26.0.1"
 
 [tool.poetry.extras]
 viz = ["streamlit", "pyvis", "plotly"]
 viz3d = ["pyvista", "pyvistaqt", "PyQt5", "param", "markdown", "trame-vtk"]
+doc-kg = ["doc-kg"]
+dock-kg = ["doc-kg"]
+code-kg = ["code-kg"]
+
 
 [tool.poetry.group.viz3d]
 optional = true
@@ -91,7 +97,6 @@ pylint = "^4.0.5"
 pdoc = ">=14.0.0"
 
 
-
 [tool.poetry.scripts]
 kgrag              = "kg_rag.cli.main:cli"
 kgrag-mcp          = "kg_rag.mcp_server:main"
@@ -105,6 +110,7 @@ kgrag-scan         = "kg_rag.cli.cmd_registry:scan"
 kgrag-query        = "kg_rag.cli.cmd_query:query"
 kgrag-pack         = "kg_rag.cli.cmd_query:pack"
 kgrag-analyze      = "kg_rag.cli.cmd_analyze:analyze"
+kgrag-viz          = "kg_rag.cli.cmd_viz:viz"
 
 [tool.ruff]
 line-length = 100
@@ -129,10 +135,8 @@ addopts = "-v --tb=short"
 disable = ["all"]
 enable = [
     "cyclic-import",           # R0401
-    "broad-exception-caught",  # W0718
     "cell-var-from-loop",      # W0640
     "undefined-variable",      # E0602
-    "import-outside-toplevel", # C0415
 ]
 
 [tool.codekg]

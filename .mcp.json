@@ -30,21 +30,21 @@
       }
     },
     "codekg": {
-      "command": "/Users/egs/repos/kgrag/.venv/bin/codekg",
+      "command": ".venv/bin/codekg",
       "args": [
         "mcp",
-        "--repo", "/Users/egs/repos/kgrag"
+        "--repo", "."
       ]
     },
     "dockg": {
-      "command": "/Users/egs/repos/kgrag/.venv/bin/dockg",
+      "command": ".venv/bin/dockg",
       "args": [
         "mcp",
-        "--repo", "/Users/egs/repos/kgrag"
+        "--repo", "."
       ]
     },
     "kgrag": {
-      "command": "/Users/egs/repos/kgrag/.venv/bin/kgrag",
+      "command": ".venv/bin/kgrag",
       "args": ["mcp"]
     }
   }

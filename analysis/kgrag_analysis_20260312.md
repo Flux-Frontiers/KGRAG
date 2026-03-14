@@ -1,12 +1,12 @@
-> **Analysis Report Metadata**  
-> - **Generated:** 2026-03-12T22:51:27Z  
-> - **Version:** code-kg 0.8.0  
-> - **Commit:** 053fbd5 (main)  
-> - **Platform:** Darwin arm64 | Python 3.12.13  
-> - **Graph:** 1023 nodes · 1239 edges (104 meaningful)  
-> - **Included directories:** src  
-> - **Excluded directories:** none  
-> - **Elapsed time:** 4s  
+> **Analysis Report Metadata**
+> - **Generated:** 2026-03-12T22:51:27Z
+> - **Version:** code-kg 0.8.0
+> - **Commit:** 053fbd5 (main)
+> - **Platform:** Darwin arm64 | Python 3.12.13
+> - **Graph:** 1023 nodes · 1239 edges (104 meaningful)
+> - **Included directories:** src
+> - **Excluded directories:** none
+> - **Elapsed time:** 4s
 
 # kgrag Analysis
 

@@ -16,6 +16,7 @@ import kg_rag.cli.cmd_init  # noqa: F401
 import kg_rag.cli.cmd_mcp  # noqa: F401
 import kg_rag.cli.cmd_query  # noqa: F401
 import kg_rag.cli.cmd_registry  # noqa: F401
+import kg_rag.cli.cmd_viz  # noqa: F401
 from kg_rag.cli.group import cli  # noqa: F401 — re-exported as entrypoint
 
 if __name__ == "__main__":

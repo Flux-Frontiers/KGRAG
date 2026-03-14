@@ -3,11 +3,12 @@ primitives.py
 
 Core data types for the KGRAG registry system.
 """
+
 from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -15,6 +16,7 @@ from typing import Any
 
 class KGKind(str, Enum):
     """Kind of knowledge graph."""
+
     CODE = "code"
     DOC = "doc"
     META = "meta"
@@ -44,6 +46,7 @@ class KGEntry:
     :param updated_at: When this entry was last updated.
     :param metadata: Flexible extra key-value data.
     """
+
     name: str
     kind: KGKind
     repo_path: Path
@@ -53,8 +56,8 @@ class KGEntry:
     lancedb_path: Path | None = None
     version: str = "unknown"
     tags: list[str] = field(default_factory=list)
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
@@ -92,6 +95,7 @@ class RegistryStats:
     :param built: Number of KGs with at least one built database.
     :param registry_path: Path to the registry SQLite file.
     """
+
     total: int
     by_kind: dict[str, int]
     built: int
@@ -111,6 +115,7 @@ class CrossHit:
     :param summary: Short description or docstring snippet.
     :param source_path: File/document path within the repo.
     """
+
     kg_name: str
     kg_kind: KGKind
     node_id: str
@@ -131,6 +136,7 @@ class CrossQueryResult:
     :param total_hits: Total number of hits.
     :param kgs_queried: Number of KGs that were queried.
     """
+
     query: str
     hits: list[CrossHit]
     by_kg: dict[str, list[CrossHit]]
@@ -151,6 +157,7 @@ class CrossSnippet:
     :param content: The raw source text.
     :param score: Relevance score.
     """
+
     kg_name: str
     kg_kind: KGKind
     node_id: str
@@ -170,6 +177,7 @@ class CrossSnippetPack:
     :param total_tokens_approx: Approximate token count.
     :param kgs_queried: Number of KGs that contributed snippets.
     """
+
     query: str
     snippets: list[CrossSnippet]
     total_tokens_approx: int

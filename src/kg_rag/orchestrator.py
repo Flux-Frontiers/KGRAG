@@ -6,10 +6,11 @@ KGRAG — cross-KG query orchestrator.
 Loads adapters from the registry and executes federated queries across
 multiple KG instances (CodeKG, DocKG, MetaKG) simultaneously.
 """
+
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 from kg_rag.adapters import KGAdapter, make_adapter
 from kg_rag.primitives import (

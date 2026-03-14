@@ -4,6 +4,7 @@ group.py
 Root Click group for the KGRAG CLI. Extracted here to avoid circular imports
 between main.py and the cmd_* modules that decorate commands onto the group.
 """
+
 from __future__ import annotations
 
 import importlib.metadata

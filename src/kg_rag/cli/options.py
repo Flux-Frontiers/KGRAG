@@ -3,6 +3,7 @@ options.py
 
 Shared Click option decorators for the KGRAG CLI.
 """
+
 from __future__ import annotations
 
 import click
