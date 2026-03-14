@@ -56,3 +56,10 @@ class KGAdapter(ABC):
 
         :return: Dict with node_count, edge_count, or equivalent metrics.
         """
+
+    def analyze(self) -> str:
+        """Run full architectural analysis on this KG (code KGs only).
+
+        :return: Markdown-formatted analysis report, or empty string if not supported.
+        """
+        return ""
