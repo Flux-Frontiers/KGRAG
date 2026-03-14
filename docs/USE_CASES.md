@@ -473,6 +473,133 @@ metakg query "compare glycolysis gluconeogenesis shared enzymes"
 
 ---
 
+## Humanities & Textual Scholarship: Comparative Text Analysis
+
+DocKG's graph structure — chunks, sections, entities, keywords, topics, and typed edges including `REFERENCES`, `SIMILAR_TO`, and `CO_OCCURS_WITH` — maps naturally onto the structure of literary and sacred texts. Each translation, edition, or commentary becomes a separate registered DocKG instance. KGRAG federates them into a single queryable corpus.
+
+This is not a niche application. Textual scholarship has always been a labour of cross-referencing: which manuscripts agree, how translators resolved ambiguity, where the same concept appears across different authors or traditions. KGRAG makes that cross-referencing structural and instant.
+
+### Use Case 1: Comparative Bible Translation — "What does each translator say about faith?"
+
+A theologian has registered five translations as separate DocKG instances:
+
+```bash
+kgrag list
+# bible-kjv    (doc)  built: true   — King James Version, 1611
+# bible-esv    (doc)  built: true   — English Standard Version, 2001
+# bible-nasb   (doc)  built: true   — New American Standard Bible, 1971
+# bible-niv    (doc)  built: true   — New International Version, 1978
+# bible-ylt    (doc)  built: true   — Young's Literal Translation, 1862
+```
+
+A single federated query returns ranked results across all five:
+
+```bash
+kgrag query "justification by faith not works"
+
+[doc:bible-kjv]  Romans 3:28   — "Therefore we conclude that a man is justified by
+                                  faith without the deeds of the law."
+[doc:bible-esv]  Romans 3:28   — "For we hold that one is justified by faith apart
+                                  from works of the law."
+[doc:bible-nasb] Romans 3:28   — "For we maintain that a man is justified by faith
+                                  apart from works of the Law."
+[doc:bible-ylt]  Romans 3:28   — "for we reckon a man to be declared righteous by
+                                  faith, apart from works of law."
+[doc:bible-esv]  Galatians 2:16 — "yet we know that a person is not justified by
+                                   works of the law but through faith in Jesus Christ"
+[doc:bible-kjv]  Galatians 2:16 — "Knowing that a man is not justified by the works
+                                   of the law, but by the faith of Jesus Christ"
+```
+
+**The same passage across five translations, ranked by semantic relevance, in one query.** The subtle differences in phrasing — "faith of Jesus Christ" vs. "faith in Jesus Christ" (a longstanding theological debate over the Greek genitive) — are surfaced immediately without manual cross-referencing.
+
+---
+
+### Use Case 2: "What did Augustine say about this passage?"
+
+A researcher registers patristic commentaries alongside primary texts:
+
+```bash
+kgrag list
+# bible-kjv          (doc) — primary text
+# augustine-confessions  (doc) — Augustine's Confessions
+# augustine-city-of-god  (doc) — City of God
+# chrysostom-homilies    (doc) — John Chrysostom's Homilies on Romans
+# aquinas-summa          (doc) — Summa Theologica (relevant sections)
+```
+
+```bash
+kgrag query "free will grace predestination"
+
+[doc:augustine-city-of-god]   Book V, Ch. 10  — Augustine on divine foreknowledge
+                                                 and human will
+[doc:aquinas-summa]           I-II Q. 109     — Whether man can will and do good
+                                                 without grace
+[doc:chrysostom-homilies]     Homily VI       — Chrysostom on Romans 8:29–30
+[doc:bible-kjv]               Romans 9:18     — "Therefore hath he mercy on whom
+                                                 he will have mercy"
+[doc:augustine-confessions]   Book VIII       — Augustine's account of his own
+                                                 conversion and the role of grace
+```
+
+A question that would require days of manual library research returns in under a second, with full source provenance — book, chapter, section — for every result.
+
+---
+
+### Use Case 3: Cross-Tradition Comparative Analysis
+
+The same architecture generalises beyond Christianity. Register the Quran (multiple translations), the Talmud, the Upanishads, and the Pali Canon as separate DocKG instances:
+
+```bash
+kgrag query "compassion for the suffering of others"
+
+[doc:dhammapada-trans-buddharakkhita]  Verse 183  — "Not to do evil, to cultivate
+                                                      good, to purify one's mind"
+[doc:quran-yusuf-ali]    Surah 90:13–17 — freeing the slave, feeding the orphan
+[doc:quran-shakir]       Surah 90:13    — "the setting free of a slave"
+[doc:upanishads-easwaran] Chandogya 3.14 — "All this universe is Brahman... meditate
+                                            on it with tranquility"
+[doc:talmud-steinsaltz]  Pirkei Avot 2:4 — "Do not judge your fellow until you
+                                            have reached his place"
+[doc:bible-esv]          Luke 6:36       — "Be merciful, even as your Father is
+                                            merciful"
+```
+
+No tradition is privileged. The global score ranking reflects semantic proximity to the query, not editorial priority. The scholar sees where traditions converge on the same theme — and, just as valuably, where the `SIMILAR_TO` edges between chunks from different corpora reveal unexpected textual kinship.
+
+---
+
+### How It Works Technically
+
+DocKG's graph structure maps cleanly onto sacred and literary text structure:
+
+| DocKG Node Kind | Text Equivalent |
+|-----------------|-----------------|
+| `document`      | A book, epistle, surah, or chapter collection |
+| `section`       | A chapter or major division |
+| `chunk`         | A verse, paragraph, or pericope |
+| `entity`        | A named person, place, or divine name |
+| `keyword`       | A theological or conceptual term (grace, dharma, tawakkul) |
+| `topic`         | A thematic cluster (soteriology, eschatology, ethics) |
+
+| DocKG Edge Type   | Text Equivalent |
+|-------------------|-----------------|
+| `CONTAINS`        | Book → Chapter → Verse hierarchy |
+| `NEXT`            | Sequential verse ordering |
+| `REFERENCES`      | Explicit cross-references and citations |
+| `SIMILAR_TO`      | Parallel passages (Synoptic Gospel parallels, Tanakh quotations in the NT) |
+| `CO_OCCURS_WITH`  | Concepts that appear together across chunks |
+| `MENTIONS_ENTITY` | Verse to named person, place, or deity |
+| `HAS_TOPIC`       | Chunk assigned to a thematic cluster |
+
+Each translation's graph is structurally independent but semantically comparable through the shared embedding space. `SIMILAR_TO` edges within a single translation capture internal cross-references; the federated query layer provides the cross-translation comparison.
+
+A follow-up `kgrag pack` call extracts the actual verse text as snippets, formatted for direct LLM consumption — so a scholar can ask a downstream model to analyze *why* the retrieved passages differ, grounded against the exact source text rather than the model's training memory.
+
+**No proprietary API. No cloud upload. No inference cost per query.** The texts remain local; the graph is built once; every query runs in under a second.
+
+---
+
 ## The Zero-Inference Advantage
 
 Every result shown above was produced **without a single LLM call**.
