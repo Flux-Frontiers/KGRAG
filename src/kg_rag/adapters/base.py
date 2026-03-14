@@ -57,9 +57,13 @@ class KGAdapter(ABC):
         :return: Dict with node_count, edge_count, or equivalent metrics.
         """
 
+    @abstractmethod
     def analyze(self) -> str:
-        """Run full architectural analysis on this KG (code KGs only).
+        """Run full analysis on this KG and return a Markdown-formatted report.
 
-        :return: Markdown-formatted analysis report, or empty string if not supported.
+        Every adapter must implement this method. The report format is
+        adapter-specific but must be valid Markdown so callers can render,
+        save, or forward it uniformly.
+
+        :return: Markdown-formatted analysis report string.
         """
-        return ""
