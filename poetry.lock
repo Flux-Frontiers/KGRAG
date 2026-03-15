@@ -1209,12 +1209,11 @@ files = [
 
 [[package]]
 name = "doc-kg"
-version = "0.3.0"
+version = "0.4.0"
 description = "A tool to build a semantically searchable knowledge graph from markdown and text documents"
 optional = false
 python-versions = ">=3.12,<3.14"
 groups = ["main"]
-markers = "extra == \"doc-kg\" or extra == \"dock-kg\""
 files = []
 develop = false
 
@@ -1237,7 +1236,7 @@ viz = []
 type = "git"
 url = "https://github.com/Flux-Frontiers/doc_kg.git"
 reference = "HEAD"
-resolved_reference = "496fa9784ed8f7abd4ed5daba2ce065149988d9f"
+resolved_reference = "a7086424509b65b02b2c73e6d8be6f3d9f7dbdc9"
 
 [[package]]
 name = "docstring-parser"
@@ -6958,7 +6957,7 @@ multidict = ">=4.0"
 propcache = ">=0.2.1"
 
 [extras]
-code-kg = []
+code-kg = ["code-kg"]
 doc-kg = ["doc-kg"]
 dock-kg = ["doc-kg"]
 viz = ["plotly", "pyvis", "streamlit"]
