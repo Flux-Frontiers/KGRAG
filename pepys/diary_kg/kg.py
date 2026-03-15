@@ -19,6 +19,7 @@ import json
 import re
 import subprocess
 from collections import Counter
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -400,12 +401,12 @@ class DiaryKG:
         lines: List[str] = [
             "# DiaryKG Analysis Report",
             "",
-            f"**Root:** `{self.root}`  |  **Source:** `{s.get('source_file', 'unknown')}`",
+            f"**Root:** `{self.root}`  |  **Source:** `{info.get('source_file', 'unknown')}`",
             "",
             "## Corpus Overview",
             "",
-            f"- Chunk files   : **{s['chunk_count']}**",
-            f"- Diary entries : **{s['entry_count']}**",
+            f"- Chunk files   : **{info['chunk_count']}**",
+            f"- Diary entries : **{info['entry_count']}**",
             f"- Temporal span : **{span_str}**",
             f"- Built at      : {info.get('built_at', 'n/a')}",
             f"- DocKG nodes   : {db_stats['node_count']}",
