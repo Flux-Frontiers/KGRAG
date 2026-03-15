@@ -68,3 +68,55 @@ class KGAdapter(ABC):
         :return: Markdown-formatted analysis report string.
         """
         return ""
+
+    @abstractmethod
+    def snapshot(self, version: str, label: str | None = None) -> dict[str, Any]:
+        """Capture a point-in-time snapshot of this KG's state.
+
+        Implementations must persist the snapshot (e.g. to disk or an in-memory
+        store) and return a serialisable dict that includes at minimum:
+
+        * ``version`` — the caller-supplied version string
+        * ``timestamp`` — ISO 8601 UTC timestamp of capture
+        * ``node_count`` — integer node count at capture time
+        * ``edge_count`` — integer edge count at capture time
+
+        Adapters that back a library with native snapshot support should
+        delegate to that library.  Adapters without native support should
+        capture metrics via :meth:`stats` and persist them as appropriate.
+
+        :param version: Semantic-version string for this snapshot (e.g. "1.2.0").
+        :param label: Optional human-readable label for the snapshot.
+        :return: Serialisable snapshot dict.
+        """
+
+    # ------------------------------------------------------------------
+    # Internal helpers — used by the orchestrator, not part of the public API
+    # ------------------------------------------------------------------
+
+    def _graph_stats(self) -> dict[str, int]:
+        """Return raw graph topology counts for this KG instance.
+
+        Unlike :meth:`stats`, this method strips all KG-kind-specific or
+        semantic fields and always returns a plain ``{node_count, edge_count}``
+        mapping with integer values.  Unavailable or non-integer counts are
+        normalised to ``0``.
+
+        This is an internal helper called by the orchestrator when it needs to
+        aggregate graph-size metrics uniformly across heterogeneous KG kinds
+        without being confused by domain-specific keys.
+
+        :return: Dict with integer ``node_count`` and ``edge_count``.
+        """
+        raw = self.stats()
+
+        def _to_int(val: Any) -> int:
+            try:
+                return int(val)
+            except (TypeError, ValueError):
+                return 0
+
+        return {
+            "node_count": _to_int(raw.get("node_count")),
+            "edge_count": _to_int(raw.get("edge_count")),
+        }

@@ -13,6 +13,7 @@ and all query/pack/stats/analyze calls return safe empty results.
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from typing import Any
 
 from kg_rag.adapters.base import KGAdapter
@@ -184,3 +185,41 @@ class StubKGAdapter(KGAdapter):
             )
         except Exception as exc:  # pylint: disable=broad-exception-caught
             return header + f"\nAnalysis failed: {exc}\n"
+
+    def snapshot(self, version: str, label: str | None = None) -> dict[str, Any]:
+        """Capture a lightweight snapshot of this KG's current state.
+
+        Delegates to the backing library's ``snapshot()`` method when available.
+        Falls back to capturing current :meth:`stats` with a timestamp.
+
+        :param version: Semantic-version string for this snapshot.
+        :param label: Optional human-readable label.
+        :return: Serialisable snapshot dict.
+        """
+        gs = self._graph_stats()
+        snap: dict[str, Any] = {
+            "version": version,
+            "label": label,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "kind": self._kind.value,
+            "kg_name": self.entry.name,
+            "node_count": gs["node_count"],
+            "edge_count": gs["edge_count"],
+        }
+        if not self.is_available():
+            snap["status"] = "unavailable"
+            return snap
+        try:
+            self._load()
+            if callable(getattr(self._kg, "snapshot", None)):
+                result = self._kg.snapshot(version, label=label)
+                if isinstance(result, dict):
+                    return result
+                # Non-dict return: serialise via __dict__ or str
+                raw = getattr(result, "__dict__", None)
+                if raw is not None:
+                    return {**snap, **raw}
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
+        snap["status"] = "available"
+        return snap
