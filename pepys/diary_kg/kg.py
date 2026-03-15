@@ -19,7 +19,6 @@ import json
 import re
 import subprocess
 from collections import Counter
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -39,29 +38,6 @@ def _parse_frontmatter(text: str) -> Dict[str, str]:
             result[k.strip()] = v.strip()
     return result
 
-
-def _git_commit_hash(path: Path) -> Optional[str]:
-    """Return the current HEAD commit hash for *path*, or None."""
-    try:
-        out = subprocess.check_output(
-            ["git", "-C", str(path), "rev-parse", "HEAD"],
-            stderr=subprocess.DEVNULL,
-        )
-        return out.decode().strip()
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return None
-
-
-def _git_branch(path: Path) -> str:
-    """Return current branch name, or 'unknown'."""
-    try:
-        out = subprocess.check_output(
-            ["git", "-C", str(path), "rev-parse", "--abbrev-ref", "HEAD"],
-            stderr=subprocess.DEVNULL,
-        )
-        return out.decode().strip()
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return "unknown"
 
 
 class DiaryKG:
@@ -457,150 +433,64 @@ class DiaryKG:
         return "\n".join(lines)
 
     # ------------------------------------------------------------------
-    # Snapshots
+    # Snapshots  (delegated to DiarySnapshotManager)
     # ------------------------------------------------------------------
 
-    def _snapshot_manifest_path(self) -> Path:
-        return self._snapshot_dir / "manifest.json"
+    def _snapshot_mgr(self) -> "DiarySnapshotManager":
+        from .snapshots import DiarySnapshotManager  # pylint: disable=import-outside-toplevel
+        return DiarySnapshotManager(self._snapshot_dir)
 
-    def _load_manifest(self) -> Dict[str, Any]:
-        mp = self._snapshot_manifest_path()
-        if mp.exists():
-            try:
-                return json.loads(mp.read_text(encoding="utf-8"))
-            except (json.JSONDecodeError, OSError):
-                pass
-        return {"format": "1.0", "last_update": None, "snapshots": []}
-
-    def _save_manifest(self, manifest: Dict[str, Any]) -> None:
-        self._snapshot_dir.mkdir(parents=True, exist_ok=True)
-        manifest["last_update"] = datetime.now(UTC).isoformat()
-        self._snapshot_manifest_path().write_text(
-            json.dumps(manifest, indent=2), encoding="utf-8"
-        )
-
-    def snapshot_save(self, label: Optional[str] = None) -> Dict[str, Any]:
+    def snapshot_save(self, version: str = "0.1.0", label: Optional[str] = None) -> Dict[str, Any]:
         """Capture a point-in-time snapshot of corpus metrics.
 
-        The snapshot key is the current git commit hash if available,
-        otherwise a UTC timestamp slug.  Metrics include chunk count,
-        entry count, temporal span, topic and context distributions.
+        Key is the git tree hash (``HEAD^{tree}``), matching the code_kg
+        pattern.  Metrics include chunk/entry/node/edge counts, temporal
+        span, and topic/context distributions.  Deltas vs previous and
+        baseline are computed automatically.
 
-        :param label: Optional human-readable label for this snapshot.
-        :return: The snapshot dict that was saved.
+        :param version: Version label for this snapshot.
+        :param label: Optional human-readable description.
+        :return: Saved snapshot as a dict.
         :raises RuntimeError: If the KG is not built.
+        :raises ValueError: If chunk_count is 0.
         """
         if not self.is_built():
             raise RuntimeError("DiaryKG is not built. Run build() first.")
-
-        key = _git_commit_hash(self.root) or datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-        branch = _git_branch(self.root)
-
-        current = self.info()
-        db_stats = self.stats()
-        current["node_count"] = db_stats.get("node_count", "n/a")
-        current["edge_count"] = db_stats.get("edge_count", "n/a")
-        manifest = self._load_manifest()
-
-        # Delta vs previous snapshot
-        vs_previous: Optional[Dict[str, Any]] = None
-        vs_baseline: Optional[Dict[str, Any]] = None
-        snapshots = manifest.get("snapshots", [])
-
-        if snapshots:
-            prev = snapshots[-1].get("metrics", {})
-            vs_previous = {
-                "chunks": current["chunk_count"] - prev.get("chunk_count", 0),
-                "entries": current["entry_count"] - prev.get("entry_count", 0),
-            }
-            baseline = snapshots[0].get("metrics", {})
-            vs_baseline = {
-                "chunks": current["chunk_count"] - baseline.get("chunk_count", 0),
-                "entries": current["entry_count"] - baseline.get("entry_count", 0),
-            }
-
         config = self._read_config()
-        snapshot: Dict[str, Any] = {
-            "key": key,
-            "branch": branch,
-            "timestamp": datetime.now(UTC).isoformat(),
-            "label": label,
-            "source_file": current.get("source_file"),
-            "metrics": {
-                "chunk_count": current["chunk_count"],
-                "entry_count": current["entry_count"],
-                "node_count": current["node_count"],
-                "edge_count": current["edge_count"],
-                "temporal_span": current.get("temporal_span"),
-                "topic_counts": current.get("topic_counts", {}),
-                "context_counts": current.get("context_counts", {}),
-                "chunking_strategy": config.get("chunking_strategy"),
-                "chunk_size": config.get("chunk_size"),
-            },
-            "vs_previous": vs_previous,
-            "vs_baseline": vs_baseline,
-        }
+        info = self.info()
+        info["chunking_strategy"] = config.get("chunking_strategy", "")
+        info["chunk_size"] = config.get("chunk_size", 512)
+        db_stats = self.stats()
+        mgr = self._snapshot_mgr()
+        snap = mgr.capture(version=version, info=info, db_stats=db_stats, label=label)
+        mgr.save_snapshot(snap)
+        return snap.to_dict()
 
-        # Write individual snapshot file
-        self._snapshot_dir.mkdir(parents=True, exist_ok=True)
-        snap_file = self._snapshot_dir / f"{key}.json"
-        snap_file.write_text(json.dumps(snapshot, indent=2), encoding="utf-8")
+    def snapshot_list(self, branch: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Return all snapshots in reverse-chronological order.
 
-        # Update manifest
-        manifest["snapshots"].append({
-            "key": key,
-            "branch": branch,
-            "timestamp": snapshot["timestamp"],
-            "label": label,
-            "file": f"{key}.json",
-            "metrics": {
-                "chunk_count": current["chunk_count"],
-                "entry_count": current["entry_count"],
-            },
-        })
-        self._save_manifest(manifest)
-
-        return snapshot
-
-    def snapshot_list(self) -> List[Dict[str, Any]]:
-        """Return all snapshots from the manifest (newest first).
-
-        :return: List of snapshot summary dicts.
+        :param branch: Filter by branch name if provided.
+        :return: List of manifest entry dicts.
         """
-        manifest = self._load_manifest()
-        return list(reversed(manifest.get("snapshots", [])))
+        return self._snapshot_mgr().list_snapshots(branch=branch)
 
     def snapshot_show(self, key: str) -> Dict[str, Any]:
-        """Load a full snapshot by key.
+        """Load a full snapshot by tree-hash key.
 
-        :param key: Commit hash or timestamp slug (from ``snapshot_list()``).
+        :param key: Git tree hash (from ``snapshot_list()``).
         :return: Full snapshot dict.
         :raises FileNotFoundError: If the snapshot does not exist.
         """
-        snap_file = self._snapshot_dir / f"{key}.json"
-        if not snap_file.exists():
+        snap = self._snapshot_mgr().load_snapshot(key)
+        if snap is None:
             raise FileNotFoundError(f"Snapshot not found: {key}")
-        return json.loads(snap_file.read_text(encoding="utf-8"))
+        return snap.to_dict()
 
     def snapshot_diff(self, key_a: str, key_b: str) -> Dict[str, Any]:
         """Compare two snapshots and return a delta report.
 
-        :param key_a: Earlier snapshot key.
-        :param key_b: Later snapshot key.
-        :return: Dict with ``from``, ``to``, and ``delta`` fields.
+        :param key_a: Earlier snapshot tree-hash key.
+        :param key_b: Later snapshot tree-hash key.
+        :return: Dict with ``a``, ``b``, ``delta``, ``topic_counts_delta``.
         """
-        a = self.snapshot_show(key_a)
-        b = self.snapshot_show(key_b)
-        ma = a.get("metrics", {})
-        mb = b.get("metrics", {})
-        return {
-            "from": {"key": key_a, "timestamp": a.get("timestamp"), "label": a.get("label")},
-            "to": {"key": key_b, "timestamp": b.get("timestamp"), "label": b.get("label")},
-            "delta": {
-                "chunks": mb.get("chunk_count", 0) - ma.get("chunk_count", 0),
-                "entries": mb.get("entry_count", 0) - ma.get("entry_count", 0),
-                "nodes": (mb.get("node_count") or 0) - (ma.get("node_count") or 0)
-                if isinstance(mb.get("node_count"), int) and isinstance(ma.get("node_count"), int)
-                else "n/a",
-            },
-        }
+        return self._snapshot_mgr().diff_snapshots(key_a, key_b)
