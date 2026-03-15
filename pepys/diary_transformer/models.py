@@ -15,6 +15,7 @@ class DiaryEntry:
     :param original_type: Source type tag (e.g. ``raw``).
     :param category: Source category tag (e.g. ``DiaryEntry``).
     :param content: Full text of the entry.
+    :param source_file: Relative path to the original source file (provenance anchor).
     :param index: Position in the source file (assigned during parsing).
     :param chunks: Pre-segmented chunks (populated by the chunk cache).
     """
@@ -23,6 +24,7 @@ class DiaryEntry:
     original_type: str
     category: str
     content: str
+    source_file: str = ""
     index: Optional[int] = None
     chunks: Optional[List[str]] = field(default=None, repr=False)
 
