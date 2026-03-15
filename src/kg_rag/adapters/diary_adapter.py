@@ -1,0 +1,19 @@
+"""diary_adapter.py — KGAdapter for DiaryKG (stub until library is released)."""
+
+from __future__ import annotations
+
+from kg_rag.adapters._stub_adapter import StubKGAdapter
+from kg_rag.primitives import KGEntry, KGKind
+
+
+class DiaryKGAdapter(StubKGAdapter):
+    """Adapter for DiaryKG — personal diary / journal knowledge graph.
+
+    :param entry: A KGEntry instance for this KG.
+    """
+
+    _pkg_name: str = "diary_kg"
+    _kind: KGKind = KGKind.DIARY
+
+    def __init__(self, entry: KGEntry) -> None:
+        super().__init__(entry)
