@@ -339,9 +339,17 @@ class TestDocKGAdapterAnalyze:
         adapter = DocKGAdapter(entry)
         adapter._kg = mock_kg
 
+        mock_doc_kg_module = MagicMock()
+        mock_analysis_module = MagicMock()
+        mock_analysis_module.DocKGAnalyzer = MagicMock(return_value=mock_analyzer)
         with patch("kg_rag.adapters.dockg_adapter.DocKGAdapter._load"):
-            with patch("doc_kg.dockg_thorough_analysis.DocKGAnalyzer") as MockAnalyzer:
-                MockAnalyzer.return_value = mock_analyzer
+            with patch.dict(
+                "sys.modules",
+                {
+                    "doc_kg": mock_doc_kg_module,
+                    "doc_kg.dockg_thorough_analysis": mock_analysis_module,
+                },
+            ):
                 report = adapter.analyze()
 
         assert "# DocKG Analysis Report" in report
