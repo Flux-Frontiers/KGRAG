@@ -8,7 +8,7 @@
   <img src="assets/logo.png" alt="KGRAG logo" width="256"/>
 </p>
 
-**KGRAG** — Knowledge Graph Orchestration & Retrieval Framework for Semantic Code & Document Analysis
+**KGRAG** — Knowledge Graph Orchestration & Retrieval Framework for Semantic Code, Document, Legal & Scientific Analysis
 
 *Author: Eric G. Suchanek, PhD*
 
@@ -18,27 +18,57 @@
 
 ## Overview
 
-KGRAG is a **unified orchestration layer** for building and querying knowledge graphs from Python codebases and document corpora. It seamlessly integrates [CodeKG](https://github.com/Flux-Frontiers/code_kg) (structural code analysis) and [DocKG](https://github.com/Flux-Frontiers/doc_kg) (semantic document indexing) under a single management interface, enabling you to:
+KGRAG is a **unified orchestration layer** for building and querying knowledge graphs across diverse domains — from Python codebases and document corpora to legal archives, personal memories, scientific structure databases, and more. It integrates [CodeKG](https://github.com/Flux-Frontiers/code_kg) (structural code analysis), [DocKG](https://github.com/Flux-Frontiers/doc_kg) (semantic document indexing), and a growing family of specialized KG types under a single management interface, enabling you to:
 
-- **Register and manage** multiple knowledge graphs from different code repositories and document sources
+- **Register and manage** multiple knowledge graphs from different repositories, document sources, and scientific datasets
 - **Query across graphs** with semantic search augmented by structural relationships
-- **Extract context** from code and documentation simultaneously for holistic understanding
-- **Build RAG systems** grounded in both structural code analysis and semantic document retrieval
-- **Expose integrations** via MCP (Model Context Protocol) for AI-powered code understanding
+- **Extract context** from code, documentation, law, and science simultaneously for holistic understanding
+- **Build RAG systems** grounded in both structural analysis and semantic document retrieval
+- **Organize KGs into corpora** — group related graphs under a named corpus for scoped queries and batch operations
+- **Model people** — aggregate all KGs relevant to an individual (diaries, memories, documents, etc.) under a person corpus with rich personal metadata
+- **Expose integrations** via MCP (Model Context Protocol) for AI-powered understanding across any domain
 
 KGRAG treats **structure as ground truth** while using **semantics to accelerate retrieval** — making it the foundation for trustworthy Knowledge-Graph RAG (KGRAG) systems that avoid hallucination.
 
 ---
 
+## KG Types
+
+KGRAG supports the following knowledge graph types:
+
+| Kind | Description |
+|------|-------------|
+| `code` | Python codebase — AST-extracted modules, classes, functions, call graphs |
+| `doc` | Document corpus — markdown, text, RST indexed by topic and entity |
+| `meta` | Metabolic pathways — biochemical reaction networks and pathway graphs |
+| `diary` | Personal diary entries — chronological personal narrative |
+| `verse` | Poetry and verse — structured literary content |
+| `memory` | Personal memory traces — episodic recollections and associations |
+| `disulfide` | Disulfide bond data — cysteine connectivity in protein structures |
+| `pdbfile` | PDB structure files — 3D atomic coordinates and protein metadata |
+| `legal` | Legal corpus — US Code, Supreme Court opinions, statutes, regulations |
+
+### Corpus Types
+
+Beyond individual KGs, KGRAG supports two corpus abstractions:
+
+**Generic Corpus** — A named collection of any KG instances grouped for scoped federated queries. Useful for project-level, subject-area, or thematic groupings (e.g., `"all-law"` containing multiple `legal` KGs, or `"my-project"` combining code + doc KGs).
+
+**Person Corpus** — A corpus enriched with personal metadata representing an individual. Aggregates all KGs relevant to a person — diaries, memories, verse, documents, and more — alongside structured personal data (birth year, address, email, contact info). Designed for personal knowledge management, biographical research, and AI-assisted life logging.
+
+---
+
 ## Features
 
-- **Multi-graph management** — Register, index, and query multiple CodeKG and DocKG instances simultaneously
-- **Unified registry** — Persistent storage of knowledge graph locations and metadata
+- **Multi-graph management** — Register, index, and query multiple KG instances across all supported types
+- **Unified registry** — Persistent SQLite-backed storage of KG locations, metadata, corpora, and person records
+- **Corpus abstraction** — Group KGs into named corpora for scoped federated queries and batch operations
+- **Person corpus** — Model individuals with personal metadata and their associated KG collections
 - **Hybrid querying** — Semantic search augmented with structural graph traversal (call chains, inheritance, cross-references)
 - **Context packing** — Extract relevant code snippets and document sections with line numbers
-- **Cross-source integration** — Correlate code definitions with documentation and issues
-- **MCP server** — Expose all graphs and queries to AI agents (Claude Code, Kilo Code, GitHub Copilot, etc.)
-- **CLI tooling** — Register graphs, query registries, analyze coverage, and extract documentation
+- **Cross-source integration** — Correlate code definitions with documentation, legal references, and scientific data
+- **MCP server** — Expose all graphs, corpora, and person records to AI agents (Claude Code, Kilo Code, GitHub Copilot, etc.)
+- **CLI tooling** — Full CRUD for KGs, corpora, and person corpora; query, analyze, scan, and initialize
 - **Streamlit dashboard** — Interactive browser for exploring registered knowledge graphs
 - **Deterministic retrieval** — Auditable, source-grounded results with zero hallucination
 

@@ -34,6 +34,7 @@ _KG_MARKERS: dict[str, str] = {
     ".memorykg": "memory",
     ".disulfidekg": "disulfide",
     ".pdbfilekg": "pdbfile",
+    ".legalkg": "legal",
 }
 
 # Map kind string → default database subdirectory name
