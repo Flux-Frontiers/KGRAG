@@ -331,8 +331,9 @@ def snapshot():
 
 @snapshot.command("save")
 @_ROOT_ARG
+@click.option("--version", "-v", default="0.1.0", show_default=True, help="Version string for this snapshot.")
 @click.option("--label", "-l", default=None, help="Human-readable label for this snapshot.")
-def snapshot_save(root, label):
+def snapshot_save(root, version, label):
     """Capture a snapshot of current corpus metrics.
 
     \b
@@ -346,7 +347,7 @@ def snapshot_save(root, label):
     """
     kg = _kg(root)
     try:
-        snap = kg.snapshot_save(label=label)
+        snap = kg.snapshot_save(version=version, label=label)
     except RuntimeError as exc:
         console.print(f"[red]Error:[/red] {exc}")
         sys.exit(1)
