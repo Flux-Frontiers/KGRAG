@@ -98,12 +98,27 @@ class DiaryKGAdapter(KGAdapter):
         return snippets
 
     def stats(self) -> dict[str, Any]:
-        """Return corpus statistics.
+        """Return KG storage statistics (node + edge counts).
 
-        :return: Dict with chunk_count, entry_count, temporal_span, kind.
+        Matches the cross-KG contract so KGRAG can aggregate total indexed
+        size across all registered KGs.
+
+        :return: Dict with node_count, edge_count, kind.
         """
         self._load()
         return self._kg.stats()
+
+    def info(self) -> dict[str, Any]:
+        """Return diary-specific corpus information.
+
+        Rich introspection: temporal span, topic distribution, context
+        breakdown, chunk + entry counts.  Not part of the base KGAdapter
+        contract — call directly when diary detail is needed.
+
+        :return: Dict from ``DiaryKG.info()``.
+        """
+        self._load()
+        return self._kg.info()
 
     def analyze(self) -> str:
         """Return a Markdown analysis report for this diary corpus.

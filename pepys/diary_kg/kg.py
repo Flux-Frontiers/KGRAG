@@ -327,13 +327,15 @@ class DiaryKG:
         return snippets
 
     # ------------------------------------------------------------------
-    # Stats / Analyze
+    # Info / Stats / Analyze
     # ------------------------------------------------------------------
 
-    def stats(self) -> Dict[str, Any]:
-        """Return corpus statistics.
+    def info(self) -> Dict[str, Any]:
+        """Return diary-specific corpus information.
 
         Reads config + corpus frontmatter without loading the full DocKG.
+        Use this for rich corpus introspection (temporal span, topic
+        distribution, context breakdown).
 
         :return: Dict with chunk_count, entry_count, source_file, built_at,
             temporal_span, topic_counts, context_counts.
@@ -387,10 +389,26 @@ class DiaryKG:
             "temporal_span": span,
             "topic_counts": dict(categories.most_common()),
             "context_counts": dict(contexts.most_common()),
-            "node_count": node_count,
-            "edge_count": edge_count,
-            "kind": "diary",
         }
+
+    def stats(self) -> Dict[str, Any]:
+        """Return KG storage statistics (node + edge counts).
+
+        Matches the contract expected by the KGRAG cross-KG ``analyze``
+        command so the system can report total indexed size across all KGs.
+
+        :return: Dict with node_count, edge_count, kind.
+        """
+        self._load_dockg()
+        try:
+            s = self._dockg.store.stats()
+            return {
+                "node_count": s.get("total_nodes", "n/a"),
+                "edge_count": s.get("total_edges", "n/a"),
+                "kind": "diary",
+            }
+        except Exception:  # pylint: disable=broad-exception-caught
+            return {"node_count": "n/a", "edge_count": "n/a", "kind": "diary"}
 
     def analyze(self) -> str:
         """Return a Markdown analysis report.
@@ -398,8 +416,9 @@ class DiaryKG:
         :return: Markdown string covering corpus overview, topic distribution,
             context distribution, temporal span, and DocKG baseline stats.
         """
-        s = self.stats()
-        span = s.get("temporal_span") or {}
+        info = self.info()
+        db_stats = self.stats()
+        span = info.get("temporal_span") or {}
         span_str = f"{span.get('start', '?')} → {span.get('end', '?')}" if span else "n/a"
 
         lines: List[str] = [
@@ -412,16 +431,16 @@ class DiaryKG:
             f"- Chunk files   : **{s['chunk_count']}**",
             f"- Diary entries : **{s['entry_count']}**",
             f"- Temporal span : **{span_str}**",
-            f"- Built at      : {s.get('built_at', 'n/a')}",
-            f"- DocKG nodes   : {s['node_count']}",
-            f"- DocKG edges   : {s['edge_count']}",
+            f"- Built at      : {info.get('built_at', 'n/a')}",
+            f"- DocKG nodes   : {db_stats['node_count']}",
+            f"- DocKG edges   : {db_stats['edge_count']}",
             "",
             "## Topic Distribution",
             "",
             "| Category | Chunks |",
             "|---|---:|",
         ]
-        for cat, cnt in (s.get("topic_counts") or {}).items():
+        for cat, cnt in (info.get("topic_counts") or {}).items():
             lines.append(f"| {cat} | {cnt} |")
 
         lines += [
@@ -431,7 +450,7 @@ class DiaryKG:
             "| Context | Chunks |",
             "|---|---:|",
         ]
-        for ctx, cnt in (s.get("context_counts") or {}).items():
+        for ctx, cnt in (info.get("context_counts") or {}).items():
             lines.append(f"| {ctx} | {cnt} |")
         lines.append("")
 
@@ -477,7 +496,10 @@ class DiaryKG:
         key = _git_commit_hash(self.root) or datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
         branch = _git_branch(self.root)
 
-        current = self.stats()
+        current = self.info()
+        db_stats = self.stats()
+        current["node_count"] = db_stats.get("node_count", "n/a")
+        current["edge_count"] = db_stats.get("edge_count", "n/a")
         manifest = self._load_manifest()
 
         # Delta vs previous snapshot
