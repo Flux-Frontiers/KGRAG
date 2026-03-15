@@ -7,7 +7,7 @@
       ],
       "env": {
         "MEMORY_PATH": "/Users/egs/.claude/memory",
-        "WORKSPACE_ID": "code_kg"
+        "WORKSPACE_ID": "kgrag"
       }
     },
     "skills-copilot": {
@@ -16,7 +16,7 @@
         "/Users/egs/.claude/copilot/mcp-servers/skills-copilot/dist/index.js"
       ],
       "env": {
-        "LOCAL_SKILLS_PATH": "./.claude/skills"
+        "LOCAL_SKILLS_PATH": "/Users/egs/repos/kgrag/.claude/skills"
       }
     },
     "task-copilot": {
@@ -30,21 +30,21 @@
       }
     },
     "codekg": {
-      "command": ".venv/bin/codekg",
+      "command": "/Users/egs/repos/kgrag/.venv/bin/codekg",
       "args": [
         "mcp",
-        "--repo", "."
+        "--repo", "/Users/egs/repos/kgrag"
       ]
     },
     "dockg": {
-      "command": ".venv/bin/dockg",
+      "command": "/Users/egs/repos/kgrag/.venv/bin/dockg",
       "args": [
         "mcp",
-        "--repo", "."
+        "--repo", "/Users/egs/repos/kgrag"
       ]
     },
     "kgrag": {
-      "command": ".venv/bin/kgrag",
+      "command": "/Users/egs/repos/kgrag/.venv/bin/kgrag",
       "args": ["mcp"]
     }
   }

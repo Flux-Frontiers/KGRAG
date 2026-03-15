@@ -122,11 +122,7 @@ class MetaKGAdapter(KGAdapter):
             return base
         try:
             self._load()
-            raw = (
-                self._kg.stats()
-                if callable(getattr(self._kg, "stats", None))
-                else {}
-            )
+            raw = self._kg.stats() if callable(getattr(self._kg, "stats", None)) else {}
             if isinstance(raw, dict):
                 base["node_count"] = raw.get("node_count") or raw.get("total_nodes", "n/a")
                 base["edge_count"] = raw.get("edge_count") or raw.get("total_edges", "n/a")
@@ -159,6 +155,7 @@ class MetaKGAdapter(KGAdapter):
                     return header + "\n" + result
                 if isinstance(result, dict):
                     import json  # pylint: disable=import-outside-toplevel
+
                     return header + "\n```json\n" + json.dumps(result, indent=2) + "\n```\n"
 
             # Fallback: stats-based summary

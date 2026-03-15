@@ -1,0 +1,122 @@
+{
+  "key": "476539843f04167f09b6ad6d0599eb6d8a69ae1b",
+  "branch": "main",
+  "timestamp": "2026-03-15T02:50:34.365020+00:00",
+  "version": "0.2.0",
+  "metrics": {
+    "total_nodes": 2948,
+    "total_edges": 20346,
+    "meaningful_nodes": 2931,
+    "coverage_score": 0.9093701996927804,
+    "node_counts": {
+      "chunk": 651,
+      "document": 17,
+      "entity": 696,
+      "keyword": 693,
+      "section": 471,
+      "topic": 420
+    },
+    "edge_counts": {
+      "CONTAINS": 1122,
+      "CO_OCCURS_WITH": 13258,
+      "HAS_KEYWORD": 2423,
+      "HAS_TOPIC": 643,
+      "MENTIONS_ENTITY": 2465,
+      "NEXT": 168,
+      "REFERENCES": 53,
+      "SIMILAR_TO": 214
+    },
+    "issues_count": 0,
+    "complexity_median": 15.0
+  },
+  "hotspots": [
+    {
+      "id": "chunk:analysis/arch.md:0013",
+      "file_path": "analysis/arch.md",
+      "label": "Module Dependencies",
+      "references": 0,
+      "semantic_links": 17,
+      "total_links": 18
+    },
+    {
+      "id": "chunk:analysis/arch.md:0014",
+      "file_path": "analysis/arch.md",
+      "label": "Module Dependencies",
+      "references": 0,
+      "semantic_links": 16,
+      "total_links": 17
+    },
+    {
+      "id": "chunk:analysis/kgrag_analysis_20260312.md:0006",
+      "file_path": "analysis/kgrag_analysis_20260312.md",
+      "label": "\ud83d\udd25 Fan-In Ranking",
+      "references": 0,
+      "semantic_links": 16,
+      "total_links": 17
+    },
+    {
+      "id": "chunk:docs/MCP.md:0009",
+      "file_path": "docs/MCP.md",
+      "label": "`kgrag_stats`",
+      "references": 0,
+      "semantic_links": 16,
+      "total_links": 16
+    },
+    {
+      "id": "chunk:docs/README.md:0001",
+      "file_path": "docs/README.md",
+      "label": "\ud83c\udfaf Quick Start",
+      "references": 3,
+      "semantic_links": 15,
+      "total_links": 19
+    },
+    {
+      "id": "chunk:docs/README.md:0008",
+      "file_path": "docs/README.md",
+      "label": "Path 4: Troubleshooting",
+      "references": 1,
+      "semantic_links": 15,
+      "total_links": 16
+    },
+    {
+      "id": "chunk:analysis/arch.md:0012",
+      "file_path": "analysis/arch.md",
+      "label": "Module Dependencies",
+      "references": 0,
+      "semantic_links": 15,
+      "total_links": 16
+    },
+    {
+      "id": "chunk:analysis/arch.md:0016",
+      "file_path": "analysis/arch.md",
+      "label": "Module Dependencies",
+      "references": 0,
+      "semantic_links": 15,
+      "total_links": 16
+    },
+    {
+      "id": "chunk:analysis/kgrag_analysis_20260312.md:0035",
+      "file_path": "analysis/kgrag_analysis_20260312.md",
+      "label": "Graph Traversal Node Edge",
+      "references": 0,
+      "semantic_links": 15,
+      "total_links": 16
+    },
+    {
+      "id": "chunk:analysis/kgrag_analysis_20260314.md:0006",
+      "file_path": "analysis/kgrag_analysis_20260314.md",
+      "label": "\ud83d\udd25 Fan-In Ranking",
+      "references": 0,
+      "semantic_links": 15,
+      "total_links": 16
+    }
+  ],
+  "issues": [],
+  "vs_previous": null,
+  "vs_baseline": {
+    "nodes": 0,
+    "edges": 0,
+    "coverage_delta": 0.0,
+    "issues_delta": 0
+  }
+}
