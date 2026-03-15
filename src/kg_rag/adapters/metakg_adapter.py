@@ -6,6 +6,7 @@ Adapter wrapping the metakg package.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any
 
 from kg_rag.adapters.base import KGAdapter
@@ -176,3 +177,40 @@ class MetaKGAdapter(KGAdapter):
             return "\n".join(lines)
         except Exception as exc:  # pylint: disable=broad-exception-caught
             return header + f"\nAnalysis failed: {exc}\n"
+
+    def snapshot(self, version: str, label: str | None = None) -> dict[str, Any]:
+        """Capture a snapshot of this MetaKG instance.
+
+        Delegates to the backing ``MetaKGOrchestrator.snapshot()`` when
+        available, otherwise captures current :meth:`stats` as a timestamped
+        snapshot dict.
+
+        :param version: Semantic-version string for this snapshot.
+        :param label: Optional human-readable label.
+        :return: Serialisable snapshot dict.
+        """
+        gs = self._graph_stats()
+        snap: dict[str, Any] = {
+            "version": version,
+            "label": label,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "kind": "meta",
+            "kg_name": self.entry.name,
+            "node_count": gs["node_count"],
+            "edge_count": gs["edge_count"],
+            "status": "available" if self.is_available() else "unavailable",
+        }
+        if not self.is_available():
+            return snap
+        try:
+            self._load()
+            if callable(getattr(self._kg, "snapshot", None)):
+                result = self._kg.snapshot(version, label=label)
+                if isinstance(result, dict):
+                    return result
+                raw = getattr(result, "__dict__", None)
+                if raw is not None:
+                    return {k: v for k, v in raw.items() if not k.startswith("_")}
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
+        return snap
