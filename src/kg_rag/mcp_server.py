@@ -57,7 +57,7 @@ def _make_server(registry_path: Path | None = None) -> Server:
                     "properties": {
                         "kind": {
                             "type": "string",
-                            "enum": ["code", "doc", "meta"],
+                            "enum": ["code", "doc", "meta", "diary", "verse", "memory", "disulfide", "pdbfile"],
                             "description": "Optional filter by KG kind.",
                         }
                     },
@@ -86,7 +86,7 @@ def _make_server(registry_path: Path | None = None) -> Server:
                         "k": {"type": "integer", "default": 8, "description": "Hits per KG."},
                         "kinds": {
                             "type": "array",
-                            "items": {"type": "string", "enum": ["code", "doc", "meta"]},
+                            "items": {"type": "string", "enum": ["code", "doc", "meta", "diary", "verse", "memory", "disulfide", "pdbfile"]},
                             "description": "Restrict to these KG kinds.",
                         },
                     },
@@ -111,7 +111,7 @@ def _make_server(registry_path: Path | None = None) -> Server:
                         },
                         "kinds": {
                             "type": "array",
-                            "items": {"type": "string", "enum": ["code", "doc", "meta"]},
+                            "items": {"type": "string", "enum": ["code", "doc", "meta", "diary", "verse", "memory", "disulfide", "pdbfile"]},
                             "description": "Restrict to these KG kinds.",
                         },
                     },
