@@ -2,8 +2,11 @@
 cmd_corpus.py
 
 Corpus management commands: create, delete, add, remove, list, info, query.
+Person corpus sub-commands: person create/delete/add/remove/list/info/update.
 
 A corpus is a named collection of KG instances that can be queried as a group.
+A person corpus is a corpus enriched with personal metadata (birth year,
+address, email, etc.) holding all KGs relevant to a specific individual.
 """
 
 from __future__ import annotations
@@ -19,7 +22,8 @@ from rich.table import Table
 from kg_rag.cli.group import cli
 from kg_rag.cli.options import context_option, k_option, registry_option
 from kg_rag.corpus_registry import CorpusRegistry
-from kg_rag.primitives import CorpusEntry
+from kg_rag.person_registry import PersonCorpusRegistry
+from kg_rag.primitives import CorpusEntry, PersonCorpusEntry
 from kg_rag.registry import KGRegistry
 
 console = Console()
@@ -367,3 +371,306 @@ def corpus_query(corpus_name, query_text, k, as_json, registry):
     console.print(
         f"\n[dim]Total hits: {result.total_hits}  |  KGs queried: {result.kgs_queried}[/dim]"
     )
+
+
+# ===========================================================================
+# Person corpus subgroup  (kgrag corpus person ...)
+# ===========================================================================
+
+
+@corpus_group.group("person")
+def person_group():
+    """Manage person corpora — KG collections enriched with personal metadata."""
+
+
+# ---------------------------------------------------------------------------
+# corpus person create
+# ---------------------------------------------------------------------------
+
+
+@person_group.command("create")
+@click.argument("name")
+@click.option("--kg", "kg_refs", multiple=True, help="KG name or ID to include (repeatable).")
+@click.option("--birth-year", "birth_year", type=int, default=None, help="Year of birth.")
+@click.option("--birth-date", "birth_date", default=None, help="Full birth date (YYYY-MM-DD).")
+@click.option("--address", default="", help="Mailing/home address.")
+@click.option("--email", default="", help="Primary email address.")
+@click.option("--phone", default="", help="Primary phone number.")
+@click.option("--notes", default="", help="Free-form notes.")
+@click.option("--tag", "tags", multiple=True, help="Tags (repeatable).")
+@registry_option
+def person_create(name, kg_refs, birth_year, birth_date, address, email, phone, notes, tags, registry):
+    """Create a person corpus entry.
+
+    \b
+    NAME  Full name of the person
+
+    Example:
+
+    \b
+        kgrag corpus person create "Jane Doe" --birth-year 1985 \\
+            --kg jane-diary --kg jane-memories --email jane@example.com
+    """
+    db_path = Path(registry).resolve() if registry else None
+
+    with KGRegistry(db_path=db_path) as kg_reg, PersonCorpusRegistry(db_path=db_path) as per_reg:
+        kg_ids: list[str] = []
+        for ref in kg_refs:
+            entry = kg_reg.get(ref)
+            if entry is None:
+                console.print(f"[red]KG not found[/red]: {ref!r}")
+                raise SystemExit(1)
+            kg_ids.append(entry.id)
+
+        person = PersonCorpusEntry(
+            name=name,
+            kg_ids=kg_ids,
+            birth_year=birth_year,
+            birth_date=birth_date,
+            address=address,
+            email=email,
+            phone=phone,
+            notes=notes,
+            tags=list(tags),
+        )
+        per_reg.create(person)
+
+    console.print(f"[green]Created person corpus[/green] [bold]{name}[/bold] ({len(kg_ids)} KG(s))")
+    if birth_year:
+        console.print(f"  Born : {birth_date or birth_year}")
+    if address:
+        console.print(f"  Addr : {address}")
+    if email:
+        console.print(f"  Email: {email}")
+
+
+# ---------------------------------------------------------------------------
+# corpus person delete
+# ---------------------------------------------------------------------------
+
+
+@person_group.command("delete")
+@click.argument("name_or_id")
+@click.option("--yes", is_flag=True, help="Skip confirmation prompt.")
+@registry_option
+def person_delete(name_or_id, yes, registry):
+    """Delete a person corpus entry.
+
+    \b
+    NAME_OR_ID  Name or UUID of the person entry to delete
+    """
+    db_path = Path(registry).resolve() if registry else None
+
+    with PersonCorpusRegistry(db_path=db_path) as per_reg:
+        entry = per_reg.get(name_or_id)
+        if entry is None:
+            console.print(f"[red]Person not found[/red]: {name_or_id!r}")
+            raise SystemExit(1)
+        if not yes:
+            click.confirm(f"Delete person corpus '{entry.name}'?", abort=True)
+        per_reg.delete(name_or_id)
+
+    console.print(f"[green]Deleted person corpus[/green] [bold]{entry.name}[/bold]")
+
+
+# ---------------------------------------------------------------------------
+# corpus person add / remove
+# ---------------------------------------------------------------------------
+
+
+@person_group.command("add")
+@click.argument("person_name")
+@click.argument("kg_ref")
+@registry_option
+def person_add(person_name, kg_ref, registry):
+    """Add a KG to a person corpus.
+
+    \b
+    PERSON_NAME  Name or UUID of the person entry
+    KG_REF       Name or UUID of the KG to add
+    """
+    db_path = Path(registry).resolve() if registry else None
+
+    with KGRegistry(db_path=db_path) as kg_reg, PersonCorpusRegistry(db_path=db_path) as per_reg:
+        kg_entry = kg_reg.get(kg_ref)
+        if kg_entry is None:
+            console.print(f"[red]KG not found[/red]: {kg_ref!r}")
+            raise SystemExit(1)
+        updated = per_reg.add_kg(person_name, kg_entry.id)
+        if updated is None:
+            console.print(f"[red]Person not found[/red]: {person_name!r}")
+            raise SystemExit(1)
+
+    console.print(f"[green]Added[/green] {kg_ref} to person corpus [bold]{updated.name}[/bold]")
+
+
+@person_group.command("remove")
+@click.argument("person_name")
+@click.argument("kg_ref")
+@registry_option
+def person_remove(person_name, kg_ref, registry):
+    """Remove a KG from a person corpus.
+
+    \b
+    PERSON_NAME  Name or UUID of the person entry
+    KG_REF       Name or UUID of the KG to remove
+    """
+    db_path = Path(registry).resolve() if registry else None
+
+    with KGRegistry(db_path=db_path) as kg_reg, PersonCorpusRegistry(db_path=db_path) as per_reg:
+        kg_entry = kg_reg.get(kg_ref)
+        if kg_entry is None:
+            console.print(f"[red]KG not found[/red]: {kg_ref!r}")
+            raise SystemExit(1)
+        updated = per_reg.remove_kg(person_name, kg_entry.id)
+        if updated is None:
+            console.print(f"[red]Person not found[/red]: {person_name!r}")
+            raise SystemExit(1)
+
+    console.print(f"[green]Removed[/green] {kg_ref} from person corpus [bold]{updated.name}[/bold]")
+
+
+# ---------------------------------------------------------------------------
+# corpus person update
+# ---------------------------------------------------------------------------
+
+
+@person_group.command("update")
+@click.argument("name_or_id")
+@click.option("--birth-year", "birth_year", type=int, default=None, help="Year of birth.")
+@click.option("--birth-date", "birth_date", default=None, help="Full birth date (YYYY-MM-DD).")
+@click.option("--address", default=None, help="Mailing/home address.")
+@click.option("--email", default=None, help="Primary email address.")
+@click.option("--phone", default=None, help="Primary phone number.")
+@click.option("--notes", default=None, help="Free-form notes.")
+@registry_option
+def person_update(name_or_id, birth_year, birth_date, address, email, phone, notes, registry):
+    """Update personal metadata for a person corpus entry.
+
+    \b
+    NAME_OR_ID  Name or UUID of the person entry
+    """
+    db_path = Path(registry).resolve() if registry else None
+
+    updates = {k: v for k, v in {
+        "birth_year": birth_year,
+        "birth_date": birth_date,
+        "address": address,
+        "email": email,
+        "phone": phone,
+        "notes": notes,
+    }.items() if v is not None}
+
+    if not updates:
+        console.print("[yellow]No updates specified.[/yellow]")
+        return
+
+    with PersonCorpusRegistry(db_path=db_path) as per_reg:
+        updated = per_reg.update(name_or_id, **updates)
+        if updated is None:
+            console.print(f"[red]Person not found[/red]: {name_or_id!r}")
+            raise SystemExit(1)
+
+    console.print(f"[green]Updated[/green] [bold]{updated.name}[/bold]")
+    for k, v in updates.items():
+        console.print(f"  {k}: {v}")
+
+
+# ---------------------------------------------------------------------------
+# corpus person list
+# ---------------------------------------------------------------------------
+
+
+@person_group.command("list")
+@registry_option
+def person_list(registry):
+    """List all person corpus entries."""
+    db_path = Path(registry).resolve() if registry else None
+
+    with PersonCorpusRegistry(db_path=db_path) as per_reg:
+        entries = per_reg.list()
+        stats = per_reg.stats()
+
+    if not entries:
+        console.print("[yellow]No person corpora defined yet.[/yellow]")
+        console.print("Use [bold]kgrag corpus person create[/bold] to add one.")
+        return
+
+    table = Table(title="Person Corpora", box=box.ROUNDED, show_lines=False)
+    table.add_column("Name", style="bold cyan")
+    table.add_column("Born", justify="right")
+    table.add_column("KGs", justify="right")
+    table.add_column("Email")
+    table.add_column("Tags")
+    table.add_column("Updated")
+
+    for e in entries:
+        born = str(e.birth_year) if e.birth_year else "[dim]-[/dim]"
+        table.add_row(
+            e.name,
+            born,
+            str(e.size),
+            e.email or "[dim]-[/dim]",
+            ", ".join(e.tags) if e.tags else "[dim]-[/dim]",
+            e.updated_at.strftime("%Y-%m-%d"),
+        )
+
+    console.print(table)
+    console.print(
+        f"\n[dim]Total persons: {stats.total}  |  "
+        f"Total KG refs: {stats.total_kg_refs}  |  "
+        f"Registry: {stats.registry_path}[/dim]"
+    )
+
+
+# ---------------------------------------------------------------------------
+# corpus person info
+# ---------------------------------------------------------------------------
+
+
+@person_group.command("info")
+@click.argument("name_or_id")
+@registry_option
+def person_info(name_or_id, registry):
+    """Show detailed information about a person corpus entry.
+
+    \b
+    NAME_OR_ID  Name or UUID of the person entry
+    """
+    db_path = Path(registry).resolve() if registry else None
+
+    with KGRegistry(db_path=db_path) as kg_reg, PersonCorpusRegistry(db_path=db_path) as per_reg:
+        entry = per_reg.get(name_or_id)
+        if entry is None:
+            console.print(f"[red]Person not found[/red]: {name_or_id!r}")
+            raise SystemExit(1)
+
+        kg_lines = []
+        for kg_id in entry.kg_ids:
+            kg_entry = kg_reg.get(kg_id)
+            if kg_entry:
+                kg_lines.append(f"  [{kg_entry.kind.value}] {kg_entry.name} ({kg_id})")
+            else:
+                kg_lines.append(f"  [dim]missing[/dim] {kg_id}")
+
+    lines = [
+        f"[bold]ID[/bold]         : {entry.id}",
+        f"[bold]Name[/bold]       : {entry.name}",
+        f"[bold]Birth Year[/bold] : {entry.birth_year or '(unknown)'}",
+        f"[bold]Birth Date[/bold] : {entry.birth_date or '(unknown)'}",
+        f"[bold]Address[/bold]    : {entry.address or '(none)'}",
+        f"[bold]Email[/bold]      : {entry.email or '(none)'}",
+        f"[bold]Phone[/bold]      : {entry.phone or '(none)'}",
+        f"[bold]Notes[/bold]      : {entry.notes or '(none)'}",
+        f"[bold]KGs[/bold]        : {entry.size}",
+    ]
+    lines.extend(kg_lines)
+    lines += [
+        f"[bold]Tags[/bold]       : {', '.join(entry.tags) or '(none)'}",
+        f"[bold]Created[/bold]    : {entry.created_at.strftime('%Y-%m-%d %H:%M UTC')}",
+        f"[bold]Updated[/bold]    : {entry.updated_at.strftime('%Y-%m-%d %H:%M UTC')}",
+    ]
+    if entry.metadata:
+        lines.append(f"[bold]Metadata[/bold]   : {entry.metadata}")
+
+    console.print(Panel("\n".join(lines), title=f"[bold]Person: {entry.name}[/bold]", expand=False))
