@@ -234,3 +234,6 @@ __marimo__/
 .dockg/graph.sqlite
 .dockg/graph.sqlite*
 .dockg/models
+
+# MCP server config — machine-specific, never commit
+.mcp.json
