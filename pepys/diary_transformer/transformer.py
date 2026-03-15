@@ -275,6 +275,97 @@ class DiaryTransformer:
         self.save_entries(memory_entries, output_path, run_params)
         print(f"Transformation complete! Generated {len(memory_entries)} entries")
 
+    def ingest_to_corpus(
+        self,
+        input_path: str,
+        corpus_dir: str,
+        batch_size: int = 20,
+        seed: Optional[int] = None,
+        max_chunks_per_entry: int = 3,
+        source_file: Optional[str] = None,
+    ) -> int:
+        """Transform diary entries and write DocKG-compatible Markdown files.
+
+        Each chunk is written as a ``.md`` file with YAML frontmatter carrying
+        provenance fields that ``DocKG`` can index.  The ``source_file`` value
+        surfaces the original source ``.txt`` path — not the generated chunk
+        file — so cross-KG queries can cite the real document.
+
+        Directory layout::
+
+            <corpus_dir>/
+              entry_0042_chunk_0.md
+              entry_0042_chunk_1.md
+              ...
+
+        Frontmatter fields per chunk::
+
+            source_file: pepys_diary.txt
+            entry_index: 42
+            chunk_index: 0
+            timestamp: 1667-04-15T22:30
+            category: domestic
+            context: Home
+
+        :param input_path: Pipe-delimited diary source file.
+        :param corpus_dir: Destination directory for generated ``.md`` files.
+        :param batch_size: Number of diverse entries to sample (0 = all).
+        :param seed: RNG seed for reproducible diversity sampling.
+        :param max_chunks_per_entry: Max chunks emitted per entry.
+        :param source_file: Override provenance path written into frontmatter.
+            Defaults to the basename of *input_path*.
+        :return: Number of ``.md`` files written.
+        """
+        from pathlib import Path as _Path  # pylint: disable=import-outside-toplevel
+
+        out_dir = _Path(corpus_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+
+        src_label = source_file or _Path(input_path).name
+
+        entries = self._load_or_build_cache(input_path)
+        # Stamp source_file on every entry if not already set
+        for e in entries:
+            if not e.source_file:
+                e.source_file = src_label
+
+        if batch_size and len(entries) > batch_size:
+            selected = select_diverse_sample(
+                entries, batch_size, self.nlp, self.num_workers,
+                input_file_path=self._current_input_path, seed=seed,
+            )
+        else:
+            selected = entries
+
+        memory_entries = self.transform_entries(selected, seed=seed, max_chunks_per_entry=max_chunks_per_entry)
+
+        written = 0
+        chunk_counter: Dict[int, int] = {}
+        for mem in memory_entries:
+            eidx = mem.source_entry_index
+            cidx = chunk_counter.get(eidx, 0)
+            chunk_counter[eidx] = cidx + 1
+
+            src = mem.source_entry
+            sf = (src.source_file if src and src.source_file else src_label) if src else src_label
+
+            frontmatter = (
+                "---\n"
+                f"source_file: {sf}\n"
+                f"entry_index: {eidx}\n"
+                f"chunk_index: {cidx}\n"
+                f"timestamp: {mem.timestamp.strftime('%Y-%m-%dT%H:%M')}\n"
+                f"category: {mem.semantic_category}\n"
+                f"context: {mem.context_classification}\n"
+                "---\n"
+            )
+            fname = f"entry_{eidx:04d}_chunk_{cidx}.md"
+            (out_dir / fname).write_text(frontmatter + "\n" + mem.content + "\n", encoding="utf-8")
+            written += 1
+
+        print(f"✓ Wrote {written} chunk files to {corpus_dir}")
+        return written
+
     def transform_file_incremental(
         self,
         input_path: str,
