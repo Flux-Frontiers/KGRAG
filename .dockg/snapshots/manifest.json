@@ -1,18 +1,75 @@
 {
   "format": "1.0",
-  "last_update": "2026-03-14T23:56:47.746643+00:00",
+  "last_update": "2026-03-15T02:59:46.517639+00:00",
   "snapshots": [
     {
-      "commit": "6b164317d71c473afba007ddf7ffe831a5649051",
+      "key": "d0a3986bdfb2850c068205a44b102edcb3dfcfeb",
       "branch": "main",
-      "timestamp": "2026-03-14T05:03:47.466947+00:00",
+      "timestamp": "2026-03-15T02:44:55.828726+00:00",
       "version": "0.3.0",
-      "file": "6b164317d71c473afba007ddf7ffe831a5649051.json",
+      "file": "d0a3986bdfb2850c068205a44b102edcb3dfcfeb.json",
       "metrics": {
-        "nodes": 830,
-        "edges": 4619,
-        "coverage": 0.9044117647058822,
-        "issues": 0
+        "total_nodes": 2948,
+        "total_edges": 20346,
+        "meaningful_nodes": 2931,
+        "coverage_score": 0.9093701996927804,
+        "node_counts": {
+          "chunk": 651,
+          "document": 17,
+          "entity": 696,
+          "keyword": 693,
+          "section": 471,
+          "topic": 420
+        },
+        "edge_counts": {
+          "CONTAINS": 1122,
+          "CO_OCCURS_WITH": 13258,
+          "HAS_KEYWORD": 2423,
+          "HAS_TOPIC": 643,
+          "MENTIONS_ENTITY": 2465,
+          "NEXT": 168,
+          "REFERENCES": 53,
+          "SIMILAR_TO": 214
+        },
+        "issues_count": 0,
+        "complexity_median": 15.0
+      },
+      "deltas": {
+        "vs_previous": null,
+        "vs_baseline": null
+      }
+    },
+    {
+      "key": "476539843f04167f09b6ad6d0599eb6d8a69ae1b",
+      "branch": "main",
+      "timestamp": "2026-03-15T02:50:34.365020+00:00",
+      "version": "0.2.0",
+      "file": "476539843f04167f09b6ad6d0599eb6d8a69ae1b.json",
+      "metrics": {
+        "total_nodes": 2948,
+        "total_edges": 20346,
+        "meaningful_nodes": 2931,
+        "coverage_score": 0.9093701996927804,
+        "node_counts": {
+          "chunk": 651,
+          "document": 17,
+          "entity": 696,
+          "keyword": 693,
+          "section": 471,
+          "topic": 420
+        },
+        "edge_counts": {
+          "CONTAINS": 1122,
+          "CO_OCCURS_WITH": 13258,
+          "HAS_KEYWORD": 2423,
+          "HAS_TOPIC": 643,
+          "MENTIONS_ENTITY": 2465,
+          "NEXT": 168,
+          "REFERENCES": 53,
+          "SIMILAR_TO": 214
+        },
+        "issues_count": 0,
+        "complexity_median": 15.0
       },
       "deltas": {
         "vs_previous": null,
@@ -25,82 +82,36 @@
       }
     },
     {
-      "commit": "e48f43617579ec627fea38d47a031ad80646c118",
+      "key": "2010f733034f5a3ec63efe47e80c9ad4254fe21a",
       "branch": "main",
-      "timestamp": "2026-03-14T05:22:41.986809+00:00",
+      "timestamp": "2026-03-15T02:59:46.516610+00:00",
       "version": "0.3.0",
-      "file": "e48f43617579ec627fea38d47a031ad80646c118.json",
+      "file": "2010f733034f5a3ec63efe47e80c9ad4254fe21a.json",
       "metrics": {
-        "nodes": 830,
-        "edges": 4619,
-        "coverage": 0.9044117647058822,
-        "issues": 0
-      },
-      "deltas": {
-        "vs_previous": null,
-        "vs_baseline": {
-          "nodes": 0,
-          "edges": 0,
-          "coverage_delta": 0.0,
-          "issues_delta": 0
-        }
-      }
-    },
-    {
-      "commit": "faf7273de777e1acd3defe103161537f34a2520c",
-      "branch": "main",
-      "timestamp": "2026-03-14T05:27:57.120286+00:00",
-      "version": "0.3.0",
-      "file": "faf7273de777e1acd3defe103161537f34a2520c.json",
-      "metrics": {
-        "nodes": 830,
-        "edges": 4619,
-        "coverage": 0.9044117647058822,
-        "issues": 0
-      },
-      "deltas": {
-        "vs_previous": null,
-        "vs_baseline": {
-          "nodes": 0,
-          "edges": 0,
-          "coverage_delta": 0.0,
-          "issues_delta": 0
-        }
-      }
-    },
-    {
-      "commit": "291abdd05bc44b01cd45b977adaa8b738873444b",
-      "branch": "main",
-      "timestamp": "2026-03-14T05:28:35.540008+00:00",
-      "version": "0.3.0",
-      "file": "291abdd05bc44b01cd45b977adaa8b738873444b.json",
-      "metrics": {
-        "nodes": 830,
-        "edges": 4619,
-        "coverage": 0.9044117647058822,
-        "issues": 0
-      },
-      "deltas": {
-        "vs_previous": null,
-        "vs_baseline": {
-          "nodes": 0,
-          "edges": 0,
-          "coverage_delta": 0.0,
-          "issues_delta": 0
-        }
-      }
-    },
-    {
-      "commit": "6464426f81349bb2f40a25fcb6dafbe4595622b0",
-      "branch": "main",
-      "timestamp": "2026-03-14T23:56:47.745662+00:00",
-      "version": "0.3.0",
-      "file": "6464426f81349bb2f40a25fcb6dafbe4595622b0.json",
-      "metrics": {
-        "nodes": 830,
-        "edges": 4619,
-        "coverage": 0.9044117647058822,
-        "issues": 0
+        "total_nodes": 2948,
+        "total_edges": 20346,
+        "meaningful_nodes": 2931,
+        "coverage_score": 0.9093701996927804,
+        "node_counts": {
+          "chunk": 651,
+          "document": 17,
+          "entity": 696,
+          "keyword": 693,
+          "section": 471,
+          "topic": 420
+        },
+        "edge_counts": {
+          "CONTAINS": 1122,
+          "CO_OCCURS_WITH": 13258,
+          "HAS_KEYWORD": 2423,
+          "HAS_TOPIC": 643,
+          "MENTIONS_ENTITY": 2465,
+          "NEXT": 168,
+          "REFERENCES": 53,
+          "SIMILAR_TO": 214
+        },
+        "issues_count": 0,
+        "complexity_median": 15.0
       },
       "deltas": {
         "vs_previous": null,

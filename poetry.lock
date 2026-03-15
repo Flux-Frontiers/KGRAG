@@ -682,12 +682,12 @@ colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
 name = "code-kg"
-version = "0.8.1"
+version = "0.9.0"
 description = "A tool to build a searchable knowledge graph from Python repositories"
 optional = false
-python-versions = ">3.10,<3.14"
+python-versions = ">=3.12,<3.14"
 groups = ["main"]
-markers = "extra == \"code-kg\""
+markers = "extra == \"doc-kg\" or extra == \"dock-kg\""
 files = []
 develop = false
 
@@ -701,6 +701,7 @@ rich = "^14.3.3"
 sentence-transformers = ">=2.7.0"
 
 [package.extras]
+doc-kg = ["doc-kg @ git+https://github.com/Flux-Frontiers/doc_kg.git"]
 viz = ["plotly (>=5.14.0)", "pyvis (>=0.3.2)", "streamlit (>=1.35.0)"]
 viz3d = ["PyQt5 (>=5.15.0)", "markdown (>=3.6)", "param (>=2.0.0)", "pyvista[jupyter] (>=0.44.0)", "pyvistaqt (>=0.11.0)", "trame-vtk (>=2.0.0)"]
 
@@ -708,7 +709,7 @@ viz3d = ["PyQt5 (>=5.15.0)", "markdown (>=3.6)", "param (>=2.0.0)", "pyvista[jup
 type = "git"
 url = "https://github.com/Flux-Frontiers/code_kg.git"
 reference = "HEAD"
-resolved_reference = "44775c7096f330738cb38301cf1351e5f389528a"
+resolved_reference = "6b7705e9eedcfd04f9b1e7b9262b81e9231539ae"
 
 [[package]]
 name = "colorama"
@@ -1203,6 +1204,7 @@ develop = false
 
 [package.dependencies]
 click = ">=8.1.0"
+code-kg = {git = "https://github.com/Flux-Frontiers/code_kg.git"}
 lancedb = ">=0.29.0"
 markdown-it-py = ">=3.0.0"
 mcp = ">=1.0.0"
@@ -1219,7 +1221,7 @@ viz = []
 type = "git"
 url = "https://github.com/Flux-Frontiers/doc_kg.git"
 reference = "HEAD"
-resolved_reference = "16f551f5d246a2e9ffa580c1b4958509ba0715a1"
+resolved_reference = "496fa9784ed8f7abd4ed5daba2ce065149988d9f"
 
 [[package]]
 name = "docstring-parser"
@@ -6852,7 +6854,7 @@ multidict = ">=4.0"
 propcache = ">=0.2.1"
 
 [extras]
-code-kg = ["code-kg"]
+code-kg = []
 doc-kg = ["doc-kg"]
 dock-kg = ["doc-kg"]
 viz = ["plotly", "pyvis", "streamlit"]
@@ -6861,4 +6863,4 @@ viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">3.12,<3.14"
-content-hash = "cbe0e8a7b1c08fb2303bdf76d5250ba8f6b24c3dbf7ad69f123ad44e55738eec"
+content-hash = "50742f2d45201e1c088942ac5d0b6aeacfe2ac7506865e2f381ab72cbf976f92"
