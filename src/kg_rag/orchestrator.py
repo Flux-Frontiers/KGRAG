@@ -13,7 +13,9 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from kg_rag.adapters import KGAdapter, make_adapter
+from kg_rag.corpus_registry import CorpusRegistry
 from kg_rag.primitives import (
+    CorpusEntry,
     CrossHit,
     CrossQueryResult,
     CrossSnippet,
@@ -44,6 +46,7 @@ class KGRAG:
         strict: bool = False,
     ) -> None:
         self._registry = KGRegistry(db_path=registry_path)
+        self._corpus_registry = CorpusRegistry(db_path=registry_path)
         self._strict = strict
         self._adapters: dict[str, KGAdapter] = {}  # name → adapter
 
@@ -52,9 +55,15 @@ class KGRAG:
         """The underlying KGRegistry."""
         return self._registry
 
+    @property
+    def corpus_registry(self) -> CorpusRegistry:
+        """The underlying CorpusRegistry."""
+        return self._corpus_registry
+
     def close(self) -> None:
         """Release all resources."""
         self._registry.close()
+        self._corpus_registry.close()
 
     def __enter__(self) -> KGRAG:
         return self
@@ -209,3 +218,122 @@ class KGRAG:
         if adapter is None:
             return f"KG '{kg_name}' is not available (library not installed or DB not built)."
         return adapter.analyze()
+
+    # ------------------------------------------------------------------
+    # Corpus-scoped operations
+    # ------------------------------------------------------------------
+
+    def _resolve_corpus_entries(self, corpus_name: str) -> list[KGEntry]:
+        """Resolve a corpus name to its constituent KGEntry objects.
+
+        :param corpus_name: Name or UUID of the corpus.
+        :return: List of KGEntry objects in the corpus (missing ones skipped).
+        :raises KeyError: If corpus not found in registry.
+        """
+        corpus = self._corpus_registry.get(corpus_name)
+        if corpus is None:
+            raise KeyError(f"Corpus '{corpus_name}' not found.")
+        return self._corpus_registry.resolve_kg_entries(corpus_name, self._registry)
+
+    def query_corpus(
+        self,
+        corpus_name: str,
+        q: str,
+        k: int = 8,
+    ) -> CrossQueryResult:
+        """Federated query scoped to a named corpus.
+
+        :param corpus_name: Name or UUID of the corpus to query.
+        :param q: Natural-language query string.
+        :param k: Max hits to return per KG.
+        :return: Aggregated and globally ranked CrossQueryResult.
+        :raises KeyError: If corpus not found.
+        """
+        entries = self._resolve_corpus_entries(corpus_name)
+        all_hits: list[CrossHit] = []
+        by_kg: dict[str, list[CrossHit]] = {}
+        kgs_queried = 0
+
+        for entry in entries:
+            adapter = self._get_adapter(entry)
+            if adapter is None:
+                continue
+            try:
+                hits = adapter.query(q, k=k)
+                all_hits.extend(hits)
+                by_kg[entry.name] = hits
+                kgs_queried += 1
+            except Exception:
+                if self._strict:
+                    raise
+
+        all_hits.sort(key=lambda h: h.score, reverse=True)
+        return CrossQueryResult(
+            query=q,
+            hits=all_hits,
+            by_kg=by_kg,
+            total_hits=len(all_hits),
+            kgs_queried=kgs_queried,
+        )
+
+    def pack_corpus(
+        self,
+        corpus_name: str,
+        q: str,
+        k: int = 8,
+        context: int = 5,
+    ) -> CrossSnippetPack:
+        """Federated snippet pack scoped to a named corpus.
+
+        :param corpus_name: Name or UUID of the corpus.
+        :param q: Natural-language query string.
+        :param k: Max snippets per KG.
+        :param context: Lines of context for code snippets.
+        :return: CrossSnippetPack with all snippets ranked by score.
+        :raises KeyError: If corpus not found.
+        """
+        entries = self._resolve_corpus_entries(corpus_name)
+        all_snippets: list[CrossSnippet] = []
+        kgs_queried = 0
+
+        for entry in entries:
+            adapter = self._get_adapter(entry)
+            if adapter is None:
+                continue
+            try:
+                snippets = adapter.pack(q, k=k, context=context)
+                all_snippets.extend(snippets)
+                kgs_queried += 1
+            except Exception:
+                if self._strict:
+                    raise
+
+        all_snippets.sort(key=lambda s: s.score, reverse=True)
+        approx_tokens = sum(len(s.content.split()) * 4 // 3 for s in all_snippets)
+
+        return CrossSnippetPack(
+            query=q,
+            snippets=all_snippets,
+            total_tokens_approx=approx_tokens,
+            kgs_queried=kgs_queried,
+        )
+
+    def stats_corpus(self, corpus_name: str) -> dict:
+        """Collect statistics from all KGs in a named corpus.
+
+        :param corpus_name: Name or UUID of the corpus.
+        :return: Dict mapping KG name to stats dict.
+        :raises KeyError: If corpus not found.
+        """
+        entries = self._resolve_corpus_entries(corpus_name)
+        out: dict = {}
+        for entry in entries:
+            adapter = self._get_adapter(entry)
+            if adapter is None:
+                out[entry.name] = {"available": False, "kind": entry.kind.value}
+                continue
+            try:
+                out[entry.name] = {"available": True, **adapter.stats()}
+            except Exception as e:
+                out[entry.name] = {"available": False, "error": str(e)}
+        return out

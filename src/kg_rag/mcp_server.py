@@ -5,11 +5,19 @@ KGRAG MCP server — exposes cross-KG tools for Claude Code, Cursor, and other
 MCP-compatible agents.
 
 Tools exposed:
-    kgrag_stats()               — Registry summary and per-KG stats
-    kgrag_query(q, k, kinds)    — Federated semantic query
-    kgrag_pack(q, k, kinds)     — Federated snippet pack
-    kgrag_list()                — List all registered KGs
-    kgrag_info(name)            — Detailed info for a single KG
+    kgrag_stats()                          — Registry summary and per-KG stats
+    kgrag_query(q, k, kinds)               — Federated semantic query
+    kgrag_pack(q, k, kinds)                — Federated snippet pack
+    kgrag_list()                           — List all registered KGs
+    kgrag_info(name)                       — Detailed info for a single KG
+    kgrag_corpus_list()                    — List all corpora
+    kgrag_corpus_info(name)                — Detailed info for a corpus
+    kgrag_corpus_create(name, kg_names)    — Create a corpus
+    kgrag_corpus_delete(name)              — Delete a corpus
+    kgrag_corpus_add(corpus, kg)           — Add KG to corpus
+    kgrag_corpus_remove(corpus, kg)        — Remove KG from corpus
+    kgrag_corpus_query(corpus, q, k)       — Query within a corpus
+    kgrag_corpus_pack(corpus, q, k)        — Snippet pack within a corpus
 """
 
 from __future__ import annotations
@@ -23,8 +31,9 @@ from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
 
+from kg_rag.corpus_registry import CorpusRegistry
 from kg_rag.orchestrator import KGRAG
-from kg_rag.primitives import KGKind
+from kg_rag.primitives import CorpusEntry, KGKind
 from kg_rag.registry import KGRegistry, default_registry_path
 
 
@@ -107,6 +116,115 @@ def _make_server(registry_path: Path | None = None) -> Server:
                         },
                     },
                     "required": ["q"],
+                },
+            ),
+            # ------ Corpus tools ------
+            Tool(
+                name="kgrag_corpus_list",
+                description="List all corpora in the KGRAG registry.",
+                inputSchema={"type": "object", "properties": {}, "required": []},
+            ),
+            Tool(
+                name="kgrag_corpus_info",
+                description="Detailed information about a corpus by name or id.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string", "description": "Corpus name or UUID."}
+                    },
+                    "required": ["name"],
+                },
+            ),
+            Tool(
+                name="kgrag_corpus_create",
+                description="Create a new corpus grouping one or more registered KGs.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string", "description": "Corpus name."},
+                        "kg_names": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "List of KG names or UUIDs to include.",
+                        },
+                        "description": {
+                            "type": "string",
+                            "default": "",
+                            "description": "Optional description.",
+                        },
+                        "tags": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Optional tags.",
+                        },
+                    },
+                    "required": ["name"],
+                },
+            ),
+            Tool(
+                name="kgrag_corpus_delete",
+                description="Delete a corpus from the registry (KGs themselves are not removed).",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "name": {"type": "string", "description": "Corpus name or UUID."}
+                    },
+                    "required": ["name"],
+                },
+            ),
+            Tool(
+                name="kgrag_corpus_add",
+                description="Add a KG to an existing corpus.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "corpus": {"type": "string", "description": "Corpus name or UUID."},
+                        "kg": {"type": "string", "description": "KG name or UUID to add."},
+                    },
+                    "required": ["corpus", "kg"],
+                },
+            ),
+            Tool(
+                name="kgrag_corpus_remove",
+                description="Remove a KG from a corpus.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "corpus": {"type": "string", "description": "Corpus name or UUID."},
+                        "kg": {"type": "string", "description": "KG name or UUID to remove."},
+                    },
+                    "required": ["corpus", "kg"],
+                },
+            ),
+            Tool(
+                name="kgrag_corpus_query",
+                description="Federated semantic query scoped to a named corpus.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "corpus": {"type": "string", "description": "Corpus name or UUID."},
+                        "q": {"type": "string", "description": "Natural-language query."},
+                        "k": {"type": "integer", "default": 8, "description": "Hits per KG."},
+                    },
+                    "required": ["corpus", "q"],
+                },
+            ),
+            Tool(
+                name="kgrag_corpus_pack",
+                description="Federated snippet pack scoped to a named corpus.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "corpus": {"type": "string", "description": "Corpus name or UUID."},
+                        "q": {"type": "string", "description": "Natural-language query."},
+                        "k": {"type": "integer", "default": 8, "description": "Snippets per KG."},
+                        "context": {
+                            "type": "integer",
+                            "default": 5,
+                            "description": "Lines of context.",
+                        },
+                    },
+                    "required": ["corpus", "q"],
                 },
             ),
         ]
@@ -204,6 +322,147 @@ def _make_server(registry_path: Path | None = None) -> Server:
             kinds = [KGKind.from_str(kk) for kk in kinds_raw] if kinds_raw else None
             with KGRAG(registry_path=reg_path) as kgrag:
                 pack_result = kgrag.pack(q, k=k, context=context, kinds=kinds)
+            return [TextContent(type="text", text=pack_result.render())]
+
+        # ------ Corpus tools ------
+
+        if name == "kgrag_corpus_list":
+            with CorpusRegistry(db_path=reg_path) as corp_reg:
+                entries = corp_reg.list()
+                stats = corp_reg.stats()
+            data = {
+                "total": stats.total,
+                "total_kg_refs": stats.total_kg_refs,
+                "corpora": [
+                    {
+                        "id": e.id,
+                        "name": e.name,
+                        "description": e.description,
+                        "size": e.size,
+                        "kg_ids": e.kg_ids,
+                        "tags": e.tags,
+                        "updated_at": e.updated_at.isoformat(),
+                    }
+                    for e in entries
+                ],
+            }
+            return [TextContent(type="text", text=json.dumps(data, indent=2))]
+
+        if name == "kgrag_corpus_info":
+            corpus_name = arguments["name"]
+            with KGRegistry(db_path=reg_path) as kg_reg, CorpusRegistry(db_path=reg_path) as corp_reg:
+                entry = corp_reg.get(corpus_name)
+                if entry is None:
+                    return [TextContent(type="text", text=json.dumps({"error": f"Corpus not found: {corpus_name}"}))]
+                kg_details = []
+                for kg_id in entry.kg_ids:
+                    kg_entry = kg_reg.get(kg_id)
+                    if kg_entry:
+                        kg_details.append({"id": kg_id, "name": kg_entry.name, "kind": kg_entry.kind.value, "built": kg_entry.is_built})
+                    else:
+                        kg_details.append({"id": kg_id, "name": None, "kind": None, "built": False})
+            data = {
+                "id": entry.id,
+                "name": entry.name,
+                "description": entry.description,
+                "size": entry.size,
+                "kgs": kg_details,
+                "tags": entry.tags,
+                "metadata": entry.metadata,
+                "created_at": entry.created_at.isoformat(),
+                "updated_at": entry.updated_at.isoformat(),
+            }
+            return [TextContent(type="text", text=json.dumps(data, indent=2))]
+
+        if name == "kgrag_corpus_create":
+            corpus_name = arguments["name"]
+            kg_names = arguments.get("kg_names", [])
+            description = arguments.get("description", "")
+            tags = arguments.get("tags", [])
+            with KGRegistry(db_path=reg_path) as kg_reg, CorpusRegistry(db_path=reg_path) as corp_reg:
+                kg_ids = []
+                missing = []
+                for ref in kg_names:
+                    kg_entry = kg_reg.get(ref)
+                    if kg_entry:
+                        kg_ids.append(kg_entry.id)
+                    else:
+                        missing.append(ref)
+                if missing:
+                    return [TextContent(type="text", text=json.dumps({"error": f"KGs not found: {missing}"}))]
+                corpus = CorpusEntry(name=corpus_name, description=description, kg_ids=kg_ids, tags=tags)
+                corp_reg.create(corpus)
+            return [TextContent(type="text", text=json.dumps({"created": corpus_name, "size": len(kg_ids)}))]
+
+        if name == "kgrag_corpus_delete":
+            corpus_name = arguments["name"]
+            with CorpusRegistry(db_path=reg_path) as corp_reg:
+                deleted = corp_reg.delete(corpus_name)
+            result = {"deleted": corpus_name} if deleted else {"error": f"Corpus not found: {corpus_name}"}
+            return [TextContent(type="text", text=json.dumps(result))]
+
+        if name == "kgrag_corpus_add":
+            corpus_name = arguments["corpus"]
+            kg_ref = arguments["kg"]
+            with KGRegistry(db_path=reg_path) as kg_reg, CorpusRegistry(db_path=reg_path) as corp_reg:
+                kg_entry = kg_reg.get(kg_ref)
+                if kg_entry is None:
+                    return [TextContent(type="text", text=json.dumps({"error": f"KG not found: {kg_ref}"}))]
+                updated = corp_reg.add_kg(corpus_name, kg_entry.id)
+                if updated is None:
+                    return [TextContent(type="text", text=json.dumps({"error": f"Corpus not found: {corpus_name}"}))]
+            return [TextContent(type="text", text=json.dumps({"corpus": corpus_name, "added": kg_ref, "size": updated.size}))]
+
+        if name == "kgrag_corpus_remove":
+            corpus_name = arguments["corpus"]
+            kg_ref = arguments["kg"]
+            with KGRegistry(db_path=reg_path) as kg_reg, CorpusRegistry(db_path=reg_path) as corp_reg:
+                kg_entry = kg_reg.get(kg_ref)
+                if kg_entry is None:
+                    return [TextContent(type="text", text=json.dumps({"error": f"KG not found: {kg_ref}"}))]
+                updated = corp_reg.remove_kg(corpus_name, kg_entry.id)
+                if updated is None:
+                    return [TextContent(type="text", text=json.dumps({"error": f"Corpus not found: {corpus_name}"}))]
+            return [TextContent(type="text", text=json.dumps({"corpus": corpus_name, "removed": kg_ref, "size": updated.size}))]
+
+        if name == "kgrag_corpus_query":
+            corpus_name = arguments["corpus"]
+            q = arguments["q"]
+            k = int(arguments.get("k", 8))
+            with KGRAG(registry_path=reg_path) as kgrag:
+                try:
+                    result = kgrag.query_corpus(corpus_name, q, k=k)
+                except KeyError as e:
+                    return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
+            data = {
+                "query": result.query,
+                "corpus": corpus_name,
+                "total_hits": result.total_hits,
+                "kgs_queried": result.kgs_queried,
+                "hits": [
+                    {
+                        "kg": h.kg_name,
+                        "kind": h.kg_kind.value,
+                        "name": h.name,
+                        "score": round(h.score, 4),
+                        "summary": h.summary,
+                        "source_path": h.source_path,
+                    }
+                    for h in result.hits
+                ],
+            }
+            return [TextContent(type="text", text=json.dumps(data, indent=2))]
+
+        if name == "kgrag_corpus_pack":
+            corpus_name = arguments["corpus"]
+            q = arguments["q"]
+            k = int(arguments.get("k", 8))
+            context = int(arguments.get("context", 5))
+            with KGRAG(registry_path=reg_path) as kgrag:
+                try:
+                    pack_result = kgrag.pack_corpus(corpus_name, q, k=k, context=context)
+                except KeyError as e:
+                    return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
             return [TextContent(type="text", text=pack_result.render())]
 
         return [TextContent(type="text", text=json.dumps({"error": f"Unknown tool: {name}"}))]
