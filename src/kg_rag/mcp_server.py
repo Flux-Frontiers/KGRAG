@@ -25,6 +25,8 @@ Tools exposed:
     kgrag_person_add(person, kg)           — Add KG to a person corpus
     kgrag_person_remove(person, kg)        — Remove KG from a person corpus
     kgrag_person_update(name, ...)         — Update personal metadata
+    kgrag_person_query(person, q, k)       — Query within a person corpus
+    kgrag_person_pack(person, q, k)        — Snippet pack within a person corpus
 """
 
 from __future__ import annotations
@@ -65,7 +67,7 @@ def _make_server(registry_path: Path | None = None) -> Server:
                     "properties": {
                         "kind": {
                             "type": "string",
-                            "enum": ["code", "doc", "meta", "diary", "verse", "memory", "disulfide", "pdbfile", "legal"],
+                            "enum": ["code", "doc", "meta", "diary", "verse", "memory", "disulfide", "pdbfile", "legal", "person"],
                             "description": "Optional filter by KG kind.",
                         }
                     },
@@ -94,7 +96,7 @@ def _make_server(registry_path: Path | None = None) -> Server:
                         "k": {"type": "integer", "default": 8, "description": "Hits per KG."},
                         "kinds": {
                             "type": "array",
-                            "items": {"type": "string", "enum": ["code", "doc", "meta", "diary", "verse", "memory", "disulfide", "pdbfile", "legal"]},
+                            "items": {"type": "string", "enum": ["code", "doc", "meta", "diary", "verse", "memory", "disulfide", "pdbfile", "legal", "person"]},
                             "description": "Restrict to these KG kinds.",
                         },
                     },
@@ -119,7 +121,7 @@ def _make_server(registry_path: Path | None = None) -> Server:
                         },
                         "kinds": {
                             "type": "array",
-                            "items": {"type": "string", "enum": ["code", "doc", "meta", "diary", "verse", "memory", "disulfide", "pdbfile", "legal"]},
+                            "items": {"type": "string", "enum": ["code", "doc", "meta", "diary", "verse", "memory", "disulfide", "pdbfile", "legal", "person"]},
                             "description": "Restrict to these KG kinds.",
                         },
                     },
@@ -317,6 +319,33 @@ def _make_server(registry_path: Path | None = None) -> Server:
                         "notes": {"type": "string", "description": "Free-form notes."},
                     },
                     "required": ["name"],
+                },
+            ),
+            Tool(
+                name="kgrag_person_query",
+                description="Federated semantic query scoped to a person corpus.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "person": {"type": "string", "description": "Person name or UUID."},
+                        "q": {"type": "string", "description": "Natural-language query."},
+                        "k": {"type": "integer", "default": 8, "description": "Hits per KG."},
+                    },
+                    "required": ["person", "q"],
+                },
+            ),
+            Tool(
+                name="kgrag_person_pack",
+                description="Federated snippet pack scoped to a person corpus.",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "person": {"type": "string", "description": "Person name or UUID."},
+                        "q": {"type": "string", "description": "Natural-language query."},
+                        "k": {"type": "integer", "default": 8, "description": "Snippets per KG."},
+                        "context": {"type": "integer", "default": 5, "description": "Lines of context."},
+                    },
+                    "required": ["person", "q"],
                 },
             ),
         ]
@@ -679,6 +708,46 @@ def _make_server(registry_path: Path | None = None) -> Server:
                 if updated is None:
                     return [TextContent(type="text", text=json.dumps({"error": f"Person not found: {person_name}"}))]
             return [TextContent(type="text", text=json.dumps({"updated": person_name, "fields": list(fields.keys())}))]
+
+        if name == "kgrag_person_query":
+            person_name = arguments["person"]
+            q = arguments["q"]
+            k = int(arguments.get("k", 8))
+            with KGRAG(registry_path=reg_path) as kgrag:
+                try:
+                    result = kgrag.query_person(person_name, q, k=k)
+                except KeyError as e:
+                    return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
+            data = {
+                "query": result.query,
+                "person": person_name,
+                "total_hits": result.total_hits,
+                "kgs_queried": result.kgs_queried,
+                "hits": [
+                    {
+                        "kg": h.kg_name,
+                        "kind": h.kg_kind.value,
+                        "name": h.name,
+                        "score": round(h.score, 4),
+                        "summary": h.summary,
+                        "source_path": h.source_path,
+                    }
+                    for h in result.hits
+                ],
+            }
+            return [TextContent(type="text", text=json.dumps(data, indent=2))]
+
+        if name == "kgrag_person_pack":
+            person_name = arguments["person"]
+            q = arguments["q"]
+            k = int(arguments.get("k", 8))
+            context = int(arguments.get("context", 5))
+            with KGRAG(registry_path=reg_path) as kgrag:
+                try:
+                    pack_result = kgrag.pack_person(person_name, q, k=k, context=context)
+                except KeyError as e:
+                    return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
+            return [TextContent(type="text", text=pack_result.render())]
 
         return [TextContent(type="text", text=json.dumps({"error": f"Unknown tool: {name}"}))]
 
