@@ -20,6 +20,11 @@ class KGKind(StrEnum):
     CODE = "code"
     DOC = "doc"
     META = "meta"
+    DIARY = "diary"
+    VERSE = "verse"
+    MEMORY = "memory"
+    DISULFIDE = "disulfide"
+    PDBFILE = "pdbfile"
 
     @classmethod
     def from_str(cls, s: str) -> KGKind:
