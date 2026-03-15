@@ -1,0 +1,1686 @@
+categories:
+  weather:
+    - weather
+    - temperature
+    - rain
+    - snow
+    - sunny
+    - cloudy
+    - storm
+    - forecast
+    - climate
+    - humidity
+    - wind
+    - precipitation
+    - hot
+    - cold
+    - warm
+    - cool
+    - degrees
+    - fahrenheit
+    - celsius
+    - meteorology
+    - barometric pressure
+    - tornado
+    - hurricane
+    - thunderstorm
+    - blizzard
+    - drought
+    - flood
+    - hail
+    - fog
+    - mist
+    - overcast
+    - partly cloudy
+    - clear skies
+  academic:
+    - phd
+    - doctorate
+    - professor
+    - university
+    - postdoc
+    - biophysics
+    - structural biology
+    - biochemistry
+    - research scientist
+    - college
+    - degree
+    - study
+    - studied
+    - studying
+    - student
+    - graduate
+    - graduated
+    - graduating
+    - graduation
+    - education
+    - school
+    - biology
+    - medical school
+    - johns hopkins
+    - mit
+  health:
+    - hospital
+    - patient
+    - symptom
+    - diagnosis
+    - therapy
+    - healthcare
+    - surgery
+    - treatment
+    - allergy
+    - allergic
+    - doctor
+    - medicine
+    - medical
+    - illness
+    - sick
+    - diet
+    - exercise
+    - fitness
+    - peanut
+  finance:
+    - stock
+    - investment
+    - retirement
+    - 401k
+    - dividend
+    - portfolio
+    - bond market
+    - capital gains
+    - interest rate
+    - money
+    - salary
+    - income
+    - budget
+    - savings
+    - financial
+  technology:
+    - ai
+    - machine learning
+    - deep learning
+    - neural network
+    - artificial intelligence
+    - quantum computing
+    - blockchain
+    - programming
+    - software development
+    - computer
+    - tech
+    - google
+    - microsoft
+    - apple
+    - software
+    - hardware
+  astronomy:
+    - astronomy
+    - astrophysics
+    - telescope
+    - stars
+    - planets
+    - cosmology
+    - galaxy
+    - observatory
+    - solar system
+    - black hole
+    - space
+    - universe
+    - mars
+    - moon
+  automotive:
+    - bmw
+    - engine
+    - horsepower
+    - torque
+    - braking system
+    - vehicle
+    - drivetrain
+    - suspension
+    - aerodynamics
+    - winter tires
+    - car
+    - truck
+    - motorcycle
+    - driving
+    - drive
+    - drove
+  personal_info:
+    - name
+    - age
+    - birthday
+    - born
+    - live
+    - address
+    - phone
+    - email
+    - john
+    - years
+    - old
+  work:
+    - work
+    - job
+    - career
+    - company
+    - office
+    - boss
+    - colleague
+    - employed
+    - unemployment
+    - business
+    - profession
+    - occupation
+    - genius
+  family:
+    - family
+    - parent
+    - mother
+    - father
+    - mom
+    - dad
+    - sibling
+    - brother
+    - sister
+    - child
+    - kids
+    - children
+    - married
+    - spouse
+    - wife
+    - husband
+    - grandma
+    - grandpa
+    - cousin
+    - niece
+    - nephew
+    - woman
+    - man
+  hobbies:
+    - hobby
+    - play
+    - watch
+    - read
+    - listen
+    - music
+    - sport
+    - game
+    - fishing
+    - travel
+    - piano
+    - guitar
+    - singing
+    - dancing
+    - cooking
+    - painting
+    - photography
+    - hiking
+    - running
+    - swimming
+    - cycling
+    - gardening
+    - knitting
+    - sewing
+    - woodworking
+    - crafts
+    - drawing
+    - writing
+    - blogging
+    - collecting
+    - chess
+    - cards
+    - board games
+    - video games
+    - movies
+    - books
+    - theater
+    - concerts
+    - festivals
+    - camping
+    - skiing
+    - surfing
+    - yoga
+    - meditation
+    - martial arts
+    - tennis
+    - golf
+    - basketball
+    - football
+    - soccer
+    - baseball
+    - volleyball
+    - rc airplanes
+    - remote control
+    - model aircraft
+    - flying
+    - fly
+    - aviation
+  food:
+    - food
+    - cuisine
+    - restaurant
+    - recipe
+    - cooking
+    - meal
+    - breakfast
+    - lunch
+    - dinner
+    - snack
+    - dessert
+    - appetizer
+    - entree
+    - vegetarian
+    - vegan
+    - pescatarian
+    - meat
+    - seafood
+    - chicken
+    - beef
+    - pork
+    - fish
+    - vegetables
+    - fruits
+    - salad
+    - soup
+    - sandwich
+    - burger
+    - pizza
+    - pasta
+    - rice
+    - noodles
+    - bread
+    - cheese
+    - eggs
+    - milk
+    - butter
+    - oil
+    - spices
+    - herbs
+    - salt
+    - pepper
+    - sugar
+    - flour
+    - baking
+    - grilling
+    - frying
+    - roasting
+    - steaming
+    - boiling
+    - sautéing
+    - flavor
+    - taste
+    - delicious
+    - yummy
+    - tasty
+    - spicy
+    - sweet
+    - sour
+    - bitter
+    - salty
+    - savory
+    - bland
+    - fresh
+    - frozen
+    - canned
+    - organic
+    - local
+    - homemade
+    - takeout
+    - delivery
+    - fast food
+    - junk food
+    - healthy eating
+    - nutrition
+    - calories
+    - protein
+    - carbs
+    - fat
+    - vitamins
+    - minerals
+    - gluten
+    - dairy
+    - nuts
+    - allergies
+    - intolerance
+    - lactose
+    - celiac
+    - keto
+    - paleo
+    - mediterranean
+    - asian
+    - italian
+    - mexican
+    - indian
+    - chinese
+    - japanese
+    - thai
+    - french
+    - greek
+    - spanish
+    - korean
+    - vietnamese
+    - ethiopian
+    - middle eastern
+    - chef
+    - cook
+    - kitchen
+    - grocery
+    - market
+    - supermarket
+    - farmers market
+    - ingredients
+    - leftovers
+    - portion
+    - serving
+    - plate
+    - bowl
+    - cup
+    - fork
+    - spoon
+    - knife
+    - chopsticks
+    - utensils
+    - dishwasher
+    - oven
+    - stove
+    - microwave
+    - refrigerator
+    - freezer
+    - pantry
+    - cupboard
+  preferences:
+    - prefer
+    - favorite
+    - favourite
+    - best
+    - worst
+    - hate
+    - dislike
+    - coffee
+    - tea
+    - drink
+    - taste
+    - opinion
+    - love
+    - like
+  goals:
+    - goal
+    - plan
+    - want
+    - hope
+    - dream
+    - aspire
+    - achieve
+    - target
+    - climb
+    - mount
+    - everest
+    - ambition
+    - future
+  pets:
+    - pet
+    - pets
+    - dog
+    - cat
+    - puppy
+    - kitten
+    - animal
+    - animals
+    - bird
+    - fish
+    - hamster
+    - rabbit
+    - guinea pig
+    - turtle
+    - snake
+    - lizard
+    - parrot
+    - goldfish
+    - veterinarian
+    - vet
+    - pet food
+    - pet care
+    - walking
+    - feeding
+    - grooming
+    - training
+    - breed
+    - rescue
+    - adoption
+    - shelter
+  skills:
+    - python
+    - java
+    - c++
+    - c#
+    - javascript
+    - typescript
+    - go
+    - rust
+    - sql
+    - nosql
+    - react
+    - angular
+    - vue
+    - docker
+    - kubernetes
+    - aws
+    - azure
+    - gcp
+    - proficient
+    - skilled
+    - expert
+    - programming
+    - developer
+    - engineer
+    - software engineer
+    - web developer
+    - coding
+    - development
+  learning:
+    - learning
+    - learn
+    - studying
+    - study
+    - language
+    - speak
+    - spanish
+    - french
+    - german
+    - italian
+    - chinese
+    - japanese
+    - korean
+    - portuguese
+    - russian
+    - arabic
+    - hindi
+    - course
+    - class
+    - lesson
+    - tutorial
+    - training
+    - skill
+    - practice
+    - improve
+    - master
+  feelings:
+    - happy
+    - sad
+    - angry
+    - excited
+    - anxious
+    - stressed
+    - relaxed
+    - content
+    - frustrated
+    - disappointed
+    - insecure
+    - secure
+    - confident
+    - nervous
+    - worried
+    - calm
+    - peaceful
+    - uncomfortable
+    - comfortable
+    - vulnerable
+    - strong
+    - weak
+    - emotional
+    - moody
+    - feel
+    - feeling
+  friends:
+    - friend
+    - friends
+    - acquaintance
+    - acquaintances
+    - colleague
+    - colleagues
+    - neighbor
+    - neighbors
+    - buddy
+    - pal
+    - companion
+    - partner
+    - roommate
+    - classmate
+    - teammate
+    - mentor
+    - mentee
+    - ally
+    - allies
+    - contact
+    - contacts
+    - social
+    - relationship
+    - relationships
+    - know
+    - knows
+    - knew
+    - meet
+    - met
+    - introduce
+    - introduced
+  enemies:
+    - enemy
+    - enemies
+    - rival
+    - opponent
+    - nemesis
+    - foe
+    - adversary
+    - antagonist
+  journal:
+    - journal
+    - journaling
+    - diary
+    - daily entry
+    - reflection
+    - thoughts
+    - writing
+    - personal writing
+    - daily thoughts
+    - record
+    - log
+    - notebook
+    - entries
+    - daily log
+    - personal record
+    - memoir
+    - chronicle
+    - documentation
+    - daily reflection
+    - introspection
+    - self-reflection
+    - morning pages
+    - gratitude journal
+    - bullet journal
+    - digital journal
+    - handwritten
+    - private thoughts
+    - personal notes
+    - life events
+    - experiences
+    - memories
+    - observations
+    - insights
+    - feelings journal
+    - mood tracking
+    - progress tracking
+    - habit tracking
+    - goal tracking
+    - daily routine
+    - mindfulness
+    - meditation journal
+    - travel journal
+    - dream journal
+    - food journal
+    - exercise journal
+    - work journal
+    - creative writing
+    - stream of consciousness
+    - therapeutic writing
+    - emotional processing
+    - self-discovery
+    - personal growth
+    - life documentation
+    - storytelling
+    - narrative
+    - autobiography
+  self_harm_risk:
+    - suicide
+    - suicidal
+    - kill myself
+    - end my life
+    - hurt myself
+    - harm myself
+    - self harm
+    - self-harm
+    - cutting
+    - overdose
+    - pills
+    - jump
+    - bridge
+    - rope
+    - gun
+    - knife
+    - blade
+    - razor
+    - worthless
+    - hopeless
+    - pointless
+    - burden
+    - better off dead
+    - disappear
+    - vanish
+    - unbearable
+    - cant take it
+    - give up
+    - done
+    - finished
+    - over
+    - goodbye
+    - farewell
+    - hate myself
+    - useless
+    - failure
+    - alone
+    - lonely
+    - isolated
+    - abandoned
+    - rejected
+    - unwanted
+    - unloved
+    - empty
+    - numb
+    - broken
+    - destroyed
+    - ruined
+    - lost
+    - trapped
+    - stuck
+    - helpless
+    - powerless
+    - pathetic
+    - disgusting
+    - stupid
+    - idiot
+    - loser
+    - freak
+    - crazy
+    - insane
+    - purge
+    - starve
+    - restrict
+    - binge
+    - deserve pain
+    - deserve death
+    - deserve nothing
+    - deserve punishment
+    - no point
+    - no hope
+    - no future
+    - cant go on
+    - tired of living
+    - want to die
+    - wish i was dead
+    - everyone hates me
+    - nobody cares
+    - world without me
+    - make it stop
+    - end the pain
+    - final solution
+    - permanent solution
+    - escape forever
+    - never wake up
+    - go to sleep forever
+    - join them
+    - be with them
+    - reunite
+    - peace at last
+    - relief
+    - freedom from pain
+    - no more suffering
+    - cant handle this
+    - too much pain
+    - overwhelming
+    - drowning
+    - suffocating
+    - choking
+    - gasping
+    - struggling
+    - fighting
+    - losing
+    - defeated
+    - surrendering
+    - giving in
+    - letting go
+    - releasing
+    - departing
+    - leaving
+    - saying goodbye
+    - final words
+    - last message
+    - goodbye cruel world
+    - this is it
+    - the end
+    - game over
+    - lights out
+    - fade away
+    - disappear forever
+    - vanish completely
+    - erase myself
+    - delete myself
+    - remove myself
+    - eliminate myself
+    - destroy myself
+    - annihilate myself
+    - obliterate myself
+    - extinguish myself
+    - snuff out
+    - blow out
+    - turn off
+    - shut down
+    - power down
+    - log off
+    - sign out
+    - check out
+    - clock out
+    - punch out
+    - time out
+    - game over
+    - mission complete
+    - task finished
+    - job done
+    - work complete
+    - duty fulfilled
+    - obligation met
+    - responsibility discharged
+    - burden lifted
+    - weight removed
+    - pressure released
+    - tension relieved
+    - stress eliminated
+    - anxiety gone
+    - fear vanished
+    - worry disappeared
+    - concern erased
+    - doubt removed
+    - uncertainty eliminated
+    - confusion cleared
+    - chaos ended
+    - disorder stopped
+    - turmoil ceased
+    - upheaval finished
+    - disruption concluded
+    - disturbance terminated
+    - interference ended
+    - obstruction removed
+    - barrier eliminated
+    - obstacle cleared
+    - impediment gone
+    - hindrance vanished
+    - blockage removed
+    - restriction lifted
+    - limitation eliminated
+    - constraint removed
+    - restraint released
+    - confinement ended
+    - imprisonment terminated
+    - captivity concluded
+    - bondage finished
+    - slavery ended
+    - servitude terminated
+    - subjugation concluded
+    - oppression finished
+    - suppression ended
+    - repression terminated
+    - compression concluded
+    - depression finished
+    - recession ended
+    - regression terminated
+    - retrogression concluded
+    - deterioration finished
+    - degradation ended
+    - degeneration terminated
+    - decay concluded
+    - decomposition finished
+    - disintegration ended
+    - dissolution terminated
+    - destruction concluded
+    - demolition finished
+    - annihilation ended
+    - obliteration terminated
+    - extermination concluded
+    - elimination finished
+    - eradication ended
+    - extirpation terminated
+    - expunction concluded
+    - erasure finished
+    - deletion ended
+    - removal terminated
+    - extraction concluded
+    - withdrawal finished
+    - retreat ended
+    - retirement terminated
+    - resignation concluded
+    - abdication finished
+    - renunciation ended
+  # Pepys-specific 17th century categories
+  pepys_naval:
+    - navy
+    - fleet
+    - ship
+    - ships
+    - admiral
+    - admiralty
+    - sea
+    - seamen
+    - sailors
+    - captain
+    - victualling
+    - naval
+    - commander
+    - deptford
+    - chatham
+    - portsmouth
+    - dock
+    - dockyard
+    - vessel
+    - frigate
+    - warship
+    - anchor
+    - mast
+    - rigging
+    - sail
+    - sailing
+    - voyage
+    - naval business
+    - sea service
+    - prize
+    - merchant
+    - trading
+    - hemp
+    - tar
+    - rope
+    - timber
+    - board
+    - commissioner
+  pepys_court:
+    - king
+    - queen
+    - his majesty
+    - her majesty
+    - duke
+    - duchess
+    - lord
+    - lady
+    - prince
+    - princess
+    - court
+    - whitehall
+    - palace
+    - royal
+    - nobility
+    - peer
+    - baron
+    - earl
+    - marquess
+    - courtier
+    - chancellor
+    - treasurer
+    - secretary
+    - council
+    - privy
+    - audience
+    - ceremony
+    - coronation
+    - parliament
+    - commons
+    - lords
+    - bill
+    - act
+    - statute
+    - proclamation
+    - favour
+    - grace
+    - honour
+    - knighthood
+    - title
+    - estate
+  pepys_domestic:
+    - wife
+    - home
+    - house
+    - household
+    - servant
+    - maid
+    - cook
+    - housekeeper
+    - chamber
+    - parlour
+    - dining
+    - kitchen
+    - bed
+    - sleep
+    - wake
+    - morning
+    - evening
+    - night
+    - candle
+    - fire
+    - coal
+    - wood
+    - garden
+    - yard
+    - neighbours
+    - family
+    - brother
+    - sister
+    - father
+    - mother
+    - cousin
+    - uncle
+    - aunt
+    - nephew
+    - niece
+    - marriage
+    - wedding
+    - funeral
+    - burial
+    - child
+    - children
+    - infant
+    - baby
+  pepys_social:
+    - dinner
+    - supper
+    - feast
+    - company
+    - guest
+    - visit
+    - discourse
+    - conversation
+    - merry
+    - pleasant
+    - entertainment
+    - music
+    - singing
+    - dancing
+    - play
+    - theatre
+    - playhouse
+    - tavern
+    - alehouse
+    - inn
+    - coffeehouse
+    - meeting
+    - assembly
+    - party
+    - gathering
+    - society
+    - friend
+    - friendship
+    - acquaintance
+    - companion
+    - neighbour
+    - gossip
+    - news
+    - story
+    - tale
+    - wit
+    - jest
+    - laugh
+    - smile
+    - pleasure
+    - delight
+    - joy
+    - happiness
+  pepys_religious:
+    - church
+    - chapel
+    - cathedral
+    - parish
+    - minister
+    - priest
+    - parson
+    - vicar
+    - bishop
+    - archbishop
+    - sermon
+    - service
+    - prayer
+    - prayers
+    - psalm
+    - hymn
+    - bible
+    - scripture
+    - god
+    - lord
+    - christ
+    - jesus
+    - spirit
+    - holy
+    - divine
+    - heaven
+    - soul
+    - sin
+    - virtue
+    - faith
+    - grace
+    - blessing
+    - sabbath
+    - sunday
+    - lords day
+    - communion
+    - baptism
+    - confirmation
+    - catholic
+    - protestant
+    - puritan
+    - quaker
+    - anabaptist
+    - presbyterian
+    - episcopal
+  pepys_financial:
+    - money
+    - pound
+    - pounds
+    - shilling
+    - shillings
+    - pence
+    - penny
+    - crown
+    - guinea
+    - debt
+    - credit
+    - loan
+    - borrow
+    - lend
+    - pay
+    - paid
+    - payment
+    - cost
+    - price
+    - expense
+    - spend
+    - spent
+    - purchase
+    - buy
+    - bought
+    - sell
+    - sold
+    - trade
+    - business
+    - profit
+    - loss
+    - account
+    - accounts
+    - bill
+    - receipt
+    - salary
+    - wage
+    - fee
+    - income
+    - estate
+    - inheritance
+    - legacy
+    - will
+    - testament
+    - executor
+    - investment
+    - stock
+    - share
+    - interest
+    - usury
+  pepys_health:
+    - sick
+    - illness
+    - disease
+    - pain
+    - ache
+    - hurt
+    - wound
+    - injury
+    - physician
+    - doctor
+    - surgeon
+    - apothecary
+    - physic
+    - medicine
+    - remedy
+    - cure
+    - treatment
+    - surgery
+    - operation
+    - blood
+    - bleeding
+    - purge
+    - vomit
+    - fever
+    - ague
+    - plague
+    - pox
+    - stone
+    - kidney
+    - bladder
+    - stomach
+    - belly
+    - head
+    - headache
+    - eye
+    - tooth
+    - toothache
+    - cold
+    - cough
+    - throat
+    - breath
+    - diet
+    - health
+    - healthy
+    - well
+    - better
+    - recover
+    - recovery
+  pepys_locations:
+    - london
+    - westminster
+    - whitehall
+    - tower
+    - bridge
+    - thames
+    - river
+    - strand
+    - fleet street
+    - cheapside
+    - cornhill
+    - exchange
+    - guildhall
+    - st pauls
+    - cathedral
+    - covent garden
+    - leicester fields
+    - hyde park
+    - st james
+    - lambeth
+    - southwark
+    - greenwich
+    - woolwich
+    - deptford
+    - chatham
+    - rochester
+    - gravesend
+    - barking
+    - brentford
+    - kingston
+    - richmond
+    - hampton court
+    - windsor
+    - oxford
+    - cambridge
+    - york
+    - bristol
+    - portsmouth
+    - plymouth
+    - dover
+    - calais
+    - paris
+    - holland
+    - amsterdam
+    - france
+    - spain
+    - portugal
+    - italy
+    - rome
+    - venice
+  pepys_weather:
+    - weather
+    - rain
+    - wind
+    - storm
+    - thunder
+    - lightning
+    - snow
+    - frost
+    - ice
+    - cold
+    - warm
+    - hot
+    - sun
+    - sunny
+    - fair
+    - foul
+    - cloudy
+    - clear
+    - mist
+    - fog
+    - hail
+    - flood
+    - drought
+    - season
+    - spring
+    - summer
+    - autumn
+    - winter
+    - harvest
+    - temperature
+    - climate
+
+phrases:
+  academic:
+    - phd in biophysics
+    - postdoc in structural biology
+    - doctoral research
+    - faculty position
+    - studied biology
+    - at university
+    - college degree
+    - graduated from
+  health:
+    - undergoing surgery
+    - diagnosed with
+    - health insurance
+    - peanut allergy
+    - have allergy
+    - allergic to
+  finance:
+    - retirement portfolio
+    - capital gains tax
+    - 401k contribution
+  technology:
+    - neural network model
+    - deep learning framework
+    - machine learning pipeline
+    - work at google
+    - software company
+    - apple store
+  astronomy:
+    - observing the night sky
+    - galactic cluster
+    - solar eclipse
+    - lunar eclipse
+    - observing the planets
+    - observing the moon
+    - solar system
+    - comet
+    - nebula
+    - galaxy
+    - black hole
+  automotive:
+    - brake upgrade
+    - winter driving conditions
+    - engine tuning
+  personal_info:
+    - my name is
+    - years old
+    - live in
+    - am from
+  work:
+    - work at
+    - my job
+    - work for
+    - employed at
+  family:
+    - my family
+    - have kids
+    - wonderful woman
+  hobbies:
+    - love to play
+    - enjoy playing
+    - like to travel
+    - play piano
+    - fly rc airplanes
+    - used to fly
+    - remote control airplanes
+    - model airplanes
+  food:
+    - love to eat
+    - favorite food
+    - favorite meal
+    - favorite dish
+    - favorite restaurant
+    - cook at home
+    - enjoy cooking
+    - like to cook
+    - eat healthy
+    - healthy diet
+    - dietary restrictions
+    - food allergy
+    - allergic to nuts
+    - vegetarian diet
+    - vegan lifestyle
+    - eat out
+    - order takeout
+    - italian food
+    - chinese food
+    - mexican food
+    - spicy food
+    - sweet tooth
+    - love chocolate
+    - hate cilantro
+    - dont like mushrooms
+    - eat breakfast
+    - skip lunch
+    - dinner time
+    - meal prep
+    - grocery shopping
+    - farmers market
+    - cook dinner
+    - bake cookies
+    - make pizza
+    - grill steaks
+    - homemade pasta
+    - fresh vegetables
+    - organic produce
+    - gluten free
+    - lactose intolerant
+    - peanut allergy
+    - shellfish allergy
+  preferences:
+    - prefer coffee
+    - like better
+    - favorite drink
+  goals:
+    - plan to climb
+    - want to achieve
+    - climb mount everest
+    - my goal
+  pets:
+    - have a dog
+    - have a cat
+    - my pet
+    - pet owner
+    - dog owner
+    - cat owner
+    - walk the dog
+    - feed the cat
+    - pet training
+    - vet appointment
+    - adopted a pet
+    - rescue animal
+    - pet care
+    - love animals
+    - animal lover
+  skills:
+    - proficient in
+    - skilled in
+    - expert in
+    - programming languages
+    - software engineer
+    - web developer
+    - am proficient
+    - know python
+    - know java
+    - programming skills
+    - technical skills
+    - coding experience
+  learning:
+    - learning to
+    - learning spanish
+    - learning french
+    - speak spanish
+    - speak french
+    - taking classes
+    - studying language
+    - language learning
+    - im learning
+    - currently learning
+  feelings:
+    - i feel
+    - feeling happy
+    - feeling sad
+    - am excited
+    - am anxious
+    - am stressed
+    - is insecure
+    - very insecure
+    - feeling insecure
+    - am insecure
+    - feels insecure
+    - is confident
+    - very confident
+    - feeling confident
+    - am confident
+    - feels confident
+    - is nervous
+    - very nervous
+    - feeling nervous
+    - am nervous
+    - feels nervous
+    - is worried
+    - very worried
+    - feeling worried
+    - am worried
+    - feels worried
+    - is vulnerable
+    - feeling vulnerable
+    - am vulnerable
+    - feels vulnerable
+    - carries a blanket
+    - security blanket
+    - comfort object
+  friends:
+    - have a friend
+    - my friend
+    - is my friend
+    - friend named
+    - know someone
+    - met someone
+    - social circle
+    - close friend
+    - best friend
+    - good friend
+    - old friend
+    - childhood friend
+    - work colleague
+    - school friend
+  enemies:
+    - my enemy
+    - is my enemy
+    - enemy named
+    - my nemesis
+    - is my nemesis
+    - nemesis named
+    - my rival
+    - is my rival
+    - rival named
+  journal:
+    - write in my journal
+    - journal entry
+    - daily journal
+    - keep a journal
+    - journaling practice
+    - wrote in my diary
+    - personal diary
+    - reflection time
+    - morning journaling
+    - evening reflection
+    - gratitude practice
+    - bullet journaling
+    - journal writing
+    - private thoughts
+    - record my thoughts
+    - document my day
+    - write down my feelings
+    - capture memories
+    - track my progress
+    - daily reflection
+    - therapeutic writing
+    - mindful journaling
+    - stream of consciousness
+    - creative journaling
+    - travel journaling
+    - dream recording
+    - mood journaling
+    - habit journaling
+    - goal journaling
+    - personal growth journal
+    - self-discovery writing
+    - life documentation
+    - memory keeping
+    - thought recording
+    - experience logging
+    - insight capturing
+    - emotional processing
+    - mindfulness practice
+    - meditation notes
+    - gratitude writing
+    - progress tracking
+    - daily routine log
+    - personal narrative
+    - life story writing
+    - autobiographical writing
+  self_harm_risk:
+    - want to hurt myself
+    - want to kill myself
+    - want to end my life
+    - want to die
+    - hurt myself
+    - kill myself
+    - end my life
+    - harm myself
+    - cut myself
+    - i want to hurt myself
+    - i want to kill myself
+    - i want to end my life
+    - i want to die
+    - thinking about suicide
+    - thinking about killing myself
+    - thinking about hurting myself
+    - planning to hurt myself
+    - planning to kill myself
+    - going to hurt myself
+    - going to kill myself
+  # Pepys-specific phrases
+  pepys_naval:
+    - office day
+    - navy business
+    - naval affairs
+    - sea service
+    - fleet business
+    - admiralty office
+    - ship business
+    - victualling office
+    - commissioner of the navy
+    - duke of york
+    - prince rupert
+    - sir william penn
+    - sir william batten
+    - principal officers
+    - navy board
+    - chatham yard
+    - deptford yard
+    - woolwich yard
+  pepys_court:
+    - his majesty
+    - her majesty
+    - the king
+    - the queen
+    - my lord
+    - my lady
+    - duke of
+    - earl of
+    - lord chancellor
+    - lord treasurer
+    - secretary of state
+    - privy council
+    - court news
+    - royal favour
+    - kings business
+    - palace affairs
+    - parliament house
+    - house of lords
+    - house of commons
+  pepys_domestic:
+    - my wife
+    - at home
+    - to bed
+    - this morning
+    - this evening
+    - family affairs
+    - household matters
+    - domestic business
+    - home affairs
+    - wife and i
+    - my brother
+    - my father
+    - my mother
+    - cousin pepys
+  pepys_social:
+    - to dinner
+    - good company
+    - very merry
+    - much pleased
+    - great pleasure
+    - fine discourse
+    - pleasant talk
+    - good friend
+    - old acquaintance
+    - tavern company
+    - coffee house
+    - playhouse tonight
+    - theatre royal
+    - covent garden
+    - much discourse
+    - good entertainment
+  pepys_religious:
+    - to church
+    - lords day
+    - sunday morning
+    - divine service
+    - morning prayers
+    - evening prayers
+    - good sermon
+    - parish church
+    - st olave
+    - st bride
+    - westminster abbey
+    - st pauls cathedral
+    - bishop of
+    - archbishop of
+    - religious matters
+    - spiritual affairs
+  pepys_financial:
+    - money matters
+    - financial affairs
+    - cost me
+    - paid for
+    - worth of
+    - pounds sterling
+    - account books
+    - business accounts
+    - profitable business
+    - great expense
+    - little money
+    - good bargain
+    - dear price
+    - cheap purchase
+  pepys_health:
+    - not well
+    - much pain
+    - very sick
+    - ill of
+    - stone pain
+    - stomach trouble
+    - head ache
+    - tooth ache
+    - cold weather
+    - catching cold
+    - physician advice
+    - taking physic
+    - much better
+    - quite well
+    - good health
+  pepys_locations:
+    - westminster hall
+    - whitehall palace
+    - st james park
+    - tower of london
+    - london bridge
+    - fleet street
+    - the exchange
+    - royal exchange
+    - covent garden
+    - leicester house
+    - somerset house
+    - greenwich palace
+    - hampton court
+    - windsor castle
+    - up the river
+    - down the river
+    - by water to
+    - by coach to
+    - walked to
+  pepys_weather:
+    - fair weather
+    - foul weather
+    - cold morning
+    - warm day
+    - rainy day
+    - windy weather
+    - great storm
+    - much rain
+    - hard frost
+    - thick fog
+    - clear sky
+    - cloudy day
