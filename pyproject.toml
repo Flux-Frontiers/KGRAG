@@ -27,7 +27,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "kg-rag"
-version = "0.2.0"
+version = "0.3.0"
 description = "Orchestration layer for the KGRAG(tm) components."
 authors = ["Eric G. Suchanek, PhD <suchanek@mac.com>"]
 license = "Elastic-2.0"
@@ -63,7 +63,6 @@ markdown = { version = ">=3.6", optional = true }
 trame-vtk = { version = ">=2.0.0", optional = true }
 
 doc-kg = { git = "https://github.com/Flux-Frontiers/doc_kg.git" }
-code-kg = { git = "https://github.com/Flux-Frontiers/code_kg.git" }
 pip = "^26.0.1"
 
 [tool.poetry.extras]

@@ -9,12 +9,12 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
 
-class KGKind(str, Enum):
+class KGKind(StrEnum):
     """Kind of knowledge graph."""
 
     CODE = "code"
