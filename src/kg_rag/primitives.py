@@ -26,6 +26,7 @@ class KGKind(StrEnum):
     DISULFIDE = "disulfide"
     PDBFILE = "pdbfile"
     LEGAL = "legal"
+    PERSON = "person"
 
     @classmethod
     def from_str(cls, s: str) -> KGKind:

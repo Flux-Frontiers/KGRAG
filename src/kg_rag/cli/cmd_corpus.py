@@ -674,3 +674,90 @@ def person_info(name_or_id, registry):
         lines.append(f"[bold]Metadata[/bold]   : {entry.metadata}")
 
     console.print(Panel("\n".join(lines), title=f"[bold]Person: {entry.name}[/bold]", expand=False))
+
+
+# ---------------------------------------------------------------------------
+# corpus person query
+# ---------------------------------------------------------------------------
+
+
+@person_group.command("query")
+@click.argument("person_name")
+@click.argument("query_text")
+@k_option
+@click.option("--json", "as_json", is_flag=True, help="Output results as JSON.")
+@registry_option
+def person_query(person_name, query_text, k, as_json, registry):
+    """Run a federated query scoped to a person corpus.
+
+    \b
+    PERSON_NAME  Name or UUID of the person corpus
+    QUERY_TEXT   Natural-language query string
+
+    Example:
+
+    \b
+        kgrag corpus person query "Jane Doe" "childhood memories in Ohio"
+    """
+    import json as _json
+
+    from kg_rag.orchestrator import KGRAG
+
+    db_path = Path(registry).resolve() if registry else None
+
+    with KGRAG(registry_path=db_path) as orch:
+        try:
+            result = orch.query_person(person_name, query_text, k=k)
+        except KeyError as e:
+            console.print(f"[red]{e}[/red]")
+            raise SystemExit(1)
+
+    if as_json:
+        out = {
+            "query": result.query,
+            "person": person_name,
+            "total_hits": result.total_hits,
+            "kgs_queried": result.kgs_queried,
+            "hits": [
+                {
+                    "kg_name": h.kg_name,
+                    "kg_kind": h.kg_kind.value,
+                    "name": h.name,
+                    "kind": h.kind,
+                    "score": round(h.score, 4),
+                    "summary": h.summary,
+                    "source_path": h.source_path,
+                }
+                for h in result.hits
+            ],
+        }
+        console.print_json(_json.dumps(out))
+        return
+
+    if not result.hits:
+        console.print("[yellow]No results found.[/yellow]")
+        return
+
+    table = Table(
+        title=f"Person query: {query_text!r} for '{person_name}'",
+        box=box.SIMPLE,
+    )
+    table.add_column("KG", style="cyan")
+    table.add_column("Kind", style="magenta")
+    table.add_column("Name", style="bold")
+    table.add_column("Score", justify="right")
+    table.add_column("Summary")
+
+    for h in result.hits:
+        table.add_row(
+            h.kg_name,
+            h.kg_kind.value,
+            h.name,
+            f"{h.score:.3f}",
+            (h.summary[:80] + "…") if len(h.summary) > 80 else h.summary,
+        )
+
+    console.print(table)
+    console.print(
+        f"\n[dim]Total hits: {result.total_hits}  |  KGs queried: {result.kgs_queried}[/dim]"
+    )
