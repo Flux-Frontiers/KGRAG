@@ -8,6 +8,10 @@ from __future__ import annotations
 
 import click
 
+from kg_rag.primitives import KGKind
+
+_KIND_CHOICES = [k.value for k in KGKind]
+
 registry_option = click.option(
     "--registry",
     default=None,
@@ -18,9 +22,9 @@ registry_option = click.option(
 
 kind_option = click.option(
     "--kind",
-    type=click.Choice(["code", "doc", "meta"], case_sensitive=False),
+    type=click.Choice(_KIND_CHOICES, case_sensitive=False),
     default=None,
-    help="Filter by KG kind: code, doc, or meta.",
+    help=f"Filter by KG kind: {', '.join(_KIND_CHOICES)}.",
 )
 
 k_option = click.option(
