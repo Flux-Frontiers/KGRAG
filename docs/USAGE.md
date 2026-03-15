@@ -19,6 +19,32 @@ That's it! KGRAG is now managing your KGs and you can start querying.
 
 ---
 
+## KG Types
+
+KGRAG supports the following knowledge graph kinds. Only `code` and `doc` have
+fully-built backends today; the remaining kinds are **stubbed** — they can be
+registered and queried, but return empty results until their backing library is
+released.
+
+| Kind | Status | Backing library | Description |
+|------|--------|-----------------|-------------|
+| `code` | **Available** | `code-kg` | Python source code: functions, classes, call graph |
+| `doc` | **Available** | `doc-kg` | Markdown / RST documentation |
+| `meta` | **Available** | `metakg` | Metabolic pathway graphs |
+| `diary` | *Stubbed* | `diary_kg` *(unreleased)* | Personal diary / journal entries |
+| `verse` | *Stubbed* | `verse_kg` *(unreleased)* | Poetry and verse |
+| `memory` | *Stubbed* | `memory_kg` *(unreleased)* | Episodic / long-term memory |
+| `disulfide` | *Stubbed* | `disulfide_kg` *(unreleased)* | Protein disulfide bond data |
+| `pdbfile` | *Stubbed* | `pdbfile_kg` *(unreleased)* | Protein Data Bank (PDB) files |
+| `legal` | *Stubbed* | `legal_kg` *(unreleased)* | US code, case law, legal corpus |
+| `person` | *Stubbed* | `person_kg` *(unreleased)* | Individual-scoped knowledge graph |
+
+Stubbed adapters still participate in the registry — you can register,
+list, and inspect them — but `query` and `pack` return empty results until
+the backing library is installed.
+
+---
+
 ## Core Workflows
 
 ### Workflow 1: Federated Search
@@ -78,10 +104,6 @@ kgrag init ~/repos/backend --name backend
 kgrag init ~/repos/frontend --name frontend
 kgrag init ~/repos/docs --name docs
 
-# Or use batch script
-bash ~/.claude/skills/kgrag/scripts/batch-init.sh \
-  ~/repos/backend ~/repos/frontend ~/repos/docs
-
 # Verify all registered
 kgrag status
 kgrag list
@@ -92,106 +114,207 @@ kgrag query "caching strategy"
 
 **Result:** All projects are federated. One query searches all.
 
-### Workflow 4: Interactive Exploration with Visualizer
+### Workflow 4: Grouping KGs into a Corpus
 
-Use the Streamlit UI for interactive exploration:
+A **corpus** is a named collection of KG instances that can be queried as a
+unit:
 
 ```bash
-# Launch visualizer
-kgrag viz
+# Create a corpus
+kgrag corpus create my-project --kg my-codekg --kg my-dockg
 
+# Query the corpus
+kgrag corpus query my-project "how is authentication handled"
+
+# Add / remove KGs later
+kgrag corpus add my-project another-kg
+kgrag corpus remove my-project old-kg
+
+# List all corpora
+kgrag corpus list
+
+# Inspect a corpus
+kgrag corpus info my-project
+```
+
+### Workflow 5: Person Corpora
+
+A **person corpus** groups all KGs relevant to an individual (diary, memory,
+doc, verse, code, etc.) alongside personal metadata:
+
+```bash
+# Create a person corpus
+kgrag corpus person create "Jane Doe" \
+    --kg jane-diary --kg jane-memories \
+    --birth-year 1985 --email jane@example.com
+
+# Query across all of Jane's KGs
+kgrag corpus person query "Jane Doe" "childhood memories in Ohio"
+
+# Update personal metadata
+kgrag corpus person update "Jane Doe" --address "123 Main St, Springfield"
+
+# List all people
+kgrag corpus person list
+
+# Inspect a person entry
+kgrag corpus person info "Jane Doe"
+
+# Add / remove a KG
+kgrag corpus person add "Jane Doe" jane-legal-docs
+kgrag corpus person remove "Jane Doe" old-kg
+```
+
+> **Note:** Queries against `diary`, `memory`, `verse`, and `person`-kind KGs
+> return empty results today — those adapters are stubbed pending library release.
+
+### Workflow 6: Interactive Exploration with Visualizer
+
+```bash
+kgrag viz
 # Open http://localhost:8501
 ```
 
 **Features:**
-- 📋 **Registry tab** — Browse all KGs, view metadata, check build status
-- 🔍 **Federated Query** — Search all KGs, display results ranked or by KG
-- 🧪 **Analysis** — Run architectural analysis on CodeKGs
-- 📦 **Snippet Pack** — Extract snippets with configurable parameters
+- **Registry tab** — Browse all KGs, view metadata, check build status
+- **Federated Query** — Search all KGs, display results ranked or by KG
+- **Analysis** — Run architectural analysis on CodeKGs
+- **Snippet Pack** — Extract snippets with configurable parameters
 
-### Workflow 5: Architectural Analysis
-
-Analyze a CodeKG for complexity, dependencies, and patterns:
+### Workflow 7: Architectural Analysis
 
 ```bash
 # Quick overview
 kgrag analyze
 
-# Or use visualizer
-kgrag viz
-# → Go to 🧪 Analysis tab
-# → Select a CodeKG
-# → Click "Run Analysis"
+# Or use visualizer → Analysis tab
 ```
-
-**Output includes:**
-- Complexity hotspots (most important nodes)
-- High fan-out functions (API entry points)
-- Module architecture and coupling
-- Critical issues (circular dependencies, orphaned code)
-- Docstring coverage percentage
 
 ---
 
 ## Command Reference
 
-### Basic Commands
+### Registry Commands
+
+| Command | Description |
+|---------|-------------|
+| `kgrag list [--kind KIND]` | List registered KG instances, optionally filtered by kind |
+| `kgrag status` | Registry health: counts, built/unbuilt, missing paths |
+| `kgrag info NAME_OR_ID` | Detailed info for a specific KG |
+| `kgrag analyze` | Statistics across all registered KGs |
+| `kgrag register NAME KIND REPO_PATH` | Manually register a KG |
+| `kgrag unregister NAME_OR_ID` | Remove a KG from the registry |
+| `kgrag scan [ROOT_PATH]` | Discover existing KG databases in a directory tree |
+| `kgrag init [REPO_PATH]` | Detect, build, and register KG layers for a repo |
+
+#### `kgrag register`
 
 ```bash
-# List all registered KGs
-kgrag list
+kgrag register NAME KIND REPO_PATH [OPTIONS]
 
-# Quick health check
-kgrag status
+# Examples
+kgrag register my-code code ~/repos/myproject
+kgrag register my-docs doc ~/repos/myproject \
+    --sqlite ~/repos/myproject/.dockg/graph.sqlite
 
-# Detailed info for a specific KG
-kgrag info myproject-code
-
-# Get KG statistics
-kgrag analyze
+# All supported kinds (stubbed ones can be registered but won't query)
+kgrag register my-diary  diary  ~/data/journal
+kgrag register case-law  legal  ~/data/legal
 ```
+
+Options: `--venv`, `--sqlite`, `--lancedb`, `--version`, `--tag`
+
+#### `kgrag scan`
+
+```bash
+kgrag scan [ROOT_PATH] [--auto-register]
+```
+
+Discovers `.codekg/`, `.dockg/`, `.metakg/`, `.diarykg/`, `.versekg/`,
+`.memorykg/`, `.disulfidekg/`, `.pdbfilekg/`, `.legalkg/`, `.personkg/`
+directories. Pass `--auto-register` to add them to the registry automatically.
+
+#### `kgrag init`
+
+```bash
+kgrag init [REPO_PATH] [--wipe] [--name PREFIX] [--layer code|doc]
+```
+
+Detects applicable layers (`code`, `doc`), builds each, and registers them.
+Layers other than `code`/`doc` must be registered manually via `kgrag register`.
+
+---
 
 ### Query Commands
 
 ```bash
-# Semantic search
-kgrag query "your search term"
-kgrag query "term" --kind code -k 5
-kgrag query "term" --kind doc
-kgrag query "term" --json  # JSON output
-
-# Extract snippets
-kgrag pack "term"
-kgrag pack "term" --out file.md
-kgrag pack "term" --context 3 -k 5
+kgrag query QUERY_TEXT [-k N] [--kind KIND] [--json]
+kgrag pack  QUERY_TEXT [-k N] [--kind KIND] [--context N] [--out FILE]
 ```
 
-### Management Commands
+`--kind` accepts any of the 10 KG types. Queries against stubbed kinds
+(diary, verse, memory, disulfide, pdbfile, legal, person) return no hits
+until the backing library is installed.
+
+---
+
+### Corpus Commands
+
+#### Generic corpus
+
+| Command | Description |
+|---------|-------------|
+| `kgrag corpus create NAME [--kg KG]... [--desc TEXT] [--tag TAG]` | Create a corpus |
+| `kgrag corpus delete NAME_OR_ID` | Delete a corpus |
+| `kgrag corpus add CORPUS_NAME KG_REF` | Add a KG to a corpus |
+| `kgrag corpus remove CORPUS_NAME KG_REF` | Remove a KG from a corpus |
+| `kgrag corpus list` | List all corpora |
+| `kgrag corpus info NAME_OR_ID` | Inspect a corpus |
+| `kgrag corpus query CORPUS_NAME QUERY_TEXT [-k N] [--json]` | Federated query scoped to a corpus |
 
 ```bash
-# Initialize/rebuild
-kgrag init ~/repos/myproject
-kgrag init ~/repos/myproject --wipe  # Full rebuild
-
-# Manual registration (rarely needed)
-kgrag register --name mykg --kind code --repo ~/repos/myproject
-
-# Remove from registry
-kgrag unregister mykg
-
-# Auto-discover existing KGs
-kgrag scan ~/repos
+# Full example
+kgrag corpus create law-library \
+    --kg us-code --kg supremecourt --desc "US legal corpus"
+kgrag corpus query law-library "first amendment protections" -k 10
 ```
+
+#### Person corpus
+
+| Command | Description |
+|---------|-------------|
+| `kgrag corpus person create NAME [--kg KG]... [OPTIONS]` | Create a person entry |
+| `kgrag corpus person delete NAME_OR_ID` | Delete a person entry |
+| `kgrag corpus person add PERSON KG_REF` | Add a KG to a person |
+| `kgrag corpus person remove PERSON KG_REF` | Remove a KG from a person |
+| `kgrag corpus person update NAME_OR_ID [OPTIONS]` | Update personal metadata |
+| `kgrag corpus person list` | List all person entries |
+| `kgrag corpus person info NAME_OR_ID` | Inspect a person entry |
+| `kgrag corpus person query PERSON_NAME QUERY_TEXT [-k N] [--json]` | Federated query scoped to a person |
+
+`kgrag corpus person create` options:
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `--kg TEXT` | repeatable | KG name or ID to include |
+| `--birth-year INTEGER` | optional | Year of birth |
+| `--birth-date TEXT` | optional | Full birth date (YYYY-MM-DD) |
+| `--address TEXT` | optional | Mailing/home address |
+| `--email TEXT` | optional | Primary email address |
+| `--phone TEXT` | optional | Primary phone number |
+| `--notes TEXT` | optional | Free-form notes |
+| `--tag TEXT` | repeatable | Tags |
+
+`kgrag corpus person update` accepts the same metadata options (omit any you
+don't want to change).
+
+---
 
 ### Integration Commands
 
 ```bash
-# Launch visualizer
-kgrag viz
-kgrag viz --port 8502  # Custom port
-
-# Start MCP server (for Claude Code)
-kgrag mcp
+kgrag viz [--port PORT]    # Launch Streamlit visualizer (default port 8501)
+kgrag mcp                  # Start MCP server for Claude Code / Kilo Code
 ```
 
 ---
@@ -200,40 +323,39 @@ kgrag mcp
 
 ### Registry Path
 
-By default, KGRAG uses `~/.kgrag/registry.sqlite`. To use a custom path:
-
 ```bash
-# Set environment variable
 export KGRAG_REGISTRY=/custom/path/registry.sqlite
-
-# Or pass to each command
-kgrag init ~/repos/myproject --registry /custom/path/registry.sqlite
+# or pass per-command:
+kgrag list --registry /custom/path/registry.sqlite
 ```
 
-### KG Layers
-
-By default, `kgrag init` auto-detects applicable layers (code, doc). To be explicit:
-
-```bash
-# Code layer only
-kgrag init --layer code
-
-# Both layers
-kgrag init --layer code --layer doc
-
-# Custom name
-kgrag init --name myproject-code
-```
+Default: `~/.kgrag/registry.sqlite`
 
 ### Rebuilding KGs
 
 ```bash
-# After refactoring: full rebuild (wipe old data)
+# After large refactors: full rebuild
 kgrag init --wipe
 
-# Minor changes: incremental update (no wipe)
+# Minor additions: incremental
 kgrag init
 ```
+
+---
+
+## Stubbed KG Types — What to Expect
+
+When a KG is registered with a stubbed kind:
+
+- `kgrag list` — shows the entry normally
+- `kgrag info NAME` — shows full metadata
+- `kgrag query` / `kgrag pack` — returns **0 results** (no error)
+- `kgrag analyze` — reports `status: unavailable`
+- `kgrag corpus query` / `kgrag corpus person query` — silently skips the stub KG
+
+This allows you to register future KG instances now and start building corpora.
+Results will appear automatically once the backing library (`diary_kg`,
+`legal_kg`, etc.) is installed.
 
 ---
 
@@ -241,101 +363,21 @@ kgrag init
 
 ### Querying Effectively
 
-✅ **Do:**
-- Use specific terms: "JWT validation" not "auth"
+- Use specific terms: `"JWT validation"` not `"auth"`
 - Filter by kind when appropriate: `--kind code`
-- Start with small k: `-k 3` for focused results
-- Adjust k upward for broad surveys: `-k 12`
+- Start small: `-k 3` for focused, `-k 12` for surveys
 
-❌ **Don't:**
-- Use vague terms: "database" (too broad)
-- Query everything simultaneously (use filters)
-- Assume first result is best (check top 5)
+### Managing Corpora
 
-### Managing the Registry
-
-✅ **Do:**
-- Keep one registry (`~/.kgrag/registry.sqlite`) for your workspace
-- Use meaningful names: `project-name-code`, `project-name-doc`
-- Run `kgrag status` monthly to catch issues
-- Rebuild quarterly: `kgrag init --wipe`
-
-❌ **Don't:**
-- Create multiple registries (confusing)
-- Use ambiguous names
-- Ignore "not built" warnings
-- Let data get stale (9+ months old)
+- Group related KGs at project creation: `--kg` is repeatable
+- Use corpora to scope queries by domain (legal, personal, scientific)
+- Person corpora naturally pair with `diary`, `memory`, and `doc` kinds
 
 ### MCP Integration
 
-✅ **Do:**
-- Use absolute paths in `.mcp.json`
-- Restart Claude Code after creating `.mcp.json`
-- Test with `kgrag mcp --help`
-- Use in prompts: `kgrag_query("term", k=8)`
-
-❌ **Don't:**
-- Use relative paths like `~`
-- Assume tools appear without restart
-- Hardcode paths in `.mcp.json`
-
-### Preparing LLM Context
-
-✅ **Do:**
-- Extract focused snippets: `-k 5 --context 3`
-- Filter by kind: `--kind code`
-- Review output before sharing
-- Set aside large files: `wc -l context.md`
-
-❌ **Don't:**
-- Extract everything at once (`-k 100`)
-- Mix all KG types (code + docs separately)
-- Share without reviewing
-- Exceed LLM context window
-
----
-
-## Automation & Scripting
-
-### Batch Initialization
-
-```bash
-# Use the provided script
-bash ~/.claude/skills/kgrag/scripts/batch-init.sh \
-  ~/repos/project1 \
-  ~/repos/project2 \
-  ~/repos/project3
-```
-
-### JSON Output for Parsing
-
-```bash
-# Get results as JSON
-kgrag query "term" --json > results.json
-
-# Parse with jq
-jq '.hits | length' results.json
-jq '.hits[0]' results.json
-
-# Process in Python
-python << 'EOF'
-import json
-with open('results.json') as f:
-    data = json.load(f)
-    for hit in data['hits']:
-        print(f"{hit['kg_name']}: {hit['name']} ({hit['score']:.3f})")
-EOF
-```
-
-### Scheduled Rebuilds
-
-```bash
-# Add to crontab for monthly rebuilds
-0 0 1 * * kgrag init ~/repos/myproject --wipe
-
-# Or use a shell alias
-alias kgrag-refresh='kgrag init ~/repos/project1 --wipe && kgrag init ~/repos/project2 --wipe'
-```
+- Use absolute paths in `.mcp.json` (machine-specific — never commit it)
+- Restart Claude Code after editing `.mcp.json`
+- Test: `kgrag mcp --help`
 
 ---
 
@@ -344,45 +386,23 @@ alias kgrag-refresh='kgrag init ~/repos/project1 --wipe && kgrag init ~/repos/pr
 ### "No results found"
 
 ```bash
-# Check registry health
-kgrag status
-
-# If KG is "not built", rebuild
-kgrag init ~/repos/myproject --wipe
-
-# Try broader query
-kgrag query "your search"  # remove --kind filter
-
-# Increase result count
-kgrag query "term" -k 12
+kgrag status                        # check health
+kgrag info NAME                     # check is_built + kind
+kgrag init ~/repos/myproject --wipe # rebuild if stale
 ```
+
+If the KG kind is stubbed (diary, verse, memory, etc.), results will always
+be empty until the backing library is released.
 
 ### "Registry not loading" in visualizer
 
-```bash
-# Check registry path
-echo $KGRAG_REGISTRY
-
-# Click "🔄 Refresh Registry" in sidebar
-# Or restart visualizer
-```
+Click **Refresh Registry** in the sidebar, or restart the visualizer.
 
 ### "MCP tools not appearing" in Claude Code
 
-```bash
-# Verify .mcp.json exists and has absolute paths
-cat .mcp.json
+Verify `.mcp.json` uses absolute paths, then fully restart Claude Code.
 
-# Verify registry path is absolute
-grep registry .mcp.json
-
-# Restart Claude Code (fully quit and reopen)
-
-# Test MCP server
-kgrag mcp --help
-```
-
-For more troubleshooting, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
+For more, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 ---
 
@@ -391,3 +411,4 @@ For more troubleshooting, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 - [INSTALLATION.md](INSTALLATION.md) — Setup and configuration
 - [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — Issues and solutions
 - [VISION.md](VISION.md) — Philosophy and design
+- [MCP.md](MCP.md) — MCP server configuration and tools
