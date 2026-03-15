@@ -17,7 +17,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from kg_rag.cli.group import cli
-from kg_rag.cli.options import kind_option, registry_option
+from kg_rag.cli.options import _KIND_CHOICES, kind_option, registry_option
 from kg_rag.config import read_pyproject_version
 from kg_rag.primitives import KGEntry, KGKind
 from kg_rag.registry import KGRegistry, default_registry_path
@@ -29,7 +29,17 @@ _KG_MARKERS: dict[str, str] = {
     ".codekg": "code",
     ".dockg": "doc",
     ".metakg": "meta",
+    ".diarykg": "diary",
+    ".versekg": "verse",
+    ".memorykg": "memory",
+    ".disulfidekg": "disulfide",
+    ".pdbfilekg": "pdbfile",
+    ".legalkg": "legal",
+    ".personkg": "person",
 }
+
+# Map kind string → default database subdirectory name
+_KIND_DB_DIR: dict[str, str] = {v: k for k, v in _KG_MARKERS.items()}
 
 
 def _find_kg_dirs(root: Path) -> list[dict]:
@@ -66,7 +76,7 @@ def _find_kg_dirs(root: Path) -> list[dict]:
 
 @cli.command("register")
 @click.argument("name")
-@click.argument("kind", type=click.Choice(["code", "doc", "meta"], case_sensitive=False))
+@click.argument("kind", type=click.Choice(_KIND_CHOICES, case_sensitive=False))
 @click.argument("repo_path", type=click.Path(exists=True, file_okay=False, resolve_path=True))
 @click.option("--venv", "venv_path", default=None, help="Path to .venv (default: REPO/.venv)")
 @click.option("--sqlite", "sqlite_path", default=None, help="Path to SQLite DB file.")
@@ -79,7 +89,7 @@ def register(name, kind, repo_path, venv_path, sqlite_path, lancedb_path, versio
 
     \b
     NAME      Human-readable name for this KG (e.g. my-codekg)
-    KIND      KG type: code, doc, or meta
+    KIND      KG type: code, doc, meta, diary, verse, memory, disulfide, pdbfile
     REPO_PATH Absolute path to the repository root
 
     Examples:
@@ -92,13 +102,12 @@ def register(name, kind, repo_path, venv_path, sqlite_path, lancedb_path, versio
     venv = Path(venv_path).resolve() if venv_path else (repo / ".venv")
 
     # Auto-detect db paths if not provided
+    db_dir = _KIND_DB_DIR.get(kind, f".{kind}kg")
     if sqlite_path is None:
-        db_dir = ".codekg" if kind == "code" else (".dockg" if kind == "doc" else ".metakg")
         candidate = repo / db_dir / "graph.sqlite"
         sqlite_path = str(candidate) if candidate.exists() else None
 
     if lancedb_path is None:
-        db_dir = ".codekg" if kind == "code" else (".dockg" if kind == "doc" else ".metakg")
         candidate = repo / db_dir / "lancedb"
         lancedb_path = str(candidate) if candidate.exists() else None
 

@@ -41,7 +41,11 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
-packages = [{ include = "kg_rag", from = "src" }]
+packages = [
+  { include = "kg_rag", from = "src" },
+  { include = "diary_kg", from = "pepys" },
+  { include = "diary_transformer", from = "pepys" },
+]
 
 [tool.poetry.dependencies]
 python = ">3.12,<3.14"
@@ -62,8 +66,9 @@ param = { version = ">=2.0.0", optional = true }
 markdown = { version = ">=3.6", optional = true }
 trame-vtk = { version = ">=2.0.0", optional = true }
 
-doc-kg = { git = "https://github.com/Flux-Frontiers/doc_kg.git" }
+doc-kg = {git = "https://github.com/Flux-Frontiers/doc_kg.git"}
 pip = "^26.0.1"
+code-kg = {git = "https://github.com/Flux-Frontiers/code_kg.git"}
 
 [tool.poetry.extras]
 viz = ["streamlit", "pyvis", "plotly"]
@@ -109,6 +114,7 @@ kgrag-query        = "kg_rag.cli.cmd_query:query"
 kgrag-pack         = "kg_rag.cli.cmd_query:pack"
 kgrag-analyze      = "kg_rag.cli.cmd_analyze:analyze"
 kgrag-viz          = "kg_rag.cli.cmd_viz:viz"
+diarykg            = "diary_kg.cli:cli"
 
 [tool.pylint.messages_control]
 disable = ["all"]

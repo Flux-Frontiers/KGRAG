@@ -20,6 +20,13 @@ class KGKind(StrEnum):
     CODE = "code"
     DOC = "doc"
     META = "meta"
+    DIARY = "diary"
+    VERSE = "verse"
+    MEMORY = "memory"
+    DISULFIDE = "disulfide"
+    PDBFILE = "pdbfile"
+    LEGAL = "legal"
+    PERSON = "person"
 
     @classmethod
     def from_str(cls, s: str) -> KGKind:
@@ -103,6 +110,63 @@ class RegistryStats:
 
 
 @dataclass
+class PersonCorpusEntry:
+    """A corpus representing a person — grouping all KGs relevant to that individual.
+
+    Extends the corpus concept with personal metadata (birth year, address, etc.)
+    and is intended to hold KGs of types such as DOC, MEMORY, DIARY, VERSE, and
+    CODE that together describe or belong to a specific person.
+
+    :param name: Full name of the person.
+    :param id: Unique identifier (UUID string).
+    :param kg_ids: List of KGEntry UUIDs associated with this person.
+    :param birth_year: Year of birth (int).
+    :param birth_date: Full birth date as ISO string (YYYY-MM-DD), if known.
+    :param address: Mailing/home address.
+    :param email: Primary email address.
+    :param phone: Primary phone number.
+    :param notes: Free-form notes about this person.
+    :param tags: Optional list of tags for grouping/filtering.
+    :param created_at: When this entry was created.
+    :param updated_at: When this entry was last modified.
+    :param metadata: Flexible extra key-value data.
+    """
+
+    name: str
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    kg_ids: list[str] = field(default_factory=list)
+    birth_year: int | None = None
+    birth_date: str | None = None
+    address: str = ""
+    email: str = ""
+    phone: str = ""
+    notes: str = ""
+    tags: list[str] = field(default_factory=list)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def size(self) -> int:
+        """Number of KGs associated with this person."""
+        return len(self.kg_ids)
+
+
+@dataclass
+class PersonCorpusStats:
+    """Summary statistics for the person corpus registry.
+
+    :param total: Total number of person corpus entries.
+    :param total_kg_refs: Total KG references across all person entries.
+    :param registry_path: Path to the registry SQLite file.
+    """
+
+    total: int
+    total_kg_refs: int
+    registry_path: Path
+
+
+@dataclass
 class CrossHit:
     """A single result hit from a cross-KG query.
 
@@ -166,6 +230,49 @@ class CrossSnippet:
     score: float = 0.0
     lineno: int | None = None
     end_lineno: int | None = None
+
+
+@dataclass
+class CorpusEntry:
+    """A named collection of KG instances grouped under a single logical corpus.
+
+    :param id: Unique identifier (UUID string).
+    :param name: Human-readable name for this corpus.
+    :param kg_ids: List of KGEntry UUIDs that belong to this corpus.
+    :param description: Optional description of what this corpus represents.
+    :param tags: Optional list of tags for grouping/filtering.
+    :param created_at: When this corpus was created.
+    :param updated_at: When this corpus was last modified.
+    :param metadata: Flexible extra key-value data.
+    """
+
+    name: str
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    kg_ids: list[str] = field(default_factory=list)
+    description: str = ""
+    tags: list[str] = field(default_factory=list)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def size(self) -> int:
+        """Number of KGs in this corpus."""
+        return len(self.kg_ids)
+
+
+@dataclass
+class CorpusStats:
+    """Summary statistics for the corpus registry.
+
+    :param total: Total number of corpora.
+    :param total_kg_refs: Total KG references across all corpora.
+    :param registry_path: Path to the registry SQLite file.
+    """
+
+    total: int
+    total_kg_refs: int
+    registry_path: Path
 
 
 @dataclass
