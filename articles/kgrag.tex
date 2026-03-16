@@ -165,6 +165,12 @@ structural knowledge graphs queryable as a single unified corpus. Specifically:
   \item A demonstration that structural KG retrieval followed by language model
     synthesis eliminates hallucination at the knowledge layer, bounding risk to
     the synthesis stage alone.
+  \item A snapshot system enabling \emph{differential queries}: what changed
+    between two compiled states of a knowledge graph, and what new knowledge
+    entered a corpus over a given interval.
+  \item An incremental ingestion pipeline with diversity-preserving temporal
+    sampling and resumable state, enabling progressive compilation of large
+    corpora without blocking queries.
   \item A long-term architectural roadmap toward the \emph{TreeOfKnowledge\texttrademark}
     (\emph{Corpus Scientia}): all human knowledge, all domains, one federated interface.
 \end{enumerate}
@@ -345,6 +351,33 @@ seeds will still follow the same structural edges and produce structurally
 correct results. The accuracy of the structural layer does not depend on the
 quality of the embedding model.
 
+\subsection{The Compilation Cost: Paid Once}
+
+Embedding is the computationally expensive phase of the KGRAG pipeline, and it
+is worth making this explicit. Encoding tens of thousands of nodes into
+high-dimensional vectors using a sentence-transformer model is a non-trivial
+compute task; for a large diary corpus or a full legal code, it may require
+minutes to hours on CPU hardware.
+
+This is not a deficiency. It is an instance of a well-understood engineering
+trade-off: the compiler trade-off. Compiling a large Fortran simulation suite
+may take tens of minutes, but the resulting binary executes in milliseconds and
+may be run any number of times without recompilation. The compile cost is
+amortised across every subsequent execution.
+
+KGRAG applies the same trade-off. The \emph{build} step---parse, extract,
+store, embed---is the compilation. Each subsequent \emph{query} is execution:
+instantaneous, deterministic, and repeatable. A federated query over a
+codebase of $\sim$100\,k lines runs in under one second. The embedding cost
+was paid during build, once, and is not paid again until the corpus changes.
+
+This framing also clarifies what the compiled artefact represents. A compiled
+binary is the source program, in executable form. The compiled knowledge
+graph---SQLite nodes and edges plus LanceDB vectors---\emph{is} the corpus, in
+queryable form. Just as one does not re-read the source to run the program,
+one does not re-parse the corpus to answer a query. The structure is already
+there, addressable in constant time.
+
 %-------------------------------------------------------------------
 \section{Layer 4: The Adapter Protocol}
 %-------------------------------------------------------------------
@@ -372,7 +405,23 @@ class KGAdapter(ABC):
 
     @abstractmethod
     def analyze(self) -> str: ...
+
+    @abstractmethod
+    def snapshot(self, version: str,
+                 label: str | None = None) -> dict[str, Any]: ...
+
+    # Internal — strips domain-specific fields; used by the orchestrator
+    # to aggregate graph-size metrics uniformly across all KG kinds.
+    def _graph_stats(self) -> dict[str, int]: ...
 \end{lstlisting}
+
+The \texttt{snapshot} method captures a point-in-time record of the KG's state,
+returning at minimum a version string, an ISO~8601 UTC timestamp, and integer
+node and edge counts. The \texttt{\_graph\_stats} helper is a concrete method on
+the base class that strips all domain-specific keys from \texttt{stats()} and
+normalises counts to integers; the orchestrator calls it to aggregate graph-size
+totals across heterogeneous KG kinds without being confused by domain-specific
+fields such as \texttt{reaction\_count} or \texttt{chunk\_count}.
 
 A \texttt{StubKGAdapter} base class provides a graceful default implementation
 for domains whose backing library has not yet been released. Stub adapters
@@ -560,20 +609,63 @@ at a time, each following the same pattern, each extending the unified query
 surface without modifying the federation layer.
 
 %-------------------------------------------------------------------
-\section{Snapshot System}
+\section{Snapshot System and Differential Queries}
 %-------------------------------------------------------------------
 
 Knowledge graphs change as their source corpora evolve. The snapshot system
-captures \texttt{SnapshotMetrics} at each commit, keyed by the pre-commit tree
-hash produced by \texttt{git write-tree}. A \texttt{Snapshot} record carries
-the tree hash, branch name, timestamp, module version, a \texttt{SnapshotMetrics}
-struct (node counts, edge counts, coverage score, issue count), and
-\texttt{SnapshotDelta} fields comparing against the immediately preceding and
-baseline snapshots.
+captures \texttt{SnapshotMetrics} at each build or ingestion run, keyed by the
+git tree hash produced by \texttt{git write-tree}. A \texttt{Snapshot} record
+carries the tree hash, branch name, ISO~8601 timestamp, module version, a
+\texttt{SnapshotMetrics} struct (node counts, edge counts, coverage score, issue
+count), and \texttt{SnapshotDelta} fields comparing against the immediately
+preceding and baseline snapshots.
 
-The snapshot history provides a longitudinal record of graph evolution: which
-commits added nodes, which removed them, and how semantic coverage trended over
-time.
+The snapshot history provides a longitudinal record of graph evolution. More
+importantly, it enables a class of queries that is impossible with a conventional
+vector index: \emph{differential queries} over the knowledge graph.
+
+Consider two questions that are straightforward to answer once snapshots exist
+but are unanswerable without them:
+
+\begin{enumerate}
+  \item \emph{How has the Pepys corpus changed since last week?} \\
+    Compare the two nearest snapshots by tree hash. The delta carries exact node
+    and edge counts added and removed, the set of new topic labels that entered
+    the corpus, and the change in semantic coverage score. This is \texttt{kgrag
+    snapshot diff} operating on two snapshot keys.
+
+  \item \emph{What new ideas have entered the Pepys corpus this month?} \\
+    Execute a federated query against both snapshots, compute the set difference
+    of the top-$k$ results, and the remainder is the new knowledge. New nodes
+    that did not exist in the earlier snapshot and rank highly in the current
+    one represent ideas that have entered the compiled corpus. This is
+    \emph{differential federated search}: the same query, two compiled states,
+    a structural diff.
+\end{enumerate}
+
+These capabilities are direct consequences of the compilation model. A raw
+vector index can be updated incrementally, but its history is not addressable;
+there is no mechanism to query ``the index as it was on Tuesday.'' The compiled
+knowledge graph, stored in SQLite and keyed by git tree hash, is fully
+addressable at any point in its history.
+
+\subsection{Incremental Ingestion with Temporal Diversity}
+
+Large corpora may not be fully ingestable in a single run. KGRAG addresses
+this with a diversity-preserving batch selection algorithm. When
+\texttt{batch\_size} is set, the ingestion pipeline clusters all available
+entries in a normalised feature space encoding temporal position, content
+length, lexical density, and named-entity profile, then selects the
+centroid-nearest entry from each cluster. A batch of 200 entries from a
+10,000-entry diary corpus will span the full temporal range and all discoverable
+themes of that corpus, not merely its beginning.
+
+A state manager tracks processed entry indices. Subsequent runs with
+\texttt{--resume} load this state, skip already-ingested entries, and select a
+fresh diverse batch from the remainder. The corpus is queryable throughout:
+an index built from 200 representative entries already covers the semantic space
+of the full corpus at reduced density. Density increases with each run until
+full ingestion is achieved.
 
 %-------------------------------------------------------------------
 \section{MCP Integration}
