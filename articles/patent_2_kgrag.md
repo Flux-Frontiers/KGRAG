@@ -5,7 +5,16 @@ STRUCTURALLY DERIVED HETEROGENEOUS KNOWLEDGE GRAPHS
 
 CROSS-REFERENCE TO RELATED APPLICATIONS
 
-Not Applicable.
+This application claims priority to and incorporates by reference the
+disclosure of U.S. Patent Application No. [PENDING-1], entitled "Deterministic
+Knowledge Compilation from Formally-Structured Source Artifacts with Hybrid
+Structural-Semantic Retrieval and Provenance-Grounded Synthesis," filed [DATE].
+This application is the second in a series of three related applications; the
+third, U.S. Patent Application No. [PENDING-3], entitled "TreeOfKnowledge:
+Fractal Forest Visualization of Compiled Knowledge Graphs with Temporal
+Animation and Federated Query Illumination," claims priority to and
+incorporates by reference the disclosures of both this application and
+[PENDING-1].
 
 STATEMENT REGARDING FEDERALLY SPONSORED RESEARCH OR DEVELOPMENT
 
