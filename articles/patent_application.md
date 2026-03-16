@@ -193,6 +193,16 @@ computation method using version-control tree hashes.
 FIG. 8 is a system diagram illustrating integration of the machine-communication
 protocol server with external AI agent clients.
 
+FIG. 9 is a screen layout diagram illustrating the four-tab interactive
+visualization application, showing the Registry browser, federated query
+interface with real-time hit rendering, analysis panel, and snippet pack
+editor with token budget display.
+
+FIG. 10 is a three-dimensional rendering diagram illustrating the abstract
+syntax tree visualizer for Python code knowledge graphs, showing the module
+hierarchy as an interactive spatial tree with nodes classified by entity kind
+and edges representing structural relationships.
+
 ---
 
 DETAILED DESCRIPTION OF THE INVENTION
@@ -765,6 +775,142 @@ Person corpus tools: `kgrag_person_list`, `kgrag_person_info`,
 `kgrag_person_pack`, providing creation, management with personal metadata
 fields, and scoped query operations for person-centric corpus groups.
 
+**X. THE INTERACTIVE VISUALIZATION SUBSYSTEM**
+
+The system provides two distinct interactive visualization components, each
+rendering a different facet of the knowledge graph: a web-based federated
+query and analysis dashboard targeting the semantic layer, and a three-
+dimensional abstract syntax tree renderer targeting the structural layer of
+Python code knowledge graphs.
+
+**X.A. The Semantic-Layer Web Dashboard**
+
+Referring to FIG. 9, the semantic-layer web dashboard is implemented as a
+Python web application using the Streamlit framework. The application receives
+a KGRAG orchestrator instance at startup and maintains the orchestrator as
+shared state across all user sessions.
+
+The application presents four tabs: Registry, Federated Query, Analysis, and
+Snippet Pack.
+
+The Registry tab displays a summary table of all registered knowledge graph
+instances retrieved from the KGRegistry, listing the name, kind, version,
+repository path, and tag list for each entry. Below the table, the tab
+presents live structural statistics for each knowledge graph instance whose
+adapter is available, including the node count and edge count obtained by
+invoking `_graph_stats` on the corresponding adapter without instantiating
+unnecessary library components.
+
+The Federated Query tab presents a text input for the query string, a numeric
+input for the maximum result count `k` defaulting to eight, and a multi-select
+widget for optional kind filtering. On submission, the tab invokes the
+orchestrator's `query` method synchronously and renders each returned CrossHit
+as a styled card. Each card displays the hit's knowledge graph name, entity
+name, entity kind, source file path, relevance score rendered as a
+proportional horizontal score bar, and the summary text. Cards are color-coded
+by knowledge graph kind: code-kind hits are rendered in blue, doc-kind hits in
+green, and meta-kind hits in purple. Node-kind sub-classification uses a
+secondary color palette: module nodes in dark blue, class nodes in teal,
+function nodes in medium blue, method nodes in cyan, chunk nodes in dark
+green, section nodes in green, and entity nodes in olive. The total result
+count and count of queried knowledge graph instances are displayed as a
+summary line above the result cards.
+
+The Analysis tab presents a select box populated with the names of all
+registered knowledge graph instances whose adapters are available. On
+selection, the tab invokes the adapter's `analyze` method and renders the
+returned Markdown string using the Streamlit Markdown renderer, preserving
+headings, tables, and code blocks.
+
+The Snippet Pack tab presents the same query input and kind filter controls
+as the Federated Query tab, plus a context window numeric input defaulting to
+five lines. On submission, the tab invokes the orchestrator's `pack` method
+and displays the returned snippets. The tab displays an approximate token
+budget gauge computing the sum of per-snippet word counts multiplied by 4/3
+and presenting the total against a configurable token budget threshold. The
+tab provides download buttons exporting the snippet collection as a Markdown
+string produced by `CrossSnippetPack.render()` and as a JSON serialization
+of the CrossSnippetPack dataclass, enabling downstream LLM context injection
+workflows.
+
+`CrossSnippetPack.render()` formats the snippet list as a Markdown document.
+The method constructs a section header for each snippet in the format
+`## [kind:name] path:line-endline`, where `kind` is the knowledge graph kind
+string, `name` is the knowledge graph instance name, `path` is the source
+file path, and `line` and `endline` are the start and end line numbers of
+the extracted source text. The snippet content is placed in a fenced code
+block following the header. This format encodes full source provenance in a
+human-readable, parseable header suitable for injection into LLM context
+windows with citation support.
+
+**X.B. Semantic Enrichment of Chunk Metadata**
+
+Prior to embedding, each chunk produced by the semantic chunking subsystem
+is enriched with two classification labels that are stored in the YAML
+frontmatter of the chunk file.
+
+The first label, `category`, is a topic category label assigned by a
+two-stage classifier pipeline. In the first stage, TF-IDF vectorization is
+applied to all chunks in the corpus, producing a term-frequency matrix.
+K-means clustering is applied to the TF-IDF matrix with a configurable number
+of clusters, and each cluster is assigned a label derived from its highest-
+weight terms. Each chunk is assigned the label of its cluster. In the second
+stage, when a supervised topic classifier model is available, its
+classifications take precedence over the unsupervised cluster labels.
+
+The second label, `context`, is a coarse context classification label
+selected from the fixed vocabulary {`Work`, `Home`, `Social`, `Reflection`,
+`Emotion`, `General`}. Assignment is performed by a rule-based analyzer
+using spaCy named-entity recognition and keyword heuristics: the presence of
+organization and person entities combined with task-related keywords triggers
+the `Work` label; location entities combined with domestic keywords trigger
+`Home`; person entities without organizational context trigger `Social`;
+first-person subjective constructs trigger `Reflection` or `Emotion`
+depending on emotional term density; and unclassified chunks receive the
+`General` label.
+
+These enriched labels are stored as metadata within the knowledge graph node
+records and are available as filterable fields in registry queries and
+diagnostic analytics.
+
+**X.C. The Three-Dimensional Abstract Syntax Tree Renderer**
+
+Referring to FIG. 10, the three-dimensional abstract syntax tree renderer
+visualizes the structural layer of a Python code knowledge graph as an
+interactive spatial scene. The renderer is implemented using the PyVista
+scientific visualization library with the PyVistaQt backend for hardware-
+accelerated rendering, and is additionally accessible as a browser-embedded
+scene via the trame-vtk web interface.
+
+The renderer reads the node and edge tables directly from the code knowledge
+graph's SQLite database. Each node is assigned a three-dimensional spatial
+position computed by a layered hierarchical layout algorithm: module nodes
+are placed at the root level at evenly spaced angular positions on a
+horizontal plane; class nodes are placed in a second tier centered beneath
+their parent module node; function and method nodes are placed in lower tiers
+centered beneath their parent class or module node; and symbol nodes are
+placed at the leaf tier. Layer separation and radial spread are parameterized
+by the depth of the subtree rooted at each node, ensuring that dense subtrees
+do not overlap their neighbors.
+
+Each node is rendered as a geometric primitive whose shape and color encode
+the node kind: module nodes as large grey spheres, class nodes as medium
+blue spheres, function nodes as medium green spheres, method nodes as small
+cyan spheres, and symbol nodes as small white points. Structural edges are
+rendered as line segments with colors corresponding to the edge relation type:
+`CONTAINS` edges in light grey, `CALLS` edges in orange, `IMPORTS` edges
+in yellow, and `INHERITS` edges in purple.
+
+The scene supports interactive pan, rotate, and zoom via mouse controls.
+Clicking on a node displays a sidebar showing the node's identifier, kind,
+name, source file path, line span, and docstring summary. The renderer
+provides a callable interface accepting a query string: when invoked, the
+renderer highlights nodes semantically related to the query by computing the
+cosine similarity between the query embedding and stored node embeddings,
+increasing the rendered size of high-similarity nodes and dimming unrelated
+nodes, enabling visual exploration of which code entities are most relevant
+to a given question.
+
 **IX. ALTERNATIVE EMBODIMENTS**
 
 In alternative embodiments, the graph storage layer may use a graph database
@@ -1046,6 +1192,55 @@ comprising:
   between the two snapshot states.
 
 **Claim 19.**
+A computer-implemented system for interactive visualization of a federated
+knowledge graph registry, the system comprising:
+  a web dashboard process configured to receive a KGRAG orchestrator instance
+  at startup and present a multi-tab user interface comprising:
+    a registry tab displaying a tabular summary of all registered knowledge
+    graph instances including per-instance structural statistics obtained by
+    invoking a normalized graph statistics method on each available adapter;
+    a federated query tab providing a query input, a result count input, and
+    an optional domain-kind filter, wherein submitting the query tab invokes
+    the orchestrator's federated query method and renders each returned result
+    as a styled card comprising the entity name, entity kind, source file
+    path, a proportional horizontal relevance score bar, a summary text
+    display, and a color code indicating the knowledge graph domain kind;
+    an analysis tab providing a selector populated with available knowledge
+    graph instance names and rendering the Markdown analysis report returned
+    by the selected adapter's analysis method; and
+    a snippet pack tab providing a query input and a context window input,
+    wherein submitting the snippet pack tab invokes the orchestrator's snippet
+    pack method and displays an approximate token budget gauge, and provides
+    export controls for downloading the snippet collection as a Markdown
+    string with per-snippet section headers encoding source domain, instance
+    name, file path, and line span, and as a JSON serialization.
+
+**Claim 20.**
+A computer-implemented method for three-dimensional structural visualization
+of a Python code knowledge graph, the method comprising:
+  reading node records and edge records from a code knowledge graph storage
+  layer, the node records comprising at minimum an identifier, a kind label,
+  a name, a source file path, and line span fields;
+  assigning each node a three-dimensional spatial position using a layered
+  hierarchical layout algorithm in which module nodes are placed at a root
+  layer, class nodes are placed in a second layer centered beneath their
+  parent module nodes, function and method nodes are placed in lower layers
+  centered beneath their parent class or module nodes, and symbol nodes are
+  placed at a leaf layer, with layer separation and radial spread parameterized
+  by the depth of the subtree rooted at each node;
+  rendering each node as a geometric primitive whose shape and color encode
+  the node's kind label, and rendering each edge as a line segment whose
+  color encodes the edge relation type;
+  responding to a user-supplied query string by computing the cosine
+  similarity between the query's dense vector embedding and each node's
+  stored dense vector embedding, increasing the rendered size of nodes with
+  high cosine similarity, and reducing the rendered opacity of nodes with
+  low cosine similarity; and
+  displaying a sidebar showing the node identifier, source file path, line
+  span, and docstring text of any node selected by user interaction with
+  the rendered scene.
+
+**Claim 21.**
 A non-transitory computer-readable medium storing instructions that, when
 executed by one or more processors, implement a federated knowledge graph
 retrieval system comprising:
@@ -1074,8 +1269,8 @@ retrieval system comprising:
   query and snippet extraction capabilities as callable tools accessible to
   external AI agent clients over a standard input/output transport.
 
-**Claim 20.**
-The non-transitory computer-readable medium of claim 19, wherein the adapter
+**Claim 22.**
+The non-transitory computer-readable medium of claim 21, wherein the adapter
 dispatch module is further configured to, when constructing a new adapter
 object for a knowledge graph instance whose backing library is not installed,
 construct a stub adapter object that returns an empty list from query and
@@ -1091,20 +1286,21 @@ federation operations.
 ABSTRACT OF THE DISCLOSURE
 
 A system and method for federated retrieval-augmented generation over
-structurally derived heterogeneous knowledge graphs. A uniform five-method
-adapter protocol enables knowledge graphs of any domain kind — including
-Python source code graphs, document graphs, biochemical pathway graphs,
-protein structure graphs, legal statute graphs, and diary corpus graphs — to
-be queried through a single federation layer without language model
-participation in graph construction. A hierarchical registry stores individual
-knowledge graph instances, named corpus groups, and person-centric corpus
-groups in a shared relational database. A federated query orchestrator
-dispatches queries to all available adapters, globally ranks results by
-relevance score, and returns results with full source provenance. A semantic
-chunking method uses a dynamic threshold equal to the mean minus one standard
-deviation of inter-sentence cosine similarities to segment prose at topical
-boundaries. A diversity-preserving sampler uses k-means clustering in a
-normalized multi-dimensional feature space to select representative corpus
-entries for incremental ingestion. A snapshot subsystem keys point-in-time
-knowledge graph state records to version-control tree hashes, enabling
-differential queries across knowledge graph histories.
+structurally derived heterogeneous knowledge graphs. A uniform adapter
+protocol enables knowledge graphs of any domain kind to be queried through a
+single federation layer without language model participation in graph
+construction. A hierarchical registry stores individual instances, named
+corpus groups, and person-centric corpus groups in a relational database. A
+federated query orchestrator dispatches queries to all available adapters,
+globally ranks results by relevance score, and returns results with full
+source provenance including snippet packing for LLM context injection. A
+semantic chunking method uses a dynamic threshold equal to the mean minus one
+standard deviation of inter-sentence cosine similarities to segment prose at
+topical boundaries, enriched with TF-IDF topic categories and named-entity
+context labels. A diversity-preserving sampler uses k-means clustering in a
+normalized feature space for incremental ingestion. A snapshot subsystem keys
+records to version-control tree hashes enabling differential queries. An
+interactive web dashboard renders real-time federated query results with
+relevance score bars and export for LLM injection. A three-dimensional AST
+renderer visualizes Python code graph structure with query-driven node
+highlighting.
