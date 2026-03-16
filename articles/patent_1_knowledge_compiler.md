@@ -7,10 +7,15 @@ WITH HYBRID STRUCTURAL-SEMANTIC RETRIEVAL AND PROVENANCE-GROUNDED SYNTHESIS**
 
 CROSS-REFERENCE TO RELATED APPLICATIONS
 
-This application claims priority to and is a continuation-in-part of U.S. Patent
-Application No. [PENDING], entitled "Federated Retrieval-Augmented Generation
-over Heterogeneous Knowledge Graphs," filed [DATE], the disclosure of which is
-incorporated herein by reference in its entirety.
+This application is the foundational patent in a series of three related
+applications. U.S. Patent Application No. [PENDING-2], entitled "System and
+Method for Federated Retrieval-Augmented Generation over Structurally Derived
+Heterogeneous Knowledge Graphs," and U.S. Patent Application No. [PENDING-3],
+entitled "TreeOfKnowledge: Fractal Forest Visualization of Compiled Knowledge
+Graphs with Temporal Animation and Federated Query Illumination," each claim
+priority to and incorporate by reference the disclosure of this application.
+Each of the foregoing applications is incorporated herein by reference in its
+entirety.
 
 ---
 
