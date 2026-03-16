@@ -68,6 +68,64 @@ There is no extraction step where errors can be silently introduced.
 
 ---
 
+## The Compilation Cost: Paid Once, Queried Forever
+
+There is a slow step in KGRAG, and it is worth being explicit about: **embedding**.
+
+When a knowledge graph is built, every node must be encoded into a vector so that
+semantic search can locate entry points quickly at query time.  For a large corpus —
+tens of thousands of diary chunks, a full legal code, a protein structure database —
+this is the computationally expensive phase.  On a GPU-equipped workstation it may
+take minutes; on modest CPU hardware it can take longer.
+
+This is not a flaw.  It is the same bargain a compiler strikes.
+
+Compiling a large Fortran program — linking a numerical simulation suite, say —
+can take tens of minutes.  Nobody considers this a problem, because the compiled
+binary runs in milliseconds and can be executed any number of times without
+recompilation.  The compute cost is paid once; every subsequent execution is free.
+KGRAG operates identically.  The build step is the compilation: parse, extract,
+store, embed.  The query step is execution: instantaneous, deterministic, repeatable.
+
+```bash
+# Compile the biochemistry corpus — pay the embedding cost once
+kgrag build biochemistry --kind meta --repo ~/data/kegg
+
+# Query it any number of times thereafter — free
+kgrag query "ATP synthesis in complex I"
+kgrag query "oxidative phosphorylation pathway inhibitors"
+```
+
+This framing has a further implication: **you can see the state of the entire
+knowledge graph**.  Because the compiled artifact is a structured SQLite database
+with known node and edge counts, graph statistics are instantaneous:
+
+```bash
+kgrag stats                         # all registered KGs: nodes, edges
+kgrag stats --kind diary            # diary KGs only
+kgrag snapshot pepys-diary --label "march-2026"
+```
+
+Snapshots capture that state at a point in time.  Combine two snapshots and you
+get differential knowledge:
+
+```bash
+# How has the Pepys corpus changed since last week?
+kgrag snapshot diff pepys-diary <last-week-hash> <today-hash>
+# → +312 nodes, +489 edges, 14 new topics entered the corpus
+
+# What new ideas have entered the Pepys corpus?
+kgrag query "new themes this month" --kind diary --since <last-week-hash>
+```
+
+The second question — *what new ideas have entered the corpus?* — is answered by
+**differential federated search**: query both snapshots, compute the set difference
+of the top-k results, and the delta is the new knowledge.  This is only possible
+because the knowledge graph is a compiled, structured artifact with a stable,
+queryable history.  A raw vector index has no such capability.
+
+---
+
 ## Federated Search: One Interface for All Knowledge
 
 The compilation metaphor scales. Once every domain compiles to the same interface
@@ -190,6 +248,118 @@ and corpus abstractions require no changes.
 
 **The framework is the answer. The domains are the data.
 The TreeOfKnowledge is the union.**
+
+---
+
+## The Forest of Knowledge: Seeing What You Know
+
+Knowledge graphs are invisible by default.  Node counts and edge counts are
+numbers on a terminal.  But a knowledge graph has shape — topology, density,
+temporal depth, thematic character — and those properties can be rendered.
+
+The vision is a **forest of fractal trees**.
+
+Each registered knowledge graph is a tree.  Its visual properties are a direct
+encoding of its structure:
+
+| KG property | Tree property |
+|---|---|
+| Node count | Overall size and height |
+| Edge count / node ratio | Branch density and complexity |
+| KG kind (`code`, `doc`, `diary`, …) | Species — trunk shape, branching style |
+| Semantic coverage score | Colour saturation |
+| Age / creation date | Patina, bark texture |
+| Recent activity (snapshot delta) | New growth — fresh green tips |
+
+A `code` KG might render as a dense, symmetrical conifer — deep call graphs
+producing many short branches from a thick trunk.  A `diary` KG grows as a
+gnarled deciduous tree, its branches irregular and temporal, new growth appearing
+as each ingestion run adds chunks.  A `meta` (biochemical) KG forms an intricate
+lattice — metabolic cycles visible as loops in the branching structure.
+
+**Person corpora** become a grove: a cluster of trees standing close together,
+their canopies touching — the diary tree, the code tree, the documents tree, the
+memory tree, all representing a single person's knowledge.  The grove is denser
+where corpora overlap; sparse where knowledge is incomplete.
+
+**The Tree of Knowledge(tm)** is the aggregate: the entire forest rendered at once,
+every registered KG, every person corpus, every corpus group — a single living
+visualisation of all compiled knowledge.
+
+### Temporal Animation
+
+Because the snapshot system captures graph state at each commit, the forest has
+a time dimension.  Replay the snapshot history and watch the forest grow:
+
+- New ingestion runs sprout branches overnight
+- A `kgrag build` on a new repository plants a sapling in the clearing
+- A differential query lights up branches across multiple trees simultaneously
+- A corpus-scoped query illuminates a specific grove
+
+Run a federated query and watch the **nodes and branches light up across the
+forest** in real time as each participating KG returns its results — the more
+relevant the KG, the brighter its canopy glows.
+
+This is not decoration.  It is a **diagnostic instrument**.  A tree that stopped
+growing six months ago signals a corpus that has not been re-ingested.  A sparse
+canopy on a large trunk signals a KG with many structural nodes but thin semantic
+coverage.  An unexpectedly bright response from the biochemistry tree on a query
+about "structural stability" signals an unexpected cross-domain connection worth
+investigating.
+
+The forest makes the invisible visible.  It turns graph statistics into intuition.
+
+---
+
+## Temporal Selection and Incremental Ingestion
+
+Large corpora cannot always be fully ingested in a single run.  A diary spanning
+decades has tens of thousands of entries; a legal corpus has millions of clauses;
+a full protein structure database has hundreds of thousands of PDB files.  On
+modest hardware, embedding all of them before the first query is impractical.
+
+KGRAG handles this through **smart temporal selection with restart capability**.
+
+### Diversity-Preserving Sampling
+
+When `batch_size` is set, the ingestion pipeline does not take the first N entries
+or a random sample.  It uses k-means clustering in a normalised feature space that
+encodes temporal position, content length, lexical density, and named-entity
+profile.  From each cluster it selects the entry closest to the centroid —
+ensuring that the selected batch covers the full temporal and thematic range of the
+corpus, not just its beginning.
+
+A build with `--batch-size 200` on a 10,000-entry diary corpus will give you 200
+entries distributed across the entire timeline and across all discoverable topics.
+Queries run immediately against this partial index; the knowledge is incomplete
+but representative.  The index improves with each subsequent run.
+
+```bash
+# First run: fast, broad semantic coverage
+kgrag diary build --batch-size 200 --seed 42
+
+# Second run: fills in more of the corpus, skips already-indexed entries
+kgrag diary build --batch-size 200 --seed 42 --resume
+
+# Final run: index everything
+kgrag diary build
+```
+
+### Resumable State
+
+The state manager tracks which entries have already been ingested by their
+index positions.  A `--resume` run loads that state, filters out already-processed
+entries, and selects a fresh diverse batch from the remainder.  No entry is
+processed twice; no run requires starting over.
+
+This means ingestion of very large corpora is naturally parallelisable across
+time: run daily with a fixed batch size, and the corpus progressively converges
+toward full indexing while remaining queryable throughout.
+
+The snapshot system complements this perfectly: each incremental run can be
+snapshotted, producing a timeline of coverage growth that is itself queryable —
+*how many new entries were indexed this week?  which topics are still
+under-represented?*
 
 ---
 
