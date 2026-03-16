@@ -40,10 +40,11 @@ This directory contains comprehensive documentation for KGRAG users and develope
 
 | Document | Purpose | Read Time |
 |----------|---------|-----------|
-| [VISION.md](VISION.md) | Strategic vision, philosophy, and roadmap | 5 min |
+| [VISION.md](VISION.md) | Strategic vision, philosophy, roadmap, Forest of Knowledge | 8 min |
 | [INSTALLATION.md](INSTALLATION.md) | Setup, configuration, and verification | 10 min |
 | [USAGE.md](USAGE.md) | Commands, workflows, examples, best practices | 20 min |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Common issues and solutions | Reference |
+| [SEMANTIC_CHUNKING.md](SEMANTIC_CHUNKING.md) | Chunking strategies, parameters, and storage layout | 5 min |
 
 ### For AI Agents
 
@@ -157,6 +158,11 @@ KGRAG achieves:
 - Global relevance ranking
 - Cross-domain pattern discovery
 
+✅ **Knowledge Compiler Model** — build cost paid once, queries are free
+- Embedding is the slow step, like compiling a large Fortran program
+- Post-build queries run in under a second on commodity hardware
+- Snapshot system enables differential queries: *what changed since last week?*
+
 ✅ **Unified CLI** for initialization, querying, analysis, visualization
 - Same commands work across all KG types
 - Consistent flags, options, and output
@@ -166,6 +172,11 @@ KGRAG achieves:
 - Knowledge graphs become agent tools
 - Semantic search in prompts
 - Context extraction for LLM tasks
+
+✅ **Incremental Ingestion with Restart**
+- Large corpora ingest in batches with diversity-preserving sampling
+- Resumable state: each run picks up where the last left off
+- Corpus is queryable throughout — no waiting for full ingestion
 
 ✅ **Complete Documentation** for users and agents
 - Comprehensive guides and references
@@ -281,11 +292,20 @@ Individual knowledge graphs for a repository:
 
 One repository can have multiple layers.
 
+### The Compilation Model
+Build = compile. Embedding nodes into vectors is the expensive step, paid once at build time. Queries execute against the pre-built index in milliseconds — exactly like running a compiled binary.
+
 ### Federated Query
 Single query searches all registered KGs simultaneously. Results are ranked globally by relevance.
 
+### Differential Query
+Compare two snapshots to ask *what changed?* — new nodes, new edges, new topics. Enables questions like "what new ideas entered the Pepys corpus this week?" via differential federated search.
+
 ### Adapters
 Uniform interface over CodeKG, DocKG, MetaKG. Handles library presence, error conditions, and consistent output.
+
+### Forest of Knowledge
+Planned visual rendering: each KG as a fractal tree whose size, colour, and branching encode its graph properties. Corpora render as groves; the TreeOfKnowledge(tm) is the full forest. See [VISION.md](VISION.md) and [TREE_VISUALIZER_PLAN.md](TREE_VISUALIZER_PLAN.md).
 
 ---
 
