@@ -132,9 +132,9 @@ Markdown / RST documentation & Document parse tree, hyperlinks & \texttt{doc} \\
 Biochemical pathways & Reaction schemas (KEGG, BioCyc) & \texttt{meta} \\
 Protein structures & PDB file format (ATOM, SEQRES) & \texttt{pdbfile} \\
 Disulfide bond networks & Bond topology from PDB coordinates & \texttt{disulfide} \\
-Books of law & Title → Chapter → Section → Clause & \texttt{legal} \\
+Books of law & Title $\rightarrow$ Chapter $\rightarrow$ Section $\rightarrow$ Clause & \texttt{legal} \\
 Diary / journal entries & Document structure + temporal order & \texttt{diary} \\
-Scripture / verse & Book → Chapter → Verse, cross-refs & \texttt{verse} \\
+Scripture / verse & Book $\rightarrow$ Chapter $\rightarrow$ Verse, cross-refs & \texttt{verse} \\
 Episodic memory & Temporal event graphs & \texttt{memory} \\
 Personal knowledge & Biographical and relational graphs & \texttt{person} \\
 \bottomrule
@@ -410,7 +410,7 @@ class KGAdapter(ABC):
     def snapshot(self, version: str,
                  label: str | None = None) -> dict[str, Any]: ...
 
-    # Internal — strips domain-specific fields; used by the orchestrator
+    # Internal -- strips domain-specific fields; used by the orchestrator
     # to aggregate graph-size metrics uniformly across all KG kinds.
     def _graph_stats(self) -> dict[str, int]: ...
 \end{lstlisting}
@@ -690,18 +690,22 @@ Tool & Function \\
 \end{tabular}
 \end{center}
 
+\begin{sloppypar}
 \textbf{Corpus tools} (\texttt{kgrag\_corpus\_list}, \texttt{kgrag\_corpus\_info},
 \texttt{kgrag\_corpus\_create}, \texttt{kgrag\_corpus\_delete},
 \texttt{kgrag\_corpus\_add}, \texttt{kgrag\_corpus\_remove},
 \texttt{kgrag\_corpus\_query}, \texttt{kgrag\_corpus\_pack}): create and manage
 named collections of KG instances and execute corpus-scoped federated queries.
+\end{sloppypar}
 
+\begin{sloppypar}
 \textbf{Person tools} (\texttt{kgrag\_person\_list}, \texttt{kgrag\_person\_info},
 \texttt{kgrag\_person\_create}, \texttt{kgrag\_person\_delete},
 \texttt{kgrag\_person\_add}, \texttt{kgrag\_person\_remove},
 \texttt{kgrag\_person\_update}, \texttt{kgrag\_person\_query},
 \texttt{kgrag\_person\_pack}): create and manage person corpus entries with
 personal metadata and execute person-scoped federated queries.
+\end{sloppypar}
 
 The MCP transport is \texttt{stdio}, making it compatible with Claude Code,
 Kilo Code, GitHub Copilot, Cline, and Claude Desktop without additional
