@@ -1,0 +1,122 @@
+{
+  "key": "95ab7e8e41fb40641e958e6fa82ebf98b8619283",
+  "branch": "main",
+  "timestamp": "2026-03-17T01:35:24.861941+00:00",
+  "version": "0.3.0",
+  "metrics": {
+    "total_nodes": 4876,
+    "total_edges": 36386,
+    "meaningful_nodes": 4850,
+    "coverage_score": 0.9488808227465215,
+    "node_counts": {
+      "chunk": 1102,
+      "document": 26,
+      "entity": 1172,
+      "keyword": 1165,
+      "section": 620,
+      "topic": 791
+    },
+    "edge_counts": {
+      "CONTAINS": 1873,
+      "CO_OCCURS_WITH": 22816,
+      "HAS_KEYWORD": 4707,
+      "HAS_TOPIC": 1247,
+      "MENTIONS_ENTITY": 4593,
+      "NEXT": 524,
+      "REFERENCES": 70,
+      "SIMILAR_TO": 556
+    },
+    "issues_count": 0,
+    "complexity_median": 24.0
+  },
+  "hotspots": [
+    {
+      "id": "chunk:README.md:0053",
+      "file_path": "README.md",
+      "label": "Web Dashboard",
+      "references": 0,
+      "semantic_links": 25,
+      "total_links": 26
+    },
+    {
+      "id": "chunk:docs/README.md:0026",
+      "file_path": "docs/README.md",
+      "label": "Opening an Issue",
+      "references": 1,
+      "semantic_links": 24,
+      "total_links": 25
+    },
+    {
+      "id": "chunk:docs/VISION.md:0001",
+      "file_path": "docs/VISION.md",
+      "label": "The Central Insight: Ontology Enables Determinism",
+      "references": 0,
+      "semantic_links": 24,
+      "total_links": 25
+    },
+    {
+      "id": "chunk:docs/VISION.md:0003",
+      "file_path": "docs/VISION.md",
+      "label": "The Central Insight: Ontology Enables Determinism",
+      "references": 0,
+      "semantic_links": 24,
+      "total_links": 25
+    },
+    {
+      "id": "chunk:README.md:0055",
+      "file_path": "README.md",
+      "label": "Design Principles",
+      "references": 0,
+      "semantic_links": 24,
+      "total_links": 24
+    },
+    {
+      "id": "chunk:README.md:0004",
+      "file_path": "README.md",
+      "label": "KG Types",
+      "references": 0,
+      "semantic_links": 23,
+      "total_links": 24
+    },
+    {
+      "id": "chunk:docs/VISION.md:0006",
+      "file_path": "docs/VISION.md",
+      "label": "KGRAG as a Knowledge Compiler",
+      "references": 0,
+      "semantic_links": 23,
+      "total_links": 24
+    },
+    {
+      "id": "chunk:docs/README.md:0021",
+      "file_path": "docs/README.md",
+      "label": "VISION.md",
+      "references": 0,
+      "semantic_links": 23,
+      "total_links": 23
+    },
+    {
+      "id": "chunk:docs/README.md:0022",
+      "file_path": "docs/README.md",
+      "label": "INSTALLATION.md",
+      "references": 0,
+      "semantic_links": 23,
+      "total_links": 23
+    },
+    {
+      "id": "chunk:docs/VISION.md:0010",
+      "file_path": "docs/VISION.md",
+      "label": "The Compilation Cost: Paid Once, Queried Forever",
+      "references": 0,
+      "semantic_links": 22,
+      "total_links": 23
+    }
+  ],
+  "issues": [],
+  "vs_previous": null,
+  "vs_baseline": {
+    "nodes": 1928,
+    "edges": 16040,
+    "coverage_delta": 0.03951062305374109,
+    "issues_delta": 0
+  }
+}

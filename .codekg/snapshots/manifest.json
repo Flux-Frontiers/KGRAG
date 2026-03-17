@@ -1,6 +1,6 @@
 {
   "format": "1.0",
-  "last_update": "2026-03-15T17:16:53.611064+00:00",
+  "last_update": "2026-03-17T01:35:05.412209+00:00",
   "snapshots": [
     {
       "key": "86c4acfa750605734e9dd62b4bfdcf7a7e0efe8a",
@@ -622,6 +622,80 @@
           "nodes": 1659,
           "edges": 2513,
           "coverage_delta": 0.02100000000000013,
+          "critical_issues_delta": 0
+        }
+      }
+    },
+    {
+      "key": "95ab7e8e41fb40641e958e6fa82ebf98b8619283",
+      "branch": "main",
+      "timestamp": "2026-03-17T01:35:05.410718+00:00",
+      "version": "0.3.0",
+      "file": "95ab7e8e41fb40641e958e6fa82ebf98b8619283.json",
+      "metrics": {
+        "total_nodes": 2859,
+        "total_edges": 4120,
+        "meaningful_nodes": 251,
+        "docstring_coverage": 0.813,
+        "node_counts": {
+          "class": 27,
+          "function": 58,
+          "method": 133,
+          "module": 33,
+          "symbol": 2608
+        },
+        "edge_counts": {
+          "ATTR_ACCESS": 1073,
+          "CALLS": 1023,
+          "CONTAINS": 218,
+          "IMPORTS": 292,
+          "INHERITS": 15,
+          "RESOLVES_TO": 1499
+        },
+        "critical_issues": 1,
+        "complexity_median": 15,
+        "module_node_counts": {
+          "src/kg_rag/__init__.py": 3,
+          "src/kg_rag/adapters/__init__.py": 29,
+          "src/kg_rag/adapters/_stub_adapter.py": 102,
+          "src/kg_rag/adapters/base.py": 18,
+          "src/kg_rag/adapters/codekg_adapter.py": 85,
+          "src/kg_rag/adapters/diary_adapter.py": 74,
+          "src/kg_rag/adapters/disulfide_adapter.py": 6,
+          "src/kg_rag/adapters/dockg_adapter.py": 98,
+          "src/kg_rag/adapters/legal_adapter.py": 6,
+          "src/kg_rag/adapters/memory_adapter.py": 6,
+          "src/kg_rag/adapters/metakg_adapter.py": 99,
+          "src/kg_rag/adapters/pdbfile_adapter.py": 6,
+          "src/kg_rag/adapters/person_adapter.py": 6,
+          "src/kg_rag/adapters/verse_adapter.py": 6,
+          "src/kg_rag/app.py": 310,
+          "src/kg_rag/cli/__init__.py": 2,
+          "src/kg_rag/cli/cmd_analyze.py": 39,
+          "src/kg_rag/cli/cmd_corpus.py": 361,
+          "src/kg_rag/cli/cmd_init.py": 70,
+          "src/kg_rag/cli/cmd_mcp.py": 6,
+          "src/kg_rag/cli/cmd_query.py": 64,
+          "src/kg_rag/cli/cmd_registry.py": 181,
+          "src/kg_rag/cli/cmd_viz.py": 25,
+          "src/kg_rag/cli/group.py": 2,
+          "src/kg_rag/cli/main.py": 1,
+          "src/kg_rag/cli/options.py": 12,
+          "src/kg_rag/config.py": 27,
+          "src/kg_rag/corpus_registry.py": 135,
+          "src/kg_rag/mcp_server.py": 125,
+          "src/kg_rag/orchestrator.py": 236,
+          "src/kg_rag/person_registry.py": 140,
+          "src/kg_rag/primitives.py": 90,
+          "src/kg_rag/registry.py": 134
+        }
+      },
+      "deltas": {
+        "vs_previous": null,
+        "vs_baseline": {
+          "nodes": 1836,
+          "edges": 2881,
+          "coverage_delta": 0.025000000000000022,
           "critical_issues_delta": 0
         }
       }

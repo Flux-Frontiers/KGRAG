@@ -235,5 +235,26 @@ __marimo__/
 .dockg/graph.sqlite*
 .dockg/models
 
+# DiaryKG
+# DocKG generated artifacts — same pattern as CodeKG; snapshots will be tracked once added
+.diarykg/lancedb/
+.diarykg/lancedb-*
+.diarykg/graph.sqlite
+.diarykg/graph.sqlite*
+.diarykg/models
+
+# KGRAG
+# KGRAG generated artifacts — same pattern as CodeKG; snapshots will be tracked once added
+.kgrag/lancedb/
+.kgrag/lancedb-*
+.kgrag/graph.sqlite
+.kgrag/graph.sqlite*
+.kgrag/models
+
 # MCP server config — machine-specific, never commit
 .mcp.json
+
+# MacOS
+.DS_Store
+commit.txt
+
