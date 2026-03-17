@@ -43,8 +43,6 @@ classifiers = [
 ]
 packages = [
   { include = "kg_rag", from = "src" },
-  { include = "diary_kg", from = "pepys" },
-  { include = "diary_transformer", from = "pepys" },
 ]
 
 [tool.poetry.dependencies]
@@ -65,17 +63,21 @@ PyQt5 = { version = ">=5.15.0", optional = true }
 param = { version = ">=2.0.0", optional = true }
 markdown = { version = ">=3.6", optional = true }
 trame-vtk = { version = ">=2.0.0", optional = true }
+pip = "^26.0.1"
 
 doc-kg = {git = "https://github.com/Flux-Frontiers/doc_kg.git"}
-pip = "^26.0.1"
 code-kg = {git = "https://github.com/Flux-Frontiers/code_kg.git"}
+diary-kg = {git = "https://github.com/Flux-Frontiers/diary_kg.git"}
+#ftree-kg = {git = "https://github.com/Flux-Frontiers/ftree_kg.git"}
+meta-kg = {git = "https://github.com/Flux-Frontiers/meta_kg.git"}
 
 [tool.poetry.extras]
 viz = ["streamlit", "pyvis", "plotly"]
 viz3d = ["pyvista", "pyvistaqt", "PyQt5", "param", "markdown", "trame-vtk"]
 doc-kg = ["doc-kg"]
-dock-kg = ["doc-kg"]
-code-kg = ["code-kg"]
+diary-kg = ["diary-kg"]
+ftree-kg = ["ftree-kg"]
+meta-kg = ["meta-kg"]
 
 
 [tool.poetry.group.viz3d]
