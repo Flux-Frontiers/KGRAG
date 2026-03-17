@@ -698,6 +698,7 @@ description = "A tool to build a searchable knowledge graph from Python reposito
 optional = false
 python-versions = ">=3.12,<3.14"
 groups = ["main"]
+markers = "extra == \"doc-kg\" or extra == \"dock-kg\" or extra == \"code-kg\""
 files = []
 develop = false
 
@@ -1214,6 +1215,7 @@ description = "A tool to build a semantically searchable knowledge graph from ma
 optional = false
 python-versions = ">=3.12,<3.14"
 groups = ["main"]
+markers = "extra == \"doc-kg\" or extra == \"dock-kg\""
 files = []
 develop = false
 
