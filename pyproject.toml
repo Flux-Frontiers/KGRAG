@@ -67,9 +67,9 @@ pip = "^26.0.1"
 
 doc-kg = {git = "https://github.com/Flux-Frontiers/doc_kg.git"}
 code-kg = {git = "https://github.com/Flux-Frontiers/code_kg.git"}
-diary-kg = {git = "https://github.com/Flux-Frontiers/diary_kg.git"}
+#diary-kg = {git = "https://github.com/Flux-Frontiers/diary_kg.git"}
 #ftree-kg = {git = "https://github.com/Flux-Frontiers/ftree_kg.git"}
-meta-kg = {git = "https://github.com/Flux-Frontiers/meta_kg.git"}
+metabo-kg = {git = "https://github.com/Flux-Frontiers/metabo_kg.git"}
 
 [tool.poetry.extras]
 viz = ["streamlit", "pyvis", "plotly"]
@@ -77,7 +77,7 @@ viz3d = ["pyvista", "pyvistaqt", "PyQt5", "param", "markdown", "trame-vtk"]
 doc-kg = ["doc-kg"]
 diary-kg = ["diary-kg"]
 ftree-kg = ["ftree-kg"]
-meta-kg = ["meta-kg"]
+meta-kg = ["metabo-kg"]
 
 
 [tool.poetry.group.viz3d]
@@ -116,7 +116,7 @@ kgrag-query        = "kg_rag.cli.cmd_query:query"
 kgrag-pack         = "kg_rag.cli.cmd_query:pack"
 kgrag-analyze      = "kg_rag.cli.cmd_analyze:analyze"
 kgrag-viz          = "kg_rag.cli.cmd_viz:viz"
-diarykg            = "diary_kg.cli:cli"
+#diarykg            = "diary_kg.cli:cli"
 
 [tool.pylint.messages_control]
 disable = ["all"]
