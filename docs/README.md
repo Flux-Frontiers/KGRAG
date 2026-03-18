@@ -40,6 +40,7 @@ This directory contains comprehensive documentation for KGRAG users and develope
 
 | Document | Purpose | Read Time |
 |----------|---------|-----------|
+| [FEATURES.md](FEATURES.md) | Complete feature list — all capabilities, commands, and data types | 5 min |
 | [VISION.md](VISION.md) | Strategic vision, philosophy, roadmap, Forest of Knowledge | 8 min |
 | [INSTALLATION.md](INSTALLATION.md) | Setup, configuration, and verification | 10 min |
 | [USAGE.md](USAGE.md) | Commands, workflows, examples, best practices | 20 min |
