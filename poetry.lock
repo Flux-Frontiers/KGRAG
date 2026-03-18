@@ -4636,7 +4636,7 @@ version = "5.15.11"
 description = "Python bindings for the Qt cross platform application toolkit"
 optional = false
 python-versions = ">=3.8"
-groups = ["main", "viz3d"]
+groups = ["main", "qt", "viz3d"]
 files = [
     {file = "PyQt5-5.15.11-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:c8b03dd9380bb13c804f0bdb0f4956067f281785b5e12303d529f0462f9afdc2"},
     {file = "PyQt5-5.15.11-cp38-abi3-macosx_11_0_x86_64.whl", hash = "sha256:6cd75628f6e732b1ffcfe709ab833a0716c0445d7aec8046a48d5843352becb6"},
@@ -4645,7 +4645,7 @@ files = [
     {file = "PyQt5-5.15.11-cp38-abi3-win_amd64.whl", hash = "sha256:bdde598a3bb95022131a5c9ea62e0a96bd6fb28932cc1619fd7ba211531b7517"},
     {file = "PyQt5-5.15.11.tar.gz", hash = "sha256:fda45743ebb4a27b4b1a51c6d8ef455c4c1b5d610c90d2934c7802b5c1557c52"},
 ]
-markers = {main = "extra == \"viz3d\""}
+markers = {main = "extra == \"qt\" or extra == \"viz3d\""}
 
 [package.dependencies]
 PyQt5-Qt5 = ">=5.15.2,<5.16.0"
@@ -4657,13 +4657,13 @@ version = "5.15.18"
 description = "The subset of a Qt installation needed by PyQt5."
 optional = false
 python-versions = "*"
-groups = ["main", "viz3d"]
+groups = ["main", "qt", "viz3d"]
 files = [
     {file = "pyqt5_qt5-5.15.18-py3-none-macosx_10_13_x86_64.whl", hash = "sha256:8bb997eb903afa9da3221a0c9e6eaa00413bbeb4394d5706118ad05375684767"},
     {file = "pyqt5_qt5-5.15.18-py3-none-macosx_11_0_arm64.whl", hash = "sha256:c656af9c1e6aaa7f59bf3d8995f2fa09adbf6762b470ed284c31dca80d686a26"},
     {file = "pyqt5_qt5-5.15.18-py3-none-manylinux2014_x86_64.whl", hash = "sha256:bf2457e6371969736b4f660a0c153258fa03dbc6a181348218e6f05421682af7"},
 ]
-markers = {main = "extra == \"viz3d\""}
+markers = {main = "extra == \"qt\" or extra == \"viz3d\""}
 
 [[package]]
 name = "pyqt5-sip"
@@ -4671,7 +4671,7 @@ version = "12.18.0"
 description = "The sip module support for PyQt5"
 optional = false
 python-versions = ">=3.10"
-groups = ["main", "viz3d"]
+groups = ["main", "qt", "viz3d"]
 files = [
     {file = "pyqt5_sip-12.18.0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:dc5c30bb9bd8cca6e13d2fedac6e2a75fe2168d798d66f76e74835546b025027"},
     {file = "pyqt5_sip-12.18.0-cp310-cp310-manylinux1_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:b4b743566f67cabfa7b0ba2da30b46d9d635d16cd5bc8cdcec83f620ed14dd93"},
@@ -4700,7 +4700,7 @@ files = [
     {file = "pyqt5_sip-12.18.0-cp314-cp314-win_amd64.whl", hash = "sha256:6d948f1be619c645cd3bda54952bfdc1aef7c79242dccea6a6858748e61114b9"},
     {file = "pyqt5_sip-12.18.0.tar.gz", hash = "sha256:71c37db75a0664325de149f43e2a712ec5fa1f90429a21dafbca005cb6767f94"},
 ]
-markers = {main = "extra == \"viz3d\""}
+markers = {main = "extra == \"qt\" or extra == \"viz3d\""}
 
 [[package]]
 name = "pytest"
@@ -6962,10 +6962,11 @@ diary-kg = []
 doc-kg = ["doc-kg"]
 ftree-kg = []
 meta-kg = []
+qt = ["PyQt5"]
 viz = ["plotly", "pyvis", "streamlit"]
 viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = ">3.12,<3.14"
-content-hash = "605de41ee149364a5c9fe0e30049ade2c427d464bdc82b387e4700a5bcf1cc87"
+content-hash = "5e98c01c0f31e06cc68ee0d3efb90970a2a9ae966b60856bbfa038e36c57e7c4"
