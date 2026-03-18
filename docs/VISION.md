@@ -363,6 +363,132 @@ under-represented?*
 
 ---
 
+## KG Distribution: Packaging, Publishing, and the `kgrag://` Protocol
+
+A compiled knowledge graph is a portable artifact. Like a compiled binary, it
+can be packaged, versioned, published, installed, and run anywhere — without
+re-compiling from source. This section describes the distribution layer that
+completes the compiler analogy.
+
+### KGs as Distributable Packages
+
+Once a KG is compiled, it is a self-contained artifact: a SQLite file (structural
+graph), a LanceDB directory (semantic index), and a registry entry (metadata).
+These can be bundled into a versioned package and published to a centralized
+repository — a **KG Package Index** — analogous to PyPI for Python packages.
+
+```bash
+# Publish a compiled KG to the central index
+kgrag publish my-legal-corpus --version 1.0.0
+
+# Install a KG from the index — no re-compilation required
+kgrag install kgpkg:us-code@2024 --into ~/.kgrag/registry
+
+# Use it immediately after install
+kgrag query "first amendment balancing tests"
+```
+
+Any transport that can carry bytes can carry a KG package:
+
+| Transport | Mechanism |
+|-----------|-----------|
+| Centralized index | `kgrag install kgpkg:us-code@2024` |
+| Git repository | `kgrag install git+https://github.com/org/legal-kg.git` |
+| Archive file | `kgrag install ./us-code-1.0.0.kgpkg` |
+| HTTP URL | `kgrag install https://example.com/kgs/us-code-1.0.0.kgpkg` |
+| Local path | `kgrag install /mnt/shared/kgs/us-code/` |
+
+The compiled artifact is transport-agnostic. The compilation cost was paid once
+by the publisher; every recipient queries immediately with zero build time.
+
+### Corpora as Published Collections
+
+A corpus — a named group of KG instances — can also be published. A published
+corpus references its member KGs by name and version, like a `requirements.txt`
+for knowledge:
+
+```yaml
+# us-law-library.corpus.yaml
+name: us-law-library
+version: 2024.1
+members:
+  - kgpkg:us-code@2024
+  - kgpkg:cfr@2024
+  - kgpkg:supremecourt-opinions@2024
+  - kgpkg:law-review@2024
+```
+
+```bash
+kgrag corpus install us-law-library --from kgpkg:us-law-library@2024.1
+# Resolves and installs all member KGs, registers the corpus
+kgrag corpus query us-law-library "administrative deference doctrine"
+```
+
+A single `kgrag corpus install` gives a researcher an entire curated knowledge
+domain, ready to query.
+
+### The `kgrag://` URL Scheme
+
+Every node in every registered KG has a stable, addressable identity. The
+`kgrag://` URL scheme makes this identity routable — across KGs, corpora, and
+the entire forest:
+
+```
+kgrag://<corpus-or-kg-name>/<node-id>
+kgrag://us-code/title:42/chapter:7/section:1395
+kgrag://eric-diary/chunk:2019-03-14/sentence:3
+kgrag://disulfide-research/fn:src/bond_analysis.py:compute_angle
+```
+
+A `kgrag://` URL is not merely a locator — it is a **graph address**. Because
+the knowledge graph is a graph, a URL pointing to a node implies all its edges:
+follow the edges and you navigate the graph. One could traverse from a statute
+section to every case that cites it, from a function node to every call site,
+from a diary entry to every thematically linked memory.
+
+The forest of trees becomes a **navigable web**:
+
+```bash
+# Resolve a node and its neighbors
+kgrag resolve kgrag://us-code/section:1395 --depth 2
+
+# Open a node in the TreeOfKnowledge visualizer
+kgrag viz --url kgrag://disulfide-research/fn:compute_angle
+
+# Federated query anchored to a node — find related nodes across all KGs
+kgrag query --from kgrag://eric-diary/chunk:2019-03-14 "related themes"
+```
+
+A `kgrag://` URL can be bookmarked, shared, embedded in documents, and followed
+by any KGRAG-compatible client — human or AI agent. It is the universal citation
+format for compiled knowledge.
+
+### The Central Vision: A Knowledge Package Index
+
+The logical endpoint is a **Knowledge Package Index (KPI)** — a public,
+versioned, searchable repository of compiled KGs covering every domain where a
+formal ontology exists:
+
+- Legal codes for every jurisdiction
+- Protein structure databases (PDB)
+- Biochemical pathway databases (KEGG, BioCyc)
+- Scientific corpus compilations (arXiv, PubMed)
+- Canonical software repositories (CPython, Linux kernel)
+- Scripture and verse in every tradition
+- Curated personal and institutional corpora
+
+Any researcher, developer, or AI agent installs the KGs they need, queries
+immediately, and contributes their own compilations back to the index. The
+compilation network effect compounds: every new domain compiled by anyone
+becomes available to everyone.
+
+This is the **distributed TreeOfKnowledge**: not a single server holding all
+knowledge, but a federated ecosystem of compiled, versioned, citable knowledge
+artifacts — interoperable through the `kgrag://` URL scheme and the universal
+`KGAdapter` interface.
+
+---
+
 ## Design Philosophy
 
 ### Structure over Approximation

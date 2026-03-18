@@ -10,6 +10,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry
+from kg_rag.viz import DisplayMode, Viewport
 
 
 class KGAdapter(ABC):
@@ -89,6 +90,128 @@ class KGAdapter(ABC):
         :param label: Optional human-readable label for the snapshot.
         :return: Serialisable snapshot dict.
         """
+
+    # ------------------------------------------------------------------
+    # Viewport display
+    # ------------------------------------------------------------------
+
+    def display(self, viewport: Viewport) -> None:
+        """Render this KG's visualization into the provided viewport.
+
+        Subclasses must override this method to produce one or both display modes:
+
+        * ``DisplayMode.SEMANTIC`` — render the KG as a tree in the
+          TreeOfKnowledge forest.  Tree shape, size, branch density, colour
+          saturation, and fresh-tip colour encode structural and temporal
+          properties per the VISION specification.
+
+        * ``DisplayMode.ONTOLOGICAL`` — render the KG's internal graph topology
+          as a 2-D node-link diagram.  Nodes coloured by kind; edges by relation
+          type; layout force-directed or hierarchical based on KG kind.
+
+        **Rendering contract:**
+
+        * All Streamlit (or other UI framework) calls must target
+          ``viewport.container``, never the global ``st`` module, so that output
+          is confined to the allocated region.
+        * Do not raise exceptions — catch internal errors and render a fallback
+          error card inside the viewport instead.
+        * Respect ``viewport.width`` and ``viewport.height`` when sizing charts
+          or canvas elements (``0`` means fill available).
+
+        The base implementation renders a placeholder card so that stub adapters
+        participate in the visualizer without crashing it.  Override to provide
+        the real visualization.
+
+        :param viewport: The rectangular display region to render into.
+        """
+        self._display_stub(viewport)
+
+    def _display_stub(self, viewport: Viewport) -> None:
+        """Render a placeholder card for adapters that have not yet implemented display().
+
+        Dispatches to the correct backend stub based on ``viewport.backend``:
+
+        * :attr:`~kg_rag.viz.RenderBackend.QT2D` — draws a synthetic tree or
+          node-link diagram into the ``QGraphicsScene`` via
+          :mod:`kg_rag.viz_qt`.
+        * :attr:`~kg_rag.viz.RenderBackend.STREAMLIT` — renders an HTML info
+          card into the Streamlit container.
+
+        :param viewport: The viewport to render into.
+        """
+        from kg_rag.viz import RenderBackend  # pylint: disable=import-outside-toplevel
+
+        if viewport.backend == RenderBackend.QT2D:
+            self._display_stub_qt(viewport)
+        else:
+            self._display_stub_streamlit(viewport)
+
+    def _display_stub_qt(self, viewport: Viewport) -> None:
+        """Draw a synthetic placeholder into a QGraphicsScene (Qt2D backend)."""
+        try:
+            from kg_rag.viz_qt import (  # pylint: disable=import-outside-toplevel
+                draw_stub_ontological,
+                draw_stub_semantic,
+            )
+        except ImportError:
+            return  # PyQt5 not installed
+
+        scene = viewport.container
+        if viewport.mode == DisplayMode.SEMANTIC:
+            draw_stub_semantic(scene, self)
+        else:
+            draw_stub_ontological(scene, self)
+
+    def _display_stub_streamlit(self, viewport: Viewport) -> None:
+        """Render an HTML info card into a Streamlit container."""
+        try:
+            import streamlit as st  # pylint: disable=import-outside-toplevel
+        except ImportError:
+            return
+
+        ct = viewport.container
+        available = self.is_available()
+        kind = self.entry.kind.value
+        name = viewport.title or self.entry.name
+        mode_label = "Semantic (forest)" if viewport.mode == DisplayMode.SEMANTIC else "Ontological (graph)"
+
+        _COLOR = {
+            "code": "#4A90D9", "doc": "#27AE60", "meta": "#8E44AD",
+            "diary": "#E67E22", "verse": "#1ABC9C", "memory": "#F39C12",
+            "disulfide": "#E74C3C", "pdbfile": "#95A5A6",
+            "legal": "#8B4513", "person": "#FF69B4",
+        }
+        color = _COLOR.get(kind, "#95A5A6")
+
+        with ct:
+            st.markdown(
+                f"<div style='border-left:4px solid {color};"
+                f"border-radius:6px;padding:10px 14px;background:#1e1e2e;'>"
+                f"<span style='background:{color};color:#fff;border-radius:4px;"
+                f"padding:2px 8px;font-size:11px;font-weight:bold;font-family:monospace;'>"
+                f"{kind}</span>&nbsp;&nbsp;"
+                f"<b style='color:#f0f0f0;font-size:14px;'>{name}</b><br>"
+                f"<span style='color:#888;font-size:11px;'>mode: {mode_label}</span>"
+                f"</div>",
+                unsafe_allow_html=True,
+            )
+            if available:
+                gs = self._graph_stats()
+                c1, c2 = ct.columns(2)
+                c1.metric("Nodes", gs["node_count"])
+                c2.metric("Edges", gs["edge_count"])
+                ct.caption(f"_display() not yet implemented for `{self.__class__.__name__}`_")
+            else:
+                ct.warning(f"KG `{name}` is not built or its library is not installed.")
+
+    def __repr__(self) -> str:
+        return (
+            f"{self.__class__.__name__}("
+            f"name={self.entry.name!r}, "
+            f"kind={self.entry.kind.value!r}, "
+            f"available={self.is_available()!r})"
+        )
 
     # ------------------------------------------------------------------
     # Internal helpers — used by the orchestrator, not part of the public API
