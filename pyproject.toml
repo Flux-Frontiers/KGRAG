@@ -73,12 +73,19 @@ code-kg = {git = "https://github.com/Flux-Frontiers/code_kg.git"}
 
 [tool.poetry.extras]
 viz = ["streamlit", "pyvis", "plotly"]
+qt = ["PyQt5"]
 viz3d = ["pyvista", "pyvistaqt", "PyQt5", "param", "markdown", "trame-vtk"]
 doc-kg = ["doc-kg"]
 diary-kg = ["diary-kg"]
 ftree-kg = ["ftree-kg"]
 meta-kg = ["metabo-kg"]
 
+
+[tool.poetry.group.qt]
+optional = true
+
+[tool.poetry.group.qt.dependencies]
+PyQt5 = ">=5.15.0"
 
 [tool.poetry.group.viz3d]
 optional = true
@@ -116,6 +123,7 @@ kgrag-query        = "kg_rag.cli.cmd_query:query"
 kgrag-pack         = "kg_rag.cli.cmd_query:pack"
 kgrag-analyze      = "kg_rag.cli.cmd_analyze:analyze"
 kgrag-viz          = "kg_rag.cli.cmd_viz:viz"
+kgrag-viz2d        = "kg_rag.cli.cmd_viz2d:viz2d"
 #diarykg            = "diary_kg.cli:cli"
 
 [tool.pylint.messages_control]
