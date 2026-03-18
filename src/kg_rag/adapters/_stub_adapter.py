@@ -13,7 +13,7 @@ and all query/pack/stats/analyze calls return safe empty results.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from kg_rag.adapters.base import KGAdapter
@@ -30,7 +30,7 @@ class StubKGAdapter(KGAdapter):
     :param entry: A KGEntry instance for this KG.
     """
 
-    _pkg_name: str = ""   # set by subclass; empty = library not yet released
+    _pkg_name: str = ""  # set by subclass; empty = library not yet released
     _kind: KGKind = KGKind.CODE  # overridden by subclass
 
     def __init__(self, entry: KGEntry) -> None:
@@ -88,16 +88,18 @@ class StubKGAdapter(KGAdapter):
             hits = []
             for hit in (getattr(raw, "ranked_hits", None) or [])[:k]:
                 node = getattr(hit, "node", hit)
-                hits.append(CrossHit(
-                    kg_name=self.entry.name,
-                    kg_kind=self._kind,
-                    node_id=getattr(node, "id", str(node)),
-                    name=getattr(node, "name", str(node)),
-                    kind=getattr(node, "kind", self._kind.value),
-                    score=getattr(hit, "score", 0.0),
-                    summary=getattr(node, "description", "") or "",
-                    source_path=getattr(node, "source", "") or "",
-                ))
+                hits.append(
+                    CrossHit(
+                        kg_name=self.entry.name,
+                        kg_kind=self._kind,
+                        node_id=getattr(node, "id", str(node)),
+                        name=getattr(node, "name", str(node)),
+                        kind=getattr(node, "kind", self._kind.value),
+                        score=getattr(hit, "score", 0.0),
+                        summary=getattr(node, "description", "") or "",
+                        source_path=getattr(node, "source", "") or "",
+                    )
+                )
             return hits
         except Exception:  # pylint: disable=broad-exception-caught
             return []
@@ -117,14 +119,16 @@ class StubKGAdapter(KGAdapter):
             raw = self._kg.pack(q, k=k)
             snippets = []
             for s in getattr(raw, "snippets", []):
-                snippets.append(CrossSnippet(
-                    kg_name=self.entry.name,
-                    kg_kind=self._kind,
-                    node_id=getattr(s, "node_id", ""),
-                    source_path=getattr(s, "path", ""),
-                    content=getattr(s, "text", str(s)),
-                    score=getattr(s, "score", 0.0),
-                ))
+                snippets.append(
+                    CrossSnippet(
+                        kg_name=self.entry.name,
+                        kg_kind=self._kind,
+                        node_id=getattr(s, "node_id", ""),
+                        source_path=getattr(s, "path", ""),
+                        content=getattr(s, "text", str(s)),
+                        score=getattr(s, "score", 0.0),
+                    )
+                )
             return snippets
         except Exception:  # pylint: disable=broad-exception-caught
             return []
@@ -163,10 +167,7 @@ class StubKGAdapter(KGAdapter):
         )
         if not self.is_available():
             pkg = self._pkg_name or f"{self._kind.value}-kg (not yet released)"
-            return (
-                header
-                + f"\n**Status:** unavailable — `{pkg}` library not installed.\n"
-            )
+            return header + f"\n**Status:** unavailable — `{pkg}` library not installed.\n"
         try:
             self._load()
             if callable(getattr(self._kg, "analyze", None)):
@@ -200,7 +201,7 @@ class StubKGAdapter(KGAdapter):
         snap: dict[str, Any] = {
             "version": version,
             "label": label,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "kind": self._kind.value,
             "kg_name": self.entry.name,
             "node_count": gs["node_count"],

@@ -24,7 +24,7 @@ Run via::
 Author: Eric G. Suchanek, PhD
 """
 
-# pylint: disable=C0116,C0115,W0613
+# pylint: disable=C0116,C0115,W0613,cyclic-import
 
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ import logging
 import math
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QBrush, QColor, QFont, QPen
@@ -64,7 +64,6 @@ from kg_rag.viz import DisplayMode, RenderBackend, Viewport
 
 if TYPE_CHECKING:
     from kg_rag.adapters.base import KGAdapter
-    from kg_rag.primitives import KGEntry
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -87,34 +86,34 @@ GRID_COLS_DEFAULT: int = 3
 
 # Per-kind accent colours — mirrors app.py and viz3d.py palettes
 KIND_COLOR: dict[str, str] = {
-    "code":      "#4A90D9",
-    "doc":       "#27AE60",
-    "meta":      "#8E44AD",
-    "diary":     "#E67E22",
-    "verse":     "#1ABC9C",
-    "memory":    "#F39C12",
+    "code": "#4A90D9",
+    "doc": "#27AE60",
+    "meta": "#8E44AD",
+    "diary": "#E67E22",
+    "verse": "#1ABC9C",
+    "memory": "#F39C12",
     "disulfide": "#E74C3C",
-    "pdbfile":   "#95A5A6",
-    "legal":     "#8B4513",
-    "person":    "#FF69B4",
+    "pdbfile": "#95A5A6",
+    "legal": "#8B4513",
+    "person": "#FF69B4",
 }
 
 # Node-kind colours for ontological mode
 NODE_KIND_COLOR: dict[str, str] = {
-    "module":   "#4A90D9",
-    "class":    "#E67E22",
+    "module": "#4A90D9",
+    "class": "#E67E22",
     "function": "#27AE60",
-    "method":   "#8E44AD",
-    "chunk":    "#F39C12",
-    "section":  "#1ABC9C",
-    "entity":   "#E74C3C",
+    "method": "#8E44AD",
+    "chunk": "#F39C12",
+    "section": "#1ABC9C",
+    "entity": "#E74C3C",
 }
 
-BG_COLOR = "#0d0d1a"          # canvas background
-VIEWPORT_BG = "#12122a"       # per-KG scene background
-TITLE_BG = "#1a1a3a"          # title bar background
+BG_COLOR = "#0d0d1a"  # canvas background
+VIEWPORT_BG = "#12122a"  # per-KG scene background
+TITLE_BG = "#1a1a3a"  # title bar background
 TEXT_COLOR = "#e0e0e0"
-STUB_COLOR = "#2a2a4a"        # stub placeholder fill
+STUB_COLOR = "#2a2a4a"  # stub placeholder fill
 
 
 # ---------------------------------------------------------------------------
@@ -210,9 +209,7 @@ class KGViewportWidget(QWidget):
         # ── Title bar ─────────────────────────────────────────────────
         title_bar = QWidget()
         title_bar.setFixedHeight(TITLE_H)
-        title_bar.setStyleSheet(
-            f"background:{TITLE_BG};border-left:4px solid {color};"
-        )
+        title_bar.setStyleSheet(f"background:{TITLE_BG};border-left:4px solid {color};")
         tb_layout = QHBoxLayout(title_bar)
         tb_layout.setContentsMargins(6, 0, 6, 0)
 
@@ -384,7 +381,7 @@ class KGRAGViz2DWindow(QMainWindow):
         self._cols = cols
         self._vp_width = vp_width
         self._vp_height = vp_height
-        self._kgrag = None
+        self._kgrag: Any = None
 
         self.setWindowTitle(f"KGRAG Visualizer 2D  v{__version__}")
         self.resize(1280, 800)
@@ -410,7 +407,7 @@ class KGRAGViz2DWindow(QMainWindow):
 
     def _build_sidebar(self) -> None:
         """Build the left dock with registry, filter, mode, and size controls."""
-        from kg_rag.registry import default_registry_path  # lazy import
+        from kg_rag.registry import default_registry_path  # pylint: disable=import-outside-toplevel
 
         dock = QDockWidget("Controls", self)
         dock.setFeatures(
@@ -517,7 +514,7 @@ class KGRAGViz2DWindow(QMainWindow):
     @staticmethod
     def _label(text: str) -> QLabel:
         lbl = QLabel(text)
-        lbl.setStyleSheet(f"color:#aaa;font-size:10px;")
+        lbl.setStyleSheet("color:#aaa;font-size:10px;")
         return lbl
 
     @staticmethod
@@ -535,8 +532,8 @@ class KGRAGViz2DWindow(QMainWindow):
         QTimer.singleShot(100, self._load_registry)
 
     def _load_registry(self) -> None:
-        from kg_rag.adapters import make_adapter  # lazy import
-        from kg_rag.orchestrator import KGRAG     # lazy import
+        from kg_rag.adapters import make_adapter  # pylint: disable=import-outside-toplevel
+        from kg_rag.orchestrator import KGRAG  # pylint: disable=import-outside-toplevel
 
         reg_path = Path(self._reg_input.text().strip())
         try:
@@ -563,9 +560,7 @@ class KGRAGViz2DWindow(QMainWindow):
 
         total_n = sum(a._graph_stats()["node_count"] for a in adapters if a.is_available())  # pylint: disable=protected-access
         self._status_lbl.setText(
-            f"{len(adapters)} KGs loaded\n"
-            f"~{total_n:,} total nodes\n"
-            f"mode: {self._mode.value}"
+            f"{len(adapters)} KGs loaded\n~{total_n:,} total nodes\nmode: {self._mode.value}"
         )
 
     # ------------------------------------------------------------------
@@ -578,8 +573,7 @@ class KGRAGViz2DWindow(QMainWindow):
 
     def _on_mode_changed(self, btn) -> None:
         self._mode = (
-            DisplayMode.SEMANTIC if self._radio_semantic.isChecked()
-            else DisplayMode.ONTOLOGICAL
+            DisplayMode.SEMANTIC if self._radio_semantic.isChecked() else DisplayMode.ONTOLOGICAL
         )
         self._canvas.refresh_all(self._mode)
         self._status_lbl.setText(f"mode: {self._mode.value}")
@@ -666,7 +660,8 @@ def draw_stub_semantic(scene: QGraphicsScene, adapter: KGAdapter) -> None:
         for b in range(branch_factor):
             child_angle = start_angle + b * spread
             _draw_branch(
-                end_x, end_y,
+                end_x,
+                end_y,
                 child_angle,
                 length * 0.65,
                 level - 1,
@@ -716,8 +711,7 @@ def draw_stub_ontological(scene: QGraphicsScene, adapter: KGAdapter) -> None:
     # Assign node kinds cyclically from NODE_KIND_COLOR keys
     kinds_cycle = list(NODE_KIND_COLOR.keys())
     node_colors = [
-        QColor(NODE_KIND_COLOR[kinds_cycle[i % len(kinds_cycle)]])
-        for i in range(display_n)
+        QColor(NODE_KIND_COLOR[kinds_cycle[i % len(kinds_cycle)]]) for i in range(display_n)
     ]
 
     # Radial layout
@@ -743,8 +737,9 @@ def draw_stub_ontological(scene: QGraphicsScene, adapter: KGAdapter) -> None:
         drawn_edges += 1
 
     # Cross-edges (every other node to centre)
-    cross_pen = QPen(QColor(accent.red(), accent.green(), accent.blue(), 40), 1,
-                     Qt.PenStyle.DashLine)
+    cross_pen = QPen(
+        QColor(accent.red(), accent.green(), accent.blue(), 40), 1, Qt.PenStyle.DashLine
+    )
     for i in range(0, display_n, 3):
         if drawn_edges >= display_e:
             break

@@ -19,7 +19,7 @@ from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
 
-from kg_rag.primitives import PersonCorpusEntry, PersonCorpusStats
+from kg_rag.primitives import KGEntry, PersonCorpusEntry, PersonCorpusStats
 from kg_rag.registry import KGRegistry, default_registry_path
 
 
@@ -214,9 +214,7 @@ class PersonCorpusRegistry:
         :param name: Exact name of the person.
         :return: PersonCorpusEntry if found, None otherwise.
         """
-        row = self._conn.execute(
-            "SELECT * FROM person_corpora WHERE name = ?", (name,)
-        ).fetchone()
+        row = self._conn.execute("SELECT * FROM person_corpora WHERE name = ?", (name,)).fetchone()
         return self._row_to_entry(row) if row else None
 
     def list(self) -> list[PersonCorpusEntry]:
@@ -247,7 +245,7 @@ class PersonCorpusRegistry:
             registry_path=self._db_path,
         )
 
-    def resolve_kg_entries(self, name_or_id: str, kg_registry: KGRegistry) -> list:
+    def resolve_kg_entries(self, name_or_id: str, kg_registry: KGRegistry) -> list[KGEntry]:  # type: ignore[valid-type]
         """Resolve a person's KG IDs to actual KGEntry objects.
 
         :param name_or_id: The person entry name or UUID.

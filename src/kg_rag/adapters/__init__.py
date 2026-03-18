@@ -37,7 +37,7 @@ def make_adapter(entry) -> KGAdapter:
     cls = _map.get(entry.kind)
     if cls is None:
         raise ValueError(f"Unknown KGKind: {entry.kind}")
-    return cls(entry)
+    return cls(entry)  # type: ignore[abstract]
 
 
 __all__ = [

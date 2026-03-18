@@ -9,6 +9,7 @@ Run with:
 """
 
 from pathlib import Path
+
 from personal_agent.tools.diary_transformer import DiaryTransformer
 
 
@@ -162,29 +163,29 @@ def main():
     print("OTHER USAGE PATTERNS")
     print("=" * 60)
     print("\n1. Basic usage:")
-    print('   transformer = DiaryTransformer()')
+    print("   transformer = DiaryTransformer()")
     print('   transformer.transform_file("diary.txt", "output.txt")')
 
     print("\n2. Parallel processing:")
-    print('   transformer = DiaryTransformer(num_workers=4)')
-    print('   transformer.transform_file(...)')
+    print("   transformer = DiaryTransformer(num_workers=4)")
+    print("   transformer.transform_file(...)")
 
     print("\n3. Custom topics:")
     print('   transformer = DiaryTransformer(topics_file="custom.yaml")')
-    print('   transformer.transform_file(...)')
+    print("   transformer.transform_file(...)")
 
     print("\n4. Pepys historical diary:")
-    print('   # Option A: Default (includes general + pepys topics)')
-    print('   transformer = DiaryTransformer()')
-    print('   # Option B: Pepys-only (17th-century vocabulary)')
+    print("   # Option A: Default (includes general + pepys topics)")
+    print("   transformer = DiaryTransformer()")
+    print("   # Option B: Pepys-only (17th-century vocabulary)")
     print('   transformer = DiaryTransformer(topics_file="pepys/pepys_topics.yaml")')
 
     print("\n5. CLI usage:")
-    print('   poetry run python -m personal_agent.tools.diary_transformer \\')
-    print('       input.txt output.txt --workers 4 --batch-size 20')
-    print('   # With pepys topics:')
-    print('   poetry run python -m personal_agent.tools.diary_transformer \\')
-    print('       pepys_diary.txt output.txt --topics-file pepys/pepys_topics.yaml')
+    print("   poetry run python -m personal_agent.tools.diary_transformer \\")
+    print("       input.txt output.txt --workers 4 --batch-size 20")
+    print("   # With pepys topics:")
+    print("   poetry run python -m personal_agent.tools.diary_transformer \\")
+    print("       pepys_diary.txt output.txt --topics-file pepys/pepys_topics.yaml")
 
 
 if __name__ == "__main__":

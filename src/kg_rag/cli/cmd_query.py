@@ -53,7 +53,7 @@ def query(query_text, k, kind, output_json, registry):
         return
 
     if output_json:
-        import json
+        import json  # pylint: disable=import-outside-toplevel
 
         data = [
             {

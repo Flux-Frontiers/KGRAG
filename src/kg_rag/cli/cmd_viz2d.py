@@ -9,14 +9,13 @@ Click subcommand for launching the KGRAG PyQt5 2-D visualizer:
 from __future__ import annotations
 
 import importlib.util
-import sys
 from pathlib import Path
 
 import click
 
 from kg_rag.cli.group import cli
 
-_QT_EXTRA = 'pip install "kg-rag[qt]"'
+_QT_EXTRA = 'pip install "kg-rag[viz2d]"'
 
 
 @cli.command("viz2d")
@@ -75,8 +74,8 @@ def viz2d(
             f"PyQt5 is not installed. Install Qt dependencies with:\n  {_QT_EXTRA}"
         )
 
-    from kg_rag.viz import DisplayMode                    # noqa: PLC0415
-    from kg_rag.viz_qt import launch                      # noqa: PLC0415
+    from kg_rag.viz import DisplayMode  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+    from kg_rag.viz_qt import launch  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
 
     reg_path = Path(registry) if registry else None
     disp_mode = DisplayMode.SEMANTIC if mode == "semantic" else DisplayMode.ONTOLOGICAL

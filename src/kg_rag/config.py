@@ -16,10 +16,10 @@ def _load_toml(pyproject: Path) -> dict:
     :return: Parsed dict, or empty dict if tomllib/tomli is unavailable.
     """
     try:
-        import tomllib  # Python 3.11+
+        import tomllib  # Python 3.11+  # pylint: disable=import-outside-toplevel
     except ImportError:
         try:
-            import tomli as tomllib  # type: ignore[no-redef]
+            import tomli as tomllib  # type: ignore[no-redef]  # pylint: disable=import-outside-toplevel
         except ImportError:
             return {}
     with pyproject.open("rb") as f:

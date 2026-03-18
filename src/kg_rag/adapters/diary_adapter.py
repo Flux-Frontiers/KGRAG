@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from kg_rag.adapters.base import KGAdapter
@@ -44,6 +44,7 @@ class DiaryKGAdapter(KGAdapter):
         """
         try:
             import diary_kg  # noqa: F401  # pylint: disable=import-outside-toplevel
+
             return self.entry.is_built
         except ImportError:
             return False
@@ -154,7 +155,7 @@ class DiaryKGAdapter(KGAdapter):
         return {
             "version": version,
             "label": label,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "kind": "diary",
             "kg_name": self.entry.name,
             "node_count": gs["node_count"],
