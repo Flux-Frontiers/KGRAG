@@ -130,18 +130,45 @@ class KGAdapter(ABC):
     def _display_stub(self, viewport: Viewport) -> None:
         """Render a placeholder card for adapters that have not yet implemented display().
 
-        Produces a minimal info card inside ``viewport.container`` showing the
-        KG kind badge, name, availability, and graph topology counts (if
-        available).  Differentiates visually between SEMANTIC and ONTOLOGICAL
-        modes so the stub is still useful during development.
+        Dispatches to the correct backend stub based on ``viewport.backend``:
+
+        * :attr:`~kg_rag.viz.RenderBackend.QT2D` — draws a synthetic tree or
+          node-link diagram into the ``QGraphicsScene`` via
+          :mod:`kg_rag.viz_qt`.
+        * :attr:`~kg_rag.viz.RenderBackend.STREAMLIT` — renders an HTML info
+          card into the Streamlit container.
 
         :param viewport: The viewport to render into.
         """
-        # Import here so the module can be imported without streamlit installed.
+        from kg_rag.viz import RenderBackend  # pylint: disable=import-outside-toplevel
+
+        if viewport.backend == RenderBackend.QT2D:
+            self._display_stub_qt(viewport)
+        else:
+            self._display_stub_streamlit(viewport)
+
+    def _display_stub_qt(self, viewport: Viewport) -> None:
+        """Draw a synthetic placeholder into a QGraphicsScene (Qt2D backend)."""
+        try:
+            from kg_rag.viz_qt import (  # pylint: disable=import-outside-toplevel
+                draw_stub_ontological,
+                draw_stub_semantic,
+            )
+        except ImportError:
+            return  # PyQt5 not installed
+
+        scene = viewport.container
+        if viewport.mode == DisplayMode.SEMANTIC:
+            draw_stub_semantic(scene, self)
+        else:
+            draw_stub_ontological(scene, self)
+
+    def _display_stub_streamlit(self, viewport: Viewport) -> None:
+        """Render an HTML info card into a Streamlit container."""
         try:
             import streamlit as st  # pylint: disable=import-outside-toplevel
         except ImportError:
-            return  # Non-Streamlit host — do nothing; subclass handles it.
+            return
 
         ct = viewport.container
         available = self.is_available()
@@ -149,7 +176,6 @@ class KGAdapter(ABC):
         name = viewport.title or self.entry.name
         mode_label = "Semantic (forest)" if viewport.mode == DisplayMode.SEMANTIC else "Ontological (graph)"
 
-        # Colour strip per kind — matches app.py palette
         _COLOR = {
             "code": "#4A90D9", "doc": "#27AE60", "meta": "#8E44AD",
             "diary": "#E67E22", "verse": "#1ABC9C", "memory": "#F39C12",

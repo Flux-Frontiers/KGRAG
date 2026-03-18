@@ -33,6 +33,31 @@ from enum import StrEnum
 from typing import Any
 
 
+class RenderBackend(StrEnum):
+    """UI host that owns the Viewport.
+
+    Adapters inspect this to decide which rendering API to use when
+    ``display()`` is called.  They must never import a backend's library at
+    module level — all UI imports must be deferred inside the ``display()``
+    implementation so that the adapter module remains importable regardless of
+    which extras are installed.
+    """
+
+    STREAMLIT = "streamlit"
+    """Streamlit web app.  ``Viewport.container`` is a ``DeltaGenerator``
+    (Streamlit container / column).  Render by calling Streamlit methods on
+    ``viewport.container``."""
+
+    QT2D = "qt2d"
+    """PyQt5 2-D canvas.  ``Viewport.container`` is a ``QGraphicsScene``.
+    Render by adding ``QGraphicsItem`` objects to the scene."""
+
+    QT3D = "qt3d"
+    """PyQt5/PyVista 3-D canvas.  ``Viewport.container`` is a
+    ``pyvistaqt.QtInteractor``.  Render by adding PyVista meshes to the
+    interactor's plotter."""
+
+
 class DisplayMode(StrEnum):
     """Rendering mode requested by the KGRAG visualizer for a KG adapter.
 
@@ -128,6 +153,7 @@ class Viewport:
 
     container: Any
     mode: DisplayMode = DisplayMode.SEMANTIC
+    backend: RenderBackend = RenderBackend.STREAMLIT
     width: int = 0
     height: int = 0
     title: str = ""
@@ -138,15 +164,33 @@ class Viewport:
     # ------------------------------------------------------------------
 
     @classmethod
-    def semantic(cls, container: Any, *, width: int = 0, height: int = 0,
-                 title: str = "", **meta: Any) -> Viewport:
-        """Construct a Viewport pre-configured for SEMANTIC (forest-tree) display."""
+    def streamlit_semantic(cls, container: Any, *, width: int = 0,
+                           height: int = 0, title: str = "", **meta: Any) -> Viewport:
+        """Streamlit container configured for SEMANTIC display."""
         return cls(container=container, mode=DisplayMode.SEMANTIC,
+                   backend=RenderBackend.STREAMLIT,
                    width=width, height=height, title=title, metadata=dict(meta))
 
     @classmethod
-    def ontological(cls, container: Any, *, width: int = 0, height: int = 0,
-                    title: str = "", **meta: Any) -> Viewport:
-        """Construct a Viewport pre-configured for ONTOLOGICAL (node-link) display."""
+    def streamlit_ontological(cls, container: Any, *, width: int = 0,
+                               height: int = 0, title: str = "", **meta: Any) -> Viewport:
+        """Streamlit container configured for ONTOLOGICAL display."""
         return cls(container=container, mode=DisplayMode.ONTOLOGICAL,
+                   backend=RenderBackend.STREAMLIT,
+                   width=width, height=height, title=title, metadata=dict(meta))
+
+    @classmethod
+    def qt2d_semantic(cls, scene: Any, *, width: int = 0, height: int = 0,
+                      title: str = "", **meta: Any) -> Viewport:
+        """Qt2D QGraphicsScene configured for SEMANTIC display."""
+        return cls(container=scene, mode=DisplayMode.SEMANTIC,
+                   backend=RenderBackend.QT2D,
+                   width=width, height=height, title=title, metadata=dict(meta))
+
+    @classmethod
+    def qt2d_ontological(cls, scene: Any, *, width: int = 0, height: int = 0,
+                          title: str = "", **meta: Any) -> Viewport:
+        """Qt2D QGraphicsScene configured for ONTOLOGICAL display."""
+        return cls(container=scene, mode=DisplayMode.ONTOLOGICAL,
+                   backend=RenderBackend.QT2D,
                    width=width, height=height, title=title, metadata=dict(meta))
