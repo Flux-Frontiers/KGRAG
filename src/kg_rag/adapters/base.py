@@ -91,6 +91,37 @@ class KGAdapter(ABC):
         """
 
     # ------------------------------------------------------------------
+    # Display helpers
+    # ------------------------------------------------------------------
+
+    def display(self) -> str:
+        """Return a human-readable one-line summary of this adapter's state.
+
+        The default implementation combines the entry label, availability status,
+        and basic graph topology counts.  Adapters may override to include
+        domain-specific metrics.
+
+        :return: A single-line string suitable for printing to a terminal.
+        """
+        available = self.is_available()
+        status = "available" if available else "unavailable"
+        if available:
+            gs = self._graph_stats()
+            return (
+                f"[{self.entry.kind.value}] {self.entry.name} — {status} "
+                f"({gs['node_count']} nodes, {gs['edge_count']} edges)"
+            )
+        return f"[{self.entry.kind.value}] {self.entry.name} — {status}"
+
+    def __repr__(self) -> str:
+        return (
+            f"{self.__class__.__name__}("
+            f"name={self.entry.name!r}, "
+            f"kind={self.entry.kind.value!r}, "
+            f"available={self.is_available()!r})"
+        )
+
+    # ------------------------------------------------------------------
     # Internal helpers — used by the orchestrator, not part of the public API
     # ------------------------------------------------------------------
 

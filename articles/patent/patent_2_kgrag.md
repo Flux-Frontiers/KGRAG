@@ -1290,6 +1290,87 @@ graph kind can be registered in the registry and included in corpus groupings
 before its domain-specific library is implemented without causing errors in
 federation operations.
 
+**Claim 23.**
+A computer-implemented method for packaging a compiled knowledge graph instance
+for distribution, the method comprising:
+  serializing the structural graph representation of the knowledge graph instance,
+  stored as a relational database file, and the semantic index representation of
+  the knowledge graph instance, stored as a vector database directory, into a
+  versioned archive file together with a manifest record comprising at minimum
+  the knowledge graph kind indicator, the domain name, a semantic version string,
+  a content-addressable hash of the serialized contents, and an ISO 8601
+  creation timestamp;
+  publishing the versioned archive file and its manifest record to a
+  knowledge package index server accessible via a network protocol;
+  wherein a receiving system may retrieve the versioned archive file from the
+  knowledge package index server, extract the structural graph representation
+  and semantic index representation to local storage, construct a registry entry
+  from the manifest record, and register the knowledge graph instance in a local
+  registry database, enabling immediate querying of the distributed knowledge
+  graph without recompilation from source artifacts.
+
+**Claim 24.**
+The method of claim 23, wherein retrieving the versioned archive file is
+accomplished through any of: a centralized knowledge package index server
+addressed by a package name and version specifier; a version-controlled
+repository identified by a network-accessible repository URL; a local or
+network-accessible archive file path; a hypertext transfer protocol URL; or
+a local filesystem directory path containing extracted knowledge graph database
+files; whereby the knowledge graph package format is transport-agnostic and
+the same compiled artifact may be retrieved and registered by any of the
+described mechanisms without modification.
+
+**Claim 25.**
+A computer-implemented method for addressing knowledge graph nodes through a
+uniform resource identifier scheme, the method comprising:
+  defining a knowledge graph uniform resource identifier scheme of the form
+  `kgrag://<authority>/<path>`, wherein the authority component identifies a
+  registered knowledge graph instance or corpus by name, and the path component
+  encodes a node identifier within that knowledge graph or corpus;
+  receiving a knowledge graph uniform resource identifier;
+  resolving the authority component to a registered knowledge graph instance
+  or corpus entry in a local registry database;
+  retrieving the node record identified by the path component from the resolved
+  knowledge graph's structural graph storage layer;
+  returning the node record together with all edges incident to the identified
+  node, enabling graph traversal by following edge targets as knowledge graph
+  uniform resource identifiers resolvable through the same method;
+  wherein the returned node record comprises at minimum the node identifier,
+  the node kind, the source file path, the line span, and the node summary text.
+
+**Claim 26.**
+The method of claim 25, further comprising:
+  accepting a depth parameter specifying a maximum traversal depth;
+  performing a breadth-first traversal of the knowledge graph beginning at the
+  node identified by the path component, following all edges whose relation type
+  matches a caller-specified relation filter, up to the specified depth;
+  collecting all traversed nodes and edges into a subgraph record;
+  returning the subgraph record with provenance metadata identifying the
+  originating knowledge graph instance for each node and edge;
+  wherein the subgraph record enables a caller to navigate from any addressed
+  node through its structural neighborhood within the knowledge graph, and
+  wherein the authority component may identify a corpus, causing traversal to
+  span multiple registered knowledge graph instances within the corpus.
+
+**Claim 27.**
+A non-transitory computer-readable medium storing a corpus manifest record
+for a named collection of knowledge graph packages, the corpus manifest record
+comprising:
+  a corpus name and a semantic version string identifying this manifest record;
+  a list of knowledge graph package references, each reference comprising a
+  package name, a version specifier, and a content-addressable hash of the
+  expected package archive;
+  an optional description and tag list;
+  wherein a knowledge graph management system configured to process the corpus
+  manifest record may resolve each knowledge graph package reference by
+  retrieving the package archive identified by the package name and version
+  specifier from a knowledge package index server, verifying the retrieved
+  archive against the content-addressable hash, extracting and registering
+  each knowledge graph instance in a local registry database, and constructing
+  a corpus registry entry grouping all registered instances under the corpus
+  name; thereby enabling installation of a complete multi-domain knowledge
+  corpus from a single manifest record with a single command.
+
 ---
 
 ABSTRACT OF THE DISCLOSURE
