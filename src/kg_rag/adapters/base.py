@@ -174,13 +174,21 @@ class KGAdapter(ABC):
         available = self.is_available()
         kind = self.entry.kind.value
         name = viewport.title or self.entry.name
-        mode_label = "Semantic (forest)" if viewport.mode == DisplayMode.SEMANTIC else "Ontological (graph)"
+        mode_label = (
+            "Semantic (forest)" if viewport.mode == DisplayMode.SEMANTIC else "Ontological (graph)"
+        )
 
         _COLOR = {
-            "code": "#4A90D9", "doc": "#27AE60", "meta": "#8E44AD",
-            "diary": "#E67E22", "verse": "#1ABC9C", "memory": "#F39C12",
-            "disulfide": "#E74C3C", "pdbfile": "#95A5A6",
-            "legal": "#8B4513", "person": "#FF69B4",
+            "code": "#4A90D9",
+            "doc": "#27AE60",
+            "meta": "#8E44AD",
+            "diary": "#E67E22",
+            "verse": "#1ABC9C",
+            "memory": "#F39C12",
+            "disulfide": "#E74C3C",
+            "pdbfile": "#95A5A6",
+            "legal": "#8B4513",
+            "person": "#FF69B4",
         }
         color = _COLOR.get(kind, "#95A5A6")
 

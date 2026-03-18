@@ -38,7 +38,7 @@ def analyze(kind, registry):
         console.print("[yellow]No KGs registered. Use 'kgrag register' to add some.[/yellow]")
         return
 
-    from rich.table import Table
+    from rich.table import Table  # pylint: disable=import-outside-toplevel
 
     table = Table(title="Cross-KG Analysis", box=box.ROUNDED, show_lines=True)
     table.add_column("Name", style="bold cyan")

@@ -20,7 +20,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from kg_rag.cli.group import cli
-from kg_rag.cli.options import context_option, k_option, registry_option
+from kg_rag.cli.options import k_option, registry_option
 from kg_rag.corpus_registry import CorpusRegistry
 from kg_rag.person_registry import PersonCorpusRegistry
 from kg_rag.primitives import CorpusEntry, PersonCorpusEntry
@@ -309,9 +309,9 @@ def corpus_query(corpus_name, query_text, k, as_json, registry):
     \b
         kgrag corpus query my-project "how is authentication handled"
     """
-    import json as _json
+    import json as _json  # pylint: disable=import-outside-toplevel
 
-    from kg_rag.orchestrator import KGRAG
+    from kg_rag.orchestrator import KGRAG  # pylint: disable=import-outside-toplevel
 
     db_path = Path(registry).resolve() if registry else None
 
@@ -399,7 +399,9 @@ def person_group():
 @click.option("--notes", default="", help="Free-form notes.")
 @click.option("--tag", "tags", multiple=True, help="Tags (repeatable).")
 @registry_option
-def person_create(name, kg_refs, birth_year, birth_date, address, email, phone, notes, tags, registry):
+def person_create(
+    name, kg_refs, birth_year, birth_date, address, email, phone, notes, tags, registry
+):
     """Create a person corpus entry.
 
     \b
@@ -552,14 +554,18 @@ def person_update(name_or_id, birth_year, birth_date, address, email, phone, not
     """
     db_path = Path(registry).resolve() if registry else None
 
-    updates = {k: v for k, v in {
-        "birth_year": birth_year,
-        "birth_date": birth_date,
-        "address": address,
-        "email": email,
-        "phone": phone,
-        "notes": notes,
-    }.items() if v is not None}
+    updates = {
+        k: v
+        for k, v in {
+            "birth_year": birth_year,
+            "birth_date": birth_date,
+            "address": address,
+            "email": email,
+            "phone": phone,
+            "notes": notes,
+        }.items()
+        if v is not None
+    }
 
     if not updates:
         console.print("[yellow]No updates specified.[/yellow]")
@@ -699,9 +705,9 @@ def person_query(person_name, query_text, k, as_json, registry):
     \b
         kgrag corpus person query "Jane Doe" "childhood memories in Ohio"
     """
-    import json as _json
+    import json as _json  # pylint: disable=import-outside-toplevel
 
-    from kg_rag.orchestrator import KGRAG
+    from kg_rag.orchestrator import KGRAG  # pylint: disable=import-outside-toplevel
 
     db_path = Path(registry).resolve() if registry else None
 

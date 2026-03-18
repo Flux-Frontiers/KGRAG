@@ -7,7 +7,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] — 2026-03-18
+
+### Added
+- `analysis/kgrag_analysis_20260318.md` — fresh architectural analysis report
+  generated from the 0.3.1 codebase (grade C / 72, 3723 nodes · 4929 edges).
+- `.mcp.json.sav` — saved MCP server configuration snapshot.
+
 ### Changed
+- **Version bump**: `0.3.0` → `0.3.1` in `__init__.py` and `pyproject.toml`.
+- **Python constraint corrected**: `>3.12` → `>=3.12` so Python 3.12.0 and later
+  are properly included (the previous constraint accidentally excluded 3.12.x).
+- **pyproject.toml cleanup**: added `viz2d` extras entry (alias for the `qt`
+  group); renamed `meta-kg` extra to `metabo-kg` to match the package name;
+  added inline comments grouping first-party adapter dependencies; diary-kg
+  and metabo-kg deps moved to commented-out block.
+- **Code formatting (Black)**: entire `src/kg_rag/` and `scripts/` tree
+  reformatted — long dict literals, enum arrays in JSON schemas, factory
+  method signatures, and comprehensions all split to multiple lines for
+  readability. No logic changes.
+- **Linting**: added `# pylint: disable=broad-exception-caught` on intentional
+  bare-except blocks in `orchestrator.py`; added `# pylint: disable=import-outside-toplevel`
+  for lazy imports in `config.py` and CLI commands; added `# type: ignore`
+  annotations for known mypy edge cases in `adapters/__init__.py`,
+  `corpus_registry.py`, and `person_registry.py`.
+- **Type annotations modernised** in `scripts/textkg_analysis.py`: replaced
+  `typing.Dict/List/Tuple/Optional` with built-in `dict/list/tuple` and `X | None`
+  syntax; removed unused `defaultdict`, `Counter`, and legacy typing imports.
+- **`_stub_adapter.py`**: `datetime.now(timezone.utc)` → `datetime.now(UTC)` for
+  consistency with the rest of the codebase; minor whitespace fixes.
+- **`corpus_registry.py` / `person_registry.py`**: `resolve_kg_entries` return
+  type tightened to `list[KGEntry]`.
+- **`orchestrator.py`**: removed unused `CorpusEntry` import.
+- **`viz_qt.py`**: added `cyclic-import` to pylint disable list; added `Any` to
+  typing imports; removed unused `KGEntry` TYPE_CHECKING import.
+- **Pepys helper scripts**: import ordering and quote-style normalised by isort/
+  Black (`hindsight_analysis.py`, `diary_transformer_example.py`,
+  `pepys_proper_parse.py`, `topic_classifier.py`).
+- **KG snapshots refreshed**: all `.codekg/snapshots/` and `.dockg/snapshots/`
+  JSON files updated with current graph metrics.
+
+### Removed
+- **`pepys/diary_kg/`** package and all sub-modules (`__init__`, `cli`, `kg`,
+  `snapshots`) — this was a bundled copy of the upstream `diary-kg` library;
+  removed in favour of the proper `diary-kg` git dependency.
+- **`pepys/diary_transformer/`** package and all sub-modules (`__init__`,
+  `chunker`, `classifier`, `cli`, `features`, `models`, `parser`, `state`,
+  `topic_classifier`, `topics.yaml`, `transformer`) — same rationale.
+- **`pepys/tests/`** test suite (11 files, ~2000 lines) that covered the now-
+  removed bundled packages.
+
+### Changed
+- **Pre-commit snapshot hook** — `.git/hooks/pre-commit` now captures snapshots
 - **Pre-commit snapshot hook** — `.git/hooks/pre-commit` now captures snapshots
   for **both** CodeKG (`.codekg/snapshots/`) and DocKG (`.dockg/snapshots/`)
   before every commit. Previously only CodeKG was snapshotted. The hook also

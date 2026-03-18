@@ -314,8 +314,8 @@ def _tab_registry(cfg: dict) -> None:
                 if entry.is_built:
                     with st.spinner("Loading stats…"):
                         try:
-                            from kg_rag.adapters import (
-                                make_adapter,  # pylint: disable=import-outside-toplevel
+                            from kg_rag.adapters import (  # pylint: disable=import-outside-toplevel
+                                make_adapter,
                             )
 
                             adapter = make_adapter(entry)

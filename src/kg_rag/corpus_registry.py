@@ -17,7 +17,7 @@ from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
 
-from kg_rag.primitives import CorpusEntry, CorpusStats
+from kg_rag.primitives import CorpusEntry, CorpusStats, KGEntry
 from kg_rag.registry import KGRegistry, default_registry_path
 
 
@@ -226,9 +226,7 @@ class CorpusRegistry:
             registry_path=self._db_path,
         )
 
-    def resolve_kg_entries(
-        self, name_or_id: str, kg_registry: KGRegistry
-    ) -> list:
+    def resolve_kg_entries(self, name_or_id: str, kg_registry: KGRegistry) -> list[KGEntry]:  # type: ignore[valid-type]
         """Resolve corpus KG IDs to actual KGEntry objects.
 
         :param name_or_id: The corpus name or UUID.

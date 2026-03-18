@@ -1,12 +1,12 @@
-> **Analysis Report Metadata**  
-> - **Generated:** 2026-03-15T16:46:11Z  
-> - **Version:** code-kg 0.9.0  
-> - **Commit:** 9091d4f (claude/add-corpus-abstraction-KXiKg)  
-> - **Platform:** Linux x86_64 | Python 3.12.3  
-> - **Graph:** 2071 nodes · 2632 edges (169 meaningful)  
-> - **Included directories:** src  
-> - **Excluded directories:** none  
-> - **Elapsed time:** 8s  
+> **Analysis Report Metadata**
+> - **Generated:** 2026-03-15T16:46:11Z
+> - **Version:** code-kg 0.9.0
+> - **Commit:** 9091d4f (claude/add-corpus-abstraction-KXiKg)
+> - **Platform:** Linux x86_64 | Python 3.12.3
+> - **Graph:** 2071 nodes · 2632 edges (169 meaningful)
+> - **Included directories:** src
+> - **Excluded directories:** none
+> - **Elapsed time:** 8s
 
 # KGRAG Analysis
 

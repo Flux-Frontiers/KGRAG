@@ -1,0 +1,122 @@
+{
+  "key": "9b77d3ce9581746bc95231002f40a62c2de0ef2c",
+  "branch": "main",
+  "timestamp": "2026-03-18T22:33:30.812277+00:00",
+  "version": "0.3.1",
+  "metrics": {
+    "total_nodes": 4991,
+    "total_edges": 36748,
+    "meaningful_nodes": 4963,
+    "coverage_score": 0.9409929078014184,
+    "node_counts": {
+      "chunk": 1175,
+      "document": 28,
+      "entity": 1181,
+      "keyword": 1187,
+      "section": 620,
+      "topic": 800
+    },
+    "edge_counts": {
+      "CONTAINS": 1802,
+      "CO_OCCURS_WITH": 23298,
+      "HAS_KEYWORD": 4570,
+      "HAS_TOPIC": 1179,
+      "MENTIONS_ENTITY": 4645,
+      "NEXT": 541,
+      "REFERENCES": 59,
+      "SIMILAR_TO": 654
+    },
+    "issues_count": 0,
+    "complexity_median": 20.0
+  },
+  "hotspots": [
+    {
+      "id": "chunk:CHANGELOG.md:0003",
+      "file_path": "CHANGELOG.md",
+      "label": "Changed",
+      "references": 0,
+      "semantic_links": 25,
+      "total_links": 25
+    },
+    {
+      "id": "chunk:commit.txt:0001",
+      "file_path": "commit.txt",
+      "label": "chunk:0002",
+      "references": 0,
+      "semantic_links": 23,
+      "total_links": 24
+    },
+    {
+      "id": "chunk:CHANGELOG.md:0007",
+      "file_path": "CHANGELOG.md",
+      "label": "Added",
+      "references": 0,
+      "semantic_links": 21,
+      "total_links": 21
+    },
+    {
+      "id": "chunk:CHANGELOG.md:0008",
+      "file_path": "CHANGELOG.md",
+      "label": "Changed",
+      "references": 0,
+      "semantic_links": 20,
+      "total_links": 20
+    },
+    {
+      "id": "chunk:CHANGELOG.md:0009",
+      "file_path": "CHANGELOG.md",
+      "label": "Fixed",
+      "references": 0,
+      "semantic_links": 20,
+      "total_links": 20
+    },
+    {
+      "id": "chunk:analysis/KGRAG_analysis_20260315.md:0013",
+      "file_path": "analysis/KGRAG_analysis_20260315.md",
+      "label": "Public API Surface",
+      "references": 0,
+      "semantic_links": 19,
+      "total_links": 19
+    },
+    {
+      "id": "chunk:commit.txt:0002",
+      "file_path": "commit.txt",
+      "label": "chunk:0003",
+      "references": 0,
+      "semantic_links": 19,
+      "total_links": 19
+    },
+    {
+      "id": "chunk:CHANGELOG.md:0002",
+      "file_path": "CHANGELOG.md",
+      "label": "Changed",
+      "references": 0,
+      "semantic_links": 18,
+      "total_links": 19
+    },
+    {
+      "id": "chunk:analysis/KGRAG_analysis_20260315.md:0034",
+      "file_path": "analysis/KGRAG_analysis_20260315.md",
+      "label": "Graph Traversal Node Edge",
+      "references": 0,
+      "semantic_links": 18,
+      "total_links": 19
+    },
+    {
+      "id": "chunk:commit.txt:0000",
+      "file_path": "commit.txt",
+      "label": "chunk:0001",
+      "references": 0,
+      "semantic_links": 18,
+      "total_links": 19
+    }
+  ],
+  "issues": [],
+  "vs_previous": null,
+  "vs_baseline": {
+    "nodes": 2043,
+    "edges": 16402,
+    "coverage_delta": 0.03162270810863799,
+    "issues_delta": 0
+  }
+}

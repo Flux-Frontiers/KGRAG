@@ -6,7 +6,7 @@ Adapter wrapping the doc_kg.DocKG class.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from kg_rag.adapters.base import KGAdapter
@@ -222,7 +222,7 @@ class DocKGAdapter(KGAdapter):
         return {
             "version": version,
             "label": label,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "kind": "doc",
             "kg_name": self.entry.name,
             "node_count": gs["node_count"],

@@ -67,7 +67,18 @@ def _make_server(registry_path: Path | None = None) -> Server:
                     "properties": {
                         "kind": {
                             "type": "string",
-                            "enum": ["code", "doc", "meta", "diary", "verse", "memory", "disulfide", "pdbfile", "legal", "person"],
+                            "enum": [
+                                "code",
+                                "doc",
+                                "meta",
+                                "diary",
+                                "verse",
+                                "memory",
+                                "disulfide",
+                                "pdbfile",
+                                "legal",
+                                "person",
+                            ],
                             "description": "Optional filter by KG kind.",
                         }
                     },
@@ -96,7 +107,21 @@ def _make_server(registry_path: Path | None = None) -> Server:
                         "k": {"type": "integer", "default": 8, "description": "Hits per KG."},
                         "kinds": {
                             "type": "array",
-                            "items": {"type": "string", "enum": ["code", "doc", "meta", "diary", "verse", "memory", "disulfide", "pdbfile", "legal", "person"]},
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "code",
+                                    "doc",
+                                    "meta",
+                                    "diary",
+                                    "verse",
+                                    "memory",
+                                    "disulfide",
+                                    "pdbfile",
+                                    "legal",
+                                    "person",
+                                ],
+                            },
                             "description": "Restrict to these KG kinds.",
                         },
                     },
@@ -121,7 +146,21 @@ def _make_server(registry_path: Path | None = None) -> Server:
                         },
                         "kinds": {
                             "type": "array",
-                            "items": {"type": "string", "enum": ["code", "doc", "meta", "diary", "verse", "memory", "disulfide", "pdbfile", "legal", "person"]},
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "code",
+                                    "doc",
+                                    "meta",
+                                    "diary",
+                                    "verse",
+                                    "memory",
+                                    "disulfide",
+                                    "pdbfile",
+                                    "legal",
+                                    "person",
+                                ],
+                            },
                             "description": "Restrict to these KG kinds.",
                         },
                     },
@@ -248,7 +287,9 @@ def _make_server(registry_path: Path | None = None) -> Server:
                 description="Detailed info about a person corpus entry including personal metadata and KG list.",
                 inputSchema={
                     "type": "object",
-                    "properties": {"name": {"type": "string", "description": "Person name or UUID."}},
+                    "properties": {
+                        "name": {"type": "string", "description": "Person name or UUID."}
+                    },
                     "required": ["name"],
                 },
             ),
@@ -259,14 +300,25 @@ def _make_server(registry_path: Path | None = None) -> Server:
                     "type": "object",
                     "properties": {
                         "name": {"type": "string", "description": "Full name of the person."},
-                        "kg_names": {"type": "array", "items": {"type": "string"}, "description": "KG names or UUIDs to include."},
+                        "kg_names": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "KG names or UUIDs to include.",
+                        },
                         "birth_year": {"type": "integer", "description": "Year of birth."},
-                        "birth_date": {"type": "string", "description": "Full birth date (YYYY-MM-DD)."},
+                        "birth_date": {
+                            "type": "string",
+                            "description": "Full birth date (YYYY-MM-DD).",
+                        },
                         "address": {"type": "string", "description": "Mailing/home address."},
                         "email": {"type": "string", "description": "Primary email address."},
                         "phone": {"type": "string", "description": "Primary phone number."},
                         "notes": {"type": "string", "description": "Free-form notes."},
-                        "tags": {"type": "array", "items": {"type": "string"}, "description": "Optional tags."},
+                        "tags": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Optional tags.",
+                        },
                     },
                     "required": ["name"],
                 },
@@ -276,7 +328,9 @@ def _make_server(registry_path: Path | None = None) -> Server:
                 description="Delete a person corpus entry (KGs are not removed).",
                 inputSchema={
                     "type": "object",
-                    "properties": {"name": {"type": "string", "description": "Person name or UUID."}},
+                    "properties": {
+                        "name": {"type": "string", "description": "Person name or UUID."}
+                    },
                     "required": ["name"],
                 },
             ),
@@ -312,7 +366,10 @@ def _make_server(registry_path: Path | None = None) -> Server:
                     "properties": {
                         "name": {"type": "string", "description": "Person name or UUID."},
                         "birth_year": {"type": "integer", "description": "Year of birth."},
-                        "birth_date": {"type": "string", "description": "Full birth date (YYYY-MM-DD)."},
+                        "birth_date": {
+                            "type": "string",
+                            "description": "Full birth date (YYYY-MM-DD).",
+                        },
                         "address": {"type": "string", "description": "Mailing/home address."},
                         "email": {"type": "string", "description": "Primary email address."},
                         "phone": {"type": "string", "description": "Primary phone number."},
@@ -343,7 +400,11 @@ def _make_server(registry_path: Path | None = None) -> Server:
                         "person": {"type": "string", "description": "Person name or UUID."},
                         "q": {"type": "string", "description": "Natural-language query."},
                         "k": {"type": "integer", "default": 8, "description": "Snippets per KG."},
-                        "context": {"type": "integer", "default": 5, "description": "Lines of context."},
+                        "context": {
+                            "type": "integer",
+                            "default": 5,
+                            "description": "Lines of context.",
+                        },
                     },
                     "required": ["person", "q"],
                 },
@@ -352,6 +413,12 @@ def _make_server(registry_path: Path | None = None) -> Server:
 
     @server.call_tool()
     async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
+        entries: Any
+        stats: Any
+        entry: Any
+        result: Any
+        data: Any
+        updated: Any
         if name == "kgrag_stats":
             with KGRegistry(db_path=reg_path) as reg:
                 stats = reg.stats()
@@ -471,15 +538,30 @@ def _make_server(registry_path: Path | None = None) -> Server:
 
         if name == "kgrag_corpus_info":
             corpus_name = arguments["name"]
-            with KGRegistry(db_path=reg_path) as kg_reg, CorpusRegistry(db_path=reg_path) as corp_reg:
+            with (
+                KGRegistry(db_path=reg_path) as kg_reg,
+                CorpusRegistry(db_path=reg_path) as corp_reg,
+            ):
                 entry = corp_reg.get(corpus_name)
                 if entry is None:
-                    return [TextContent(type="text", text=json.dumps({"error": f"Corpus not found: {corpus_name}"}))]
+                    return [
+                        TextContent(
+                            type="text",
+                            text=json.dumps({"error": f"Corpus not found: {corpus_name}"}),
+                        )
+                    ]
                 kg_details = []
                 for kg_id in entry.kg_ids:
                     kg_entry = kg_reg.get(kg_id)
                     if kg_entry:
-                        kg_details.append({"id": kg_id, "name": kg_entry.name, "kind": kg_entry.kind.value, "built": kg_entry.is_built})
+                        kg_details.append(
+                            {
+                                "id": kg_id,
+                                "name": kg_entry.name,
+                                "kind": kg_entry.kind.value,
+                                "built": kg_entry.is_built,
+                            }
+                        )
                     else:
                         kg_details.append({"id": kg_id, "name": None, "kind": None, "built": False})
             data = {
@@ -500,7 +582,10 @@ def _make_server(registry_path: Path | None = None) -> Server:
             kg_names = arguments.get("kg_names", [])
             description = arguments.get("description", "")
             tags = arguments.get("tags", [])
-            with KGRegistry(db_path=reg_path) as kg_reg, CorpusRegistry(db_path=reg_path) as corp_reg:
+            with (
+                KGRegistry(db_path=reg_path) as kg_reg,
+                CorpusRegistry(db_path=reg_path) as corp_reg,
+            ):
                 kg_ids = []
                 missing = []
                 for ref in kg_names:
@@ -510,41 +595,91 @@ def _make_server(registry_path: Path | None = None) -> Server:
                     else:
                         missing.append(ref)
                 if missing:
-                    return [TextContent(type="text", text=json.dumps({"error": f"KGs not found: {missing}"}))]
-                corpus = CorpusEntry(name=corpus_name, description=description, kg_ids=kg_ids, tags=tags)
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": f"KGs not found: {missing}"})
+                        )
+                    ]
+                corpus = CorpusEntry(
+                    name=corpus_name, description=description, kg_ids=kg_ids, tags=tags
+                )
                 corp_reg.create(corpus)
-            return [TextContent(type="text", text=json.dumps({"created": corpus_name, "size": len(kg_ids)}))]
+            return [
+                TextContent(
+                    type="text", text=json.dumps({"created": corpus_name, "size": len(kg_ids)})
+                )
+            ]
 
         if name == "kgrag_corpus_delete":
             corpus_name = arguments["name"]
             with CorpusRegistry(db_path=reg_path) as corp_reg:
                 deleted = corp_reg.delete(corpus_name)
-            result = {"deleted": corpus_name} if deleted else {"error": f"Corpus not found: {corpus_name}"}
+            result = (
+                {"deleted": corpus_name}
+                if deleted
+                else {"error": f"Corpus not found: {corpus_name}"}
+            )
             return [TextContent(type="text", text=json.dumps(result))]
 
         if name == "kgrag_corpus_add":
             corpus_name = arguments["corpus"]
             kg_ref = arguments["kg"]
-            with KGRegistry(db_path=reg_path) as kg_reg, CorpusRegistry(db_path=reg_path) as corp_reg:
+            with (
+                KGRegistry(db_path=reg_path) as kg_reg,
+                CorpusRegistry(db_path=reg_path) as corp_reg,
+            ):
                 kg_entry = kg_reg.get(kg_ref)
                 if kg_entry is None:
-                    return [TextContent(type="text", text=json.dumps({"error": f"KG not found: {kg_ref}"}))]
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": f"KG not found: {kg_ref}"})
+                        )
+                    ]
                 updated = corp_reg.add_kg(corpus_name, kg_entry.id)
                 if updated is None:
-                    return [TextContent(type="text", text=json.dumps({"error": f"Corpus not found: {corpus_name}"}))]
-            return [TextContent(type="text", text=json.dumps({"corpus": corpus_name, "added": kg_ref, "size": updated.size}))]
+                    return [
+                        TextContent(
+                            type="text",
+                            text=json.dumps({"error": f"Corpus not found: {corpus_name}"}),
+                        )
+                    ]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps({"corpus": corpus_name, "added": kg_ref, "size": updated.size}),
+                )
+            ]
 
         if name == "kgrag_corpus_remove":
             corpus_name = arguments["corpus"]
             kg_ref = arguments["kg"]
-            with KGRegistry(db_path=reg_path) as kg_reg, CorpusRegistry(db_path=reg_path) as corp_reg:
+            with (
+                KGRegistry(db_path=reg_path) as kg_reg,
+                CorpusRegistry(db_path=reg_path) as corp_reg,
+            ):
                 kg_entry = kg_reg.get(kg_ref)
                 if kg_entry is None:
-                    return [TextContent(type="text", text=json.dumps({"error": f"KG not found: {kg_ref}"}))]
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": f"KG not found: {kg_ref}"})
+                        )
+                    ]
                 updated = corp_reg.remove_kg(corpus_name, kg_entry.id)
                 if updated is None:
-                    return [TextContent(type="text", text=json.dumps({"error": f"Corpus not found: {corpus_name}"}))]
-            return [TextContent(type="text", text=json.dumps({"corpus": corpus_name, "removed": kg_ref, "size": updated.size}))]
+                    return [
+                        TextContent(
+                            type="text",
+                            text=json.dumps({"error": f"Corpus not found: {corpus_name}"}),
+                        )
+                    ]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {"corpus": corpus_name, "removed": kg_ref, "size": updated.size}
+                    ),
+                )
+            ]
 
         if name == "kgrag_corpus_query":
             corpus_name = arguments["corpus"]
@@ -613,15 +748,25 @@ def _make_server(registry_path: Path | None = None) -> Server:
 
         if name == "kgrag_person_info":
             person_name = arguments["name"]
-            with KGRegistry(db_path=reg_path) as kg_reg, PersonCorpusRegistry(db_path=reg_path) as per_reg:
+            with (
+                KGRegistry(db_path=reg_path) as kg_reg,
+                PersonCorpusRegistry(db_path=reg_path) as per_reg,
+            ):
                 entry = per_reg.get(person_name)
                 if entry is None:
-                    return [TextContent(type="text", text=json.dumps({"error": f"Person not found: {person_name}"}))]
+                    return [
+                        TextContent(
+                            type="text",
+                            text=json.dumps({"error": f"Person not found: {person_name}"}),
+                        )
+                    ]
                 kg_details = []
                 for kg_id in entry.kg_ids:
                     kg_entry = kg_reg.get(kg_id)
                     if kg_entry:
-                        kg_details.append({"id": kg_id, "name": kg_entry.name, "kind": kg_entry.kind.value})
+                        kg_details.append(
+                            {"id": kg_id, "name": kg_entry.name, "kind": kg_entry.kind.value}
+                        )
                     else:
                         kg_details.append({"id": kg_id, "name": None, "kind": None})
             data = {
@@ -645,7 +790,10 @@ def _make_server(registry_path: Path | None = None) -> Server:
         if name == "kgrag_person_create":
             person_name = arguments["name"]
             kg_names = arguments.get("kg_names", [])
-            with KGRegistry(db_path=reg_path) as kg_reg, PersonCorpusRegistry(db_path=reg_path) as per_reg:
+            with (
+                KGRegistry(db_path=reg_path) as kg_reg,
+                PersonCorpusRegistry(db_path=reg_path) as per_reg,
+            ):
                 kg_ids, missing = [], []
                 for ref in kg_names:
                     kg_entry = kg_reg.get(ref)
@@ -654,7 +802,11 @@ def _make_server(registry_path: Path | None = None) -> Server:
                     else:
                         missing.append(ref)
                 if missing:
-                    return [TextContent(type="text", text=json.dumps({"error": f"KGs not found: {missing}"}))]
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": f"KGs not found: {missing}"})
+                        )
+                    ]
                 person = PersonCorpusEntry(
                     name=person_name,
                     kg_ids=kg_ids,
@@ -667,38 +819,82 @@ def _make_server(registry_path: Path | None = None) -> Server:
                     tags=arguments.get("tags", []),
                 )
                 per_reg.create(person)
-            return [TextContent(type="text", text=json.dumps({"created": person_name, "size": len(kg_ids)}))]
+            return [
+                TextContent(
+                    type="text", text=json.dumps({"created": person_name, "size": len(kg_ids)})
+                )
+            ]
 
         if name == "kgrag_person_delete":
             person_name = arguments["name"]
             with PersonCorpusRegistry(db_path=reg_path) as per_reg:
                 deleted = per_reg.delete(person_name)
-            result = {"deleted": person_name} if deleted else {"error": f"Person not found: {person_name}"}
+            result = (
+                {"deleted": person_name}
+                if deleted
+                else {"error": f"Person not found: {person_name}"}
+            )
             return [TextContent(type="text", text=json.dumps(result))]
 
         if name == "kgrag_person_add":
             person_name = arguments["person"]
             kg_ref = arguments["kg"]
-            with KGRegistry(db_path=reg_path) as kg_reg, PersonCorpusRegistry(db_path=reg_path) as per_reg:
+            with (
+                KGRegistry(db_path=reg_path) as kg_reg,
+                PersonCorpusRegistry(db_path=reg_path) as per_reg,
+            ):
                 kg_entry = kg_reg.get(kg_ref)
                 if kg_entry is None:
-                    return [TextContent(type="text", text=json.dumps({"error": f"KG not found: {kg_ref}"}))]
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": f"KG not found: {kg_ref}"})
+                        )
+                    ]
                 updated = per_reg.add_kg(person_name, kg_entry.id)
                 if updated is None:
-                    return [TextContent(type="text", text=json.dumps({"error": f"Person not found: {person_name}"}))]
-            return [TextContent(type="text", text=json.dumps({"person": person_name, "added": kg_ref, "size": updated.size}))]
+                    return [
+                        TextContent(
+                            type="text",
+                            text=json.dumps({"error": f"Person not found: {person_name}"}),
+                        )
+                    ]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps({"person": person_name, "added": kg_ref, "size": updated.size}),
+                )
+            ]
 
         if name == "kgrag_person_remove":
             person_name = arguments["person"]
             kg_ref = arguments["kg"]
-            with KGRegistry(db_path=reg_path) as kg_reg, PersonCorpusRegistry(db_path=reg_path) as per_reg:
+            with (
+                KGRegistry(db_path=reg_path) as kg_reg,
+                PersonCorpusRegistry(db_path=reg_path) as per_reg,
+            ):
                 kg_entry = kg_reg.get(kg_ref)
                 if kg_entry is None:
-                    return [TextContent(type="text", text=json.dumps({"error": f"KG not found: {kg_ref}"}))]
+                    return [
+                        TextContent(
+                            type="text", text=json.dumps({"error": f"KG not found: {kg_ref}"})
+                        )
+                    ]
                 updated = per_reg.remove_kg(person_name, kg_entry.id)
                 if updated is None:
-                    return [TextContent(type="text", text=json.dumps({"error": f"Person not found: {person_name}"}))]
-            return [TextContent(type="text", text=json.dumps({"person": person_name, "removed": kg_ref, "size": updated.size}))]
+                    return [
+                        TextContent(
+                            type="text",
+                            text=json.dumps({"error": f"Person not found: {person_name}"}),
+                        )
+                    ]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {"person": person_name, "removed": kg_ref, "size": updated.size}
+                    ),
+                )
+            ]
 
         if name == "kgrag_person_update":
             person_name = arguments["name"]
@@ -706,8 +902,18 @@ def _make_server(registry_path: Path | None = None) -> Server:
             with PersonCorpusRegistry(db_path=reg_path) as per_reg:
                 updated = per_reg.update(person_name, **fields)
                 if updated is None:
-                    return [TextContent(type="text", text=json.dumps({"error": f"Person not found: {person_name}"}))]
-            return [TextContent(type="text", text=json.dumps({"updated": person_name, "fields": list(fields.keys())}))]
+                    return [
+                        TextContent(
+                            type="text",
+                            text=json.dumps({"error": f"Person not found: {person_name}"}),
+                        )
+                    ]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps({"updated": person_name, "fields": list(fields.keys())}),
+                )
+            ]
 
         if name == "kgrag_person_query":
             person_name = arguments["person"]
