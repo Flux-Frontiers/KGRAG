@@ -698,7 +698,6 @@ description = "A tool to build a searchable knowledge graph from Python reposito
 optional = false
 python-versions = ">=3.12,<3.14"
 groups = ["main"]
-markers = "extra == \"doc-kg\" or extra == \"dock-kg\" or extra == \"code-kg\""
 files = []
 develop = false
 
@@ -1215,7 +1214,7 @@ description = "A tool to build a semantically searchable knowledge graph from ma
 optional = false
 python-versions = ">=3.12,<3.14"
 groups = ["main"]
-markers = "extra == \"doc-kg\" or extra == \"dock-kg\""
+markers = "extra == \"doc-kg\""
 files = []
 develop = false
 
@@ -6959,13 +6958,14 @@ multidict = ">=4.0"
 propcache = ">=0.2.1"
 
 [extras]
-code-kg = ["code-kg"]
+diary-kg = []
 doc-kg = ["doc-kg"]
-dock-kg = ["doc-kg"]
+ftree-kg = []
+meta-kg = []
 viz = ["plotly", "pyvis", "streamlit"]
 viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = ">3.12,<3.14"
-content-hash = "cbe0e8a7b1c08fb2303bdf76d5250ba8f6b24c3dbf7ad69f123ad44e55738eec"
+content-hash = "605de41ee149364a5c9fe0e30049ade2c427d464bdc82b387e4700a5bcf1cc87"
