@@ -69,7 +69,7 @@ doc-kg = {git = "https://github.com/Flux-Frontiers/doc_kg.git"}
 code-kg = {git = "https://github.com/Flux-Frontiers/code_kg.git"}
 #diary-kg = {git = "https://github.com/Flux-Frontiers/diary_kg.git"}
 #ftree-kg = {git = "https://github.com/Flux-Frontiers/ftree_kg.git"}
-metabo-kg = {git = "https://github.com/Flux-Frontiers/metabo_kg.git"}
+#metabo-kg = {git = "https://github.com/Flux-Frontiers/metabo_kg.git"}
 
 [tool.poetry.extras]
 viz = ["streamlit", "pyvis", "plotly"]
