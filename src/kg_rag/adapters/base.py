@@ -10,6 +10,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry
+from kg_rag.viz import DisplayMode, Viewport
 
 
 class KGAdapter(ABC):
@@ -91,27 +92,92 @@ class KGAdapter(ABC):
         """
 
     # ------------------------------------------------------------------
-    # Display helpers
+    # Viewport display
     # ------------------------------------------------------------------
 
-    def display(self) -> str:
-        """Return a human-readable one-line summary of this adapter's state.
+    def display(self, viewport: Viewport) -> None:
+        """Render this KG's visualization into the provided viewport.
 
-        The default implementation combines the entry label, availability status,
-        and basic graph topology counts.  Adapters may override to include
-        domain-specific metrics.
+        Subclasses must override this method to produce one or both display modes:
 
-        :return: A single-line string suitable for printing to a terminal.
+        * ``DisplayMode.SEMANTIC`` — render the KG as a tree in the
+          TreeOfKnowledge forest.  Tree shape, size, branch density, colour
+          saturation, and fresh-tip colour encode structural and temporal
+          properties per the VISION specification.
+
+        * ``DisplayMode.ONTOLOGICAL`` — render the KG's internal graph topology
+          as a 2-D node-link diagram.  Nodes coloured by kind; edges by relation
+          type; layout force-directed or hierarchical based on KG kind.
+
+        **Rendering contract:**
+
+        * All Streamlit (or other UI framework) calls must target
+          ``viewport.container``, never the global ``st`` module, so that output
+          is confined to the allocated region.
+        * Do not raise exceptions — catch internal errors and render a fallback
+          error card inside the viewport instead.
+        * Respect ``viewport.width`` and ``viewport.height`` when sizing charts
+          or canvas elements (``0`` means fill available).
+
+        The base implementation renders a placeholder card so that stub adapters
+        participate in the visualizer without crashing it.  Override to provide
+        the real visualization.
+
+        :param viewport: The rectangular display region to render into.
         """
+        self._display_stub(viewport)
+
+    def _display_stub(self, viewport: Viewport) -> None:
+        """Render a placeholder card for adapters that have not yet implemented display().
+
+        Produces a minimal info card inside ``viewport.container`` showing the
+        KG kind badge, name, availability, and graph topology counts (if
+        available).  Differentiates visually between SEMANTIC and ONTOLOGICAL
+        modes so the stub is still useful during development.
+
+        :param viewport: The viewport to render into.
+        """
+        # Import here so the module can be imported without streamlit installed.
+        try:
+            import streamlit as st  # pylint: disable=import-outside-toplevel
+        except ImportError:
+            return  # Non-Streamlit host — do nothing; subclass handles it.
+
+        ct = viewport.container
         available = self.is_available()
-        status = "available" if available else "unavailable"
-        if available:
-            gs = self._graph_stats()
-            return (
-                f"[{self.entry.kind.value}] {self.entry.name} — {status} "
-                f"({gs['node_count']} nodes, {gs['edge_count']} edges)"
+        kind = self.entry.kind.value
+        name = viewport.title or self.entry.name
+        mode_label = "Semantic (forest)" if viewport.mode == DisplayMode.SEMANTIC else "Ontological (graph)"
+
+        # Colour strip per kind — matches app.py palette
+        _COLOR = {
+            "code": "#4A90D9", "doc": "#27AE60", "meta": "#8E44AD",
+            "diary": "#E67E22", "verse": "#1ABC9C", "memory": "#F39C12",
+            "disulfide": "#E74C3C", "pdbfile": "#95A5A6",
+            "legal": "#8B4513", "person": "#FF69B4",
+        }
+        color = _COLOR.get(kind, "#95A5A6")
+
+        with ct:
+            st.markdown(
+                f"<div style='border-left:4px solid {color};"
+                f"border-radius:6px;padding:10px 14px;background:#1e1e2e;'>"
+                f"<span style='background:{color};color:#fff;border-radius:4px;"
+                f"padding:2px 8px;font-size:11px;font-weight:bold;font-family:monospace;'>"
+                f"{kind}</span>&nbsp;&nbsp;"
+                f"<b style='color:#f0f0f0;font-size:14px;'>{name}</b><br>"
+                f"<span style='color:#888;font-size:11px;'>mode: {mode_label}</span>"
+                f"</div>",
+                unsafe_allow_html=True,
             )
-        return f"[{self.entry.kind.value}] {self.entry.name} — {status}"
+            if available:
+                gs = self._graph_stats()
+                c1, c2 = ct.columns(2)
+                c1.metric("Nodes", gs["node_count"])
+                c2.metric("Edges", gs["edge_count"])
+                ct.caption(f"_display() not yet implemented for `{self.__class__.__name__}`_")
+            else:
+                ct.warning(f"KG `{name}` is not built or its library is not installed.")
 
     def __repr__(self) -> str:
         return (
