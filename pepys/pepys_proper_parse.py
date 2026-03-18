@@ -37,23 +37,34 @@ Arguments:
 import argparse
 import re
 import sys
+from collections.abc import Iterator
 from datetime import date
 from pathlib import Path
-from typing import Optional, Iterator
 
 MONTHS = {
-    "january": 1, "jan": 1,
-    "february": 2, "feb": 2,
-    "march": 3, "mar": 3,
-    "april": 4, "apr": 4,
+    "january": 1,
+    "jan": 1,
+    "february": 2,
+    "feb": 2,
+    "march": 3,
+    "mar": 3,
+    "april": 4,
+    "apr": 4,
     "may": 5,
-    "june": 6, "jun": 6,
-    "july": 7, "jul": 7,
-    "august": 8, "aug": 8,
-    "september": 9, "sep": 9,
-    "october": 10, "oct": 10,
-    "november": 11, "nov": 11,
-    "december": 12, "dec": 12,
+    "june": 6,
+    "jun": 6,
+    "july": 7,
+    "jul": 7,
+    "august": 8,
+    "aug": 8,
+    "september": 9,
+    "sep": 9,
+    "october": 10,
+    "oct": 10,
+    "november": 11,
+    "nov": 11,
+    "december": 12,
+    "dec": 12,
 }
 
 # Year header like "January 1660" or "February 1659-60"
@@ -80,6 +91,7 @@ DATE_DAY_RE = re.compile(
     re.IGNORECASE,
 )
 
+
 def is_leap_year(year: int) -> bool:
     """Check if year is a leap year.
 
@@ -87,6 +99,7 @@ def is_leap_year(year: int) -> bool:
     :return: True if leap year
     """
     return (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0)
+
 
 def is_valid_date(year: int, month: int, day: int) -> bool:
     """Check if date is valid.
@@ -102,7 +115,8 @@ def is_valid_date(year: int, month: int, day: int) -> bool:
     days_in_month = [31, 29 if is_leap_year(year) else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     return day <= days_in_month[month - 1]
 
-def resolve_abbreviated_day(day_marker: int, prev_day: Optional[int]) -> int:
+
+def resolve_abbreviated_day(day_marker: int, prev_day: int | None) -> int:
     """Resolve abbreviated day number (0-9) to full day number (1-31).
 
     Pepys' abbreviation scheme:
@@ -132,6 +146,7 @@ def resolve_abbreviated_day(day_marker: int, prev_day: Optional[int]) -> int:
     # e.g., prev=19, day=0 -> 20
     return ((prev_day // 10) + 1) * 10 + day_marker
 
+
 def infer_time_from_content(content: str, entry_index: int = 0) -> str:
     """Infer approximate time from diary content using temporal keywords.
 
@@ -146,19 +161,31 @@ def infer_time_from_content(content: str, entry_index: int = 0) -> str:
 
     # Map written numbers to integers
     number_words = {
-        'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6,
-        'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10, 'eleven': 11, 'twelve': 12
+        "one": 1,
+        "two": 2,
+        "three": 3,
+        "four": 4,
+        "five": 5,
+        "six": 6,
+        "seven": 7,
+        "eight": 8,
+        "nine": 9,
+        "ten": 10,
+        "eleven": 11,
+        "twelve": 12,
     }
 
     # Specific time mentions (HIGH PRIORITY - check these first)
     time_patterns = [
         # Written numbers: "three in the morning", "about five o'clock"
-        (r'\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(?:in the|o\'?clock)',
-         lambda m: number_words[m.group(1)]),
+        (
+            r"\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(?:in the|o\'?clock)",
+            lambda m: number_words[m.group(1)],
+        ),
         # Numeric: "3 o'clock", "at 5 o'clock"
-        (r'\b([1-9]|1[0-2])\s*o\'?clock', lambda m: int(m.group(1))),
-        (r'\babout\s+([1-9]|1[0-2])\s+o\'?clock', lambda m: int(m.group(1))),
-        (r'\bat\s+([1-9]|1[0-2])\s+o\'?clock', lambda m: int(m.group(1))),
+        (r"\b([1-9]|1[0-2])\s*o\'?clock", lambda m: int(m.group(1))),
+        (r"\babout\s+([1-9]|1[0-2])\s+o\'?clock", lambda m: int(m.group(1))),
+        (r"\bat\s+([1-9]|1[0-2])\s+o\'?clock", lambda m: int(m.group(1))),
     ]
 
     for pattern, extractor in time_patterns:
@@ -167,22 +194,24 @@ def infer_time_from_content(content: str, entry_index: int = 0) -> str:
             hour = extractor(match)
 
             # Context-based AM/PM determination
-            context = content_lower[max(0, match.start()-50):match.end()+50]
+            context = content_lower[max(0, match.start() - 50) : match.end() + 50]
 
             # Explicit "in the morning" or "in the afternoon" takes precedence
-            if 'in the morning' in context or 'this morning' in context:
+            if "in the morning" in context or "this morning" in context:
                 pass  # Keep as AM
-            elif 'in the afternoon' in context or 'this afternoon' in context:
+            elif "in the afternoon" in context or "this afternoon" in context:
                 if hour < 12:
                     hour += 12
-            elif 'in the evening' in context or 'this evening' in context:
+            elif "in the evening" in context or "this evening" in context:
                 if hour < 12:
                     hour += 12
-            elif 'at night' in context or 'tonight' in context:
+            elif "at night" in context or "tonight" in context:
                 if hour < 12:
                     hour += 12
             # General context clues (less reliable)
-            elif hour < 12 and any(word in content_lower for word in ['afternoon', 'evening', 'supper']):
+            elif hour < 12 and any(
+                word in content_lower for word in ["afternoon", "evening", "supper"]
+            ):
                 hour += 12
 
             # Add some variation to minutes
@@ -191,12 +220,12 @@ def infer_time_from_content(content: str, entry_index: int = 0) -> str:
 
     # Time-of-day keywords (by priority)
     time_keywords = [
-        (['early morning', 'rose early', 'up early'], 6, 7),
-        (['morning', 'forenoon'], 8, 11),
-        (['noon', 'midday', 'dinner'], 12, 13),
-        (['afternoon'], 14, 17),
-        (['evening', 'supper'], 18, 20),
-        (['night', 'late', 'midnight'], 21, 23),
+        (["early morning", "rose early", "up early"], 6, 7),
+        (["morning", "forenoon"], 8, 11),
+        (["noon", "midday", "dinner"], 12, 13),
+        (["afternoon"], 14, 17),
+        (["evening", "supper"], 18, 20),
+        (["night", "late", "midnight"], 21, 23),
     ]
 
     for keywords, hour_min, hour_max in time_keywords:
@@ -211,6 +240,7 @@ def infer_time_from_content(content: str, entry_index: int = 0) -> str:
     minute = (entry_index * 17) % 60
     return f"{hour:02d}:{minute:02d}"
 
+
 def normalize_body(text: str) -> str:
     """Normalize body text to single line.
 
@@ -223,6 +253,7 @@ def normalize_body(text: str) -> str:
     text = re.sub(r"[ \t]+", " ", text)
     return text.strip()
 
+
 def parse_diary(input_path: Path) -> Iterator[tuple[date, str, int]]:
     """Parse Pepys diary and yield (date, content, entry_index) tuples.
 
@@ -232,14 +263,14 @@ def parse_diary(input_path: Path) -> Iterator[tuple[date, str, int]]:
     with input_path.open("r", encoding="utf-8", errors="replace") as f:
         lines = f.readlines()
 
-    current_year: Optional[int] = None
-    current_month: Optional[int] = None
+    current_year: int | None = None
+    current_month: int | None = None
     dual_year_offset = 0
-    prev_day: Optional[int] = None
-    last_date: Optional[date] = None
+    prev_day: int | None = None
+    last_date: date | None = None
     entry_index = 0  # Track entries within same day
 
-    current_date: Optional[date] = None
+    current_date: date | None = None
     buffer: list[str] = []
     started = False
 
@@ -263,13 +294,13 @@ def parse_diary(input_path: Path) -> Iterator[tuple[date, str, int]]:
 
     for line_no, line in enumerate(lines, 1):
         # Strip line numbers if present (format: "123→content")
-        if '→' in line:
-            line = line.split('→', 1)[1]
+        if "→" in line:
+            line = line.split("→", 1)[1]
 
         stripped = line.strip()
 
         # Skip bracketed editorial notes
-        if stripped.startswith('[') and stripped.endswith(']'):
+        if stripped.startswith("[") and stripped.endswith("]"):
             continue
 
         # Check for year header
@@ -326,7 +357,7 @@ def parse_diary(input_path: Path) -> Iterator[tuple[date, str, int]]:
                 yield prev_entry
 
             current_date = date(year_to_use, month, day)
-            body_start = line[m.end():].strip()
+            body_start = line[m.end() :].strip()
             if body_start:
                 buffer.append(body_start)
             continue
@@ -357,19 +388,24 @@ def parse_diary(input_path: Path) -> Iterator[tuple[date, str, int]]:
                 yield prev_entry
 
             current_date = date(year_to_use, current_month, day)
-            body_start = line[m2.end():].strip()
+            body_start = line[m2.end() :].strip()
             if body_start:
                 buffer.append(body_start)
             continue
 
         # Accumulate body text
-        if current_date is not None and stripped and not (stripped.startswith('[') and ']' in stripped):
+        if (
+            current_date is not None
+            and stripped
+            and not (stripped.startswith("[") and "]" in stripped)
+        ):
             buffer.append(line.rstrip("\n"))
 
     # Flush last entry
     last = flush()
     if last:
         yield last
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(
@@ -378,17 +414,9 @@ def main() -> int:
     parser.add_argument("input_path", type=str, help="Input diary text file")
     parser.add_argument("output_path", type=str, help="Output transformed file")
     parser.add_argument(
-        "--vary-times",
-        action="store_true",
-        default=True,
-        help="Vary times (default: True)"
+        "--vary-times", action="store_true", default=True, help="Vary times (default: True)"
     )
-    parser.add_argument(
-        "--min-chars",
-        type=int,
-        default=30,
-        help="Minimum content length to keep"
-    )
+    parser.add_argument("--min-chars", type=int, default=30, help="Minimum content length to keep")
     args = parser.parse_args()
 
     input_path = Path(args.input_path)
@@ -416,6 +444,7 @@ def main() -> int:
 
     print(f"Parsed {n_entries} entries -> {output_path}")
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

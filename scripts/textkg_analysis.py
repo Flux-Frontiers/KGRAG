@@ -40,10 +40,10 @@ import argparse
 import re
 import sqlite3
 import sys
-from collections import Counter, defaultdict
+from collections import Counter
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from rich import box
 from rich.console import Console
@@ -60,11 +60,11 @@ console = Console()
 _FM_RE = re.compile(r"^---\n(.*?)\n---", re.DOTALL)
 
 
-def _parse_frontmatter(text: str) -> Dict[str, str]:
+def _parse_frontmatter(text: str) -> dict[str, str]:
     m = _FM_RE.match(text)
     if not m:
         return {}
-    result: Dict[str, str] = {}
+    result: dict[str, str] = {}
     for line in m.group(1).splitlines():
         if ": " in line:
             k, _, v = line.partition(": ")
@@ -80,10 +80,10 @@ DIARY_KG_DIR = ".diarykg"
 
 
 def resolve_paths(
-    root: Optional[str],
-    db: Optional[str],
-    corpus: Optional[str],
-) -> Tuple[Path, Optional[Path]]:
+    root: str | None,
+    db: str | None,
+    corpus: str | None,
+) -> tuple[Path, Path | None]:
     """Return (db_path, corpus_dir) from CLI arguments.
 
     Priority:
@@ -117,7 +117,7 @@ def resolve_paths(
 # ---------------------------------------------------------------------------
 
 
-def collect_graph_data(db_path: Path) -> Dict[str, Any]:
+def collect_graph_data(db_path: Path) -> dict[str, Any]:
     """Query the SQLite database and collect all analytics data."""
     if not db_path.exists():
         console.print(f"[red]Error:[/red] Database not found: {db_path}")
@@ -125,13 +125,13 @@ def collect_graph_data(db_path: Path) -> Dict[str, Any]:
 
     con = sqlite3.connect(str(db_path), check_same_thread=False)
     con.row_factory = sqlite3.Row
-    data: Dict[str, Any] = {"db_path": str(db_path)}
+    data: dict[str, Any] = {"db_path": str(db_path)}
 
     # ---- baseline counts ----
     node_rows = con.execute("SELECT kind, COUNT(*) AS cnt FROM nodes GROUP BY kind").fetchall()
     edge_rows = con.execute("SELECT rel,  COUNT(*) AS cnt FROM edges GROUP BY rel").fetchall()
     data["node_counts"] = {r["kind"]: r["cnt"] for r in node_rows}
-    data["edge_counts"] = {r["rel"]:  r["cnt"] for r in edge_rows}
+    data["edge_counts"] = {r["rel"]: r["cnt"] for r in edge_rows}
     data["total_nodes"] = sum(data["node_counts"].values())
     data["total_edges"] = sum(data["edge_counts"].values())
 
@@ -232,21 +232,20 @@ def collect_graph_data(db_path: Path) -> Dict[str, Any]:
     # ---- semantic coverage ----
     chunk_count = data["node_counts"].get("chunk", 0)
     if chunk_count:
+
         def _covered(rel: str) -> int:
             return con.execute(
                 "SELECT COUNT(DISTINCT src) FROM edges WHERE rel = ?", (rel,)
             ).fetchone()[0]
 
         data["semantic_coverage"] = {
-            "topic":   _covered("HAS_TOPIC")        / chunk_count,
-            "entity":  _covered("MENTIONS_ENTITY")   / chunk_count,
-            "keyword": _covered("HAS_KEYWORD")       / chunk_count,
-            "similar": _covered("SIMILAR_TO")        / chunk_count,
+            "topic": _covered("HAS_TOPIC") / chunk_count,
+            "entity": _covered("MENTIONS_ENTITY") / chunk_count,
+            "keyword": _covered("HAS_KEYWORD") / chunk_count,
+            "similar": _covered("SIMILAR_TO") / chunk_count,
         }
     else:
-        data["semantic_coverage"] = {
-            "topic": 0.0, "entity": 0.0, "keyword": 0.0, "similar": 0.0
-        }
+        data["semantic_coverage"] = {"topic": 0.0, "entity": 0.0, "keyword": 0.0, "similar": 0.0}
 
     con.close()
     return data
@@ -257,10 +256,10 @@ def collect_graph_data(db_path: Path) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def collect_corpus_data(corpus_dir: Path) -> Dict[str, Any]:
+def collect_corpus_data(corpus_dir: Path) -> dict[str, Any]:
     """Scan corpus .md files for temporal and category data."""
     md_files = list(corpus_dir.rglob("*.md"))
-    timestamps: List[str] = []
+    timestamps: list[str] = []
     categories: Counter = Counter()
     contexts: Counter = Counter()
     entry_indices: set = set()
@@ -309,9 +308,10 @@ def _bar(value: int, max_value: int, width: int = 30) -> str:
     return "█" * max(1, int(value / max_value * width))
 
 
-def display_summary_panel(graph: Dict[str, Any], corpus: Optional[Dict[str, Any]], db_path: Path) -> None:
+def display_summary_panel(
+    graph: dict[str, Any], corpus: dict[str, Any] | None, db_path: Path
+) -> None:
     nc = graph["node_counts"]
-    ec = graph["edge_counts"]
     content = Text()
 
     content.append("Database:  ", style="bold cyan")
@@ -329,7 +329,10 @@ def display_summary_panel(graph: Dict[str, Any], corpus: Optional[Dict[str, Any]
     content.append(")\n")
 
     content.append("Semantic:  ", style="bold cyan")
-    content.append(f"entities={nc.get('entity',0):,}  topics={nc.get('topic',0):,}  keywords={nc.get('keyword',0):,}\n", style="white")
+    content.append(
+        f"entities={nc.get('entity', 0):,}  topics={nc.get('topic', 0):,}  keywords={nc.get('keyword', 0):,}\n",
+        style="white",
+    )
 
     content.append("Edges:     ", style="bold cyan")
     content.append(f"{graph['total_edges']:,}\n", style="bold white")
@@ -343,7 +346,9 @@ def display_summary_panel(graph: Dict[str, Any], corpus: Optional[Dict[str, Any]
     if corpus:
         content.append("\n")
         content.append("Corpus files: ", style="bold cyan")
-        content.append(f"{corpus['chunk_files']}  (entries: {corpus['entry_count']})\n", style="white")
+        content.append(
+            f"{corpus['chunk_files']}  (entries: {corpus['entry_count']})\n", style="white"
+        )
         if corpus["timestamps"]:
             ts = corpus["timestamps"]
             content.append("Time span:    ", style="bold cyan")
@@ -360,7 +365,7 @@ def display_summary_panel(graph: Dict[str, Any], corpus: Optional[Dict[str, Any]
     console.print(Panel(content, title="TextKG Analysis", border_style="cyan", box=box.DOUBLE))
 
 
-def display_node_kinds_table(graph: Dict[str, Any]) -> None:
+def display_node_kinds_table(graph: dict[str, Any]) -> None:
     table = Table(title="Node Kind Distribution", box=box.ROUNDED)
     table.add_column("Kind", style="cyan", no_wrap=True)
     table.add_column("Count", style="magenta", justify="right")
@@ -375,7 +380,7 @@ def display_node_kinds_table(graph: Dict[str, Any]) -> None:
     console.print(table)
 
 
-def display_edge_rels_table(graph: Dict[str, Any]) -> None:
+def display_edge_rels_table(graph: dict[str, Any]) -> None:
     table = Table(title="Edge Relation Distribution", box=box.ROUNDED)
     table.add_column("Relation", style="cyan", no_wrap=True)
     table.add_column("Count", style="magenta", justify="right")
@@ -390,7 +395,7 @@ def display_edge_rels_table(graph: Dict[str, Any]) -> None:
     console.print(table)
 
 
-def display_entities_table(graph: Dict[str, Any], limit: int = 30) -> None:
+def display_entities_table(graph: dict[str, Any], limit: int = 30) -> None:
     entities = graph["entities"][:limit]
     if not entities:
         return
@@ -408,7 +413,7 @@ def display_entities_table(graph: Dict[str, Any], limit: int = 30) -> None:
     console.print(table)
 
 
-def display_topics_table(graph: Dict[str, Any]) -> None:
+def display_topics_table(graph: dict[str, Any]) -> None:
     topics = graph["topics"]
     if not topics:
         return
@@ -425,7 +430,7 @@ def display_topics_table(graph: Dict[str, Any]) -> None:
     console.print(table)
 
 
-def display_keywords_table(graph: Dict[str, Any]) -> None:
+def display_keywords_table(graph: dict[str, Any]) -> None:
     keywords = graph["keywords"]
     if not keywords:
         return
@@ -442,7 +447,7 @@ def display_keywords_table(graph: Dict[str, Any]) -> None:
     console.print(table)
 
 
-def display_cooccurrence_table(graph: Dict[str, Any]) -> None:
+def display_cooccurrence_table(graph: dict[str, Any]) -> None:
     cooccur = graph["cooccurrences"]
     if not cooccur:
         return
@@ -457,13 +462,16 @@ def display_cooccurrence_table(graph: Dict[str, Any]) -> None:
     max_cnt = cooccur[0]["cnt"] if cooccur else 1
     for row in cooccur:
         table.add_row(
-            row["entity1"][:25], "↔", row["entity2"][:25],
-            f"{row['cnt']:,}", "●" * max(1, int(row["cnt"] / max_cnt * 12)),
+            row["entity1"][:25],
+            "↔",
+            row["entity2"][:25],
+            f"{row['cnt']:,}",
+            "●" * max(1, int(row["cnt"] / max_cnt * 12)),
         )
     console.print(table)
 
 
-def display_hot_chunks_table(graph: Dict[str, Any]) -> None:
+def display_hot_chunks_table(graph: dict[str, Any]) -> None:
     hot = graph["hot_chunks"]
     if not hot:
         return
@@ -476,7 +484,7 @@ def display_hot_chunks_table(graph: Dict[str, Any]) -> None:
     table.add_column("Total", style="green", justify="right")
 
     for h in hot:
-        fp = (h.get("file_path") or "")
+        fp = h.get("file_path") or ""
         fp_short = fp.split("/")[-1] if "/" in fp else fp
         table.add_row(
             (h["label"] or "")[:40],
@@ -488,7 +496,7 @@ def display_hot_chunks_table(graph: Dict[str, Any]) -> None:
     console.print(table)
 
 
-def display_temporal_table(corpus: Dict[str, Any]) -> None:
+def display_temporal_table(corpus: dict[str, Any]) -> None:
     dist = corpus.get("temporal_distribution", {})
     if not dist:
         return
@@ -504,7 +512,7 @@ def display_temporal_table(corpus: Dict[str, Any]) -> None:
     console.print(table)
 
 
-def display_category_table(corpus: Dict[str, Any]) -> None:
+def display_category_table(corpus: dict[str, Any]) -> None:
     cats = corpus.get("category_counts", {})
     if not cats:
         return
@@ -526,8 +534,8 @@ def display_category_table(corpus: Dict[str, Any]) -> None:
 
 
 def write_markdown_report(
-    graph: Dict[str, Any],
-    corpus: Optional[Dict[str, Any]],
+    graph: dict[str, Any],
+    corpus: dict[str, Any] | None,
     db_path: Path,
     output_path: Path,
 ) -> None:
@@ -537,7 +545,7 @@ def write_markdown_report(
     sc = graph["semantic_coverage"]
     chunk_count = nc.get("chunk", 0)
 
-    lines: List[str] = [
+    lines: list[str] = [
         "# TextKG Analysis Report",
         "",
         f"**Database**: `{db_path}`  ",
@@ -545,7 +553,7 @@ def write_markdown_report(
         "",
         "## Executive Summary",
         "",
-        f"| Metric | Value |",
+        "| Metric | Value |",
         "|--------|-------|",
         f"| Total Nodes | {graph['total_nodes']:,} |",
         f"| Total Edges | {graph['total_edges']:,} |",
@@ -557,7 +565,7 @@ def write_markdown_report(
         f"| Keywords    | {nc.get('keyword', 0):,} |",
     ]
     if chunk_count:
-        lines.append(f"| Edges/Chunk | {graph['total_edges']/chunk_count:.1f} |")
+        lines.append(f"| Edges/Chunk | {graph['total_edges'] / chunk_count:.1f} |")
     lines.append("")
 
     if corpus:
@@ -576,7 +584,7 @@ def write_markdown_report(
     lines += [
         "## Semantic Coverage",
         "",
-        f"| Feature | Coverage |",
+        "| Feature | Coverage |",
         "|---------|----------|",
         f"| Topics   | {sc['topic']:.1%} |",
         f"| Entities | {sc['entity']:.1%} |",
@@ -586,7 +594,12 @@ def write_markdown_report(
     ]
 
     # Node kinds
-    lines += ["## Node Kind Distribution", "", "| Kind | Count | Share | Bar |", "|------|------:|------:|-----|"]
+    lines += [
+        "## Node Kind Distribution",
+        "",
+        "| Kind | Count | Share | Bar |",
+        "|------|------:|------:|-----|",
+    ]
     total = graph["total_nodes"]
     for kind, cnt in sorted(nc.items(), key=lambda x: x[1], reverse=True):
         pct = cnt / total * 100 if total else 0
@@ -595,7 +608,12 @@ def write_markdown_report(
     lines.append("")
 
     # Edge relations
-    lines += ["## Edge Relation Distribution", "", "| Relation | Count | Share | Bar |", "|----------|------:|------:|-----|"]
+    lines += [
+        "## Edge Relation Distribution",
+        "",
+        "| Relation | Count | Share | Bar |",
+        "|----------|------:|------:|-----|",
+    ]
     total_e = graph["total_edges"]
     for rel, cnt in sorted(ec.items(), key=lambda x: x[1], reverse=True):
         pct = cnt / total_e * 100 if total_e else 0
@@ -726,7 +744,7 @@ def write_markdown_report(
 
     # Insights
     lines += ["## Insights", ""]
-    insights: List[str] = []
+    insights: list[str] = []
 
     if chunk_count:
         epk = graph["total_edges"] / chunk_count
@@ -735,14 +753,18 @@ def write_markdown_report(
         elif epk > 4:
             insights.append(f"Good connectivity: {epk:.1f} edges/chunk.")
         else:
-            insights.append(f"Low connectivity ({epk:.1f} edges/chunk); consider enabling more extraction features.")
+            insights.append(
+                f"Low connectivity ({epk:.1f} edges/chunk); consider enabling more extraction features."
+            )
 
     for feat, label in [("topic", "topic"), ("entity", "entity"), ("keyword", "keyword")]:
         cov = sc.get(feat, 0.0)
         if cov >= 0.6:
             insights.append(f"Strong {label} coverage ({cov:.0%}) across chunks.")
         elif cov < 0.25:
-            insights.append(f"Low {label} coverage ({cov:.0%}); consider tuning extraction thresholds.")
+            insights.append(
+                f"Low {label} coverage ({cov:.0%}); consider tuning extraction thresholds."
+            )
 
     if entities:
         top10_sum = sum(e["mentions"] for e in entities[:10])
@@ -782,22 +804,26 @@ def main() -> None:
         epilog=__doc__,
     )
     parser.add_argument(
-        "--root", "-r",
+        "--root",
+        "-r",
         default=None,
         help="DiaryKG project root (auto-discovers .diarykg/graph.sqlite and corpus/).",
     )
     parser.add_argument(
-        "--db", "-d",
+        "--db",
+        "-d",
         default=None,
         help="Direct path to graph.sqlite (overrides --root).",
     )
     parser.add_argument(
-        "--corpus", "-c",
+        "--corpus",
+        "-c",
         default=None,
         help="Path to corpus directory containing .md chunk files (for temporal/category data).",
     )
     parser.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         default=None,
         type=Path,
         help="Write Markdown report to this file.",
@@ -819,7 +845,7 @@ def main() -> None:
     with console.status("[bold cyan]Querying graph database..."):
         graph_data = collect_graph_data(db_path)
 
-    corpus_data: Optional[Dict[str, Any]] = None
+    corpus_data: dict[str, Any] | None = None
     if corpus_dir and corpus_dir.exists():
         with console.status("[bold cyan]Scanning corpus frontmatter..."):
             corpus_data = collect_corpus_data(corpus_dir)

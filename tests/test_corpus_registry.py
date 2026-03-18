@@ -14,7 +14,6 @@ from kg_rag.corpus_registry import CorpusRegistry
 from kg_rag.primitives import CorpusEntry, KGEntry, KGKind
 from kg_rag.registry import KGRegistry
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------

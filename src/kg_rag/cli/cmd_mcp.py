@@ -20,6 +20,6 @@ from kg_rag.cli.options import registry_option
 @registry_option
 def mcp(host, port, registry):
     """Launch the KGRAG MCP server (cross-KG tools for Claude/Cursor)."""
-    from kg_rag.mcp_server import main as mcp_main
+    from kg_rag.mcp_server import main as mcp_main  # pylint: disable=import-outside-toplevel
 
     mcp_main(host=host, port=port, registry_path=Path(registry) if registry else None)

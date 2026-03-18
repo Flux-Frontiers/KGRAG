@@ -24,7 +24,7 @@ The TopicClassifier class provides a convenient way to categorize text data into
 import argparse
 import re
 from dataclasses import dataclass
-from typing import List, Pattern
+from re import Pattern
 
 import yaml
 
@@ -33,8 +33,8 @@ import yaml
 class RuleSet:
     """Basic ruleset"""
 
-    keywords: List[str]
-    patterns: List[Pattern]
+    keywords: list[str]
+    patterns: list[Pattern]
 
 
 class TopicClassifier:
@@ -143,7 +143,7 @@ class TopicClassifier:
         self.phrase_weight = 3
 
     def load_config(self, config_path):
-        with open(config_path, "r") as f:
+        with open(config_path) as f:
             config = yaml.safe_load(f)
             self.categories = config.get("categories", {})
             self.phrases = config.get("phrases", {})
@@ -295,9 +295,7 @@ def main():
     parser.add_argument(
         "-d", "--demo", action="store_true", help="Run demo mode with example texts"
     )
-    parser.add_argument(
-        "text", nargs="*", help="Text to classify (if not using demo mode)"
-    )
+    parser.add_argument("text", nargs="*", help="Text to classify (if not using demo mode)")
 
     args = parser.parse_args()
 

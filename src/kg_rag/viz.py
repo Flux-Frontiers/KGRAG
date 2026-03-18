@@ -164,33 +164,61 @@ class Viewport:
     # ------------------------------------------------------------------
 
     @classmethod
-    def streamlit_semantic(cls, container: Any, *, width: int = 0,
-                           height: int = 0, title: str = "", **meta: Any) -> Viewport:
+    def streamlit_semantic(
+        cls, container: Any, *, width: int = 0, height: int = 0, title: str = "", **meta: Any
+    ) -> Viewport:
         """Streamlit container configured for SEMANTIC display."""
-        return cls(container=container, mode=DisplayMode.SEMANTIC,
-                   backend=RenderBackend.STREAMLIT,
-                   width=width, height=height, title=title, metadata=dict(meta))
+        return cls(
+            container=container,
+            mode=DisplayMode.SEMANTIC,
+            backend=RenderBackend.STREAMLIT,
+            width=width,
+            height=height,
+            title=title,
+            metadata=dict(meta),
+        )
 
     @classmethod
-    def streamlit_ontological(cls, container: Any, *, width: int = 0,
-                               height: int = 0, title: str = "", **meta: Any) -> Viewport:
+    def streamlit_ontological(
+        cls, container: Any, *, width: int = 0, height: int = 0, title: str = "", **meta: Any
+    ) -> Viewport:
         """Streamlit container configured for ONTOLOGICAL display."""
-        return cls(container=container, mode=DisplayMode.ONTOLOGICAL,
-                   backend=RenderBackend.STREAMLIT,
-                   width=width, height=height, title=title, metadata=dict(meta))
+        return cls(
+            container=container,
+            mode=DisplayMode.ONTOLOGICAL,
+            backend=RenderBackend.STREAMLIT,
+            width=width,
+            height=height,
+            title=title,
+            metadata=dict(meta),
+        )
 
     @classmethod
-    def qt2d_semantic(cls, scene: Any, *, width: int = 0, height: int = 0,
-                      title: str = "", **meta: Any) -> Viewport:
+    def qt2d_semantic(
+        cls, scene: Any, *, width: int = 0, height: int = 0, title: str = "", **meta: Any
+    ) -> Viewport:
         """Qt2D QGraphicsScene configured for SEMANTIC display."""
-        return cls(container=scene, mode=DisplayMode.SEMANTIC,
-                   backend=RenderBackend.QT2D,
-                   width=width, height=height, title=title, metadata=dict(meta))
+        return cls(
+            container=scene,
+            mode=DisplayMode.SEMANTIC,
+            backend=RenderBackend.QT2D,
+            width=width,
+            height=height,
+            title=title,
+            metadata=dict(meta),
+        )
 
     @classmethod
-    def qt2d_ontological(cls, scene: Any, *, width: int = 0, height: int = 0,
-                          title: str = "", **meta: Any) -> Viewport:
+    def qt2d_ontological(
+        cls, scene: Any, *, width: int = 0, height: int = 0, title: str = "", **meta: Any
+    ) -> Viewport:
         """Qt2D QGraphicsScene configured for ONTOLOGICAL display."""
-        return cls(container=scene, mode=DisplayMode.ONTOLOGICAL,
-                   backend=RenderBackend.QT2D,
-                   width=width, height=height, title=title, metadata=dict(meta))
+        return cls(
+            container=scene,
+            mode=DisplayMode.ONTOLOGICAL,
+            backend=RenderBackend.QT2D,
+            width=width,
+            height=height,
+            title=title,
+            metadata=dict(meta),
+        )

@@ -16,7 +16,6 @@ from kg_rag.adapters import KGAdapter, make_adapter
 from kg_rag.corpus_registry import CorpusRegistry
 from kg_rag.person_registry import PersonCorpusRegistry
 from kg_rag.primitives import (
-    CorpusEntry,
     CrossHit,
     CrossQueryResult,
     CrossSnippet,
@@ -139,7 +138,7 @@ class KGRAG:
                 all_hits.extend(hits)
                 by_kg[entry.name] = hits
                 kgs_queried += 1
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
                 if self._strict:
                     raise
                 # Silently skip failing KGs in permissive mode
@@ -181,7 +180,7 @@ class KGRAG:
                 snippets = adapter.pack(q, k=k, context=context)
                 all_snippets.extend(snippets)
                 kgs_queried += 1
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
                 if self._strict:
                     raise
 
@@ -209,7 +208,7 @@ class KGRAG:
                 continue
             try:
                 out[entry.name] = {"available": True, **adapter.stats()}
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 out[entry.name] = {"available": False, "error": str(e)}
         return out
 
@@ -271,7 +270,7 @@ class KGRAG:
                 all_hits.extend(hits)
                 by_kg[entry.name] = hits
                 kgs_queried += 1
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
                 if self._strict:
                     raise
 
@@ -312,7 +311,7 @@ class KGRAG:
                 snippets = adapter.pack(q, k=k, context=context)
                 all_snippets.extend(snippets)
                 kgs_queried += 1
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
                 if self._strict:
                     raise
 
@@ -342,7 +341,7 @@ class KGRAG:
                 continue
             try:
                 out[entry.name] = {"available": True, **adapter.stats()}
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 out[entry.name] = {"available": False, "error": str(e)}
         return out
 
@@ -390,7 +389,7 @@ class KGRAG:
                 all_hits.extend(hits)
                 by_kg[entry.name] = hits
                 kgs_queried += 1
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
                 if self._strict:
                     raise
 
@@ -431,7 +430,7 @@ class KGRAG:
                 snippets = adapter.pack(q, k=k, context=context)
                 all_snippets.extend(snippets)
                 kgs_queried += 1
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
                 if self._strict:
                     raise
 
@@ -461,6 +460,6 @@ class KGRAG:
                 continue
             try:
                 out[entry.name] = {"available": True, **adapter.stats()}
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 out[entry.name] = {"available": False, "error": str(e)}
         return out

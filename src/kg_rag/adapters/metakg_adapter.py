@@ -6,7 +6,7 @@ Adapter wrapping the metakg package.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from kg_rag.adapters.base import KGAdapter
@@ -193,7 +193,7 @@ class MetaKGAdapter(KGAdapter):
         snap: dict[str, Any] = {
             "version": version,
             "label": label,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "kind": "meta",
             "kg_name": self.entry.name,
             "node_count": gs["node_count"],

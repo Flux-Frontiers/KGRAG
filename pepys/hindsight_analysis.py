@@ -21,19 +21,18 @@ import sys
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import psycopg2
 from dotenv import load_dotenv
+from personal_agent.config.runtime_config import get_config
+from personal_agent.tools import postgresql_manager
 from psycopg2.extras import RealDictCursor
 from rich import box
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
-
-from personal_agent.config.runtime_config import get_config
-from personal_agent.tools import postgresql_manager
 
 # Load environment variables
 env_path = Path.home() / ".persagent" / ".env"
@@ -61,14 +60,12 @@ def remap_entity_name(entity_name: str) -> str:
     return entity_map.get(entity_name, entity_name)
 
 
-def connect_to_hindsight() -> Tuple[psycopg2.extensions.connection, str]:
+def connect_to_hindsight() -> tuple[psycopg2.extensions.connection, str]:
     """Connect to Hindsight PostgreSQL database using proper credentials."""
     config = get_config()
     user_id = config.user_id
 
-    console.print(
-        f"[cyan]🔗 Connecting to Hindsight database for user: {user_id}[/cyan]"
-    )
+    console.print(f"[cyan]🔗 Connecting to Hindsight database for user: {user_id}[/cyan]")
 
     try:
         conn_string = postgresql_manager.build_connection_string(user_id)
@@ -79,7 +76,7 @@ def connect_to_hindsight() -> Tuple[psycopg2.extensions.connection, str]:
         raise
 
 
-def get_all_banks(conn) -> List[Dict[str, Any]]:
+def get_all_banks(conn) -> list[dict[str, Any]]:
     """Get all memory banks in the database."""
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     cursor.execute(
@@ -94,7 +91,7 @@ def get_all_banks(conn) -> List[Dict[str, Any]]:
     return banks
 
 
-def create_histogram(data: Dict[str, int], max_width: int = 40, top_n: int = 15) -> str:
+def create_histogram(data: dict[str, int], max_width: int = 40, top_n: int = 15) -> str:
     """Create a text-based histogram."""
     if not data:
         return "No data"
@@ -114,7 +111,7 @@ def create_histogram(data: Dict[str, int], max_width: int = 40, top_n: int = 15)
     return "\n".join(lines)
 
 
-def create_sparkline(values: List[int], width: int = 20) -> str:
+def create_sparkline(values: list[int], width: int = 20) -> str:
     """Create a sparkline from numeric values."""
     if not values or max(values) == 0:
         return "▁" * width
@@ -130,10 +127,10 @@ def create_sparkline(values: List[int], width: int = 20) -> str:
     )
 
 
-def analyze_bank(conn, bank_id: str) -> Dict[str, Any]:
+def analyze_bank(conn, bank_id: str) -> dict[str, Any]:
     """Perform comprehensive analysis on a specific bank."""
     cursor = conn.cursor(cursor_factory=RealDictCursor)
-    results: Dict[str, Any] = {"bank_id": bank_id}
+    results: dict[str, Any] = {"bank_id": bank_id}
 
     # Get entities
     cursor.execute(
@@ -238,7 +235,7 @@ def analyze_bank(conn, bank_id: str) -> Dict[str, Any]:
     return results
 
 
-def display_summary_panel(data: Dict[str, Any]):
+def display_summary_panel(data: dict[str, Any]):
     """Display high-level summary in a panel."""
     bank_id = data["bank_id"]
     title = f"📊 Memory Bank: {bank_id}"
@@ -258,9 +255,7 @@ def display_summary_panel(data: Dict[str, Any]):
         latest = data["latest_memory"]
         span = (latest - earliest).days if latest > earliest else 0
         content.append("\nTime Span: ", style="bold cyan")
-        content.append(
-            f"{span:,} days ({earliest.year} - {latest.year})\n", style="bold white"
-        )
+        content.append(f"{span:,} days ({earliest.year} - {latest.year})\n", style="bold white")
 
     # Calculate ratios
     if data["total_memories"] > 0:
@@ -274,7 +269,7 @@ def display_summary_panel(data: Dict[str, Any]):
     console.print(Panel(content, title=title, border_style="cyan", box=box.DOUBLE))
 
 
-def display_fact_types_table(data: Dict[str, Any]):
+def display_fact_types_table(data: dict[str, Any]):
     """Display memory types distribution."""
     table = Table(title="📝 Memory Types Distribution", box=box.ROUNDED)
     table.add_column("Type", style="cyan", no_wrap=True)
@@ -283,9 +278,7 @@ def display_fact_types_table(data: Dict[str, Any]):
     table.add_column("Visualization", style="blue")
 
     total = data["total_memories"]
-    for fact_type, count in sorted(
-        data["fact_types"].items(), key=lambda x: x[1], reverse=True
-    ):
+    for fact_type, count in sorted(data["fact_types"].items(), key=lambda x: x[1], reverse=True):
         percentage = (count / total * 100) if total > 0 else 0
         bar_width = int(percentage / 2)  # Scale to 50 chars max
         visual_bar = "█" * bar_width
@@ -294,7 +287,7 @@ def display_fact_types_table(data: Dict[str, Any]):
     console.print(table)
 
 
-def display_link_types_table(data: Dict[str, Any]):
+def display_link_types_table(data: dict[str, Any]):
     """Display link types distribution."""
     table = Table(title="🔗 Link Types Distribution", box=box.ROUNDED)
     table.add_column("Link Type", style="cyan", no_wrap=True)
@@ -303,9 +296,7 @@ def display_link_types_table(data: Dict[str, Any]):
     table.add_column("Visualization", style="blue")
 
     total = data["total_links"]
-    for link_type, count in sorted(
-        data["link_types"].items(), key=lambda x: x[1], reverse=True
-    ):
+    for link_type, count in sorted(data["link_types"].items(), key=lambda x: x[1], reverse=True):
         percentage = (count / total * 100) if total > 0 else 0
         bar_width = int(percentage / 2)  # Scale to 50 chars max
         visual_bar = "█" * bar_width
@@ -314,7 +305,7 @@ def display_link_types_table(data: Dict[str, Any]):
     console.print(table)
 
 
-def display_top_entities_table(data: Dict[str, Any], limit: int = 30):
+def display_top_entities_table(data: dict[str, Any], limit: int = 30):
     """Display top entities by mentions."""
     table = Table(title=f"👥 Top {limit} Entities by Mentions", box=box.ROUNDED)
     table.add_column("Rank", style="dim", width=4)
@@ -322,9 +313,7 @@ def display_top_entities_table(data: Dict[str, Any], limit: int = 30):
     table.add_column("Mentions", style="magenta", justify="right")
     table.add_column("Activity", style="blue")
 
-    entities = sorted(data["entities"], key=lambda x: x["mention_count"], reverse=True)[
-        :limit
-    ]
+    entities = sorted(data["entities"], key=lambda x: x["mention_count"], reverse=True)[:limit]
     max_mentions = entities[0]["mention_count"] if entities else 1
 
     for idx, entity in enumerate(entities, 1):
@@ -338,7 +327,7 @@ def display_top_entities_table(data: Dict[str, Any], limit: int = 30):
     console.print(table)
 
 
-def display_cooccurrence_network(data: Dict[str, Any], limit: int = 15):
+def display_cooccurrence_network(data: dict[str, Any], limit: int = 15):
     """Display top entity co-occurrences."""
     table = Table(title=f"🕸️  Top {limit} Entity Relationships", box=box.ROUNDED)
     table.add_column("Entity 1", style="cyan")
@@ -361,7 +350,7 @@ def display_cooccurrence_network(data: Dict[str, Any], limit: int = 15):
     console.print(table)
 
 
-def display_temporal_distribution(data: Dict[str, Any]):
+def display_temporal_distribution(data: dict[str, Any]):
     """Display temporal distribution of memories."""
     if not data.get("temporal_distribution"):
         return
@@ -384,7 +373,7 @@ def display_temporal_distribution(data: Dict[str, Any]):
     console.print(table)
 
 
-def create_markdown_report(data: Dict[str, Any], output_path: Path):
+def create_markdown_report(data: dict[str, Any], output_path: Path):
     """Generate comprehensive markdown report."""
     bank_id = data["bank_id"]
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -404,17 +393,13 @@ def create_markdown_report(data: Dict[str, Any], output_path: Path):
             earliest = data["earliest_memory"]
             latest = data["latest_memory"]
             span = (latest - earliest).days
-            f.write(
-                f"- **Time Span**: {span:,} days ({earliest.year} - {latest.year})\n"
-            )
+            f.write(f"- **Time Span**: {span:,} days ({earliest.year} - {latest.year})\n")
 
         if data["total_memories"] > 0:
             links_per_memory = data["total_links"] / data["total_memories"]
             entities_per_memory = data["entity_count"] / data["total_memories"]
             f.write(f"- **Links per Memory**: {links_per_memory:.1f}\n")
-            f.write(
-                f"- **Entity Density**: {entities_per_memory:.2f} entities/memory\n"
-            )
+            f.write(f"- **Entity Density**: {entities_per_memory:.2f} entities/memory\n")
 
         # Memory Types
         f.write("\n## 📝 Memory Types\n\n")
@@ -427,9 +412,7 @@ def create_markdown_report(data: Dict[str, Any], output_path: Path):
             percentage = (count / total * 100) if total > 0 else 0
             bar_length = int(percentage / 2)  # Scale to 50 chars max
             visual_bar = "█" * bar_length
-            f.write(
-                f"| {fact_type} | {count:,} | {percentage:.1f}% | `{visual_bar}` |\n"
-            )
+            f.write(f"| {fact_type} | {count:,} | {percentage:.1f}% | `{visual_bar}` |\n")
 
         # Link Types
         f.write("\n## 🔗 Link Types\n\n")
@@ -442,26 +425,20 @@ def create_markdown_report(data: Dict[str, Any], output_path: Path):
             percentage = (count / total_links * 100) if total_links > 0 else 0
             bar_length = int(percentage / 2)  # Scale to 50 chars max
             visual_bar = "█" * bar_length
-            f.write(
-                f"| {link_type} | {count:,} | {percentage:.1f}% | `{visual_bar}` |\n"
-            )
+            f.write(f"| {link_type} | {count:,} | {percentage:.1f}% | `{visual_bar}` |\n")
 
         # Top Entities
         f.write("\n## 👥 Top 30 Entities\n\n")
         f.write("| Rank | Entity | Mentions | Frequency |\n")
         f.write("|------|--------|----------|----------|\n")
-        entities = sorted(
-            data["entities"], key=lambda x: x["mention_count"], reverse=True
-        )[:30]
+        entities = sorted(data["entities"], key=lambda x: x["mention_count"], reverse=True)[:30]
         max_mentions = entities[0]["mention_count"] if entities else 1
         for idx, entity in enumerate(entities, 1):
             # Create a scaled bar (max 30 chars)
             bar_length = int((entity["mention_count"] / max_mentions) * 30)
             visual_bar = "▓" * bar_length
             entity_name = remap_entity_name(entity["canonical_name"])
-            f.write(
-                f"| {idx} | {entity_name} | {entity['mention_count']:,} | `{visual_bar}` |\n"
-            )
+            f.write(f"| {idx} | {entity_name} | {entity['mention_count']:,} | `{visual_bar}` |\n")
 
         # Top Relationships
         f.write("\n## 🕸️ Top Entity Relationships\n\n")
@@ -481,9 +458,7 @@ def create_markdown_report(data: Dict[str, Any], output_path: Path):
             f.write("### Link Proliferation\n\n")
             f.write(f"With **{links_per_mem:.1f} links per memory**, this bank shows ")
             if links_per_mem > 100:
-                f.write(
-                    "very high interconnectivity, typical of rich semantic graphs.\n\n"
-                )
+                f.write("very high interconnectivity, typical of rich semantic graphs.\n\n")
             elif links_per_mem > 50:
                 f.write("good interconnectivity for semantic queries.\n\n")
             else:
@@ -496,16 +471,10 @@ def create_markdown_report(data: Dict[str, Any], output_path: Path):
             f.write("### Entity Distribution\n\n")
             top_10_mentions = sum(e["mention_count"] for e in entities[:10])
             total_mentions = sum(e["mention_count"] for e in data["entities"])
-            concentration = (
-                (top_10_mentions / total_mentions * 100) if total_mentions > 0 else 0
-            )
-            f.write(
-                f"The top 10 entities account for **{concentration:.1f}%** of all mentions, "
-            )
+            concentration = (top_10_mentions / total_mentions * 100) if total_mentions > 0 else 0
+            f.write(f"The top 10 entities account for **{concentration:.1f}%** of all mentions, ")
             if concentration > 50:
-                f.write(
-                    "indicating a centralized memory structure around key entities.\n\n"
-                )
+                f.write("indicating a centralized memory structure around key entities.\n\n")
             else:
                 f.write("indicating a distributed memory structure.\n\n")
 
@@ -525,9 +494,7 @@ def create_markdown_report(data: Dict[str, Any], output_path: Path):
             f.write("```\n")
 
             # Get temporal data sorted by month
-            temporal_data = sorted(
-                data["temporal_distribution"], key=lambda x: x["month"]
-            )
+            temporal_data = sorted(data["temporal_distribution"], key=lambda x: x["month"])
             max_count = max((t["count"] for t in temporal_data), default=1)
 
             for row in temporal_data:
@@ -612,8 +579,7 @@ def main():
         else:
             # Default to current working directory
             output_file = (
-                Path.cwd()
-                / f"hindsight_report_{user_id}_{datetime.now().strftime('%Y%m%d')}.md"
+                Path.cwd() / f"hindsight_report_{user_id}_{datetime.now().strftime('%Y%m%d')}.md"
             )
         create_markdown_report(data, output_file)
 
