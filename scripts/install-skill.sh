@@ -9,7 +9,7 @@
 #   claude   — Claude Code  (.claude/claude_code_config.json)
 #   kilo     — Kilo Code    (.mcp.json, shared with Claude Code)
 #   copilot  — GitHub Copilot (.vscode/mcp.json)
-#   cline    — Cline        (.claude/commands/codekg.md slash command)
+#   cline    — Cline        (.claude/commands/codekg.md slash command + .mcp.json)
 #
 # Usage (from a target repo, no clone needed):
 #   curl -fsSL https://raw.githubusercontent.com/Flux-Frontiers/kg_rag/main/scripts/install-skill.sh | bash
@@ -36,11 +36,15 @@
 #        c. poetry add (fallback for Poetry-managed repos)
 #   5. Builds the SQLite knowledge graph (skips if already present, unless --wipe)
 #   6. Builds the LanceDB vector index  (skips if already present, unless --wipe)
-#   7. Writes provider MCP configs as requested
+#   7. Writes provider MCP configs as requested (.mcp.json and/or .vscode/mcp.json)
 #   8. Prints a final summary
 #
+# NOTE: MCP server registration is written to the workspace-local .mcp.json only.
+# The global Cline cline_mcp_settings.json is NOT modified — Cline reads .mcp.json
+# automatically when opening a workspace.
+#
 # Author: Eric G. Suchanek, PhD
-# Last Revision: 2026-03-02 09:45:06
+# Last Revision: 2026-03-19
 # =============================================================================
 
 set -eo pipefail
@@ -354,59 +358,7 @@ if [ -z "$CODEKG_BIN" ]; then
     fi
 fi
 
-# ── Step 4b: Write Cline MCP settings (cline_mcp_settings.json) ─────────────
-# Must run after CODEKG_BIN is resolved above.
-echo ""
-echo "── Step 4b: Configuring Cline MCP settings ──────────"
-echo ""
-
-if [ "$DO_CLINE" = "1" ]; then
-    # Cline global MCP settings — macOS/Linux paths
-    CLINE_SETTINGS=""
-    if [ -f "${HOME}/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json" ]; then
-        CLINE_SETTINGS="${HOME}/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json"
-    elif [ -f "${HOME}/.config/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json" ]; then
-        CLINE_SETTINGS="${HOME}/.config/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json"
-    fi
-
-    if [ -z "$CLINE_SETTINGS" ]; then
-        echo "  ⚠ cline_mcp_settings.json not found — is Cline installed?"
-        echo "    Expected: ~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json"
-    elif [ -n "$DRY_RUN" ]; then
-        REPO_NAME="$(basename "${TARGET_REPO}")"
-        echo "  [dry-run] would upsert codekg-${REPO_NAME} in ${CLINE_SETTINGS}"
-    else
-        REPO_NAME="$(basename "${TARGET_REPO}")"
-        python3 - "$CLINE_SETTINGS" "$TARGET_REPO" "$REPO_NAME" "$CODEKG_BIN" <<'PYEOF'
-import json, sys
-cline_settings = sys.argv[1]
-target_repo    = sys.argv[2]
-repo_name      = sys.argv[3]
-codekg_bin     = sys.argv[4]
-server_key     = f"codekg-{repo_name}"
-
-with open(cline_settings, "r") as f:
-    data = json.load(f)
-if "mcpServers" not in data:
-    data["mcpServers"] = {}
-
-data["mcpServers"][server_key] = {
-    "command": codekg_bin,
-    "args": ["mcp", "--repo", target_repo,
-             "--db", f"{target_repo}/.codekg/graph.sqlite"]
-}
-
-with open(cline_settings, "w") as f:
-    json.dump(data, f, indent=2)
-    f.write("\n")
-print(f"  ✓ Upserted {server_key} in {cline_settings}")
-PYEOF
-    fi
-else
-    echo "  – Skipped (cline not selected)"
-fi
-
-# ── Step 4: Build the SQLite knowledge graph ──────────────────────────────────
+# ── Step 5: Build the SQLite knowledge graph ──────────────────────────────────
 echo ""
 echo "── Step 5: Building SQLite knowledge graph ──────────"
 echo ""
@@ -431,7 +383,7 @@ else
     fi
 fi
 
-# ── Step 5: Build the LanceDB vector index ────────────────────────────────────
+# ── Step 6: Build the LanceDB vector index ────────────────────────────────────
 echo ""
 echo "── Step 6: Building LanceDB vector index ────────────"
 echo ""
@@ -589,7 +541,7 @@ echo ""
 echo "  Providers configured:"
 ( [ "$DO_CLAUDE" = "1" ] || [ "$DO_KILO" = "1" ] ) && echo "    ✓ Claude Code + Kilo Code  (.mcp.json)"
 [ "$DO_COPILOT" = "1" ] && echo "    ✓ GitHub Copilot (.vscode/mcp.json)"
-[ "$DO_CLINE"   = "1" ] && echo "    ✓ Cline          (.claude/commands/codekg.md + cline_mcp_settings.json)"
+[ "$DO_CLINE"   = "1" ] && echo "    ✓ Cline          (.claude/commands/codekg.md + .mcp.json)"
 echo ""
 echo "  ⚠ One manual step required:"
 echo "    Reload VS Code to activate the MCP servers:"
