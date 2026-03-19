@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.3] — 2026-03-18
+
+### Added
+- `src/kg_rag/cli/cmd_hooks.py` — new `kgrag install-hooks` CLI command that
+  installs a KGRAG-aware pre-commit git hook into `.git/hooks/pre-commit`. The
+  hook orchestrates rebuild + snapshot for all registered KG layers present in
+  the workspace (CodeKG, DocKG, FTreeKG, DiaryKG) before running pre-commit
+  framework checks. Supports `--repo` and `--force` flags. Skip with
+  `KGRAG_SKIP_SNAPSHOT=1 git commit ...`.
+- `src/kg_rag/cli/main.py` — imports `cmd_hooks` to register the new
+  `install-hooks` command in the CLI dispatcher.
+
+### Changed
+- **Version bump**: `0.3.1` → `0.3.3` in `pyproject.toml` and `__init__.py`.
+- **Dependency pinning**: `sentence-transformers` pinned to `==4.1.0` (was
+  `>=2.7.0`) to avoid breaking changes in 5.x; added explicit `transformers
+  <5.0.0` and `torch >=2.5.1` constraints for reproducible embedding behaviour.
+- **`poetry.lock` updated**: `sentence-transformers` 5.3.0 → 4.1.0;
+  `transformers` 5.3.0 → 4.57.6; `huggingface-hub` 1.6.0 → 0.36.2;
+  `cuda-pathfinder` 1.4.2 → 1.4.3. Removed transitive deps no longer needed:
+  `typer`, `shellingham`, `annotated-doc`.
+
 ## [0.3.1] — 2026-03-18
 
 ### Added
