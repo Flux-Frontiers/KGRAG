@@ -13,7 +13,6 @@ and all query/pack/stats/analyze calls return safe empty results.
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
 from typing import Any
 
 from kg_rag.adapters.base import KGAdapter
@@ -187,40 +186,22 @@ class StubKGAdapter(KGAdapter):
         except Exception as exc:  # pylint: disable=broad-exception-caught
             return header + f"\nAnalysis failed: {exc}\n"
 
-    def snapshot(self, version: str, label: str | None = None) -> dict[str, Any]:
-        """Capture a lightweight snapshot of this KG's current state.
+    def _collect_snapshot_metrics(self) -> dict[str, Any]:
+        """Return availability status and any metrics from the backing library.
 
-        Delegates to the backing library's ``snapshot()`` method when available.
-        Falls back to capturing current :meth:`stats` with a timestamp.
-
-        :param version: Semantic-version string for this snapshot.
-        :param label: Optional human-readable label.
-        :return: Serialisable snapshot dict.
+        Delegates to the backing library's ``stats()`` when available.
         """
-        gs = self._graph_stats()
-        snap: dict[str, Any] = {
-            "version": version,
-            "label": label,
-            "timestamp": datetime.now(UTC).isoformat(),
-            "kind": self._kind.value,
-            "kg_name": self.entry.name,
-            "node_count": gs["node_count"],
-            "edge_count": gs["edge_count"],
-        }
         if not self.is_available():
-            snap["status"] = "unavailable"
-            return snap
+            return {"status": "unavailable"}
         try:
             self._load()
-            if callable(getattr(self._kg, "snapshot", None)):
-                result = self._kg.snapshot(version, label=label)
-                if isinstance(result, dict):
-                    return result
-                # Non-dict return: serialise via __dict__ or str
-                raw = getattr(result, "__dict__", None)
-                if raw is not None:
-                    return {**snap, **raw}
+            raw = self._kg.stats() if callable(getattr(self._kg, "stats", None)) else {}
+            if isinstance(raw, dict):
+                return {
+                    "status": "available",
+                    "total_nodes": raw.get("total_nodes", raw.get("node_count", 0)),
+                    "total_edges": raw.get("total_edges", raw.get("edge_count", 0)),
+                }
         except Exception:  # pylint: disable=broad-exception-caught
             pass
-        snap["status"] = "available"
-        return snap
+        return {"status": "available"}

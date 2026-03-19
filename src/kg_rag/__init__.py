@@ -21,6 +21,7 @@ from kg_rag.primitives import (
     RegistryStats,
 )
 from kg_rag.registry import KGRegistry
+from kg_rag.snapshots import Snapshot, SnapshotManifest, SnapshotManager
 
 __all__ = [
     "KGRAG",
@@ -38,6 +39,9 @@ __all__ = [
     "CrossQueryResult",
     "CrossSnippet",
     "CrossSnippetPack",
+    "Snapshot",
+    "SnapshotManifest",
+    "SnapshotManager",
 ]
 
 __version__ = "0.3.3"
