@@ -7,6 +7,7 @@ Abstract adapter protocol for all KG backends.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from datetime import UTC, datetime
 from typing import Any
 
 from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry
@@ -70,26 +71,59 @@ class KGAdapter(ABC):
         """
         return ""
 
-    @abstractmethod
+    # ------------------------------------------------------------------
+    # Snapshot — concrete template method
+    # ------------------------------------------------------------------
+
     def snapshot(self, version: str, label: str | None = None) -> dict[str, Any]:
         """Capture a point-in-time snapshot of this KG's state.
 
-        Implementations must persist the snapshot (e.g. to disk or an in-memory
-        store) and return a serialisable dict that includes at minimum:
+        **Template method** — builds a standard envelope from
+        :meth:`_graph_stats` and merges in any domain-specific data returned
+        by :meth:`_collect_snapshot_metrics`.  Subclasses should **not**
+        override this method; override ``_collect_snapshot_metrics()`` instead.
+
+        The returned dict always contains:
 
         * ``version`` — the caller-supplied version string
-        * ``timestamp`` — ISO 8601 UTC timestamp of capture
-        * ``node_count`` — integer node count at capture time
-        * ``edge_count`` — integer edge count at capture time
-
-        Adapters that back a library with native snapshot support should
-        delegate to that library.  Adapters without native support should
-        capture metrics via :meth:`stats` and persist them as appropriate.
+        * ``label`` — optional human-readable label
+        * ``timestamp`` — ISO 8601 UTC timestamp
+        * ``kind`` — KG kind value (e.g. ``"code"``, ``"doc"``)
+        * ``kg_name`` — registered KG name
+        * ``node_count`` / ``edge_count`` — topology counts
 
         :param version: Semantic-version string for this snapshot (e.g. "1.2.0").
         :param label: Optional human-readable label for the snapshot.
         :return: Serialisable snapshot dict.
         """
+        gs = self._graph_stats()
+        snap: dict[str, Any] = {
+            "version": version,
+            "label": label,
+            "timestamp": datetime.now(UTC).isoformat(),
+            "kind": self.entry.kind.value,
+            "kg_name": self.entry.name,
+            "node_count": gs["node_count"],
+            "edge_count": gs["edge_count"],
+        }
+        extra = self._collect_snapshot_metrics()
+        if extra:
+            snap.update(extra)
+        return snap
+
+    def _collect_snapshot_metrics(self) -> dict[str, Any]:
+        """Return additional domain-specific metrics for the snapshot.
+
+        Override in subclasses to add data beyond the standard envelope.
+        For example, a code adapter might add ``docstring_coverage``,
+        ``critical_issues``, or ``module_node_counts``.
+
+        The default implementation returns an empty dict — adapters that
+        have no domain-specific metrics need not override this.
+
+        :return: Dict of extra key-value pairs to merge into the snapshot.
+        """
+        return {}
 
     # ------------------------------------------------------------------
     # Viewport display

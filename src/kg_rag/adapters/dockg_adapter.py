@@ -6,7 +6,6 @@ Adapter wrapping the doc_kg.DocKG class.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
 from typing import Any
 
 from kg_rag.adapters.base import KGAdapter
@@ -197,34 +196,16 @@ class DocKGAdapter(KGAdapter):
         except Exception as exc:  # pylint: disable=broad-exception-caught
             return f"# DocKG Analysis\n\nAnalysis failed: {exc}\n"
 
-    def snapshot(self, version: str, label: str | None = None) -> dict[str, Any]:
-        """Capture a snapshot of this DocKG instance.
-
-        Delegates to the backing ``DocKG.snapshot()`` when available, otherwise
-        captures current :meth:`stats` as a timestamped snapshot dict.
-
-        :param version: Semantic-version string for this snapshot.
-        :param label: Optional human-readable label.
-        :return: Serialisable snapshot dict.
-        """
-        self._load()
+    def _collect_snapshot_metrics(self) -> dict[str, Any]:
+        """Return doc-specific metrics for the snapshot."""
         try:
-            if callable(getattr(self._kg, "snapshot", None)):
-                result = self._kg.snapshot(version, label=label)
-                if isinstance(result, dict):
-                    return result
-                raw = getattr(result, "__dict__", None)
-                if raw is not None:
-                    return {k: v for k, v in raw.items() if not k.startswith("_")}
+            self._load()
+            s = self._kg.store.stats()
+            return {
+                "total_nodes": s.get("total_nodes", 0),
+                "total_edges": s.get("total_edges", 0),
+                "node_counts": s.get("node_counts", {}),
+                "edge_counts": s.get("edge_counts", {}),
+            }
         except Exception:  # pylint: disable=broad-exception-caught
-            pass
-        gs = self._graph_stats()
-        return {
-            "version": version,
-            "label": label,
-            "timestamp": datetime.now(UTC).isoformat(),
-            "kind": "doc",
-            "kg_name": self.entry.name,
-            "node_count": gs["node_count"],
-            "edge_count": gs["edge_count"],
-        }
+            return {}
