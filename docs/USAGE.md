@@ -99,17 +99,20 @@ kgrag pack "authentication" -k 12 --context 10 --out auth_context.md
 Federate multiple projects under one registry:
 
 ```bash
-# Initialize each project
-kgrag init ~/repos/backend --name backend
-kgrag init ~/repos/frontend --name frontend
-kgrag init ~/repos/docs --name docs
+# Create a corpus to group them
+kgrag corpus create mystack
+
+# Initialize each project and add to the corpus in one step
+kgrag init ~/repos/backend --name backend --corpus mystack
+kgrag init ~/repos/frontend --name frontend --corpus mystack
+kgrag init ~/repos/docs --name docs --corpus mystack
 
 # Verify all registered
 kgrag status
 kgrag list
 
-# Now queries search all projects
-kgrag query "caching strategy"
+# Query scoped to the corpus
+kgrag corpus query mystack "caching strategy"
 ```
 
 **Result:** All projects are federated. One query searches all.
@@ -205,7 +208,7 @@ kgrag analyze
 | `kgrag register NAME KIND REPO_PATH` | Manually register a KG |
 | `kgrag unregister NAME_OR_ID` | Remove a KG from the registry |
 | `kgrag scan [ROOT_PATH]` | Discover existing KG databases in a directory tree |
-| `kgrag init [REPO_PATH]` | Detect, build, and register KG layers for a repo |
+| `kgrag init [REPO_PATH]` | Detect, build, and register KG layers for a repo; optionally add to a corpus |
 
 #### `kgrag register`
 
@@ -237,11 +240,17 @@ directories. Pass `--auto-register` to add them to the registry automatically.
 #### `kgrag init`
 
 ```bash
-kgrag init [REPO_PATH] [--wipe] [--name PREFIX] [--layer code|doc]
+kgrag init [REPO_PATH] [--wipe] [--name PREFIX] [--layer code|doc] [--corpus NAME]
 ```
 
 Detects applicable layers (`code`, `doc`), builds each, and registers them.
 Layers other than `code`/`doc` must be registered manually via `kgrag register`.
+
+Pass `--corpus NAME` to automatically add every successfully registered KG into an existing corpus in one step — no separate `kgrag corpus add` calls needed:
+
+```bash
+kgrag init ~/repos/FTreeKG --corpus KGRAG_repos
+```
 
 ---
 
