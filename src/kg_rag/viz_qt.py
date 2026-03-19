@@ -150,7 +150,8 @@ class KGGraphView(QGraphicsView):
 
     def mouseDoubleClickEvent(self, event) -> None:  # type: ignore[override]
         """Fit the scene back into the view on double-click."""
-        self.fitInView(self.scene().sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
+        if (scene := self.scene()) is not None:
+            self.fitInView(scene.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
         super().mouseDoubleClickEvent(event)
 
 
@@ -411,7 +412,7 @@ class KGRAGViz2DWindow(QMainWindow):
 
         dock = QDockWidget("Controls", self)
         dock.setFeatures(
-            QDockWidget.DockWidgetFeature.DockWidgetMovable
+            QDockWidget.DockWidgetFeature.DockWidgetMovable  # type: ignore[arg-type]
             | QDockWidget.DockWidgetFeature.DockWidgetFloatable
         )
         dock.setFixedWidth(SIDEBAR_W)
@@ -474,7 +475,7 @@ class KGRAGViz2DWindow(QMainWindow):
 
         # ── Grid columns ──────────────────────────────────────────────
         vlayout.addWidget(self._label(f"Columns: {self._cols}"))
-        self._cols_lbl = vlayout.itemAt(vlayout.count() - 1).widget()
+        self._cols_lbl = vlayout.itemAt(vlayout.count() - 1).widget()  # type: ignore[union-attr]
 
         cols_slider = QSlider(Qt.Orientation.Horizontal)
         cols_slider.setRange(1, 6)
@@ -486,7 +487,7 @@ class KGRAGViz2DWindow(QMainWindow):
         # ── Viewport size ─────────────────────────────────────────────
         self._sep(vlayout)
         vlayout.addWidget(self._label(f"Viewport width: {self._vp_width}px"))
-        self._vpw_lbl = vlayout.itemAt(vlayout.count() - 1).widget()
+        self._vpw_lbl = vlayout.itemAt(vlayout.count() - 1).widget()  # type: ignore[union-attr]
 
         vpw_slider = QSlider(Qt.Orientation.Horizontal)
         vpw_slider.setRange(200, 700)
@@ -580,13 +581,13 @@ class KGRAGViz2DWindow(QMainWindow):
 
     def _on_cols_changed(self, value: int) -> None:
         self._cols = value
-        self._cols_lbl.setText(f"Columns: {value}")
+        self._cols_lbl.setText(f"Columns: {value}")  # type: ignore[union-attr]
         if self._kgrag is not None:
             QTimer.singleShot(50, self._load_registry)
 
     def _on_vp_width_changed(self, value: int) -> None:
         self._vp_width = value
-        self._vpw_lbl.setText(f"Viewport width: {value}px")
+        self._vpw_lbl.setText(f"Viewport width: {value}px")  # type: ignore[union-attr]
         if self._kgrag is not None:
             QTimer.singleShot(200, self._load_registry)
 
