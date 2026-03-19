@@ -21,7 +21,7 @@ from kg_rag.primitives import (
     RegistryStats,
 )
 from kg_rag.registry import KGRegistry
-from kg_rag.snapshots import Snapshot, SnapshotManifest, SnapshotManager
+from kg_rag.snapshots import Snapshot, SnapshotManager, SnapshotManifest
 
 __all__ = [
     "KGRAG",
