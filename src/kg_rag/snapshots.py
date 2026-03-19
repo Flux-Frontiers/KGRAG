@@ -32,7 +32,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-
 # ---------------------------------------------------------------------------
 # Data models
 # ---------------------------------------------------------------------------
@@ -253,7 +252,11 @@ class SnapshotManager:
         :return: Path to the saved JSON file.
         :raises ValueError: If ``total_nodes`` is 0.
         """
-        if snapshot.metrics.get("total_nodes", 0) == 0:
+        m = snapshot.metrics
+        total_nodes = (
+            m.get("total_nodes", 0) if isinstance(m, dict) else getattr(m, "total_nodes", 0)
+        )
+        if total_nodes == 0:
             raise ValueError(
                 "Refusing to save degenerate snapshot with 0 nodes. "
                 "Build the KG before capturing a snapshot."
@@ -308,9 +311,7 @@ class SnapshotManager:
         return manifest
 
     def _save_manifest(self, manifest: SnapshotManifest) -> None:
-        self.manifest_path.write_text(
-            json.dumps(manifest.to_dict(), indent=2), encoding="utf-8"
-        )
+        self.manifest_path.write_text(json.dumps(manifest.to_dict(), indent=2), encoding="utf-8")
 
     def load_snapshot(self, key: str) -> Snapshot | None:
         """Load a snapshot by key (tree hash) or ``'latest'``.
