@@ -26,6 +26,7 @@ from rich.table import Table
 from kg_rag.cli.group import cli
 from kg_rag.cli.options import registry_option
 from kg_rag.config import read_pyproject_version
+from kg_rag.corpus_registry import CorpusRegistry
 from kg_rag.primitives import KGEntry, KGKind
 from kg_rag.registry import KGRegistry
 
@@ -90,14 +91,24 @@ def _detect_layers(repo: Path) -> list[str]:
     multiple=True,
     help="KG layers to build (repeatable). Default: auto-detect.",
 )
+@click.option(
+    "--corpus",
+    "corpus_name",
+    default=None,
+    metavar="NAME",
+    help="Add successfully registered KGs to this existing corpus.",
+)
 @registry_option
-def init(repo_path, wipe, name_prefix, layers, registry):
+def init(repo_path, wipe, name_prefix, layers, corpus_name, registry):
     """Initialise a repo: detect, build, and register all applicable KG layers.
 
     A *KG layer* is one knowledge-graph backend for a single repo (code layer
     via codekg, doc layer via dockg).  ``kgrag init`` detects which layers
     apply, builds each one, and registers them in the KGRAG registry — all in
     one command.
+
+    Pass ``--corpus NAME`` to also add every successfully registered KG into an
+    existing corpus in one step (the corpus must already exist).
 
     \b
     REPO_PATH  Path to the repository (default: current directory)
@@ -108,6 +119,7 @@ def init(repo_path, wipe, name_prefix, layers, registry):
         kgrag init ~/repos/myproject
         kgrag init . --layer code --layer doc --wipe
         kgrag init ~/repos/myproject --name myproject
+        kgrag init ~/repos/myproject --corpus KGRAG_repos
     """
     repo = Path(repo_path).resolve()
     prefix = name_prefix or repo.name
@@ -208,3 +220,29 @@ def init(repo_path, wipe, name_prefix, layers, registry):
         )
 
     console.print(table)
+
+    # Optionally add all successfully registered KGs to an existing corpus
+    if corpus_name:
+        db_path = Path(registry).resolve() if registry else None
+        ok_names = [r["name"] for r in results if r["status"] == "ok"]
+        if not ok_names:
+            console.print("[yellow]No KGs were registered; skipping corpus add.[/yellow]")
+            return
+        added: list[str] = []
+        corpus_missing = False
+        with KGRegistry(db_path=db_path) as kg_reg, CorpusRegistry(db_path=db_path) as corp_reg:
+            for name in ok_names:
+                entry = kg_reg.get(name)
+                if entry is None:
+                    continue
+                result = corp_reg.add_kg(corpus_name, entry.id)
+                if result is None:
+                    console.print(f"[red]Corpus not found[/red]: {corpus_name!r}")
+                    corpus_missing = True
+                    break
+                added.append(name)
+        if not corpus_missing and added:
+            console.print(
+                f"\n[green]Added[/green] {len(added)} KG(s) to corpus "
+                f"[bold]{corpus_name}[/bold]: {', '.join(added)}"
+            )

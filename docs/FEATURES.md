@@ -102,7 +102,7 @@
 |---------|-------------|
 | `kgrag init [path]` | Auto-detect, build, and register all KG layers |
 
-Options: `--layer code|doc`, `--name`, `--wipe` (rebuild from scratch)
+Options: `--layer code|doc`, `--name`, `--wipe` (rebuild from scratch), `--corpus NAME` (add to existing corpus)
 
 ### Integration
 | Command | Description |

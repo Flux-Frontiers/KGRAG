@@ -49,8 +49,13 @@ packages = [
 python = ">=3.12,<3.14"
 lancedb = ">=0.29.0"
 numpy = ">=1.24.0"
-sentence-transformers = "==4.1.0"
-transformers = "<5.0.0"
+# personal agent
+
+# from personal_agent
+transformers = "^4.57.6"
+sentence-transformers = "^5.2.0"
+safetensors = "^0.5.0"
+
 torch = ">=2.5.1"
 streamlit = { version = ">=1.35.0", optional = true }
 pyvis = { version = ">=0.3.2", optional = true }
