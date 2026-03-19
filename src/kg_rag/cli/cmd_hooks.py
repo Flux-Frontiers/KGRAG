@@ -88,16 +88,6 @@ if [ -d "$FTREEKG_REPO/.filetreekg" ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# DiaryKG — snapshot if present in workspace
-# ---------------------------------------------------------------------------
-DIARYKG_REPO="${WORKSPACE_ROOT}/diary_kg"
-if [ -d "$DIARYKG_REPO/.diarykg" ]; then
-    (cd "$DIARYKG_REPO" && "$DIARYKG_REPO/.venv/bin/diarykg" snapshot save .) \\
-      || { echo "[kgrag] diarykg snapshot skipped" >&2; }
-    (cd "$DIARYKG_REPO" && git add .diarykg/snapshots/ 2>/dev/null || true)
-fi
-
-# ---------------------------------------------------------------------------
 # Run pre-commit framework checks AFTER all snapshots are captured and staged.
 # ---------------------------------------------------------------------------
 PRECOMMIT="$REPO_ROOT/.venv/bin/pre-commit"
@@ -131,9 +121,8 @@ def install_hooks(repo: str, force: bool) -> None:
       1. Rebuild + snapshot CodeKG (if workspace/code_kg is built)
       2. Rebuild + snapshot DocKG (if workspace/doc_kg is built)
       3. Rebuild + snapshot FTreeKG (if workspace/FTreeKG is built)
-      4. Snapshot DiaryKG (if workspace/diary_kg is built)
-      5. Stage all snapshot directories atomically
-      6. Run pre-commit framework checks (ruff, mypy, etc.)
+      4. Stage all snapshot directories atomically
+      5. Run pre-commit framework checks (ruff, mypy, etc.)
 
     Skip with: KGRAG_SKIP_SNAPSHOT=1 git commit ...
 
@@ -162,4 +151,4 @@ def install_hooks(repo: str, force: bool) -> None:
 
     click.echo(f"OK Installed pre-commit hook: {hook_path}")
     click.echo("  Snapshots will be captured automatically before each commit.")
-    click.echo("  Orchestrates: CodeKG, DocKG, FTreeKG, DiaryKG (if built).")
+    click.echo("  Orchestrates: CodeKG, DocKG, FTreeKG (if built).")
