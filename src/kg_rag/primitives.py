@@ -27,6 +27,7 @@ class KGKind(StrEnum):
     PDBFILE = "pdbfile"
     LEGAL = "legal"
     PERSON = "person"
+    AGENT = "agent"
 
     @classmethod
     def from_str(cls, s: str) -> KGKind:
