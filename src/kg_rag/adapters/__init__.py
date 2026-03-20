@@ -1,6 +1,7 @@
 """Adapters for individual KG backends."""
 
 from kg_rag.adapters._stub_adapter import StubKGAdapter
+from kg_rag.adapters.agent_adapter import AgentKGAdapter
 from kg_rag.adapters.base import KGAdapter
 from kg_rag.adapters.codekg_adapter import CodeKGAdapter
 from kg_rag.adapters.diary_adapter import DiaryKGAdapter
@@ -33,6 +34,7 @@ def make_adapter(entry) -> KGAdapter:
         KGKind.PDBFILE: PDBFileKGAdapter,
         KGKind.LEGAL: LegalKGAdapter,
         KGKind.PERSON: PersonKGAdapter,
+        KGKind.AGENT: AgentKGAdapter,
     }
     cls = _map.get(entry.kind)
     if cls is None:
@@ -52,6 +54,7 @@ __all__ = [
     "DisulfideKGAdapter",
     "PDBFileKGAdapter",
     "LegalKGAdapter",
+    "AgentKGAdapter",
     "PersonKGAdapter",
     "make_adapter",
 ]
