@@ -118,25 +118,39 @@ Today's enterprise search:
 
 ---
 
-## Current Deployment Status: Live in Production
+## Current Deployment Status: Beyond Prototype — Fully Functional Application
 
-### **MetaboKG: Federated Architecture Proven**
+### **MetaboKG: Working Proof the Architecture Scales to New Domains**
 
-The federated adapter pattern is **not theoretical**—it's already deployed:
+This is not theoretical. **MetaboKG is a fully functional knowledge graph application for metabolomics** — built with KGRAG, proving the architecture works:
 
-- **MetaboKG** (Flux-Frontiers/metabo_kg)
-  - Live metabolomics knowledge graph: compounds, reactions, pathways, assay protocols
-  - Built using the same federated compilation and query engine as KGRAG
-  - Demonstrates that the adapter protocol works across fundamentally different domains
-  - Ready for scaling: adding new metabolic databases, organism-specific pathways, and experimental data requires only new adapters, no orchestrator changes
+- **MetaboKG** (Flux-Frontiers/metabo_kg) — Complete, working application
+  - Functional metabolomics knowledge graph: compounds, reactions, pathways, assay protocols
+  - Can answer real questions: "Find all pathways containing this compound" or "Show assays for this metabolite"
+  - Built using KGRAG's federated architecture, same adapter pattern
+  - Demonstrates the system works on biochemistry—a fundamentally different domain from code
+
+### **Why This Matters**
+
+1. **Proof the Architecture Scales:** MetaboKG isn't a toy or prototype. It handles complex biochemical ontologies, metabolic relationships, and domain-specific reasoning—a fundamentally different domain from code structure, yet uses the identical KGRAG adapter pattern.
+
+2. **Extensibility Proven:** You didn't need to change KGRAG's core. You just built a new adapter (MetaKGAdapter) that speaks the standardized protocol. Adding new metabolic data sources, pathways, or experimental protocols requires only new data + lightweight compiler. Orchestrator unchanged.
+
+3. **Market Opportunity Validated:** Biotech researchers need this. MetaboKG proves the use case is real and the demand exists. Ready for commercialization once integrated into Claude or offered as standalone.
+
+4. **Technical Differentiation Proven:**
+   - CodeKG compiles Python AST
+   - MetaboKG compiles chemical ontologies
+   - Same orchestrator, different domains
+   - This is the model that scales infinitely
 
 ### **Architectural Proof Points**
-- ✅ **Deterministic compilation** handles both code structure (AST) and domain schemas (chemical ontologies)
-- ✅ **Hybrid retrieval** works across different graph types and edge semantics
-- ✅ **Federation** seamlessly merges code KGs, doc KGs, and domain KGs
-- ✅ **Extensibility verified**: MetaboKG shows new domains need only a lightweight adapter
+- ✅ **Deterministic compilation** works on code AND chemistry (no LLM inference during indexing)
+- ✅ **Hybrid retrieval** handles code structure, documentation, AND biochemical relationships
+- ✅ **Federation** seamlessly queries CodeKG + DocKG + MetaboKG simultaneously
+- ✅ **Extensibility verified:** MetaboKG shows new domains need only lightweight adapters
 
-This is production-ready infrastructure, not a research prototype.
+**Bottom line:** You didn't build a theory. You built a working application that proves the theory. That's the difference between vision and capability.
 
 ---
 
