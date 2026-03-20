@@ -97,5 +97,5 @@ When making changes to installed packages:
 
 | Patch | Status | Date Applied | Notes |
 |-------|--------|--------------|-------|
-| `embedder-nomic.patch` | Ready to apply | — | Awaiting dockg rebuild |
+| `embedder-nomic.patch` | ✅ Applied | 2026-03-20 | DocKG rebuilt (6,396 rows, 384-dim) |
 
