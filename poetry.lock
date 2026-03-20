@@ -1201,7 +1201,6 @@ description = "A tool to build a semantically searchable knowledge graph from ma
 optional = false
 python-versions = ">=3.12,<3.14"
 groups = ["main"]
-markers = "extra == \"doc-kg\""
 files = []
 develop = false
 
@@ -6931,7 +6930,6 @@ propcache = ">=0.2.1"
 
 [extras]
 diary-kg = []
-doc-kg = ["doc-kg"]
 ftree-kg = []
 metabo-kg = []
 qt = ["PyQt5"]
@@ -6942,4 +6940,4 @@ viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "62e0f8151b2815392af298ce6ed8cff048217e46c3b932c6f71a3d15b8ce3752"
+content-hash = "992d0393104d7dc6d52b0937f63538c73bade2485e48e31de0e10859e9bc88d0"
