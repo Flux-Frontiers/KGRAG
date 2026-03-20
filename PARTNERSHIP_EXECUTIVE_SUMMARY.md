@@ -37,7 +37,8 @@ We have invented all four. And they work together as a unified system.
 - Hierarchical registry (instances, corpora, person-centric)
 - Federated query engine dispatching to all available KG types simultaneously
 - Global ranking and result merging with per-source attribution
-- One query spans code + docs + metabolic pathways + domain ontologies
+- **PROVEN IN PRODUCTION:** One query already spans code + docs + metabolic pathways + domain ontologies
+- **Live implementation:** MetaboKG (Flux-Frontiers/metabo_kg) indexes metabolic databases, compounds, and pathways using the same federated architecture
 
 **Patent 3: TreeOfKnowledge Visualization**
 - Fractal forest rendering of KG registry using procedurally generated trees
@@ -111,9 +112,31 @@ Today's enterprise search:
 - Metabolomics: chemical ontologies, assay protocols, research
 - Drug discovery: compound libraries, clinical trial data, literature
 
-**KGRAG with domain adapters (MetaKG).** A researcher's single query spans wet-lab data, bioinformatics code, pathway databases, and literature simultaneously.
+**KGRAG with domain adapters—MetaboKG is the working proof.** A researcher's single query spans wet-lab data, bioinformatics code, pathway databases, and literature simultaneously. MetaboKG shows this is achievable today, not tomorrow. The same architecture scales to genomics, proteomics, and drug discovery without fundamental changes.
 
-**Licensing model:** Per-institution or per-discovery-program licensing.
+**Licensing model:** Per-institution or per-discovery-program licensing. MetaboKG demonstrates immediate applicability to biotech workflows.
+
+---
+
+## Current Deployment Status: Live in Production
+
+### **MetaboKG: Federated Architecture Proven**
+
+The federated adapter pattern is **not theoretical**—it's already deployed:
+
+- **MetaboKG** (Flux-Frontiers/metabo_kg)
+  - Live metabolomics knowledge graph: compounds, reactions, pathways, assay protocols
+  - Built using the same federated compilation and query engine as KGRAG
+  - Demonstrates that the adapter protocol works across fundamentally different domains
+  - Ready for scaling: adding new metabolic databases, organism-specific pathways, and experimental data requires only new adapters, no orchestrator changes
+
+### **Architectural Proof Points**
+- ✅ **Deterministic compilation** handles both code structure (AST) and domain schemas (chemical ontologies)
+- ✅ **Hybrid retrieval** works across different graph types and edge semantics
+- ✅ **Federation** seamlessly merges code KGs, doc KGs, and domain KGs
+- ✅ **Extensibility verified**: MetaboKG shows new domains need only a lightweight adapter
+
+This is production-ready infrastructure, not a research prototype.
 
 ---
 
@@ -177,8 +200,11 @@ We're seeking a strategic partnership (licensing, acquisition, or joint venture)
 - Your research direction makes this foundational
 - Your agent platform is the first-to-market for long-context applications
 - Your team understands both the technical and business imperatives
+- **We have proof.** MetaboKG is live. The federated architecture works. It's ripe for growth.
 
 This IP is **transformational**. Not evolutionary. It changes how agents remember, retrieve, and reason.
+
+**This is not a proposal for future work. This is a platform ready for immediate scaling.**
 
 We want to see it in your hands.
 
