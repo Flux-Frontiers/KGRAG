@@ -7,7 +7,7 @@ You will create a new versioned release by promoting the `[Unreleased]` section 
 ## Step 0: Gather Release Context
 
 1. Read `CHANGELOG.md` in full.
-2. Read `pyproject.toml` and `src/KGRAG/__init__.py` to find the current version string.
+2. Read `pyproject.toml` to find the current version string.
 3. Run `git status` and `git log --oneline -10` to understand the state of the working tree.
 4. Confirm there is content under `## [Unreleased]`; if the section is empty, stop and tell the user there is nothing to release.
 
