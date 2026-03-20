@@ -263,7 +263,7 @@ class SnapshotManager:
             )
 
         snapshot_file = self.snapshots_dir / f"{snapshot.key}.json"
-        snapshot_file.write_text(json.dumps(snapshot.to_dict(), indent=2), encoding="utf-8")
+        snapshot_file.write_text(json.dumps(snapshot.to_dict(), indent=2) + "\n", encoding="utf-8")
 
         manifest = self.load_manifest()
         existing_idx = next(
@@ -311,7 +311,9 @@ class SnapshotManager:
         return manifest
 
     def _save_manifest(self, manifest: SnapshotManifest) -> None:
-        self.manifest_path.write_text(json.dumps(manifest.to_dict(), indent=2), encoding="utf-8")
+        self.manifest_path.write_text(
+            json.dumps(manifest.to_dict(), indent=2) + "\n", encoding="utf-8"
+        )
 
     def load_snapshot(self, key: str) -> Snapshot | None:
         """Load a snapshot by key (tree hash) or ``'latest'``.
