@@ -1,0 +1,14 @@
+--- .venv/src/doc_kg/src/doc_kg/dockg.py.orig
++++ .venv/src/doc_kg/src/doc_kg/dockg.py
+@@ -54,8 +54,8 @@
+ # ============================================================================
+
+ #: Default sentence-transformer model for general text (not code).
+-#: Mirrors personal_agent's sentence-transformer default.
++#: Document-optimized (prose, narrative). Richer embeddings than generic models.
+ #: Override via the ``DOCKG_MODEL`` environment variable.
+-DEFAULT_MODEL: str = os.environ.get("DOCKG_MODEL", "all-mpnet-base-v2")
++DEFAULT_MODEL: str = os.environ.get("DOCKG_MODEL", "nomic-embed-text")
+
+ # ============================================================================
+ # Graph primitives (LOCKED v0 CONTRACT)
