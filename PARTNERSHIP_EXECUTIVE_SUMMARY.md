@@ -2,6 +2,20 @@
 
 **A Transformational Approach to Agent Memory, Knowledge Retrieval, and Grounded Reasoning**
 
+## Vision: The Universal Knowledge Tree
+
+Imagine if every organization could publish a **knowledge tree**—a structured, queryable graph of their knowledge—and agents could seamlessly reason across them all. Like GitHub democratized code, KGRAG democratizes knowledge: permanent, citable, discoverable, interconnected.
+
+**Knowledge trees:** Organizations build and publish structured knowledge graphs using KGRAG adapters.
+
+**Knowledge tree URLs:** tree://organization/corpus/node references precise facts across the internet.
+
+**Federated queries:** One question searches your code, docs, research, and the world's public knowledge simultaneously.
+
+**Agent grounding:** Claude (or any agent) grounds responses in actual source material, with verifiable citations.
+
+This is the infrastructure. We've already built it. MetaboKG proves it works. Four patents protect it. Anthropic can own the knowledge infrastructure.
+
 ---
 
 ## The Problem We Solve
@@ -107,7 +121,34 @@ Today's enterprise search:
 
 **Licensing model:** Platform SaaS ($Z/month) or per-query licensing.
 
-### Tertiary: Scientific/Biotech Knowledge Integration
+### Transformational: Universal Knowledge Tree Platform
+The Knowledge Tree is the hidden unicorn. It's not just a tool—it's a new internet layer.
+
+**The Vision:**
+Organizations publish knowledge graphs as "knowledge trees" via a unified platform. Agents, researchers, and developers query across them using standard URLs:
+```
+tree://anthropic/claude/fn:agents.py:AgentMemory
+tree://nature/neuroscience-2025/paper:section-3
+tree://pharma-corp/oncology/compound:HER2-inhibitor
+```
+
+**Why This Matters:**
+- Like GitHub democratized code, Knowledge Trees democratize knowledge
+- Unlike papers (read-only) or databases (proprietary), knowledge trees are queryable, citable, and permanent
+- Enterprises can federate internal + public knowledge in one query
+- Researchers can publish structured findings alongside papers
+- Agents ground reasoning in verifiable, source-attributed facts
+
+**TAM:** $10bn+ (knowledge economy). GitHub is $1bn/yr; this is bigger. Every organization (research, enterprise, biotech, academia) will want to publish and query knowledge trees.
+
+**Revenue Model:**
+- Hosted platform: Per-corpus hosting, per-query API, premium tiers
+- Licensing KGRAG: On-premise + federation for private trees
+- Integrations: Claude, enterprise search, scientific workflows
+
+**Anthropic's Unique Position:** If Anthropic owns the Knowledge Tree platform and integrates it into Claude, agents become the search engine for all human knowledge. This is the endgame.
+
+### Secondary: Scientific/Biotech Knowledge Integration
 - Genomics: protein sequences, pathway databases, published papers
 - Metabolomics: chemical ontologies, assay protocols, research
 - Drug discovery: compound libraries, clinical trial data, literature
