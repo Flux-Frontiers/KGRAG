@@ -27,7 +27,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "kg-rag"
-version = "0.3.3"
+version = "0.3.5"
 description = "Orchestration layer for the KGRAG(tm) components."
 authors = ["Eric G. Suchanek, PhD <suchanek@mac.com>"]
 license = "Elastic-2.0"
@@ -79,7 +79,7 @@ code-kg = {git = "https://github.com/Flux-Frontiers/code_kg.git"}
 
 # we really don't need these
 # diary-kg = {git = "https://github.com/Flux-Frontiers/diary_kg.git"}
-# metabo-kg = {git = "https://github.com/Flux-Frontiers/metabo_kg.git"}
+metabo-kg = {git = "https://github.com/Flux-Frontiers/metabo_kg.git", optional=true}
 
 [tool.poetry.extras]
 viz = ["streamlit", "pyvis", "plotly"]

@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+## [0.3.5] - 2026-03-20
+
+### Added
 - `kgrag init --corpus NAME` — after building and registering KG layers, automatically
   add every successfully registered KG to an existing corpus in one step. Eliminates the
   need for separate `kgrag corpus add` calls when initialising a repo into an existing
@@ -20,6 +28,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **docs/USAGE.md**: Updated `kgrag init` reference and Workflow 3 example to show
   `--corpus` usage; corpus-scoped query replaces the flat `kgrag query` call.
 - **docs/FEATURES.md**: Added `--corpus NAME` to the `kgrag init` options line.
+
+### Fixed
+- `SnapshotManager._compute_delta` now converts `SnapshotMetrics` dataclass objects to
+  plain dicts before calling `_compute_delta_from_metrics`, fixing an `AttributeError`
+  raised when subclasses (e.g. FTreeKG) hydrate `snap.metrics` as a dataclass rather
+  than a dict.
 
 ## [0.3.3] — 2026-03-18
 
