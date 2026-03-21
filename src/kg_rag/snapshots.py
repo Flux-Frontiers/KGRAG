@@ -24,6 +24,7 @@ Usage
 
 from __future__ import annotations
 
+import dataclasses
 import importlib.metadata
 import json
 import subprocess
@@ -459,7 +460,17 @@ class SnapshotManager:
         Override in subclasses to add domain-specific delta fields
         (e.g. ``coverage_delta``, ``files_delta``).
         """
-        return self._compute_delta_from_metrics(snap_new.metrics, snap_old.metrics)
+
+        def _to_dict(m: Any) -> dict[str, Any]:
+            if isinstance(m, dict):
+                return m
+            if dataclasses.is_dataclass(m) and not isinstance(m, type):
+                return dataclasses.asdict(m)
+            return {}
+
+        return self._compute_delta_from_metrics(
+            _to_dict(snap_new.metrics), _to_dict(snap_old.metrics)
+        )
 
     def _compute_delta_from_metrics(
         self, new_m: dict[str, Any], old_m: dict[str, Any]

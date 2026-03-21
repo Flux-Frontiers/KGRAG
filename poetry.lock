@@ -2832,6 +2832,39 @@ files = [
 ]
 
 [[package]]
+name = "metabo-kg"
+version = "0.4.0"
+description = "Metabolic pathway parser and semantic knowledge graph with MCP support"
+optional = true
+python-versions = ">=3.12,<3.14"
+groups = ["main"]
+markers = "extra == \"metabo-kg\""
+files = []
+develop = false
+
+[package.dependencies]
+click = ">=8.0"
+code-kg = {git = "https://github.com/Flux-Frontiers/code_kg.git"}
+doc-kg = {git = "https://github.com/Flux-Frontiers/doc_kg.git"}
+lancedb = ">=0.29.0"
+mcp = ">=1.0.0"
+numpy = ">=1.24.0"
+sentence-transformers = ">=2.7.0"
+
+[package.extras]
+all = ["PyQt5 (>=5.15.0)", "matplotlib (>=3.8.0)", "pandas (>=2.0.0)", "param (>=2.0.0)", "pyvis (>=0.3.2)", "pyvista (>=0.44.0)", "pyvistaqt (>=0.11.0)", "rdflib (>=6.0.0)", "scipy (>=1.11.0)", "streamlit (>=1.35.0)"]
+biopax = ["rdflib (>=6.0.0)"]
+simulate = ["scipy (>=1.11.0)"]
+viz = ["matplotlib (>=3.8.0)", "pandas (>=2.0.0)", "pyvis (>=0.3.2)", "streamlit (>=1.35.0)"]
+viz3d = ["PyQt5 (>=5.15.0)", "param (>=2.0.0)", "pyvista (>=0.44.0)", "pyvistaqt (>=0.11.0)"]
+
+[package.source]
+type = "git"
+url = "https://github.com/Flux-Frontiers/metabo_kg.git"
+reference = "HEAD"
+resolved_reference = "9117d89bd964b6cf02372705c20c778bd99ea6f7"
+
+[[package]]
 name = "mistune"
 version = "3.2.0"
 description = "A sane and fast Markdown parser with useful plugins and renderers"
@@ -6931,7 +6964,7 @@ propcache = ">=0.2.1"
 [extras]
 diary-kg = []
 ftree-kg = []
-metabo-kg = []
+metabo-kg = ["metabo-kg"]
 qt = ["PyQt5"]
 viz = ["plotly", "pyvis", "streamlit"]
 viz2d = ["PyQt5"]
@@ -6940,4 +6973,4 @@ viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "992d0393104d7dc6d52b0937f63538c73bade2485e48e31de0e10859e9bc88d0"
+content-hash = "3b4f0d0b4a0d1e96b01c6f8b34641cae2016bcceaae3309769836d298b00c70e"
