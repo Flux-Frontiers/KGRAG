@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "kgrag": {
+      "command": "/home/user/KGRAG/.venv/bin/kgrag",
+      "args": ["mcp"]
+    },
+    "codekg": {
+      "command": "/home/user/KGRAG/.venv/bin/codekg",
+      "args": ["mcp"]
+    },
+    "dockg": {
+      "command": "/home/user/KGRAG/.venv/bin/dockg",
+      "args": ["mcp"]
+    }
+  }
+}
