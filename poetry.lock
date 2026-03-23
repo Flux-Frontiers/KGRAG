@@ -1569,6 +1569,27 @@ test-full = ["adlfs", "aiohttp (!=4.0.0a0,!=4.0.0a1)", "backports-zstd ; python_
 tqdm = ["tqdm"]
 
 [[package]]
+name = "ftree-kg"
+version = "0.2.0"
+description = "KGModule for file tree knowledge graphs"
+optional = false
+python-versions = ">=3.12,<3.14"
+groups = ["main"]
+markers = "extra == \"ftree-kg\""
+files = []
+develop = true
+
+[package.dependencies]
+click = "^8.1.0"
+code-kg = {git = "https://github.com/Flux-Frontiers/code_kg.git"}
+doc-kg = {git = "https://github.com/Flux-Frontiers/doc_kg.git"}
+kg-rag = {git = "https://github.com/Flux-Frontiers/KGRAG.git"}
+
+[package.source]
+type = "directory"
+url = "../FTreeKG"
+
+[[package]]
 name = "gitdb"
 version = "4.0.12"
 description = "Git Object Database"
@@ -6963,7 +6984,7 @@ propcache = ">=0.2.1"
 
 [extras]
 diary-kg = []
-ftree-kg = []
+ftree-kg = ["ftree-kg"]
 metabo-kg = ["metabo-kg"]
 qt = ["PyQt5"]
 viz = ["plotly", "pyvis", "streamlit"]
@@ -6973,4 +6994,4 @@ viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "3b4f0d0b4a0d1e96b01c6f8b34641cae2016bcceaae3309769836d298b00c70e"
+content-hash = "4d8e638d5f09cdb52b0bd6eb6099dfa107c1caa5641c6b82ce489030bfe7debb"
