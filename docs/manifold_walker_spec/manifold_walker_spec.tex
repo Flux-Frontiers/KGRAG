@@ -1,0 +1,500 @@
+\documentclass[11pt,letterpaper]{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{bm}
+
+\geometry{margin=1in}
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
+
+% --- Theorem environments ---
+\newtheorem{definition}{Definition}[section]
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{remark}{Remark}[section]
+
+% --- Notation macros ---
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\frame}{\mathbf{F}}
+\newcommand{\pos}{\mathbf{p}}
+\newcommand{\basis}{\mathbf{e}}
+\newcommand{\grad}{\nabla}
+\newcommand{\manifold}{\mathcal{M}}
+\newcommand{\tangent}{T}
+\newcommand{\embed}{\Phi}
+\newcommand{\obj}{\mathcal{L}}
+\newcommand{\cov}{\mathbf{C}}
+\newcommand{\eye}{\mathbf{I}}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+
+\title{%
+  \textbf{Intelligent Navigation of $N$-Dimensional Manifolds} \\[6pt]
+  \large A Formal Specification for Manifold-Aware Descent \\
+  via Turtle Geometry and Local Principal Component Analysis
+}
+
+\author{
+  Eric G. Suchanek, PhD \\
+  \texttt{suchanek@mac.com} \\[4pt]
+  proteusPy Project \\
+  \url{https://github.com/suchanek/proteusPy}
+}
+
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We present a formal specification for navigating $N$-dimensional embedding
+spaces by combining turtle geometry with local principal component analysis.
+The system generalizes the classical 3D turtle to $N$ dimensions via Givens
+rotations over an orthonormal frame, then couples this with adaptive,
+position-dependent PCA to discover the tangent space of the data manifold
+at each step. Gradients are projected onto this tangent space and weighted
+by eigenvalue magnitude, yielding a form of empirical natural gradient
+descent that respects the intrinsic geometry of the embedding rather than
+its ambient coordinate system. We provide complete mathematical definitions,
+algorithmic specifications, correctness properties, and complexity analysis.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+%======================================================================
+\section{Introduction}
+\label{sec:intro}
+%======================================================================
+
+Large language models and other deep learning systems embed discrete
+symbolic structures into continuous vector spaces of high dimension $N$.
+These embedding spaces are not isotropic: the data concentrates on
+lower-dimensional manifolds $\manifold \subset \R^N$ whose intrinsic
+dimensionality $d \ll N$ varies with position. Standard optimization
+methods---gradient descent, Adam, and their variants---treat all $N$
+dimensions equivalently, wasting capacity on off-manifold noise and
+ignoring the curvature of the data manifold.
+
+We propose an alternative: \emph{manifold-aware navigation} using a
+generalized turtle geometry. The turtle carries an orthonormal frame
+that is continuously re-aligned to the local tangent space of $\manifold$
+via PCA on a neighborhood of data points. This transforms the optimization
+problem from descent in the ambient $\R^N$ to descent along the manifold,
+suppressing off-manifold components and weighting on-manifold directions
+by their data variance.
+
+This document specifies two components:
+\begin{enumerate}[label=(\roman*)]
+  \item \textbf{TurtleND}: An $N$-dimensional turtle with position, orthonormal frame, and Givens rotation primitives.
+  \item \textbf{ManifoldWalker}: A navigation system that wraps TurtleND with local PCA steering, eigenvalue-weighted gradient projection, and adaptive dimensionality estimation.
+\end{enumerate}
+
+%======================================================================
+\section{Mathematical Preliminaries}
+\label{sec:prelim}
+%======================================================================
+
+\begin{definition}[Orthonormal Frame]
+\label{def:frame}
+An \emph{orthonormal frame} in $\R^N$ is an ordered set of $N$ vectors
+$\frame = (\basis_0, \basis_1, \ldots, \basis_{N-1})$ satisfying:
+\begin{equation}
+  \langle \basis_i, \basis_j \rangle = \delta_{ij}
+  \qquad \forall\; i, j \in \{0, \ldots, N-1\}
+\end{equation}
+where $\delta_{ij}$ is the Kronecker delta. Equivalently, the matrix
+$F \in \R^{N \times N}$ with rows $\basis_i$ satisfies $F F^\top = \eye_N$.
+\end{definition}
+
+\begin{definition}[Givens Rotation]
+\label{def:givens}
+A \emph{Givens rotation} $G(i, j, \theta)$ in $\R^N$ acts on the plane
+spanned by coordinates $i$ and $j$, rotating by angle $\theta$:
+\begin{equation}
+  G(i, j, \theta) = \eye_N + (\cos\theta - 1)(\mathbf{e}_i\mathbf{e}_i^\top + \mathbf{e}_j\mathbf{e}_j^\top) + \sin\theta(\mathbf{e}_i\mathbf{e}_j^\top - \mathbf{e}_j\mathbf{e}_i^\top)
+\end{equation}
+where $\mathbf{e}_i, \mathbf{e}_j$ are standard basis vectors. A Givens
+rotation preserves orthonormality: if $F$ is orthonormal, so is $G \cdot F$.
+\end{definition}
+
+\begin{definition}[Data Manifold]
+\label{def:manifold}
+Given a set of embedding vectors $\mathcal{X} = \{\mathbf{x}_1, \ldots, \mathbf{x}_M\} \subset \R^N$,
+the \emph{data manifold} $\manifold$ is the smooth submanifold (or the
+best smooth approximation thereof) on which the data concentrates. The
+\emph{intrinsic dimensionality} $d(\pos)$ at a point $\pos$ is the
+dimension of the tangent space $\tangent_\pos\manifold$.
+\end{definition}
+
+\begin{definition}[Local Tangent Space via PCA]
+\label{def:tangent}
+Given a point $\pos \in \R^N$ and its $k$-nearest neighborhood
+$\mathcal{N}_k(\pos) \subset \mathcal{X}$, the \emph{empirical local
+tangent space} is the span of the top-$d$ eigenvectors of the local
+covariance matrix:
+\begin{equation}
+  \cov(\pos) = \frac{1}{k-1} \sum_{\mathbf{x} \in \mathcal{N}_k(\pos)} (\mathbf{x} - \bar{\mathbf{x}})(\mathbf{x} - \bar{\mathbf{x}})^\top
+\end{equation}
+where $\bar{\mathbf{x}}$ is the neighborhood centroid. The eigendecomposition
+$\cov = V \Lambda V^\top$ with $\lambda_1 \geq \lambda_2 \geq \cdots \geq \lambda_N \geq 0$
+yields the principal directions $\mathbf{v}_1, \ldots, \mathbf{v}_N$ as
+columns of $V$.
+\end{definition}
+
+%======================================================================
+\section{TurtleND Specification}
+\label{sec:turtlend}
+%======================================================================
+
+\subsection{State}
+
+The TurtleND maintains:
+\begin{itemize}[nosep]
+  \item Position: $\pos \in \R^N$
+  \item Frame: $\frame = (\basis_0, \basis_1, \ldots, \basis_{N-1})$, an orthonormal frame
+\end{itemize}
+
+By convention:
+\begin{itemize}[nosep]
+  \item $\basis_0$: \emph{heading} (direction of movement)
+  \item $\basis_1$: \emph{left}
+  \item $\basis_2$: \emph{up} (when $N \geq 3$)
+  \item $\basis_3, \ldots, \basis_{N-1}$: higher-dimensional basis vectors
+\end{itemize}
+
+\noindent\textbf{Initial state:} $\pos = \mathbf{0}$, $\frame = \eye_N$.
+
+\subsection{Operations}
+
+\begin{table}[h]
+\centering
+\caption{TurtleND operations and their mathematical definitions.}
+\label{tab:ops}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Operation} & \textbf{Definition} & \textbf{Plane} \\
+\midrule
+$\textsc{Move}(d)$ & $\pos \leftarrow \pos + d \cdot \basis_0$ & --- \\
+$\textsc{Rotate}(\theta, i, j)$ & Apply $G(i, j, \theta)$ to $\frame$ & $(\basis_i, \basis_j)$ \\
+$\textsc{Turn}(\theta)$ & $\textsc{Rotate}(\theta, 0, 1)$ & heading--left \\
+$\textsc{Roll}(\theta)$ & $\textsc{Rotate}(\theta, 1, 2)$ & left--up \\
+$\textsc{Pitch}(\theta)$ & $\textsc{Rotate}(-\theta, 0, 2)$ & heading--up \\
+$\textsc{Yaw}(\theta)$ & $\textsc{Rotate}(180° - \theta, 0, 1)$ & heading--left \\
+$\textsc{ToLocal}(\mathbf{g})$ & $\ell_i = \langle \basis_i, \mathbf{g} - \pos \rangle$ & --- \\
+$\textsc{ToGlobal}(\bm{\ell})$ & $\mathbf{g} = \pos + \sum_i \ell_i \basis_i$ & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{proposition}[Frame Invariant]
+\label{prop:frame}
+All TurtleND rotation operations preserve the orthonormality of $\frame$.
+That is, if $\frame$ is orthonormal before a rotation, it is orthonormal
+after (up to floating-point precision).
+\end{proposition}
+
+\begin{proof}
+Each rotation modifies exactly two rows of $F$ via a $2 \times 2$ rotation
+matrix $\begin{psmallmatrix} \cos\theta & \sin\theta \\ -\sin\theta & \cos\theta \end{psmallmatrix}$
+applied to rows $i$ and $j$. Since the original rows are orthonormal and
+a rotation matrix preserves inner products, the result is orthonormal. \qed
+\end{proof}
+
+\begin{proposition}[Coordinate Transform Invertibility]
+\label{prop:coords}
+$\textsc{ToGlobal}(\textsc{ToLocal}(\mathbf{g})) = \mathbf{g}$ for all $\mathbf{g} \in \R^N$.
+\end{proposition}
+
+\begin{proof}
+Let $\bm{\delta} = \mathbf{g} - \pos$. Then $\textsc{ToLocal}(\mathbf{g}) = F\bm{\delta}$
+and $\textsc{ToGlobal}(F\bm{\delta}) = \pos + F^\top F \bm{\delta} = \pos + \bm{\delta} = \mathbf{g}$
+since $F^\top F = \eye_N$. \qed
+\end{proof}
+
+\subsection{3D Backward Compatibility}
+
+\begin{theorem}[Equivalence]
+\label{thm:compat}
+TurtleND with $N=3$ produces identical position and frame vectors as
+Turtle3D for all sequences of \textsc{Move}, \textsc{Turn}, \textsc{Roll},
+\textsc{Pitch}, and \textsc{Yaw} operations with identical parameters.
+\end{theorem}
+
+This is verified empirically by exhaustive testing of individual operations
+and compound sequences.
+
+%======================================================================
+\section{ManifoldWalker Specification}
+\label{sec:walker}
+%======================================================================
+
+\subsection{State}
+
+The ManifoldWalker maintains:
+\begin{itemize}[nosep]
+  \item A TurtleND instance (position and frame)
+  \item An embedding matrix $\mathcal{X} \in \R^{M \times N}$
+  \item An objective function $\obj : \R^N \to \R$ to minimize
+  \item Parameters: neighborhood size $k$, variance threshold $\tau$, learning rate $\eta$
+  \item Diagnostics: eigenvalue spectrum $\bm{\lambda}$, intrinsic dimensionality $d$
+\end{itemize}
+
+\subsection{Core Algorithm: Manifold-Aware Descent}
+
+\begin{algorithm}[H]
+\caption{ManifoldWalker.Step}
+\label{alg:step}
+\begin{algorithmic}[1]
+\Require Current position $\pos$, embeddings $\mathcal{X}$, objective $\obj$, parameters $k, \tau, \eta$
+\Ensure Updated position $\pos'$, objective value $\obj(\pos')$
+\Statex
+
+\State \textbf{Phase 1: Discover local manifold geometry}
+\State $\mathcal{N} \leftarrow k\text{-nearest neighbors of } \pos \text{ in } \mathcal{X}$
+\State $\bar{\mathbf{x}} \leftarrow \frac{1}{k}\sum_{\mathbf{x} \in \mathcal{N}} \mathbf{x}$
+\State $\cov \leftarrow \frac{1}{k-1}\sum_{\mathbf{x} \in \mathcal{N}} (\mathbf{x} - \bar{\mathbf{x}})(\mathbf{x} - \bar{\mathbf{x}})^\top$
+\State $(\lambda_1, \mathbf{v}_1), \ldots, (\lambda_N, \mathbf{v}_N) \leftarrow \text{eigendecomposition of } \cov$ \Comment{$\lambda_1 \geq \cdots \geq \lambda_N$}
+
+\Statex
+\State \textbf{Phase 2: Estimate intrinsic dimensionality}
+\State $d \leftarrow \min\left\{j : \frac{\sum_{i=1}^{j} \lambda_i}{\sum_{i=1}^{N} \lambda_i} \geq \tau\right\}$
+
+\Statex
+\State \textbf{Phase 3: Orient turtle to manifold tangent space}
+\State $\basis_i \leftarrow \mathbf{v}_i$ for $i = 0, \ldots, N-1$ \Comment{Align frame to principal directions}
+
+\Statex
+\State \textbf{Phase 4: Compute and project gradient}
+\State $\mathbf{g} \leftarrow \grad\obj(\pos)$ \Comment{Analytic or numerical}
+\State $\bm{\ell} \leftarrow F \cdot \mathbf{g}$ \Comment{Project into local frame}
+
+\Statex
+\State \textbf{Phase 5: Suppress off-manifold components and weight}
+\For{$i = 0, \ldots, N-1$}
+  \If{$i \geq d$}
+    \State $\ell_i \leftarrow 0$ \Comment{Off-manifold: suppress}
+  \Else
+    \State $\ell_i \leftarrow \ell_i \cdot \frac{\lambda_i}{\lambda_1}$ \Comment{Eigenvalue weighting}
+  \EndIf
+\EndFor
+
+\Statex
+\State \textbf{Phase 6: Step in global coordinates}
+\State $\mathbf{s} \leftarrow F^\top \cdot \bm{\ell}$ \Comment{Map weighted gradient back to global}
+\State $\pos' \leftarrow \pos - \eta \cdot \mathbf{s}$ \Comment{Descend}
+
+\Statex
+\State \Return $\pos', \obj(\pos')$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Intrinsic Dimensionality Estimation}
+
+The intrinsic dimensionality $d(\pos)$ is estimated at each step as the
+number of eigenvalues needed to capture fraction $\tau$ of the total
+variance:
+\begin{equation}
+  d(\pos) = \min \left\{ j \in \{1, \ldots, N\} \;:\; \frac{\sum_{i=1}^{j} \lambda_i(\pos)}{\sum_{i=1}^{N} \lambda_i(\pos)} \geq \tau \right\}
+\end{equation}
+
+This is \emph{adaptive}: $d$ may vary from point to point on the manifold.
+Regions of high curvature or branching may exhibit higher $d$; flat
+regions may have very low $d$.
+
+\subsection{Eigenvalue Weighting as Natural Gradient}
+
+The weighting $w_i = \lambda_i / \lambda_1$ applied to each on-manifold
+gradient component implements a form of natural gradient descent. The
+local covariance $\cov(\pos)$ serves as an empirical estimate of the
+metric tensor of the data manifold. Directions of high data variance
+(large $\lambda_i$) receive proportionally larger step sizes, while
+directions of low variance (small $\lambda_i$) are damped.
+
+This is analogous to the Fisher Information Matrix (FIM) in classical
+natural gradient methods, but estimated nonparametrically from the
+data geometry rather than from the model's parameter space.
+
+\begin{remark}[Relationship to Riemannian Optimization]
+The ManifoldWalker implements a discrete approximation to Riemannian
+gradient descent on the data manifold $\manifold$. At each point:
+\begin{enumerate}[nosep]
+  \item The local PCA approximates the tangent space $\tangent_\pos\manifold$
+  \item The eigenvalue-weighted projection approximates the Riemannian gradient $\grad_{\manifold}\obj$
+  \item The linear step approximates the exponential map $\exp_\pos(-\eta \grad_\manifold\obj)$
+\end{enumerate}
+The approximation quality depends on the neighborhood size $k$ and the
+local curvature of $\manifold$.
+\end{remark}
+
+%======================================================================
+\section{Coordinate Transform Geometry}
+\label{sec:transforms}
+%======================================================================
+
+The turtle's frame provides a moving coordinate system. At any point $\pos$
+with frame $F$:
+
+\begin{align}
+  \textsc{ToLocal}(\mathbf{g}) &= F \cdot (\mathbf{g} - \pos) \label{eq:tolocal} \\
+  \textsc{ToGlobal}(\bm{\ell}) &= \pos + F^\top \cdot \bm{\ell} \label{eq:toglobal}
+\end{align}
+
+In the ManifoldWalker context, after orientation:
+\begin{itemize}[nosep]
+  \item $\ell_0$: component along direction of maximum local variance (heading)
+  \item $\ell_1$: component along second principal direction (left)
+  \item $\ell_i$ for $i < d$: on-manifold components
+  \item $\ell_i$ for $i \geq d$: off-manifold components (suppressed)
+\end{itemize}
+
+%======================================================================
+\section{Probing the Loss Landscape}
+\label{sec:probe}
+%======================================================================
+
+The \textsc{Probe} operation evaluates the objective along a single
+principal direction without moving the turtle:
+\begin{equation}
+  \textsc{Probe}(i, \{s_1, \ldots, s_m\}) = \left\{ \obj(\pos + s_j \cdot \basis_i) \right\}_{j=1}^{m}
+\end{equation}
+
+This enables:
+\begin{itemize}[nosep]
+  \item Visualization of the loss landscape along individual principal components
+  \item Detection of non-convexity or saddle points in specific directions
+  \item Adaptive step size selection based on local curvature estimates
+\end{itemize}
+
+%======================================================================
+\section{Complexity Analysis}
+\label{sec:complexity}
+%======================================================================
+
+\begin{table}[h]
+\centering
+\caption{Computational complexity per step.}
+\label{tab:complexity}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Operation} & \textbf{Complexity} & \textbf{Notes} \\
+\midrule
+$k$-NN search & $O(MN)$ & Brute force; $O(N \log M)$ with KD-tree \\
+Covariance matrix & $O(k N^2)$ & \\
+Eigendecomposition & $O(N^3)$ & Full spectrum; $O(N^2 d)$ for top-$d$ only \\
+Gradient (numerical) & $O(2N \cdot C_\obj)$ & $C_\obj$ = cost of one $\obj$ evaluation \\
+Projection \& step & $O(N^2)$ & Matrix-vector products \\
+\midrule
+\textbf{Total per step} & $O(MN + N^3 + NC_\obj)$ & Dominated by KNN or eigendecomp \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+For practical embedding spaces ($N \sim 768$--$4096$, $M \sim 10^4$--$10^6$),
+the KNN search dominates. This can be mitigated with approximate nearest
+neighbor structures (FAISS, Annoy, ScaNN). The eigendecomposition can use
+truncated SVD when only the top-$d$ components are needed.
+
+%======================================================================
+\section{Correctness Properties}
+\label{sec:correctness}
+%======================================================================
+
+\begin{enumerate}[label=\textbf{P\arabic*.}, ref=P\arabic*]
+  \item \label{prop:ortho} \textbf{Frame Orthonormality.} The turtle's frame remains orthonormal after any sequence of rotations: $FF^\top = \eye_N$. A periodic Gram-Schmidt re-orthonormalization corrects floating-point drift.
+
+  \item \label{prop:invert} \textbf{Coordinate Invertibility.} $\textsc{ToGlobal} \circ \textsc{ToLocal} = \mathrm{id}$ (Proposition~\ref{prop:coords}).
+
+  \item \label{prop:compat} \textbf{3D Compatibility.} TurtleND$(3)$ is operationally identical to Turtle3D (Theorem~\ref{thm:compat}).
+
+  \item \label{prop:descent} \textbf{Descent Property.} For a smooth, locally convex objective $\obj$ with Lipschitz gradient, and sufficiently small $\eta$, each step reduces the objective: $\obj(\pos') \leq \obj(\pos) - c \norm{\grad_\manifold \obj(\pos)}^2$ for some $c > 0$ depending on $\eta$ and the eigenvalue spectrum.
+
+  \item \label{prop:manifold} \textbf{Manifold Alignment.} The frame's first $d$ basis vectors span the same subspace as the top-$d$ eigenvectors of the local covariance, ensuring the step direction lies in (or near) $\tangent_\pos \manifold$.
+\end{enumerate}
+
+%======================================================================
+\section{Parameters and Tuning}
+\label{sec:params}
+%======================================================================
+
+\begin{table}[h]
+\centering
+\caption{ManifoldWalker parameters and guidance.}
+\label{tab:params}
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Parameter} & \textbf{Symbol} & \textbf{Default} & \textbf{Guidance} \\
+\midrule
+Neighborhood size & $k$ & 50 & $\sim 5$--$10\times$ expected $d$ \\
+Variance threshold & $\tau$ & 0.95 & Lower $\to$ more aggressive dimensionality reduction \\
+Learning rate & $\eta$ & 0.01 & Scale inversely with gradient magnitude \\
+Gradient epsilon & $\varepsilon$ & $10^{-5}$ & For numerical differentiation only \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%======================================================================
+\section{Discussion}
+\label{sec:discussion}
+%======================================================================
+
+\subsection{Why Not Cosine Distance?}
+
+Cosine distance treats the embedding space as isotropic---all angular
+directions are equally meaningful. This is false for learned embeddings.
+The variance along different principal directions can differ by orders of
+magnitude, and those directions \emph{rotate} as one moves through the space.
+The ManifoldWalker's local PCA captures this anisotropy directly.
+
+\subsection{Relationship to Existing Methods}
+
+\begin{itemize}[nosep]
+  \item \textbf{Natural Gradient Descent} (Amari, 1998): Uses the Fisher
+    information matrix; ManifoldWalker uses the empirical data covariance
+    as a nonparametric analog.
+  \item \textbf{Local Tangent Space Alignment} (Zhang \& Zha, 2004):
+    Discovers manifold structure via local PCA; ManifoldWalker adds
+    navigation and optimization.
+  \item \textbf{Riemannian Optimization} (Absil et al., 2008): Requires
+    knowing the manifold geometry a priori; ManifoldWalker discovers it
+    empirically at each step.
+\end{itemize}
+
+\subsection{From Molecular Geometry to Embedding Spaces}
+
+The TurtleND originates from Turtle3D, a tool for building molecular
+structures via local coordinate systems (Suchanek, 1990). The generalization
+to $N$ dimensions and coupling with local PCA creates a bridge between
+geometric molecular modeling and high-dimensional machine learning---the
+same frame-based navigation that builds proteins can now navigate the
+latent spaces that represent them.
+
+%======================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+%======================================================================
+
+The TurtleND + ManifoldWalker system provides a geometrically principled
+framework for navigating high-dimensional embedding spaces. By continuously
+re-aligning a carried orthonormal frame to the local data manifold via PCA,
+it achieves manifold-aware descent that:
+\begin{enumerate}[nosep]
+  \item Adapts to locally varying intrinsic dimensionality
+  \item Suppresses off-manifold gradient noise
+  \item Weights on-manifold directions by data variance (natural gradient)
+  \item Provides interpretable diagnostics (eigenvalue spectra, intrinsic dim)
+  \item Enables directional probing of the loss landscape
+\end{enumerate}
+
+This replaces the assumption of isotropic space with empirical geometry,
+offering a new paradigm for optimization in learned embedding spaces.
+
+\end{document}

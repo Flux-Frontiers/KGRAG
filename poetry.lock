@@ -1196,7 +1196,7 @@ files = [
 
 [[package]]
 name = "doc-kg"
-version = "0.4.0"
+version = "0.5.1"
 description = "A tool to build a semantically searchable knowledge graph from markdown and text documents"
 optional = false
 python-versions = ">=3.12,<3.14"
@@ -1206,7 +1206,7 @@ develop = false
 
 [package.dependencies]
 click = ">=8.1.0"
-code-kg = {git = "https://github.com/Flux-Frontiers/code_kg.git"}
+einops = "^0.8.2"
 lancedb = ">=0.29.0"
 markdown-it-py = ">=3.0.0"
 mcp = ">=1.0.0"
@@ -1223,7 +1223,7 @@ viz = []
 type = "git"
 url = "https://github.com/Flux-Frontiers/doc_kg.git"
 reference = "HEAD"
-resolved_reference = "a7086424509b65b02b2c73e6d8be6f3d9f7dbdc9"
+resolved_reference = "0b3088be9d6571b20f22699160553276d0982587"
 
 [[package]]
 name = "docstring-parser"
@@ -1255,6 +1255,18 @@ files = [
     {file = "docutils-0.22.4.tar.gz", hash = "sha256:4db53b1fde9abecbb74d91230d32ab626d94f6badfc575d6db9194a49df29968"},
 ]
 markers = {main = "extra == \"viz3d\""}
+
+[[package]]
+name = "einops"
+version = "0.8.2"
+description = "A new flavour of deep learning operations"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "einops-0.8.2-py3-none-any.whl", hash = "sha256:54058201ac7087911181bfec4af6091bb59380360f069276601256a76af08193"},
+    {file = "einops-0.8.2.tar.gz", hash = "sha256:609da665570e5e265e27283aab09e7f279ade90c4f01bcfca111f3d3e13f2827"},
+]
 
 [[package]]
 name = "executing"
@@ -1567,27 +1579,6 @@ test = ["aiohttp (!=4.0.0a0,!=4.0.0a1)", "numpy", "pytest", "pytest-asyncio (!=0
 test-downstream = ["aiobotocore (>=2.5.4,<3.0.0)", "dask[dataframe,test]", "moto[server] (>4,<5)", "pytest-timeout", "xarray"]
 test-full = ["adlfs", "aiohttp (!=4.0.0a0,!=4.0.0a1)", "backports-zstd ; python_version < \"3.14\"", "cloudpickle", "dask", "distributed", "dropbox", "dropboxdrivefs", "fastparquet", "fusepy", "gcsfs", "jinja2", "kerchunk", "libarchive-c", "lz4", "notebook", "numpy", "ocifs", "pandas (<3.0.0)", "panel", "paramiko", "pyarrow", "pyarrow (>=1)", "pyftpdlib", "pygit2", "pytest", "pytest-asyncio (!=0.22.0)", "pytest-benchmark", "pytest-cov", "pytest-mock", "pytest-recording", "pytest-rerunfailures", "python-snappy", "requests", "smbprotocol", "tqdm", "urllib3", "zarr", "zstandard ; python_version < \"3.14\""]
 tqdm = ["tqdm"]
-
-[[package]]
-name = "ftree-kg"
-version = "0.2.0"
-description = "KGModule for file tree knowledge graphs"
-optional = false
-python-versions = ">=3.12,<3.14"
-groups = ["main"]
-markers = "extra == \"ftree-kg\""
-files = []
-develop = true
-
-[package.dependencies]
-click = "^8.1.0"
-code-kg = {git = "https://github.com/Flux-Frontiers/code_kg.git"}
-doc-kg = {git = "https://github.com/Flux-Frontiers/doc_kg.git"}
-kg-rag = {git = "https://github.com/Flux-Frontiers/KGRAG.git"}
-
-[package.source]
-type = "directory"
-url = "../FTreeKG"
 
 [[package]]
 name = "gitdb"
@@ -6984,7 +6975,7 @@ propcache = ">=0.2.1"
 
 [extras]
 diary-kg = []
-ftree-kg = ["ftree-kg"]
+ftree-kg = []
 metabo-kg = ["metabo-kg"]
 qt = ["PyQt5"]
 viz = ["plotly", "pyvis", "streamlit"]
@@ -6994,4 +6985,4 @@ viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "4d8e638d5f09cdb52b0bd6eb6099dfa107c1caa5641c6b82ce489030bfe7debb"
+content-hash = "3b4f0d0b4a0d1e96b01c6f8b34641cae2016bcceaae3309769836d298b00c70e"
