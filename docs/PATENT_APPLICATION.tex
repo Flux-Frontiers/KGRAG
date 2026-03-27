@@ -1,0 +1,726 @@
+% ============================================================
+%  PATENT APPLICATION
+%  System and Method for Offline Semantic Pre-Computation
+%  and Knowledge Graph Construction from Timestamped Text Corpora
+% ============================================================
+\documentclass[12pt,letterpaper]{article}
+
+% ---- Packages ----------------------------------------------
+\usepackage[top=1.25in, bottom=1.25in, left=1.25in, right=1.25in]{geometry}
+\usepackage{fontenc}
+\usepackage{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{mdframed}
+\usepackage{tocloft}
+\usepackage{hyperref}
+
+% ---- Colors ------------------------------------------------
+\definecolor{codebg}{gray}{0.96}
+\definecolor{codeframe}{gray}{0.75}
+\definecolor{keywordcolor}{rgb}{0.0, 0.3, 0.7}
+\definecolor{commentcolor}{rgb}{0.3, 0.5, 0.3}
+\definecolor{stringcolor}{rgb}{0.6, 0.1, 0.1}
+
+% ---- Listings setup ----------------------------------------
+\lstset{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{codebg},
+  frame=single,
+  framerule=0.6pt,
+  rulecolor=\color{codeframe},
+  breaklines=true,
+  breakatwhitespace=false,
+  keepspaces=true,
+  showspaces=false,
+  showstringspaces=false,
+  tabsize=2,
+  captionpos=b,
+  numbers=none,
+  xleftmargin=6pt,
+  xrightmargin=6pt,
+}
+
+\lstdefinelanguage{YAML}{
+  keywords={true,false,null,~},
+  sensitive=false,
+  comment=[l]{\#},
+  morestring=[b]',
+  morestring=[b]",
+  keywordstyle=\color{keywordcolor}\bfseries,
+  commentstyle=\color{commentcolor}\itshape,
+  stringstyle=\color{stringcolor},
+}
+
+\lstdefinelanguage{JSON}{
+  morestring=[b]",
+  stringstyle=\color{stringcolor},
+  literate=
+    *{:}{{{\color{black}{:}}}}{1}
+    {,}{{{\color{black}{,}}}}{1}
+    {\{}{{{\color{black}{\{}}}}{1}
+    {\}}{{{\color{black}{\}}}}}{1}
+    {[}{{{\color{black}{[}}}}{1}
+    {]}{{{\color{black}{]}}}}{1},
+}
+
+% ---- Hyperref setup ----------------------------------------
+\hypersetup{
+  colorlinks=false,
+  pdfborder={0 0 0},
+  pdftitle={Patent Application -- Offline Semantic Pre-Computation and Knowledge Graph Construction},
+  pdfauthor={Eric G. Suchanek, PhD},
+}
+
+% ---- Section title formatting ------------------------------
+\titleformat{\section}
+  {\normalfont\large\bfseries\uppercase}
+  {}
+  {0pt}
+  {}
+  [\vspace{2pt}\hrule\vspace{4pt}]
+
+\titleformat{\subsection}
+  {\normalfont\normalsize\bfseries}
+  {}
+  {0pt}
+  {}
+
+\titlespacing*{\section}{0pt}{18pt}{8pt}
+\titlespacing*{\subsection}{0pt}{12pt}{4pt}
+
+% ---- Page style --------------------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{Patent Application}}
+\fancyhead[R]{\small\textit{Suchanek -- Offline Semantic Pre-Computation}}
+\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ---- Claim formatting helper --------------------------------
+\newcounter{claimnum}
+\newenvironment{claims}
+  {\begin{list}{\textbf{Claim \arabic{claimnum}.}}
+      {\usecounter{claimnum}
+       \setlength{\labelwidth}{1.8cm}
+       \setlength{\labelsep}{0.4cm}
+       \setlength{\leftmargin}{2.2cm}
+       \setlength{\itemsep}{12pt}
+       \setlength{\parsep}{4pt}}}
+  {\end{list}}
+
+% ---- Indented sub-list for claim elements ------------------
+\newlist{claimelems}{enumerate}{2}
+\setlist[claimelems,1]{
+  label=(\alph*),
+  leftmargin=1.6cm,
+  itemsep=4pt,
+  parsep=2pt,
+}
+\setlist[claimelems,2]{
+  label=(\roman*),
+  leftmargin=1.6cm,
+  itemsep=2pt,
+  parsep=1pt,
+}
+
+% ---- Document spacing --------------------------------------
+\setstretch{1.15}
+
+% ============================================================
+\begin{document}
+
+% ---- Title block -------------------------------------------
+\begin{center}
+  {\LARGE\bfseries PATENT APPLICATION}\\[14pt]
+  {\large\bfseries SYSTEM AND METHOD FOR OFFLINE SEMANTIC\\
+   PRE-COMPUTATION AND KNOWLEDGE GRAPH CONSTRUCTION\\
+   FROM TIMESTAMPED TEXT CORPORA}\\[20pt]
+  \begin{tabular}{ll}
+    \textbf{Inventor:}        & Eric G. Suchanek, PhD \\[2pt]
+    \textbf{Assignee:}        & Flux-Frontiers \\[2pt]
+    \textbf{Filing Date:}     & March 26, 2026 \\[2pt]
+    \textbf{Application Type:} & Utility Patent \\
+  \end{tabular}
+\end{center}
+
+\vspace{18pt}
+\noindent\rule{\linewidth}{0.8pt}
+\vspace{6pt}
+
+% ============================================================
+\section*{Cross-Reference to Related Applications}
+
+Not applicable.
+
+% ============================================================
+\section*{Field of the Invention}
+
+The present invention relates generally to natural language processing and knowledge
+graph construction, and more particularly to a system and method for offline semantic
+pre-computation of timestamped text corpora that eliminates query-time inference while
+preserving full semantic and temporal search capability.
+
+% ============================================================
+\section*{Background of the Invention}
+
+\subsection*{The Prior Art and Its Deficiencies}
+
+Modern semantic search systems operate under two foundational assumptions that constrain
+their deployment, cost, and privacy characteristics.
+
+\textbf{First assumption: semantic understanding requires live inference.} When a user
+queries a document corpus, conventional systems invoke a large language model (LLM) at
+query time --- either via cloud API or local GPU inference --- to process the query and
+generate semantically relevant results. This architecture imposes per-query costs that
+scale linearly with query volume, requires persistent network connectivity for
+cloud-based systems, and demands specialized hardware (GPU clusters) for local
+deployment. Consumer-grade hardware cannot serve these workloads at interactive
+latencies for corpora exceeding trivial sizes.
+
+\textbf{Second assumption: temporal grounding requires LLM extraction.} Dates, time
+references, and temporal relationships embedded in natural language prose are
+conventionally extracted by language models at either ingest or query time. For
+locally-deployed small-parameter models (e.g., 4 billion parameters), this extraction
+fails systematically --- such models hallucinate dates, confuse temporal formats,
+produce malformed output, and cannot reliably distinguish relative from absolute time
+references. This failure mode blocks local, offline execution of any temporally-aware
+memory or search system.
+
+Prior art systems addressing semantic search over document corpora include
+Retrieval-Augmented Generation (RAG) pipelines, which embed documents into vector
+stores but require LLM inference at query time for answer generation; traditional
+knowledge graph systems, which provide structural querying but lack integrated semantic
+vector search; and embedding-based search engines, which provide semantic similarity
+but lack temporal provenance, topic classification, and structural graph relationships.
+
+No existing system provides, in a single integrated pipeline executable on consumer
+hardware without network connectivity: (a) multi-phase NLP enrichment with configurable
+topic and context classification; (b) parallel multi-process vector embedding with no
+external service dependency; (c) a hybrid knowledge graph combining structural indices
+with semantic vector indices; (d) temporal provenance on every node written directly
+from source metadata without LLM extraction; and (e) sub-three-minute full-corpus
+ingestion at the scale of thousands of entries.
+
+% ============================================================
+\section*{Summary of the Invention}
+
+The present invention provides a system and method for constructing a semantically
+enriched, temporally grounded knowledge graph from timestamped text corpora through
+offline pre-computation. The core innovation is a shift from query-time inference to
+ingest-time pre-computation: all semantic understanding --- topic labeling, context
+classification, vector embedding, and graph edge construction --- is computed once
+during corpus ingestion. The resulting knowledge graph is a frozen, versioned,
+queryable artifact that serves all subsequent queries through vector lookup and graph
+traversal alone, with no model loading or inference at query time.
+
+The system comprises six sequential processing stages orchestrated by a unified
+pipeline controller:
+
+\begin{enumerate}[leftmargin=2cm, itemsep=6pt]
+
+\item A multi-phase NLP transformer that parses timestamped source entries, applies
+configurable sentence-group chunking, performs multi-label topic classification and
+single-label context classification using domain-configurable YAML vocabularies, and
+supports temporally-diverse sampling;
+
+\item A corpus emitter that writes each semantically enriched chunk as a structured
+document with metadata frontmatter, embedding temporal provenance directly from parsed
+source timestamps without any language model extraction;
+
+\item A structural graph builder that indexes all chunks into a SQLite database with
+BM25 lexical search capability and typed graph edges;
+
+\item A semantic vector index builder that generates dense vector embeddings and stores
+them in a columnar vector database for approximate nearest-neighbor search;
+
+\item A multi-process parallel embedder that shards the corpus across CPU worker
+processes, each loading an independent model instance with no shared state and no GIL
+contention; and
+
+\item A JSON embedding cache that stores aligned arrays of embeddings, texts, and
+timestamps for downstream analysis.
+
+\end{enumerate}
+
+The invention inverts the conventional cost model: ingestion cost is medium and paid
+once; query cost is negligible and does not increase with query volume; privacy is
+preserved because no data leaves the local machine; and offline operation is fully
+supported.
+
+% ============================================================
+\section*{Detailed Description of the Preferred Embodiments}
+
+\subsection*{1.\ \ System Overview}
+
+Referring now to the invention in detail, the system operates on timestamped text
+corpora in a pipe-delimited enriched format:
+
+\begin{lstlisting}
+TIMESTAMP | TYPE | CATEGORY | CONTENT
+\end{lstlisting}
+
+Each entry carries a temporal anchor (an ISO-format timestamp), a semantic type label,
+and a context category. This format is produced by a preprocessing layer that enriches
+raw text with natural language processing --- named-entity recognition, sentence
+segmentation, and domain-specific topic classification via configurable vocabularies.
+
+The system has been reduced to practice and validated on a corpus of 6,450 diary
+entries spanning 9.6 years (1660--1669), comprising 23,235 enriched lines totaling
+3.3 megabytes. Full pipeline execution completes in approximately three minutes on
+consumer-grade Apple Silicon hardware with no GPU and no network connectivity.
+
+% -----------------------------------------------------------
+\subsection*{2.\ \ Stage 1: Multi-Phase NLP Transformation}
+
+The first processing stage applies five sequential NLP phases to the enriched source
+text:
+
+\textbf{Phase 1 --- Parsing.} The system reads pipe-delimited lines and validates ISO
+timestamps. Malformed entries are logged and excluded. Each valid entry produces a
+structured record with timestamp, type, category, and content fields.
+
+\textbf{Phase 2 --- Sentence-Group Chunking.} The content of each entry is segmented
+into chunks using a configurable chunking strategy. The preferred embodiment uses
+sentence-group chunking with a default of four sentences per chunk and a maximum of 512
+characters. Alternative strategies include hybrid chunking (combining sentence
+boundaries with character limits) and semantic chunking (grouping sentences by topical
+coherence). The chunking parameters are configurable to accommodate different corpus
+characteristics.
+
+\textbf{Phase 3 --- Multi-Label Topic Classification.} Each chunk is classified against
+a domain-configurable YAML vocabulary that maps topic labels to keyword lists.
+Classification uses TF-IDF weighted keyword matching. Each chunk may carry multiple
+topic labels (e.g., a single chunk may be labeled with both ``domestic'' and ``court''
+topics). The vocabulary is fully user-configurable, enabling domain adaptation without
+code changes.
+
+\textbf{Phase 4 --- Single-Label Context Classification.} Each chunk receives exactly
+one context label from a second configurable YAML vocabulary. Context categories
+represent the situational frame of the content (e.g., ``Office,'' ``Home,'' ``Social,''
+``Reflection,'' ``Health''). Assignment uses keyword matching with priority ordering
+defined in the vocabulary.
+
+\textbf{Phase 5 --- Temporally-Diverse Sampling.} When a batch size is specified (for
+processing a subset of a large corpus), the system applies temporally-diverse sampling
+using uniform stride across the time axis rather than random sampling. This ensures
+representative coverage across the full temporal span of the corpus, preventing
+front-loading bias that would result from naive sequential or random sampling.
+
+\textbf{Parallelism.} The NLP transformation stage accepts a configurable
+\texttt{workers} parameter that distributes feature extraction across CPU cores via
+process-level parallelism. Each worker processes an independent shard of the corpus
+with no shared state, enabling near-linear scaling with available CPU cores.
+
+% -----------------------------------------------------------
+\subsection*{3.\ \ Stage 2: Corpus Emission with Direct Temporal Provenance}
+
+Each semantically enriched chunk is written as a Markdown file with YAML frontmatter
+containing structured metadata:
+
+\begin{lstlisting}[language=YAML, caption={Emitted chunk document with YAML frontmatter}]
+---
+source_file: corpus/enriched_full.txt
+timestamp: 1666-09-02T08:00
+topic: domestic
+context: Home
+chunk_index: 0
+---
+[chunk text content]
+\end{lstlisting}
+
+\textbf{Critical innovation: direct temporal database writes.} The timestamp in the
+frontmatter is written directly from the parsed ISO timestamp in the source format. No
+language model is involved in temporal grounding at any stage. This completely bypasses
+the temporal extraction failure mode that plagues small-parameter local models, making
+the temporal dimension fully reliable regardless of model capability. The temporal
+provenance is a first-class metadata field on every chunk, available for filtering,
+sorting, and graph construction in all downstream stages.
+
+% -----------------------------------------------------------
+\subsection*{4.\ \ Stage 3: Structural Knowledge Graph Construction}
+
+The system delegates to a structural graph builder that indexes all emitted chunk files
+into a SQLite database. The structural index provides:
+
+\textbf{BM25 Lexical Search.} Full-text search over chunk content using the Okapi BM25
+ranking function. This supports exact term matching, phrase queries, and Boolean
+combinations.
+
+\textbf{Typed Graph Edges.} The system constructs typed edges between nodes:
+
+\begin{itemize}[leftmargin=2cm, itemsep=3pt]
+  \item CONTAINS edges linking source documents to their constituent chunks;
+  \item SIMILAR edges linking chunks with high lexical overlap;
+  \item TEMPORAL edges linking chunks that are temporally adjacent in the source corpus.
+\end{itemize}
+
+\textbf{Metadata Filtering.} All frontmatter fields (timestamp, topic, context, source
+file, chunk index) are indexed as filterable metadata columns, enabling efficient
+predicate pushdown for combined structural and metadata queries.
+
+The validated structural graph for the reference corpus contains 29,402 nodes and
+355,250 edges in a 109 MB SQLite database.
+
+% -----------------------------------------------------------
+\subsection*{5.\ \ Stage 4: Semantic Vector Index Construction}
+
+The system builds a semantic vector index using dense embeddings from a pre-trained
+sentence transformer model. In the preferred embodiment, the model is
+\texttt{all-mpnet-base-v2}, producing 768-dimensional float32 vectors.
+
+The vector index is stored in a columnar vector database (LanceDB in the preferred
+embodiment) optimized for approximate nearest-neighbor (ANN) search. The index supports
+cosine similarity queries with sub-millisecond latency.
+
+\textbf{Critical design point:} All embedding computation occurs during this build
+stage. At query time, the vector index serves pre-computed embeddings directly. No
+model is loaded and no inference is performed to answer a query.
+
+The validated vector index for the reference corpus occupies 102 MB for 6,647 chunk
+embeddings at 768 dimensions.
+
+% -----------------------------------------------------------
+\subsection*{6.\ \ Stage 5: Multi-Process Parallel Embedding}
+
+The embedding pipeline operates independently of the knowledge graph build, producing
+an embedding cache optimized for analysis:
+
+\begin{lstlisting}[caption={Multi-process parallel embedding pipeline}]
+Parse -> (optional temporal sample) -> shard across workers -> each worker:
+    load sentence-transformer model locally -> encode shard -> return float32 array
+-> concatenate shards in original order -> write cache
+\end{lstlisting}
+
+\textbf{Key design decisions providing the inventive step:}
+
+\textbf{Independent model instances per worker.} Each worker process loads its own copy
+of the sentence-transformer model. There is no shared memory between workers and no
+Global Interpreter Lock (GIL) contention. This is in contrast to conventional
+approaches that share a single model instance across threads, which in Python-based
+systems creates GIL contention that prevents true parallelism.
+
+\textbf{Spawn start method enforcement.} On POSIX systems, the system enforces the
+\texttt{spawn} start method for subprocess creation rather than the default \texttt{fork}
+method. This ensures clean subprocess isolation, preventing issues with inherited file
+descriptors, CUDA contexts, or other process state that can cause subtle failures in
+forked multiprocessing.
+
+\textbf{Temporally-uniform sampling.} When processing a subset of the corpus, temporal
+sampling uses uniform stride across the time axis rather than random sampling, ensuring
+that the embedding cache provides representative manifold coverage of the full temporal
+span.
+
+\textbf{Aligned output format.} The output consists of three aligned arrays ---
+embeddings, texts, and timestamps --- stored as JSON. This self-contained format
+requires no database dependency and is portable across environments.
+
+The architecture achieves near-linear scaling with CPU count on encode-bound workloads.
+In the reference implementation, four worker processes embed 6,647 chunks as part of a
+full pipeline execution completing in approximately three minutes.
+
+% -----------------------------------------------------------
+\subsection*{7.\ \ Stage 6: Embedding Cache}
+
+The JSON embedding cache stores three parallel arrays:
+
+\begin{lstlisting}[language=JSON, caption={Embedding cache JSON structure}]
+{
+  "embeddings": [[float32, ...], ...],
+  "texts": ["chunk text", ...],
+  "timestamps": ["ISO timestamp", ...]
+}
+\end{lstlisting}
+
+The arrays are index-aligned: \texttt{embeddings[i]}, \texttt{texts[i]}, and
+\texttt{timestamps[i]} all correspond to the same source chunk. This format is
+intentionally simple, requiring no database dependency and supporting direct consumption
+by any numerical computing environment.
+
+% -----------------------------------------------------------
+\subsection*{8.\ \ Unified Pipeline Orchestration with Snapshot System}
+
+The system provides a unified orchestrator that executes the full pipeline --- NLP
+transformation, corpus emission, structural graph indexing, vector index construction,
+and snapshot capture --- through a single invocation.
+
+\textbf{Point-in-time snapshots} capture corpus metrics (entry count, chunk count,
+temporal span), graph metrics (node count, edge count, index sizes), and build metadata
+(timestamp, hardware, duration). Snapshots are versioned and enable comparison across
+corpus rebuilds, supporting reproducibility and regression detection.
+
+% -----------------------------------------------------------
+\subsection*{9.\ \ Hybrid Retrieval Without Query-Time Inference}
+
+The completed knowledge graph supports hybrid retrieval combining:
+
+\begin{itemize}[leftmargin=2cm, itemsep=3pt]
+  \item \textbf{BM25 lexical search} for exact term matching and Boolean queries;
+  \item \textbf{Vector ANN search} for semantic similarity queries;
+  \item \textbf{Metadata filtering} for temporal range queries, topic filtering, and
+        context filtering;
+  \item \textbf{Graph traversal} for structural navigation (containment, similarity,
+        temporal adjacency).
+\end{itemize}
+
+All four retrieval modalities operate on pre-computed indices. No model is loaded at
+query time. No inference is performed. Query latency is sub-millisecond for the
+reference corpus of 29,402 nodes.
+
+\bigskip
+\noindent The following table summarizes the validated reference corpus metrics:
+
+\vspace{6pt}
+\begin{center}
+\begin{tabular}{lrl}
+  \toprule
+  \textbf{Metric} & \textbf{Value} & \textbf{Notes} \\
+  \midrule
+  Source entries          & 6,450     & Diary entries, 1660--1669 \\
+  Enriched lines          & 23,235    & Pipe-delimited format \\
+  Source file size        & 3.3 MB    & \\
+  Chunk count             & 6,647     & Sentence-group chunking \\
+  Graph nodes             & 29,402    & \\
+  Graph edges             & 355,250   & CONTAINS, SIMILAR, TEMPORAL \\
+  SQLite database size    & 109 MB    & Structural index \\
+  LanceDB vector index    & 102 MB    & 768-dimensional float32 \\
+  Combined KG footprint   & $\sim$241 MB & \\
+  Embedding dimensions    & 768       & \texttt{all-mpnet-base-v2} \\
+  Full pipeline duration  & $\sim$3 min & Apple Silicon, no GPU \\
+  Query latency           & $<$1 ms   & Pre-computed indices \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================
+\section*{Claims}
+
+\subsection*{Independent Claims}
+
+\begin{claims}
+
+% --- Claim 1 ------------------------------------------------
+\item A computer-implemented method for constructing a queryable knowledge graph from a
+timestamped text corpus, comprising:
+
+\begin{claimelems}
+  \item receiving a plurality of text entries, each text entry comprising a timestamp,
+        a semantic type label, a context category, and natural language content;
+
+  \item for each text entry, applying a multi-phase natural language processing
+        transformation comprising:
+    \begin{claimelems}
+      \item parsing and validating the timestamp;
+      \item segmenting the content into one or more chunks according to a configurable
+            chunking strategy;
+      \item classifying each chunk with one or more topic labels using a configurable
+            topic vocabulary;
+      \item classifying each chunk with a single context label using a configurable
+            context vocabulary;
+    \end{claimelems}
+
+  \item emitting each chunk as a structured document file comprising the chunk text and
+        metadata frontmatter, wherein the metadata frontmatter includes a temporal
+        provenance field written directly from the parsed timestamp of step (b)(i)
+        without invoking any language model for temporal extraction;
+
+  \item constructing a structural graph index from the emitted document files, the
+        structural graph index comprising nodes representing chunks, typed edges
+        representing containment, similarity, and temporal adjacency relationships,
+        and a full-text search index;
+
+  \item constructing a semantic vector index by computing dense vector embeddings for
+        each chunk using a pre-trained sentence-transformer model and storing the
+        embeddings in a columnar vector store supporting approximate nearest-neighbor
+        search;
+\end{claimelems}
+
+\noindent wherein steps (d) and (e) collectively constitute ingest-time pre-computation
+such that all subsequent queries against the knowledge graph are served by vector lookup
+and graph traversal without loading any language model or performing any neural network
+inference at query time.
+
+% --- Claim 2 ------------------------------------------------
+\item A computer-implemented method for parallel vector embedding of a text corpus
+without shared state, comprising:
+
+\begin{claimelems}
+  \item receiving a plurality of text chunks derived from a timestamped text corpus;
+
+  \item partitioning the text chunks into a plurality of shards, one shard per
+        available CPU core;
+
+  \item spawning a plurality of worker processes using a spawn start method, wherein
+        each worker process:
+    \begin{claimelems}
+      \item loads an independent instance of a sentence-transformer model into its own
+            process memory;
+      \item encodes its assigned shard of text chunks into dense vector embeddings;
+      \item returns the embeddings as a contiguous float32 array;
+    \end{claimelems}
+
+  \item concatenating the returned embeddings from all worker processes in the original
+        corpus order;
+\end{claimelems}
+
+\noindent wherein no shared memory is used between worker processes, no Global
+Interpreter Lock contention occurs, and the method achieves near-linear scaling with
+the number of available CPU cores.
+
+% --- Claim 3 ------------------------------------------------
+\item A system for offline semantic pre-computation of a timestamped text corpus,
+comprising:
+
+\begin{claimelems}
+  \item a multi-phase NLP transformer module configured to parse timestamped entries,
+        segment content into chunks, and classify each chunk with topic and context
+        labels from user-configurable YAML vocabularies;
+
+  \item a corpus emitter module configured to write each chunk as a structured document
+        file with metadata frontmatter containing temporal provenance written directly
+        from source timestamps without language model extraction;
+
+  \item a structural graph builder module configured to index the document files into a
+        relational database comprising nodes, typed edges, and a BM25 full-text search
+        index;
+
+  \item a semantic vector index builder module configured to compute dense vector
+        embeddings using a pre-trained sentence-transformer model and store the
+        embeddings in a columnar vector database;
+
+  \item a multi-process parallel embedder module configured to shard the corpus across
+        worker processes, each worker loading an independent model instance with no
+        shared state;
+
+  \item a unified orchestrator configured to execute modules (a) through (e) in
+        sequence through a single invocation and to capture point-in-time snapshots of
+        corpus and graph metrics;
+\end{claimelems}
+
+\noindent wherein the system is configured to execute entirely on consumer-grade CPU
+hardware without GPU acceleration and without network connectivity, and wherein all
+queries against the constructed knowledge graph are served without loading any language
+model or performing any inference.
+
+\end{claims}
+
+% -----------------------------------------------------------
+\subsection*{Dependent Claims}
+
+\begin{claims}
+\setcounter{claimnum}{3}
+
+% --- Claim 4 ------------------------------------------------
+\item The method of Claim~1, wherein the configurable chunking strategy of step
+(b)(ii) comprises sentence-group chunking with a configurable number of sentences per
+chunk and a configurable maximum character count per chunk.
+
+% --- Claim 5 ------------------------------------------------
+\item The method of Claim~1, wherein the multi-label topic classification of step
+(b)(iii) uses TF-IDF weighted keyword matching against a YAML vocabulary file that maps
+topic labels to keyword lists, and wherein each chunk may receive zero, one, or multiple
+topic labels.
+
+% --- Claim 6 ------------------------------------------------
+\item The method of Claim~1, further comprising applying temporally-diverse sampling
+when processing a subset of the corpus, wherein the sampling uses uniform stride across
+the time axis of the corpus to ensure representative temporal coverage.
+
+% --- Claim 7 ------------------------------------------------
+\item The method of Claim~1, wherein the structural graph index of step (d) comprises:
+\begin{itemize}[leftmargin=1.8cm, itemsep=3pt]
+  \item CONTAINS edges linking source document nodes to constituent chunk nodes;
+  \item SIMILAR edges linking chunk nodes having lexical overlap exceeding a configurable
+        threshold;
+  \item TEMPORAL edges linking chunk nodes that are temporally adjacent in the source
+        corpus.
+\end{itemize}
+
+% --- Claim 8 ------------------------------------------------
+\item The method of Claim~1, wherein the semantic vector index of step (e) uses a
+768-dimensional embedding space generated by a pre-trained sentence-transformer model,
+and wherein the columnar vector store supports cosine similarity approximate
+nearest-neighbor queries with sub-millisecond latency.
+
+% --- Claim 9 ------------------------------------------------
+\item The method of Claim~2, wherein the spawn start method is enforced on POSIX
+systems to ensure clean subprocess isolation and to prevent inheritance of file
+descriptors, GPU contexts, or other parent process state.
+
+% --- Claim 10 -----------------------------------------------
+\item The method of Claim~2, further comprising, prior to step (b), applying
+temporally-uniform sampling using stride-based selection across the time axis of the
+corpus.
+
+% --- Claim 11 -----------------------------------------------
+\item The system of Claim~3, further comprising a snapshot module configured to capture
+point-in-time metrics including entry count, chunk count, temporal span, node count,
+edge count, index sizes, and build metadata, and to support comparison between snapshots
+captured at different build times.
+
+% --- Claim 12 -----------------------------------------------
+\item The system of Claim~3, wherein the structural graph builder module stores the
+relational database as a SQLite file and the semantic vector index builder module stores
+the vector database as a LanceDB directory, and wherein the combined knowledge graph
+footprint for a corpus of approximately 6,500 entries is approximately 241 megabytes.
+
+% --- Claim 13 -----------------------------------------------
+\item The method of Claim~1, wherein the knowledge graph supports hybrid retrieval
+combining BM25 lexical search, vector approximate nearest-neighbor search, metadata
+filtering on temporal range and topic and context labels, and graph traversal across
+typed edges, all without loading any model or performing any inference at query time.
+
+% --- Claim 14 -----------------------------------------------
+\item The method of Claim~1, wherein the entire pipeline from raw corpus ingestion to
+completed knowledge graph executes in less than five minutes for a corpus of up to
+10,000 entries on consumer-grade hardware without GPU acceleration.
+
+% --- Claim 15 -----------------------------------------------
+\item The system of Claim~3, wherein the user-configurable YAML vocabularies of module
+(a) enable domain adaptation to arbitrary timestamped text corpora --- including
+personal journals, clinical notes, legal case files, corporate meeting transcripts,
+research literature, and biographical archives --- without modification to any system
+module.
+
+\end{claims}
+
+% ============================================================
+\section*{Abstract}
+
+A system and method for constructing a semantically enriched, temporally grounded
+knowledge graph from timestamped text corpora through offline pre-computation. The
+system applies multi-phase NLP transformation --- parsing, chunking, multi-label topic
+classification, and context classification using domain-configurable YAML vocabularies
+--- to produce structured document chunks with temporal provenance written directly from
+source timestamps without any language model extraction. The chunks are indexed into a
+hybrid knowledge graph comprising a structural relational database with BM25 full-text
+search and typed graph edges, and a semantic vector index with dense embeddings from a
+pre-trained sentence-transformer model. A multi-process parallel embedding pipeline
+shards the corpus across CPU workers, each loading an independent model instance with
+no shared state, achieving near-linear scaling. A unified orchestrator executes the
+full pipeline through a single invocation with point-in-time snapshot capture. The
+resulting knowledge graph serves all subsequent queries --- lexical, semantic, metadata,
+and structural --- through pre-computed indices with sub-millisecond latency, no model
+loading, and no inference at query time. The system executes entirely on consumer-grade
+CPU hardware without GPU acceleration or network connectivity.
+
+\vspace{24pt}
+\noindent\rule{\linewidth}{0.4pt}
+\vspace{6pt}
+
+\begin{center}
+  \small
+  \textit{Patent Application -- Eric G. Suchanek, PhD -- Flux-Frontiers -- March 26, 2026}
+\end{center}
+
+\end{document}
