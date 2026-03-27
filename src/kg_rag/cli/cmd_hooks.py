@@ -50,7 +50,7 @@ BRANCH=$(git rev-parse --abbrev-ref HEAD)
 # ---------------------------------------------------------------------------
 CODEKG_REPO="${WORKSPACE_ROOT}/code_kg"
 if [ -d "$CODEKG_REPO/.codekg" ]; then
-    (cd "$CODEKG_REPO" && "$CODEKG_REPO/.venv/bin/codekg" build --repo . --wipe || exit 1)
+    (cd "$CODEKG_REPO" && "$CODEKG_REPO/.venv/bin/codekg" build --repo . || exit 1)
     (cd "$CODEKG_REPO" && "$CODEKG_REPO/.venv/bin/codekg" snapshot save \\
         --repo . \\
         --tree-hash "$TREE_HASH" \\

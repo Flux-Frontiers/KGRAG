@@ -75,7 +75,7 @@ pip = "^26.0.1"
 # our own adaptors
 doc-kg = {git = "https://github.com/Flux-Frontiers/doc_kg.git"}
 code-kg = {git = "https://github.com/Flux-Frontiers/code_kg.git"}
-ftree-kg = {path = "../FTreeKG", develop = true}
+# ftree-kg = {path = "../FTreeKG", develop = true}
 
 # we really don't need these
 # diary-kg = {git = "https://github.com/Flux-Frontiers/diary_kg.git"}

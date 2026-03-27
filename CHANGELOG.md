@@ -8,10 +8,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `docs/graph_reasoner_spec/` — formal specification for GraphReasoner: a semantic
+  reasoning engine that navigates knowledge graphs using an N-dimensional turtle
+  navigator with heading-aware steering, lazy edge discovery, beam search, and
+  backtracking. Includes full spec (`graph_reasoner_spec.md`) and summary.
+- `docs/manifold_walker_spec/` — formal specification for ManifoldWalker: a
+  gradient-based navigator for continuous embedding manifolds. Includes both
+  Markdown and LaTeX sources (`manifold_walker_spec.md`, `manifold_walker_spec.tex`).
+- `docs/waverider/` — WaveRider specification and infographic summary: a
+  compressed-space navigator operating on latent manifolds.
 
 ### Changed
+- `doc-kg` updated from `0.4.0` → `0.5.1` in `poetry.lock` (bump resolved git
+  reference to `0b3088b`; gains `einops ^0.8.2` as a transitive dependency).
+- `ftree-kg` local path dependency commented out in `pyproject.toml` (removes
+  dependency on `../FTreeKG` sibling directory).
 
 ### Fixed
+- `cmd_hooks.py`: Remove `--wipe` from `codekg build` in the generated pre-commit
+  hook — `codekg build` always wipes and no longer accepts the flag (unlike `dockg`
+  and `ftreekg` which still support `--wipe`). Prevents hook failure on `git commit`.
 
 ## [0.3.5] - 2026-03-20
 
