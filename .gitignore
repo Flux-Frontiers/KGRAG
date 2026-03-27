@@ -251,6 +251,9 @@ __marimo__/
 .kgrag/graph.sqlite*
 .kgrag/models
 
+# Patents
+patents/
+
 # MCP server config — machine-specific, never commit
 .mcp.json
 
