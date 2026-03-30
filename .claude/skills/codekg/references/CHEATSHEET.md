@@ -5,7 +5,7 @@ All queries below work against the live `code_kg` knowledge graph.
 
 ---
 
-## The Ten Tools at a Glance
+## All CodeKG Tools at a Glance
 
 | Tool | Best for | Returns |
 |---|---|---|
@@ -16,6 +16,12 @@ All queries below work against the live `code_kg` knowledge graph.
 | `list_nodes(module_path, kind)` | Enumerate module contents — *what classes/functions are in this file?* | JSON: array of matching node dicts |
 | `callers(node_id, rel)` | Fan-in lookup — *who calls this function?* | JSON: all caller nodes, resolved through stubs |
 | `explain(node_id)` | Natural language understanding — *what does this do?* | Markdown: role, callers, callees, docstring |
+| `centrality(top, kinds, group_by)` | PageRank ranking — *which nodes are most structurally important?* | JSON: ranked nodes by PageRank score |
+| `bridge_centrality()` | Betweenness ranking — *which nodes bridge otherwise disconnected regions?* | JSON: ranked nodes by betweenness score |
+| `framework_nodes()` | In-degree ranking — *which nodes are most depended-upon?* | JSON: highest fan-in nodes |
+| `rank_nodes()` | Custom ranking by configurable signals | JSON: ranked nodes |
+| `query_ranked()` | Semantic query + ranking combined | JSON: ranked nodes + snippets |
+| `explain_rank()` | Explain why a node ranked highly for a query | Markdown: ranking rationale |
 | `analyze_repo()` | Full architectural health check — complexity, coupling, orphans | Markdown: nine-phase analysis |
 | `snapshot_list(limit)` | Temporal tracking — *how has the codebase grown?* | JSON: snapshots with deltas, newest first |
 | `snapshot_show(key)` | Snapshot detail — full metrics at a specific snapshot key (tree hash) or `"latest"` | JSON: full metrics + hotspots + deltas |
