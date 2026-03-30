@@ -75,7 +75,7 @@ pip = "^26.0.1"
 # our own adaptors
 doc-kg = {git = "https://github.com/Flux-Frontiers/doc_kg.git"}
 code-kg = {git = "https://github.com/Flux-Frontiers/code_kg.git"}
-# ftree-kg = {path = "../FTreeKG", develop = true}
+ftree-kg = {path = "../ftreekg", develop = true}
 
 # we really don't need these
 # diary-kg = {git = "https://github.com/Flux-Frontiers/diary_kg.git"}
@@ -134,7 +134,6 @@ kgrag-pack         = "kg_rag.cli.cmd_query:pack"
 kgrag-analyze      = "kg_rag.cli.cmd_analyze:analyze"
 kgrag-viz          = "kg_rag.cli.cmd_viz:viz"
 kgrag-viz2d        = "kg_rag.cli.cmd_viz2d:viz2d"
-#diarykg            = "diary_kg.cli:cli"
 
 [tool.pylint.messages_control]
 disable = ["all"]
