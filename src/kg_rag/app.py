@@ -691,6 +691,177 @@ def _tab_snippets(cfg: dict) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Tab 5 — Synthesize (Ollama inference)
+# ---------------------------------------------------------------------------
+
+_DEFAULT_OLLAMA_URL = "http://localhost:11434"
+_DEFAULT_MODEL = "llama3.2"
+
+_SYNTH_SYSTEM = (
+    "You are a knowledgeable literary and research assistant. "
+    "You are given excerpts retrieved from a knowledge graph built from books and documents. "
+    "Use these excerpts as your primary source and synthesize a clear, accurate answer. "
+    "If the excerpts do not contain enough information, say so honestly."
+)
+
+
+def _call_ollama_stream(prompt: str, model: str, base_url: str):
+    """Yield tokens from Ollama /api/generate (streaming).
+
+    :param prompt: Full prompt string.
+    :param model: Ollama model name.
+    :param base_url: Ollama server base URL.
+    :yields: Response token strings.
+    :raises RuntimeError: On connection or HTTP errors.
+    """
+    import json  # pylint: disable=import-outside-toplevel
+
+    try:
+        import httpx  # pylint: disable=import-outside-toplevel
+    except ImportError as exc:
+        raise RuntimeError("httpx is required — run `pip install httpx`") from exc
+
+    url = base_url.rstrip("/") + "/api/generate"
+    payload = {"model": model, "prompt": prompt, "system": _SYNTH_SYSTEM, "stream": True}
+    try:
+        with httpx.stream("POST", url, json=payload, timeout=120) as resp:
+            if resp.status_code != 200:
+                raise RuntimeError(
+                    f"Ollama returned HTTP {resp.status_code}. Is Ollama running?"
+                )
+            for line in resp.iter_lines():
+                if not line:
+                    continue
+                chunk = json.loads(line)
+                yield chunk.get("response", "")
+                if chunk.get("done"):
+                    break
+    except httpx.ConnectError as exc:
+        raise RuntimeError(
+            f"Cannot connect to Ollama at {base_url}. Start it with: ollama serve"
+        ) from exc
+
+
+def _tab_synthesize(cfg: dict) -> None:
+    """Render the Synthesize tab — KG-grounded Ollama inference."""
+    st.header("🧠 Synthesize")
+    st.caption(
+        "Retrieve relevant excerpts from your KGs, then synthesize an answer "
+        "using a local [Ollama](https://ollama.com) model."
+    )
+
+    kgrag = cfg["kgrag"]
+    if cfg["reg_stats"].total == 0:
+        st.warning("No KGs registered. Add KGs via `kgrag init`.")
+        return
+
+    # ── Controls ──────────────────────────────────────────────────────────
+    col_q, col_model = st.columns([4, 2])
+    with col_q:
+        synth_query = st.text_input(
+            "Question / topic",
+            placeholder="e.g. What motivates Victor Frankenstein?",
+            key="synth_query",
+        )
+    with col_model:
+        model = st.text_input("Ollama model", value=_DEFAULT_MODEL, key="synth_model")
+
+    col_url, col_k = st.columns([3, 1])
+    with col_url:
+        ollama_url = st.text_input(
+            "Ollama URL",
+            value=_DEFAULT_OLLAMA_URL,
+            key="synth_ollama_url",
+            help="Set OLLAMA_URL env var to override default.",
+        )
+    with col_k:
+        synth_k = st.number_input("Top-K snippets", min_value=1, max_value=20, value=6, key="synth_k")
+
+    show_ctx = st.checkbox("Show retrieved context", value=False, key="synth_show_ctx")
+
+    synth_btn = st.button("🧠 Synthesize", type="primary", key="synth_btn")
+
+    if not synth_btn or not synth_query.strip():
+        if not synth_btn:
+            st.info("Enter a question above and click **Synthesize**.")
+        return
+
+    # ── Retrieve context ──────────────────────────────────────────────────
+    with st.spinner("Retrieving KG context…"):
+        try:
+            kinds = cfg["selected_kinds"] if cfg["selected_kinds"] else None
+            pack = kgrag.pack(synth_query.strip(), k=int(synth_k), context=5, kinds=kinds)
+            selected = cfg["selected_names"]
+            if selected:
+                pack.snippets = [s for s in pack.snippets if s.kg_name in selected]
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            st.error(f"Context retrieval failed: {exc}")
+            return
+
+    if not pack.snippets:
+        st.warning("No relevant content found in the selected KGs.")
+        return
+
+    c1, c2 = st.columns(2)
+    c1.metric("Snippets retrieved", len(pack.snippets))
+    c2.metric("KGs queried", pack.kgs_queried)
+
+    if show_ctx:
+        with st.expander("📄 Retrieved context", expanded=False):
+            for i, snip in enumerate(pack.snippets, 1):
+                icon = _KG_KIND_ICON.get(snip.kg_kind.value, "⬡")
+                st.markdown(
+                    f"**{i}. {icon} [{snip.kg_name}]** `{snip.source_path or 'unknown'}` "
+                    f"· score `{snip.score:.3f}`"
+                )
+                if snip.kg_kind == KGKind.CODE:
+                    st.code(snip.content, language="python")
+                else:
+                    st.markdown(snip.content)
+                st.markdown("---")
+
+    # ── Build prompt ──────────────────────────────────────────────────────
+    context_parts = []
+    for i, snip in enumerate(pack.snippets, 1):
+        header = (
+            f"[Excerpt {i} | KG: {snip.kg_name} | "
+            f"source: {snip.source_path or 'unknown'} | score: {snip.score:.3f}]"
+        )
+        context_parts.append(f"{header}\n{snip.content.strip()}")
+
+    full_prompt = (
+        f"Question: {synth_query.strip()}\n\n"
+        f"Relevant excerpts:\n\n"
+        + "\n\n---\n\n".join(context_parts)
+        + "\n\nAnswer:"
+    )
+
+    # ── Stream from Ollama ────────────────────────────────────────────────
+    st.markdown("---")
+    st.subheader(f"Answer · `{model}`")
+
+    answer_box = st.empty()
+    full_answer = ""
+
+    try:
+        for token in _call_ollama_stream(full_prompt, model=model, base_url=ollama_url):
+            full_answer += token
+            answer_box.markdown(full_answer + "▌")
+        answer_box.markdown(full_answer)
+    except RuntimeError as exc:
+        st.error(str(exc))
+        return
+
+    # ── Download ──────────────────────────────────────────────────────────
+    st.download_button(
+        "⬇ Download answer",
+        data=full_answer,
+        file_name="synthesized_answer.md",
+        mime="text/markdown",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -706,12 +877,13 @@ def main() -> None:
         "Powered by [KGRAG](https://github.com/Flux-Frontiers/kgrag) · Streamlit."
     )
 
-    tab1, tab2, tab3, tab4 = st.tabs(
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(
         [
             "📋 Registry",
             "🔍 Federated Query",
             "🧪 Analysis",
             "📦 Snippet Pack",
+            "🧠 Synthesize",
         ]
     )
 
@@ -726,6 +898,9 @@ def main() -> None:
 
     with tab4:
         _tab_snippets(cfg)
+
+    with tab5:
+        _tab_synthesize(cfg)
 
 
 if __name__ == "__main__":
