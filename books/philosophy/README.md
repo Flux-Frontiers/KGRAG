@@ -1,11 +1,10 @@
-# Philosophy — Project Gutenberg
+# Philosophy & Non-Fiction
 
-Place plain-text Gutenberg philosophy texts in this directory.
+Philosophy and non-fiction texts staged here for DocKG ingestion.
 
-Recommended naming: `pg<ID>_<title>.txt`
+**Titles**: On the Origin of Species, Common Sense, Leviathan,
+Thus Spake Zarathustra, Beyond Good and Evil, The Wealth of Nations,
+The Federalist Papers, The Prince, Meditations
 
-After adding books, run from the repo root:
-
-```bash
-kgrag init books/philosophy --layer doc --name gutenberg-philosophy
-```
+Run `bash books/ingest.sh /path/to/gutenberg_kg` from the repo root to populate
+and build the `.dockg/` index for this genre.
