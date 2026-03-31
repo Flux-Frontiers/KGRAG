@@ -257,3 +257,6 @@ __marimo__/
 # MacOS
 .DS_Store
 commit.txt
+
+# Patents — sensitive IP, keep local only
+patents/
