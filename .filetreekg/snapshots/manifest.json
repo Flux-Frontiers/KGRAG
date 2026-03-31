@@ -1,0 +1,151 @@
+{
+  "format": "1.0",
+  "last_update": "2026-03-31T23:02:18.664567+00:00",
+  "snapshots": [
+    {
+      "key": "9cfb7637bea115948f3eeb62abe5308184cd40a8",
+      "branch": "patent/provisional-filing",
+      "timestamp": "2026-03-31T22:50:12.198662+00:00",
+      "version": "0.3.0",
+      "file": "9cfb7637bea115948f3eeb62abe5308184cd40a8.json",
+      "metrics": {
+        "total_nodes": 241,
+        "total_edges": 241,
+        "node_counts": {
+          "directory": 36,
+          "file": 205
+        },
+        "edge_counts": {
+          "CONTAINS": 241
+        },
+        "total_files": 205,
+        "total_dirs": 36,
+        "dir_node_counts": {}
+      },
+      "deltas": {
+        "vs_previous": null,
+        "vs_baseline": null
+      }
+    },
+    {
+      "key": "1e78e47fd9ae53bf9de7b7022e6e1988f7aa5068",
+      "branch": "main",
+      "timestamp": "2026-03-31T22:54:17.699576+00:00",
+      "version": "0.3.0",
+      "file": "1e78e47fd9ae53bf9de7b7022e6e1988f7aa5068.json",
+      "metrics": {
+        "total_nodes": 239,
+        "total_edges": 239,
+        "node_counts": {
+          "directory": 36,
+          "file": 203
+        },
+        "edge_counts": {
+          "CONTAINS": 239
+        },
+        "total_files": 203,
+        "total_dirs": 36,
+        "dir_node_counts": {}
+      },
+      "deltas": {
+        "vs_previous": null,
+        "vs_baseline": {
+          "nodes": -2,
+          "edges": -2,
+          "files_delta": -2,
+          "dirs_delta": 0
+        }
+      }
+    },
+    {
+      "key": "2ba15d03842953ae8bdd53f829c073aef9fb7d6a",
+      "branch": "main",
+      "timestamp": "2026-03-31T22:59:20.183523+00:00",
+      "version": "0.3.0",
+      "file": "2ba15d03842953ae8bdd53f829c073aef9fb7d6a.json",
+      "metrics": {
+        "total_nodes": 239,
+        "total_edges": 239,
+        "node_counts": {
+          "directory": 36,
+          "file": 203
+        },
+        "edge_counts": {
+          "CONTAINS": 239
+        },
+        "total_files": 203,
+        "total_dirs": 36,
+        "dir_node_counts": {}
+      },
+      "deltas": {
+        "vs_previous": null,
+        "vs_baseline": {
+          "nodes": -2,
+          "edges": -2,
+          "files_delta": -2,
+          "dirs_delta": 0
+        }
+      }
+    },
+    {
+      "key": "8e726dea777e3c755b32698a41585a28561a3054",
+      "branch": "main",
+      "timestamp": "2026-03-31T23:00:59.291391+00:00",
+      "version": "0.3.0",
+      "file": "8e726dea777e3c755b32698a41585a28561a3054.json",
+      "metrics": {
+        "total_nodes": 239,
+        "total_edges": 239,
+        "node_counts": {
+          "directory": 36,
+          "file": 203
+        },
+        "edge_counts": {
+          "CONTAINS": 239
+        },
+        "total_files": 203,
+        "total_dirs": 36,
+        "dir_node_counts": {}
+      },
+      "deltas": {
+        "vs_previous": null,
+        "vs_baseline": {
+          "nodes": -2,
+          "edges": -2,
+          "files_delta": -2,
+          "dirs_delta": 0
+        }
+      }
+    },
+    {
+      "key": "9c24357dc519305118ec20fea2e7c98f37365001",
+      "branch": "main",
+      "timestamp": "2026-03-31T23:02:18.663875+00:00",
+      "version": "0.3.0",
+      "file": "9c24357dc519305118ec20fea2e7c98f37365001.json",
+      "metrics": {
+        "total_nodes": 239,
+        "total_edges": 239,
+        "node_counts": {
+          "directory": 36,
+          "file": 203
+        },
+        "edge_counts": {
+          "CONTAINS": 239
+        },
+        "total_files": 203,
+        "total_dirs": 36,
+        "dir_node_counts": {}
+      },
+      "deltas": {
+        "vs_previous": null,
+        "vs_baseline": {
+          "nodes": -2,
+          "edges": -2,
+          "files_delta": -2,
+          "dirs_delta": 0
+        }
+      }
+    }
+  ]
+}

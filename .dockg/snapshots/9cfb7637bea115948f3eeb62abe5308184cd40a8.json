@@ -1,0 +1,123 @@
+{
+  "key": "9cfb7637bea115948f3eeb62abe5308184cd40a8",
+  "branch": "patent/provisional-filing",
+  "timestamp": "2026-03-31T22:50:06.292221+00:00",
+  "version": "0.5.1",
+  "metrics": {
+    "db_path": "/Users/egs/repos/kgrag/.dockg/graph.sqlite",
+    "total_nodes": 9444,
+    "total_edges": 76656,
+    "node_counts": {
+      "chunk": 2194,
+      "document": 56,
+      "entity": 2264,
+      "keyword": 2065,
+      "section": 1220,
+      "topic": 1645
+    },
+    "edge_counts": {
+      "CONTAINS": 3414,
+      "CO_OCCURS_WITH": 51430,
+      "HAS_KEYWORD": 8462,
+      "HAS_TOPIC": 2173,
+      "MENTIONS_ENTITY": 9127,
+      "NEXT": 944,
+      "REFERENCES": 60,
+      "SIMILAR_TO": 1046
+    },
+    "meaningful_nodes": 9388,
+    "coverage_score": 0.946824673351565,
+    "issues_count": 0,
+    "complexity_median": 18.0
+  },
+  "hotspots": [
+    {
+      "id": "chunk:analysis/KGRAG_analysis_20260315.md:0034",
+      "file_path": "analysis/KGRAG_analysis_20260315.md",
+      "label": "Graph Traversal Node Edge",
+      "references": 0,
+      "semantic_links": 18,
+      "total_links": 19
+    },
+    {
+      "id": "chunk:docs/PARTNERSHIP_EXECUTIVE_SUMMARY.md:0009",
+      "file_path": "docs/PARTNERSHIP_EXECUTIVE_SUMMARY.md",
+      "label": "The Solution: Four Patents, One Architecture",
+      "references": 0,
+      "semantic_links": 18,
+      "total_links": 19
+    },
+    {
+      "id": "chunk:docs/PARTNERSHIP_EXECUTIVE_SUMMARY.md:0010",
+      "file_path": "docs/PARTNERSHIP_EXECUTIVE_SUMMARY.md",
+      "label": "The Solution: Four Patents, One Architecture",
+      "references": 0,
+      "semantic_links": 18,
+      "total_links": 19
+    },
+    {
+      "id": "chunk:patents/embedder_patent/PATENT_APPLICATION.md:0019",
+      "file_path": "patents/embedder_patent/PATENT_APPLICATION.md",
+      "label": "A.1 Method Overview",
+      "references": 0,
+      "semantic_links": 18,
+      "total_links": 19
+    },
+    {
+      "id": "chunk:analysis/KGRAG_analysis_20260315.md:0013",
+      "file_path": "analysis/KGRAG_analysis_20260315.md",
+      "label": "Public API Surface",
+      "references": 0,
+      "semantic_links": 18,
+      "total_links": 18
+    },
+    {
+      "id": "chunk:analysis/KGRAG_analysis_20260315.md:0031",
+      "file_path": "analysis/KGRAG_analysis_20260315.md",
+      "label": "Configuration Loading Initialization Setup",
+      "references": 0,
+      "semantic_links": 18,
+      "total_links": 18
+    },
+    {
+      "id": "chunk:analysis/KGRAG_analysis_20260315.md:0032",
+      "file_path": "analysis/KGRAG_analysis_20260315.md",
+      "label": "Data Persistence Storage Database",
+      "references": 0,
+      "semantic_links": 18,
+      "total_links": 18
+    },
+    {
+      "id": "chunk:analysis/arch.md:0013",
+      "file_path": "analysis/arch.md",
+      "label": "Module Dependencies",
+      "references": 0,
+      "semantic_links": 17,
+      "total_links": 18
+    },
+    {
+      "id": "chunk:analysis/kgrag_analysis_20260312.md:0006",
+      "file_path": "analysis/kgrag_analysis_20260312.md",
+      "label": "\ud83d\udd25 Fan-In Ranking",
+      "references": 0,
+      "semantic_links": 17,
+      "total_links": 18
+    },
+    {
+      "id": "chunk:patents/embedder_patent/PATENT_APPLICATION.md:0023",
+      "file_path": "patents/embedder_patent/PATENT_APPLICATION.md",
+      "label": "A.1 Method Overview",
+      "references": 0,
+      "semantic_links": 17,
+      "total_links": 18
+    }
+  ],
+  "issues": [],
+  "vs_previous": null,
+  "vs_baseline": {
+    "nodes": 6496,
+    "edges": 56310,
+    "coverage_delta": 0.037454473658784515,
+    "issues_delta": 0
+  }
+}

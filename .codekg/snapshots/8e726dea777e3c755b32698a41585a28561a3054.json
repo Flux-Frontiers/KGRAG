@@ -1,0 +1,144 @@
+{
+  "key": "8e726dea777e3c755b32698a41585a28561a3054",
+  "branch": "main",
+  "timestamp": "2026-03-31T23:00:19.186314+00:00",
+  "version": "0.10.0",
+  "metrics": {
+    "db_path": ".codekg/graph.sqlite",
+    "total_nodes": 4247,
+    "meaningful_nodes": 342,
+    "total_edges": 5711,
+    "node_counts": {
+      "class": 38,
+      "function": 70,
+      "method": 194,
+      "module": 40,
+      "symbol": 3905
+    },
+    "edge_counts": {
+      "ATTR_ACCESS": 1556,
+      "CALLS": 1492,
+      "CONTAINS": 302,
+      "IMPORTS": 372,
+      "INHERITS": 20,
+      "RESOLVES_TO": 1969
+    },
+    "docstring_coverage": 0.7809999999999999,
+    "critical_issues": 1,
+    "complexity_median": 16,
+    "module_node_counts": {
+      "src/kg_rag/__init__.py": 3,
+      "src/kg_rag/adapters/__init__.py": 31,
+      "src/kg_rag/adapters/_stub_adapter.py": 93,
+      "src/kg_rag/adapters/agent_adapter.py": 52,
+      "src/kg_rag/adapters/base.py": 84,
+      "src/kg_rag/adapters/codekg_adapter.py": 71,
+      "src/kg_rag/adapters/diary_adapter.py": 60,
+      "src/kg_rag/adapters/disulfide_adapter.py": 6,
+      "src/kg_rag/adapters/dockg_adapter.py": 84,
+      "src/kg_rag/adapters/legal_adapter.py": 6,
+      "src/kg_rag/adapters/memory_adapter.py": 6,
+      "src/kg_rag/adapters/metakg_adapter.py": 81,
+      "src/kg_rag/adapters/pdbfile_adapter.py": 6,
+      "src/kg_rag/adapters/person_adapter.py": 6,
+      "src/kg_rag/adapters/verse_adapter.py": 6,
+      "src/kg_rag/app.py": 387,
+      "src/kg_rag/cli/__init__.py": 2,
+      "src/kg_rag/cli/cmd_analyze.py": 39,
+      "src/kg_rag/cli/cmd_corpus.py": 361,
+      "src/kg_rag/cli/cmd_hooks.py": 22,
+      "src/kg_rag/cli/cmd_init.py": 91,
+      "src/kg_rag/cli/cmd_mcp.py": 6,
+      "src/kg_rag/cli/cmd_query.py": 64,
+      "src/kg_rag/cli/cmd_registry.py": 180,
+      "src/kg_rag/cli/cmd_synthesize.py": 91,
+      "src/kg_rag/cli/cmd_viz.py": 25,
+      "src/kg_rag/cli/cmd_viz2d.py": 20,
+      "src/kg_rag/cli/group.py": 2,
+      "src/kg_rag/cli/main.py": 1,
+      "src/kg_rag/cli/options.py": 12,
+      "src/kg_rag/config.py": 27,
+      "src/kg_rag/corpus_registry.py": 135,
+      "src/kg_rag/mcp_server.py": 125,
+      "src/kg_rag/orchestrator.py": 236,
+      "src/kg_rag/person_registry.py": 140,
+      "src/kg_rag/primitives.py": 91,
+      "src/kg_rag/registry.py": 134,
+      "src/kg_rag/snapshots.py": 243,
+      "src/kg_rag/viz.py": 58,
+      "src/kg_rag/viz_qt.py": 551
+    }
+  },
+  "hotspots": [
+    {
+      "name": "m:src/kg_rag/corpus_registry.py:CorpusRegistry.get",
+      "callers": 70,
+      "callees": 3,
+      "risk_level": "low"
+    },
+    {
+      "name": "m:src/kg_rag/person_registry.py:PersonCorpusRegistry.get",
+      "callers": 70,
+      "callees": 3,
+      "risk_level": "low"
+    },
+    {
+      "name": "m:src/kg_rag/registry.py:KGRegistry.get",
+      "callers": 68,
+      "callees": 3,
+      "risk_level": "low"
+    },
+    {
+      "name": "m:src/kg_rag/adapters/base.py:KGAdapter.stats",
+      "callers": 22,
+      "callees": 0,
+      "risk_level": "low"
+    },
+    {
+      "name": "m:src/kg_rag/adapters/_stub_adapter.py:StubKGAdapter.stats",
+      "callers": 22,
+      "callees": 7,
+      "risk_level": "low"
+    },
+    {
+      "name": "m:src/kg_rag/adapters/metakg_adapter.py:MetaKGAdapter.stats",
+      "callers": 22,
+      "callees": 7,
+      "risk_level": "low"
+    },
+    {
+      "name": "m:src/kg_rag/adapters/_stub_adapter.py:StubKGAdapter.__init__",
+      "callers": 16,
+      "callees": 2,
+      "risk_level": "low"
+    },
+    {
+      "name": "m:src/kg_rag/adapters/agent_adapter.py:AgentKGAdapter.__init__",
+      "callers": 16,
+      "callees": 2,
+      "risk_level": "low"
+    },
+    {
+      "name": "m:src/kg_rag/corpus_registry.py:CorpusRegistry.list",
+      "callers": 15,
+      "callees": 3,
+      "risk_level": "low"
+    },
+    {
+      "name": "m:src/kg_rag/person_registry.py:PersonCorpusRegistry.list",
+      "callers": 15,
+      "callees": 3,
+      "risk_level": "low"
+    }
+  ],
+  "issues": [
+    "[WARN] Moderate docstring coverage (78.1%) \u2014 semantic retrieval quality is degraded for undocumented nodes; BM25 is as effective as embeddings without docstrings"
+  ],
+  "vs_previous": null,
+  "vs_baseline": {
+    "nodes": 3224,
+    "edges": 4472,
+    "coverage_delta": -0.007000000000000006,
+    "critical_issues_delta": 0
+  }
+}

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- `src/kg_rag/cli/cmd_synthesize.py`: change default Ollama model from `llama3.2`
+  to `qwen3:8b`; update system prompt to say "summarize" instead of "synthesize";
+  reformat inline `pylint: disable` comments to multi-line import blocks for
+  ruff compliance.
+
 ## [0.3.6] - 2026-03-31
 
 ### Fixed
