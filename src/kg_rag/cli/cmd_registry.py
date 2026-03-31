@@ -258,8 +258,6 @@ def status(registry):
     for e in entries:
         if not e.repo_path.exists():
             issues.append(f"  [red]missing[/red] {e.name}: repo_path missing ({e.repo_path})")
-        if not e.venv_path.exists():
-            issues.append(f"  [yellow]warning[/yellow] {e.name}: venv missing ({e.venv_path})")
         if not e.is_built:
             issues.append(f"  [dim]-[/dim] {e.name}: no databases found (run build first)")
 

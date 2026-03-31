@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.6] - 2026-03-31
+
+### Fixed
+- `kgrag init` (`cmd_init.py`): resolve SQLite and LanceDB output paths relative to
+  `--repo` (via `repo / marker / "graph.sqlite"`) instead of CWD. Prevents silent
+  misplacement of database files when the command is run from a different directory.
+- `cmd_registry.py`: `scan` command now prunes hidden directories during `os.walk`,
+  preventing descent into `.git`, `.venv`, and sibling KG dirs. `register` command
+  auto-detects DB paths anchored to the resolved repo path.
+
+### Added
+- `docs/cwd-anchor-fix.md` — documents the CWD-anchor bug, its root cause across
+  `doc_kg`, `ftreekg`, and `kgrag`, and the fix applied to each CLI.
+
+---
+
 ### Added
 - `src/kg_rag/cli/cmd_synthesize.py` — new `kgrag synthesize` CLI command: query
   registered KGs (or a named corpus) and stream an answer from a local Ollama model,
