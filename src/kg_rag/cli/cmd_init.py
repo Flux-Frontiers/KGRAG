@@ -161,7 +161,7 @@ def init(repo_path, wipe, name_prefix, layers, corpus_name, registry):
         console.print(f"Running: {' '.join(cmd)}")
 
         try:
-            subprocess.run(cmd, check=True)
+            subprocess.run(cmd, check=True, cwd=repo)
             built_ok = True
         except subprocess.CalledProcessError:
             built_ok = False
