@@ -18,9 +18,9 @@ Or add the content below to an existing `.clinerules` file in your repo.
 ## Content to put in `.clinerules`
 
 ```
-## CodeKG Tools
+## CodeKG MCP Tools
 
-This project has a CodeKG server configured (`codekg`). Use these tools to
+This project has a CodeKG MCP server configured (`codekg`). Use these tools to
 explore the codebase structure before writing or modifying code.
 
 ### Available tools
@@ -54,21 +54,6 @@ explore the codebase structure before writing or modifying code.
 - **callers(node_id)** — Find all callers of a function, including cross-module
   callers resolved through import stubs. Use for impact analysis before changing
   a function. Import-aware filtering reduces same-name false positives.
-
-- **centrality(top, kinds, group_by)** — PageRank structural importance ranking.
-  Use to find architectural hotspots and the most-connected nodes.
-
-- **bridge_centrality()** — Betweenness centrality: nodes that bridge otherwise
-  disconnected parts of the graph. Use to identify critical integration points.
-
-- **framework_nodes()** — Highest in-degree nodes (most depended-upon code).
-  Use to find core utilities and shared infrastructure.
-
-- **rank_nodes()** — Custom node ranking by configurable signals.
-
-- **query_ranked()** — Semantic query with integrated ranking in one call.
-
-- **explain_rank()** — Explain why a node ranked highly for a given query.
 
 - **snapshot_list(limit)** — List saved codebase metric snapshots newest-first.
   Returns snapshot key (tree hash), branch, timestamp, node/edge counts, and deltas.

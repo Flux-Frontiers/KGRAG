@@ -1,6 +1,6 @@
 ---
 name: codekg
-description: Expert knowledge for installing, configuring, and using CodeKG — a hybrid semantic + structural knowledge graph for Python codebases. Use this skill when the user asks about: setting up CodeKG in a project, adding code-kg as a Poetry dependency, building the SQLite or LanceDB knowledge graph, configuring .mcp.json for Claude Code or Kilo Code, configuring .vscode/mcp.json for GitHub Copilot, configuring claude_desktop_config.json for Claude Desktop, configuring Cline MCP settings, using the codekg CLI (codekg build, codekg update, codekg build-sqlite, codekg build-lancedb, codekg mcp, codekg query, codekg pack, codekg analyze, codekg centrality, codekg viz, codekg viz3d, codekg viz-timeline, codekg explain, codekg snapshot, codekg architecture, codekg download-model, codekg install-hooks), using the graph_stats / query_codebase / pack_snippets / get_node / list_nodes / callers / explain / centrality / bridge_centrality / framework_nodes / analyze_repo / rank_nodes / query_ranked / explain_rank / snapshot_list / snapshot_show / snapshot_diff tools, or troubleshooting CodeKG errors.
+description: Expert knowledge for installing, configuring, and using the CodeKG MCP server — a hybrid semantic + structural knowledge graph for Python codebases. Use this skill when the user asks about: setting up CodeKG in a project, adding code-kg as a Poetry dependency, building the SQLite or LanceDB knowledge graph, configuring .mcp.json for Claude Code or Kilo Code, configuring .vscode/mcp.json for GitHub Copilot, configuring claude_desktop_config.json for Claude Desktop, configuring Cline MCP settings, using the codekg CLI (codekg build-sqlite, codekg build-lancedb, codekg mcp, codekg query, codekg pack, codekg analyze, codekg viz, codekg viz3d, codekg viz-timeline, codekg explain, codekg snapshot, codekg architecture, codekg download-model, codekg install-hooks), using the graph_stats / query_codebase / pack_snippets / get_node / list_nodes / callers / explain / analyze_repo / snapshot_list / snapshot_show / snapshot_diff MCP tools, or troubleshooting CodeKG errors.
 ---
 
 # CodeKG Skill
@@ -9,18 +9,18 @@ description: Expert knowledge for installing, configuring, and using CodeKG — 
 >
 > Grep and file search find text. CodeKG understands code. It knows what calls what, what inherits from what, which modules are imported where, and surfaces the most semantically relevant source snippets in a single query. One `pack_snippets` call replaces five rounds of grep-and-read and gives the agent real structural insight into the codebase — not just line matches.
 
-CodeKG indexes Python repos into a hybrid knowledge graph (SQLite + LanceDB) and exposes it as tools for AI agents.
+CodeKG indexes Python repos into a hybrid knowledge graph (SQLite + LanceDB) and exposes it as MCP tools for AI agents.
 
 ## Installation (Poetry)
 
 ```bash
 # With MCP server support
-poetry add "code-kg[mcp] @ git+https://github.com/Flux-Frontiers/code_kg.git"
+poetry add "code-kg @ git+https://github.com/Flux-Frontiers/code_kg.git"
 ```
 
 Adds to `pyproject.toml`:
 ```toml
-code-kg = { git = "https://github.com/Flux-Frontiers/code_kg.git", extras = ["mcp"] }
+code-kg = { git = "https://github.com/Flux-Frontiers/code_kg.git", extras = ["viz"] }
 ```
 
 ## Build the Knowledge Graph
@@ -35,6 +35,8 @@ codekg build-lancedb --repo .
 
 > **Common mistake:** `codekg build-lancedb` uses `--sqlite`, not `--db`, when specifying a non-default path.
 
+Add `--wipe` to either command to rebuild from scratch.
+
 ## Rebuilding After Code Changes
 
 The knowledge graph is a snapshot of the codebase at build time. It does **not** update automatically. Stale data causes misleading query results — especially after renames, deletions, or large refactors.
@@ -43,34 +45,37 @@ The knowledge graph is a snapshot of the codebase at build time. It does **not**
 
 | Change | Action |
 |---|---|
-| Added / renamed / deleted functions, classes, or modules | Full rebuild (`codekg build`) |
-| Large refactor touching many files | Full rebuild (`codekg build`) |
-| Minor edits within existing functions | Incremental rebuild (`codekg update`) is usually sufficient |
-| New file added to the repo | Incremental rebuild (`codekg update`) is sufficient |
+| Added / renamed / deleted functions, classes, or modules | Full rebuild (`--wipe`) |
+| Large refactor touching many files | Full rebuild (`--wipe`) |
+| Minor edits within existing functions | Incremental rebuild (no `--wipe`) is usually sufficient |
+| New file added to the repo | Incremental rebuild is sufficient |
 
-> **Note:** `codekg build` always wipes and rebuilds from scratch (SQLite + LanceDB in one step). Use `codekg update` for fast incremental upserts that preserve existing nodes.
+> **Why `--wipe` matters:** Without it, deleted or renamed nodes remain in the index as phantom entries. LanceDB upserts by node ID so renamed nodes leave behind orphans; `--wipe` clears them.
 
 ### Full rebuild (recommended after significant changes)
 
 ```bash
-codekg build --repo .
+codekg build-sqlite  --repo . --wipe
+codekg build-lancedb --repo . --wipe
 ```
 
 ### Incremental rebuild (minor additions only)
 
 ```bash
-codekg update --repo .
+# omit --wipe to upsert without clearing
+codekg build-sqlite  --repo .
+codekg build-lancedb --repo .
 ```
 
 ### Using the installer script
 
 ```bash
-# Re-run the installer from your target repo
-bash scripts/install-skill.sh
+# Re-run the installer with --wipe from your target repo
+bash scripts/install-skill.sh --wipe
 
 # Or via curl if not running from a local clone
 curl -fsSL https://raw.githubusercontent.com/Flux-Frontiers/code_kg/main/scripts/install-skill.sh \
-  | bash -s
+  | bash -s -- --wipe
 ```
 
 ---
@@ -81,8 +86,6 @@ Beyond build/query/viz, the full command set:
 
 | Command | Purpose |
 |---|---|
-| `codekg build` | Full pipeline: SQLite + LanceDB in one step |
-| `codekg centrality` | Compute Structural Importance Ranking (SIR) over the graph |
 | `codekg explain <NODE_ID>` | Natural-language explanation of a code node by ID |
 | `codekg snapshot save <version>` | Capture metrics snapshot (commit, branch, version) |
 | `codekg snapshot list` | List all snapshots in reverse chronological order |
@@ -102,7 +105,7 @@ If you need to use CodeKG without network access (e.g., in CI, air-gapped nets, 
 codekg download-model
 ```
 
-This saves the model to `.codekg/models/<model-name>/`. Subsequent runs of `build-lancedb` and `codekg query` will use the cached local copy without any network access.
+This saves the model to `.codekg/models/microsoft--codebert-base/` (479M). Subsequent runs of `build-lancedb` and `codekg query` will use the cached local copy without any network access.
 
 Alternatively, set `CODEKG_MODEL_DIR` to cache elsewhere:
 ```bash
@@ -182,11 +185,11 @@ Config path: `~/Library/Application Support/Claude/claude_desktop_config.json` (
 
 If the project has Claude Copilot installed:
 ```
-/setup-codekg-mcp /path/to/repo
+/setup-mcp /path/to/repo
 ```
 This installs, builds, smoke-tests, and writes both config files automatically.
 
-## CodeKG Tools
+## MCP Tools
 
 | Tool | When to use |
 |---|---|
@@ -197,21 +200,10 @@ This installs, builds, smoke-tests, and writes both config files automatically.
 | `list_nodes(module_path, kind)` | List nodes filtered by module path prefix and/or kind |
 | `callers(node_id)` | Find all callers of a node — fan-in lookup resolving cross-module sym: stubs with import-aware filtering for ambiguous names |
 | `explain(node_id)` | Natural-language explanation of a node: role, docstring, callers, callees |
-| `centrality(top, kinds, group_by)` | SIR PageRank — rank nodes or modules by structural importance; use before refactoring or to prioritize test coverage |
-| `bridge_centrality(top, include_imports)` | Module connectivity ranking — identifies orchestrator/hub modules by how many other modules they interact with |
-| `framework_nodes(top)` | Identify framework-like hub modules: high SIR + high connectivity (0.6×SIR + 0.4×connectivity) |
-| `rank_nodes(top, rels, persist_metric, exclude_tests)` | Global weighted CodeRank (PageRank) — find the most structurally important nodes across the whole repo |
-| `query_ranked(q, k, mode, top, rels, radius, exclude_tests)` | CodeRank-enhanced query: `hybrid` mode (0.60×semantic + 0.25×centrality + 0.15×proximity) or `ppr` (0.70×personalized PageRank + 0.30×semantic) |
-| `explain_rank(node_id, q)` | Explain why a node ranked where it did — shows inbound counts, global rank, and query-conditioned scores |
 | `analyze_repo()` | Full architectural analysis — complexity, coupling, coverage, orphans |
 | `snapshot_list(limit)` | List saved metric snapshots newest-first (use `limit=0` for all) |
 | `snapshot_show(key)` | Full metrics for a snapshot key (tree hash) or `"latest"`; legacy snapshots backfill missing deltas |
 | `snapshot_diff(key_a, key_b)` | Compare two snapshots by key — node/edge/coverage/issues delta |
-
-**CodeRank workflows:**
-- Find most important nodes globally: `rank_nodes(top=25)` → `explain_rank`
-- Persist global rank for later queries: `rank_nodes(persist_metric='coderank_global')`
-- Structure-aware query: `query_ranked(q='database connection', mode='hybrid')`
 
 ## Query Strategy Guide
 
@@ -247,21 +239,6 @@ This installs, builds, smoke-tests, and writes both config files automatically.
 7. snapshot_list() / snapshot_diff("a", "b")             → track codebase evolution
 ```
 
-### Structural importance workflows
-
-```
-# Identify hotspots before refactoring
-centrality(top=20)                                       → SIR ranking by node
-centrality(top=10, group_by="module")                    → SIR ranking by module
-bridge_centrality(top=10)                                → hub modules by connectivity
-framework_nodes(top=10)                                  → most critical hub modules
-
-# CodeRank-enhanced search
-rank_nodes(top=25)                                       → global PageRank ranking
-query_ranked("database connection", mode="hybrid")       → structure-aware query
-explain_rank("fn:src/db/store.py:connect")               → why did this rank here?
-```
-
 ## .gitignore Setup
 
 The `.codekg/` directory holds the SQLite graph, LanceDB vector index, and snapshots. All are local artifacts — the graph and index are reproducible, snapshots are captured by the post-commit hook.
@@ -287,7 +264,7 @@ Add this to `.gitignore` when installing CodeKG in a new repo. Commit snapshots 
 | `ERROR: 'mcp' package not found` | `poetry add mcp` |
 | `WARNING: SQLite database not found` | Run both build commands first |
 | MCP server not appearing | Use absolute paths; restart Claude Code |
-| Empty query results | Run `codekg build --repo .` |
+| Empty query results | Run `codekg build-lancedb --wipe` |
 
 ## Full Reference
 

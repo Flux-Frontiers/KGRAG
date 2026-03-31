@@ -442,4 +442,3 @@ Your architecture doesn't just solve agent memory. It solves the **architecture 
 Every adapter you build just makes the unified system more powerful. The orchestrator stays the same.
 
 That's the moat.
-

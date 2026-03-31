@@ -92,15 +92,12 @@ def _call_ollama(
             resp = httpx.post(url, json=payload, timeout=120)
             if resp.status_code != 200:
                 raise click.ClickException(
-                    f"Ollama returned HTTP {resp.status_code}. "
-                    "Is Ollama running? Try: ollama serve"
+                    f"Ollama returned HTTP {resp.status_code}. Is Ollama running? Try: ollama serve"
                 )
             return resp.json().get("response", "")
     except httpx.ConnectError as e:
         raise click.ClickException(
-            f"Cannot connect to Ollama at {base_url}.\n"
-            "Start Ollama with: ollama serve\n"
-            f"  ({e})"
+            f"Cannot connect to Ollama at {base_url}.\nStart Ollama with: ollama serve\n  ({e})"
         ) from e
 
 
@@ -187,7 +184,9 @@ def synthesize(
     with KGRAG(registry_path=reg_path) as kg:
         if corpus:
             # Scoped corpus query — use the corpus registry
-            from kg_rag.corpus_registry import CorpusRegistry  # pylint: disable=import-outside-toplevel
+            from kg_rag.corpus_registry import (  # pylint: disable=import-outside-toplevel
+                CorpusRegistry,
+            )
             from kg_rag.registry import KGRegistry  # pylint: disable=import-outside-toplevel
 
             with KGRegistry(db_path=reg_path) as kreg, CorpusRegistry(db_path=reg_path) as creg:
@@ -222,14 +221,10 @@ def synthesize(
 
     if not snippets:
         console.print("[yellow]No relevant content found in registered KGs.[/yellow]")
-        console.print(
-            "[dim]Register and build KGs first (kgrag init / kgrag register).[/dim]"
-        )
+        console.print("[dim]Register and build KGs first (kgrag init / kgrag register).[/dim]")
         sys.exit(0)
 
-    console.print(
-        f"[green]Found[/green] {len(snippets)} snippet(s) from {kgs_queried} KG(s)"
-    )
+    console.print(f"[green]Found[/green] {len(snippets)} snippet(s) from {kgs_queried} KG(s)")
 
     # ── 2. Build context block ───────────────────────────────────────────────
     context_parts: list[str] = []
@@ -239,11 +234,7 @@ def synthesize(
 
     context_block = "\n\n---\n\n".join(context_parts)
 
-    full_prompt = (
-        f"Question: {query_text}\n\n"
-        f"Relevant excerpts:\n\n{context_block}\n\n"
-        f"Answer:"
-    )
+    full_prompt = f"Question: {query_text}\n\nRelevant excerpts:\n\n{context_block}\n\nAnswer:"
 
     if show_context:
         console.print(Rule("Retrieved Context"))
