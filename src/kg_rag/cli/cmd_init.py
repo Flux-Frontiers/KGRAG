@@ -153,9 +153,24 @@ def init(repo_path, wipe, name_prefix, layers, corpus_name, registry):
             results.append({"kind": kind, "name": name, "status": "skipped", "entry": None})
             continue
 
+        # Resolve DB paths from the well-known marker dir up front so we can
+        # pass them explicitly to the build tool — prevents CWD-relative placement.
+        kg_dir = repo / marker
+        sqlite_path = kg_dir / "graph.sqlite"
+        lancedb_path = kg_dir / "lancedb"
+
         # Build
         console.rule(f"[bold]{kind} layer[/bold]")
-        cmd = [cli_name, "build", "--repo", str(repo)]
+        cmd = [
+            cli_name,
+            "build",
+            "--repo",
+            str(repo),
+            "--sqlite",
+            str(sqlite_path),
+            "--lancedb",
+            str(lancedb_path),
+        ]
         if wipe:
             cmd.append("--wipe")
         console.print(f"Running: {' '.join(cmd)}")
@@ -170,11 +185,6 @@ def init(repo_path, wipe, name_prefix, layers, corpus_name, registry):
             console.print(f"[red]Build failed[/red] for {kind} layer.")
             results.append({"kind": kind, "name": name, "status": "build-failed", "entry": None})
             continue
-
-        # Resolve DB paths from the well-known marker dir
-        kg_dir = repo / marker
-        sqlite_path = kg_dir / "graph.sqlite"
-        lancedb_path = kg_dir / "lancedb"
 
         version = read_pyproject_version(repo)
         entry = KGEntry(
@@ -209,14 +219,31 @@ def init(repo_path, wipe, name_prefix, layers, corpus_name, registry):
         "build-failed": "[red]build failed[/red]",
     }
 
+    def _fmt_size(path: Path | None) -> str:
+        """Return human-readable file/dir size, or '-' if absent."""
+        if path is None or not path.exists():
+            return "-"
+        try:
+            if path.is_file():
+                size: float = path.stat().st_size
+            else:
+                size = float(sum(f.stat().st_size for f in path.rglob("*") if f.is_file()))
+            for unit in ("B", "KB", "MB", "GB"):
+                if size < 1024:
+                    return f"[green]{size:.0f} {unit}[/green]"
+                size /= 1024
+            return f"[green]{size:.1f} TB[/green]"
+        except OSError:
+            return "[yellow]?[/yellow]"
+
     for r in results:
         e = r["entry"]
         table.add_row(
             r["kind"],
             r["name"],
             _STATUS_FMT.get(r["status"], r["status"]),
-            "[green]yes[/green]" if (e and e.sqlite_path) else "-",
-            "[green]yes[/green]" if (e and e.lancedb_path) else "-",
+            _fmt_size(e.sqlite_path if e else None),
+            _fmt_size(e.lancedb_path if e else None),
         )
 
     console.print(table)

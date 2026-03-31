@@ -1,5 +1,12 @@
 {
   "permissions": {
+    "allow": [
+      "Bash(kgrag registry:*)",
+      "Bash(kgrag info:*)",
+      "Bash(kgrag --help)",
+      "Bash(kgrag unregister:*)",
+      "Bash(dockg build:*)"
+    ],
     "additionalDirectories": [
       "/Users/egs/repos/kgrag/.claude"
     ]
