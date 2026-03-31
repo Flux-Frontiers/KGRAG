@@ -1,0 +1,24 @@
+{
+  "key": "9cfb7637bea115948f3eeb62abe5308184cd40a8",
+  "branch": "patent/provisional-filing",
+  "timestamp": "2026-03-31T22:50:12.198662+00:00",
+  "version": "0.3.0",
+  "metrics": {
+    "total_nodes": 241,
+    "total_edges": 241,
+    "node_counts": {
+      "directory": 36,
+      "file": 205
+    },
+    "edge_counts": {
+      "CONTAINS": 241
+    },
+    "total_files": 205,
+    "total_dirs": 36,
+    "dir_node_counts": {}
+  },
+  "hotspots": [],
+  "issues": [],
+  "vs_previous": null,
+  "vs_baseline": null
+}

@@ -9,6 +9,11 @@ Usage::
     kgrag synthesize "theme of isolation in 19th century novels" --kind doc -k 8
     kgrag synthesize "Watson's role" --corpus gutenberg-fiction --model llama3.2
     kgrag synthesize "entropy" --ollama-url http://myserver:11434
+
+    Author: Eric G. Suchanek, PhD
+    Last Revision: 2026-03-31 18:52:16
+
+    License: Elastic 2.0
 """
 
 from __future__ import annotations
@@ -29,12 +34,12 @@ from kg_rag.primitives import KGKind
 console = Console()
 
 _DEFAULT_OLLAMA_URL = "http://localhost:11434"
-_DEFAULT_MODEL = "llama3.2"
+_DEFAULT_MODEL = "qwen3:8b"
 
 _SYSTEM_PROMPT = """\
 You are a knowledgeable literary and research assistant. You are given excerpts \
 retrieved from a knowledge graph built from books and documents. Use these excerpts \
-as your primary source and synthesize a clear, accurate answer to the user's question. \
+as your primary source and summarize a clear, accurate answer to the user's question. \
 If the excerpts do not contain enough information, say so honestly.\
 """
 
@@ -187,7 +192,9 @@ def synthesize(
             from kg_rag.corpus_registry import (  # pylint: disable=import-outside-toplevel
                 CorpusRegistry,
             )
-            from kg_rag.registry import KGRegistry  # pylint: disable=import-outside-toplevel
+            from kg_rag.registry import (  # pylint: disable=import-outside-toplevel
+                KGRegistry,
+            )
 
             with KGRegistry(db_path=reg_path) as kreg, CorpusRegistry(db_path=reg_path) as creg:
                 corpus_entry = creg.get(corpus)
@@ -201,8 +208,12 @@ def synthesize(
                 console.print(f"[yellow]Corpus {corpus!r} has no registered KGs.[/yellow]")
                 sys.exit(0)
 
-            from kg_rag.adapters import make_adapter  # pylint: disable=import-outside-toplevel
-            from kg_rag.primitives import CrossSnippet  # pylint: disable=import-outside-toplevel
+            from kg_rag.adapters import (  # pylint: disable=import-outside-toplevel
+                make_adapter,
+            )
+            from kg_rag.primitives import (  # pylint: disable=import-outside-toplevel
+                CrossSnippet,
+            )
 
             snippets: list[CrossSnippet] = []
             for entry in entries:

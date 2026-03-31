@@ -175,7 +175,7 @@ include = ["src"]
 
 [tool.dockg]
 # Exclude directories from the knowledge graph by default.
-exclude = [".dockg", ".codekg", "src", ".git", ".venv", "venv", "__pycache__",
+exclude = [".dockg", ".codekg", ".filetreekg", "src", ".git", ".venv", "venv", "__pycache__",
 ".mypy_cache", ".pytest_cache", "bundles", "dist"]
 
 [tool.poe.tasks.docs]

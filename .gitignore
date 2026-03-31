@@ -251,6 +251,12 @@ __marimo__/
 .kgrag/graph.sqlite*
 .kgrag/models
 
+# FileTreeKG
+.filetreekg/lancedb/
+.filetreekg/lancedb-*
+.filetreekg/graph.sqlite
+.filetreekg/graph.sqlite*
+
 # MCP server config — machine-specific, never commit
 .mcp.json
 
