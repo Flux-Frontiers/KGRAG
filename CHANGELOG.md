@@ -8,6 +8,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `src/kg_rag/cli/cmd_synthesize.py` — new `kgrag synthesize` CLI command: query
+  registered KGs (or a named corpus) and stream an answer from a local Ollama model,
+  with optional context display and configurable top-K snippet retrieval.
+- `src/kg_rag/app.py` — Streamlit **Synthesize** tab: interactive RAG interface
+  backed by `kgrag synthesize`, allowing corpus-scoped queries and Ollama streaming
+  from the web UI.
+- `docs/` — moved vision and roadmap documents (`ADAPTERS_ROADMAP.md`,
+  `AGENTKGKG_IN_CLAUDE_VISION.md`, `OPEN_KNOWLEDGE_INSTITUTE_VISION.md`,
+  `PARTNERSHIP_EXECUTIVE_SUMMARY.md`, `PITCH_DECK.md`, `TAGLINES_AND_POSITIONING.md`,
+  `THE_FOREST_VISION.md`) from repo root into `docs/`.
+- `patents/embedder_patent/` — PEPYS embedder patent application, CIP temporal
+  extension, and pipeline technical disclosure (Markdown, LaTeX, PDF).
+- `patents/haystack_patent/` — Haystack knowledge compiler patent suite: four patent
+  drafts plus eight figures.
+
+### Changed
+- `src/kg_rag/app.py`: ruff-formatted; minor line-length fixes in Synthesize tab.
+- `src/kg_rag/cli/cmd_synthesize.py`: ruff-formatted; import grouping and string
+  concatenation cleaned up.
+
+### Added
 - `docs/graph_reasoner_spec/` — formal specification for GraphReasoner: a semantic
   reasoning engine that navigates knowledge graphs using an N-dimensional turtle
   navigator with heading-aware steering, lazy edge discovery, beam search, and

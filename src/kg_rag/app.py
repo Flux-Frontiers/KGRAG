@@ -726,9 +726,7 @@ def _call_ollama_stream(prompt: str, model: str, base_url: str):
     try:
         with httpx.stream("POST", url, json=payload, timeout=120) as resp:
             if resp.status_code != 200:
-                raise RuntimeError(
-                    f"Ollama returned HTTP {resp.status_code}. Is Ollama running?"
-                )
+                raise RuntimeError(f"Ollama returned HTTP {resp.status_code}. Is Ollama running?")
             for line in resp.iter_lines():
                 if not line:
                     continue
@@ -775,7 +773,9 @@ def _tab_synthesize(cfg: dict) -> None:
             help="Set OLLAMA_URL env var to override default.",
         )
     with col_k:
-        synth_k = st.number_input("Top-K snippets", min_value=1, max_value=20, value=6, key="synth_k")
+        synth_k = st.number_input(
+            "Top-K snippets", min_value=1, max_value=20, value=6, key="synth_k"
+        )
 
     show_ctx = st.checkbox("Show retrieved context", value=False, key="synth_show_ctx")
 
@@ -831,9 +831,7 @@ def _tab_synthesize(cfg: dict) -> None:
 
     full_prompt = (
         f"Question: {synth_query.strip()}\n\n"
-        f"Relevant excerpts:\n\n"
-        + "\n\n---\n\n".join(context_parts)
-        + "\n\nAnswer:"
+        f"Relevant excerpts:\n\n" + "\n\n---\n\n".join(context_parts) + "\n\nAnswer:"
     )
 
     # ── Stream from Ollama ────────────────────────────────────────────────
