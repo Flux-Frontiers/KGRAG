@@ -5,10 +5,14 @@
       "Bash(kgrag info:*)",
       "Bash(kgrag --help)",
       "Bash(kgrag unregister:*)",
-      "Bash(dockg build:*)"
+      "Bash(dockg build:*)",
+      "Bash(time .venv/bin/diary-embedder --workers 1 --force)",
+      "Bash(kpsewhich jmlr2e.sty)",
+      "Read(//usr/local/texlive/**)"
     ],
     "additionalDirectories": [
-      "/Users/egs/repos/kgrag/.claude"
+      "/Users/egs/repos/kgrag/.claude",
+      "/Users/egs/repos/kgrag/docs/manifold_walker_spec"
     ]
   }
 }

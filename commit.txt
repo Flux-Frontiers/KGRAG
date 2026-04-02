@@ -1,22 +1,9 @@
-feat(viz): add Streamlit visualizer, kgrag viz CLI, and adapter API alignment
+fix(synthesize): default model qwen3:8b, prompt wording, import formatting; ignore .filetreekg
 
-Introduce a full Streamlit UI (`app.py`) with Registry, Query, and Snippets
-tabs for exploring the federated KG registry. Wire it up via a new `kgrag viz`
-CLI command (`cmd_viz.py`) and `kgrag-viz` script entry in `pyproject.toml`.
-
-Update all three adapters (CodeKG, DocKG, MetaKG) to the new dict-based result
-API (`result.nodes`, `pack.nodes`, `store.stats()`), fixing constructor kwarg
-renames (`lancedb_path` → `lancedb_dir`, `repo_root` → `corpus_root`).
-
-Additional improvements:
-- `config.py`: extract `_load_toml()` helper; add `read_pyproject_version()`
-- `cmd_registry.py` / `cmd_init.py`: auto-read version from pyproject.toml and
-  default tags to today's datestamp
-- `primitives.py` / `registry.py`: replace deprecated `datetime.utcnow()` with
-  timezone-aware `datetime.now(UTC)`
-- `.mcp.json`: switch to relative `.venv/bin/` paths and `--repo .` for
-  portability
-- Pre-commit hook extended to snapshot both CodeKG and DocKG before each commit
-- Add `.claude/skills/kgrag-usage/` Claude Code skill and `.vscode/settings.json`
+- cmd_synthesize.py: default Ollama model llama3.2 → qwen3:8b; system prompt
+  "synthesize" → "summarize"; reformat pylint-disable to multi-line import blocks
+- .gitignore: add .filetreekg/lancedb/, graph.sqlite exclusions
+- pyproject.toml: add .filetreekg to [tool.dockg] exclude list
+- KG snapshots: codekg, dockg, filetreekg snapshots updated
 
 Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
