@@ -257,6 +257,9 @@ __marimo__/
 .filetreekg/graph.sqlite
 .filetreekg/graph.sqlite*
 
+# AgentKG — conversation graph is private, never commit
+.agentkg/
+
 # MCP server config — machine-specific, never commit
 .mcp.json
 
