@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "agent-kg": {
+      "type": "stdio",
+      "command": "agent-kg-mcp",
+      "env": {
+        "AGENTKG_REPO": ".",
+        "AGENTKG_PERSON": "egs"
+      }
+    }
+  }
+}
