@@ -43,6 +43,7 @@ classifiers = [
 ]
 packages = [
   { include = "kg_rag", from = "src" },
+  { include = "agent_kg", from = "src" },
 ]
 
 [tool.poetry.dependencies]
@@ -78,6 +79,7 @@ kg-snapshot = { git = "https://github.com/Flux-Frontiers/kg_snapshot.git" }
 # our own adaptors
 doc-kg = {git = "https://github.com/Flux-Frontiers/doc_kg.git"}
 code-kg = {git = "https://github.com/Flux-Frontiers/code_kg.git"}
+spacy = {version = ">=3.7.0", optional = true}
 # ftree-kg = {path = "../FTreeKG", develop = true}
 
 # we really don't need these
@@ -92,6 +94,7 @@ viz3d = ["pyvista", "pyvistaqt", "PyQt5", "param", "markdown", "trame-vtk"]
 diary-kg = ["diary-kg"]
 ftree-kg = ["ftree-kg"]
 metabo-kg = ["metabo-kg"]
+agent-kg-nlp = ["spacy"]
 
 
 [tool.poetry.group.qt]
@@ -125,6 +128,8 @@ pdoc = ">=14.0.0"
 [tool.poetry.scripts]
 kgrag              = "kg_rag.cli.main:cli"
 kgrag-mcp          = "kg_rag.mcp_server:main"
+agent-kg           = "agent_kg.cli.main:cli"
+agent-kg-mcp       = "agent_kg.mcp.server:main"
 kgrag-register     = "kg_rag.cli.cmd_registry:register"
 kgrag-unregister   = "kg_rag.cli.cmd_registry:unregister"
 kgrag-list         = "kg_rag.cli.cmd_registry:list_kgs"
