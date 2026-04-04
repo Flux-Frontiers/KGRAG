@@ -208,10 +208,11 @@ class AgentKG:
                  ``session_id``, ``turn_count``.
         """
         s = self._store.stats()
+        all_turns = self._store.get_all_turns()
         return {
             **s,
             "session_id": self._session.id,
-            "turn_count": self._session.turn_count,
+            "turn_count": len(all_turns),
             "person_id": self._person_id,
         }
 
