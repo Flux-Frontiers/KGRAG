@@ -2307,6 +2307,22 @@ files = [
 markers = {main = "extra == \"viz3d\""}
 
 [[package]]
+name = "kg-snapshot"
+version = "0.1.0"
+description = "Shared snapshot infrastructure for KG modules — zero stdlib-only deps."
+optional = false
+python-versions = ">=3.12,<3.14"
+groups = ["main"]
+files = []
+develop = false
+
+[package.source]
+type = "git"
+url = "https://github.com/Flux-Frontiers/kg_snapshot.git"
+reference = "HEAD"
+resolved_reference = "a55fdd44070c899dd2c08831a873082ca7068423"
+
+[[package]]
 name = "kiwisolver"
 version = "1.5.0"
 description = "A fast implementation of the Cassowary constraint solver"
@@ -7096,4 +7112,4 @@ viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "3b4f0d0b4a0d1e96b01c6f8b34641cae2016bcceaae3309769836d298b00c70e"
+content-hash = "5e7ae51ff48c0d450c42496ab3432ee63898592110e454170b1e47d9e791d910"

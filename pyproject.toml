@@ -72,6 +72,9 @@ markdown = { version = ">=3.6", optional = true }
 trame-vtk = { version = ">=2.0.0", optional = true }
 pip = "^26.0.1"
 
+# snapshot infrastructure (no third-party deps)
+kg-snapshot = { git = "https://github.com/Flux-Frontiers/kg_snapshot.git" }
+
 # our own adaptors
 doc-kg = {git = "https://github.com/Flux-Frontiers/doc_kg.git"}
 code-kg = {git = "https://github.com/Flux-Frontiers/code_kg.git"}
@@ -175,8 +178,7 @@ include = ["src"]
 
 [tool.dockg]
 # Exclude directories from the knowledge graph by default.
-exclude = [".dockg", ".codekg", ".filetreekg", "src", ".git", ".venv", "venv", "__pycache__",
-".mypy_cache", ".pytest_cache", "bundles", "dist"]
+exclude = ["bundles", "dist", "books"]
 
 [tool.poe.tasks.docs]
 help = "Generate project documentation and user guide PDFs"
