@@ -260,8 +260,6 @@ __marimo__/
 # AgentKG — conversation graph is private, never commit
 .agentkg/
 
-# MCP server config — machine-specific, never commit
-.mcp.json
 
 # MacOS
 .DS_Store
