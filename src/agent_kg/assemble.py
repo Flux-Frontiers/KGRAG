@@ -111,8 +111,10 @@ def assemble_context(
             _add("## Active Topics\n" + ", ".join(topic_labels[:8]))
 
     # ------------------------------------------------------------------
-    # 5. Verbatim recent turns (always last so they're most visible)
+    # 5. Verbatim recent turns — search ALL sessions (CLI calls each create
+    #    a new session; we want the most recent turns regardless of session)
     # ------------------------------------------------------------------
+    recent_turns = store.get_all_turns(session_id=None)[-recent_window:]
     if recent_turns:
         recent_lines = []
         for t in recent_turns:
