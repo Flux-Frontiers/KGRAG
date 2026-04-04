@@ -1,4 +1,28 @@
 {
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.prompt' | { read -r p; agent-kg ingest \"$p\" --role user --repo /home/user/KGRAG --person egs --no-embed; } 2>/dev/null || true",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "agent-kg ingest \"Session ended.\" --role assistant --repo /home/user/KGRAG --person egs --no-embed 2>/dev/null || true",
+            "async": true
+          }
+        ]
+      }
+    ]
+  },
   "permissions": {
     "allow": [
       "Bash(kgrag registry:*)",
