@@ -46,6 +46,14 @@
     "kgrag": {
       "command": "/Users/egs/repos/kgrag/.venv/bin/kgrag",
       "args": ["mcp"]
+    },
+    "agent-kg": {
+      "type": "stdio",
+      "command": "agent-kg-mcp",
+      "env": {
+        "AGENTKG_REPO": ".",
+        "AGENTKG_PERSON": "egs"
+      }
     }
   }
 }

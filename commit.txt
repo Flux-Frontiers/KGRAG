@@ -1,9 +1,9 @@
-fix(synthesize): default model qwen3:8b, prompt wording, import formatting; ignore .filetreekg
+chore: extract agent_kg to dedicated repo, add as external dependency
 
-- cmd_synthesize.py: default Ollama model llama3.2 → qwen3:8b; system prompt
-  "synthesize" → "summarize"; reformat pylint-disable to multi-line import blocks
-- .gitignore: add .filetreekg/lancedb/, graph.sqlite exclusions
-- pyproject.toml: add .filetreekg to [tool.dockg] exclude list
-- KG snapshots: codekg, dockg, filetreekg snapshots updated
+Remove bundled src/agent_kg/ — the package now lives at
+Flux-Frontiers/agent_kg and is pulled in as a git dependency.
+Drop agent-kg script entries and agent-kg-nlp extra from pyproject.toml.
+Add pylint disable for lazy imports in agent_adapter.py.
+Add agent-kg.skill, settings templates, and .mcp.json registrations.
 
 Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
