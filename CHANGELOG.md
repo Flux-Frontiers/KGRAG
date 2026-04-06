@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- `src/agent_kg/` — entire `agent_kg` package extracted to its own dedicated repo
+  ([Flux-Frontiers/agent_kg](https://github.com/Flux-Frontiers/agent_kg)). KGRAG
+  now depends on it as an external package (`agent-kg` git dependency) rather than
+  bundling the source. The `agent-kg` and `agent-kg-mcp` script entries and the
+  `agent-kg-nlp` extra are removed from `pyproject.toml`.
+- `.claude/agents/` — 13 agent definition files removed (moved upstream).
+
+### Added
+- `agent-kg` git dependency in `pyproject.toml` pointing to `Flux-Frontiers/agent_kg`.
+- `.claude/settings.json.template` and `settings.json.template` — hook config templates.
+- `agent-kg.skill` — packaged AgentKG skill for Claude Code.
+- `analysis/filetreekg_analysis.md` — FTreeKG analysis document.
+- `.mcp.json` — MCP server registrations including `agent-kg-mcp`.
+
+### Fixed
+- `src/kg_rag/adapters/agent_adapter.py` — module-level pylint disable for C0415
+  on lazy `agent_kg` imports.
+
 ### Changed
 - `src/kg_rag/cli/cmd_synthesize.py`: change default Ollama model from `llama3.2`
   to `qwen3:8b`; update system prompt to say "summarize" instead of "synthesize";

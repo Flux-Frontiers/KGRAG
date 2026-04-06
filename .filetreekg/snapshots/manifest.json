@@ -1,6 +1,6 @@
 {
   "format": "1.0",
-  "last_update": "2026-03-31T23:02:18.664567+00:00",
+  "last_update": "2026-04-06T22:36:38.563665+00:00",
   "snapshots": [
     {
       "key": "9cfb7637bea115948f3eeb62abe5308184cd40a8",
@@ -144,6 +144,69 @@
           "edges": -2,
           "files_delta": -2,
           "dirs_delta": 0
+        }
+      }
+    },
+    {
+      "key": "a28ef956fda1d313c27140fd096afc602bd69187",
+      "branch": "main",
+      "timestamp": "2026-04-06T22:36:38.562818+00:00",
+      "version": "0.3.0",
+      "file": "a28ef956fda1d313c27140fd096afc602bd69187.json",
+      "metrics": {
+        "total_nodes": 622,
+        "total_edges": 622,
+        "node_counts": {
+          "directory": 43,
+          "file": 579
+        },
+        "edge_counts": {
+          "CONTAINS": 622
+        },
+        "total_files": 579,
+        "total_dirs": 43,
+        "dir_node_counts": {
+          ".agentkg": 373,
+          ".claude": 54,
+          ".mcp.json": 1,
+          ".mcp.json.sav": 1,
+          ".metabokg": 2,
+          ".pre-commit-config.yaml": 1,
+          ".secrets.baseline": 1,
+          "AGENT_PERSPECTIVE.md": 1,
+          "CHANGELOG.md": 1,
+          "CLAUDE.md": 1,
+          "Claude.mcp.json": 1,
+          "LICENSE": 1,
+          "PORTABLE_KNOWLEDGE_VISION.md": 1,
+          "README.md": 1,
+          "agent-kg.skill": 1,
+          "analysis": 9,
+          "apply-doc-kg-patches.sh": 1,
+          "articles": 4,
+          "books": 12,
+          "commit.txt": 1,
+          "docs": 41,
+          "kgrag.code-workspace": 1,
+          "ode_to_the_knowledge_graph.md": 1,
+          "patents": 43,
+          "pepys": 6,
+          "poetry.lock": 1,
+          "poetry.toml": 1,
+          "pyproject.toml": 1,
+          "scripts": 5,
+          "settings.json.template": 1,
+          "src": 44,
+          "tests": 9
+        }
+      },
+      "deltas": {
+        "vs_previous": null,
+        "vs_baseline": {
+          "nodes": 381,
+          "edges": 381,
+          "files_delta": 374,
+          "dirs_delta": 7
         }
       }
     }

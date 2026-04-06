@@ -15,6 +15,7 @@ Storage layout (auto-created on first use)::
     ~/.kgrag/profiles/<person_id>/
         userprofile.sqlite # global UserProfile (Preference, Expertise, etc.)
 """
+# pylint: disable=import-outside-toplevel
 
 from __future__ import annotations
 
