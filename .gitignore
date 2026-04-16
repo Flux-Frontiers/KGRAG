@@ -260,6 +260,13 @@ __marimo__/
 # AgentKG — conversation graph is private, never commit
 .agentkg/
 
+# MemoryKG — claude_t_self corpus index (built artifact, not source)
+.memorykg/lancedb/
+.memorykg/lancedb-*
+.memorykg/graph.sqlite
+.memorykg/graph.sqlite*
+.memorykg/models
+
 
 # MacOS
 .DS_Store

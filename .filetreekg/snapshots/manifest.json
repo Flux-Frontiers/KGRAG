@@ -1,6 +1,6 @@
 {
   "format": "1.0",
-  "last_update": "2026-04-06T22:36:38.563665+00:00",
+  "last_update": "2026-04-16T04:10:34.093436+00:00",
   "snapshots": [
     {
       "key": "9cfb7637bea115948f3eeb62abe5308184cd40a8",
@@ -207,6 +207,136 @@
           "edges": 381,
           "files_delta": 374,
           "dirs_delta": 7
+        }
+      }
+    },
+    {
+      "key": "9c76a1a4ac49420a75653adba9652a8a15c85219",
+      "branch": "main",
+      "timestamp": "2026-04-16T04:07:43.859461+00:00",
+      "version": "0.5.0",
+      "file": "9c76a1a4ac49420a75653adba9652a8a15c85219.json",
+      "metrics": {
+        "total_nodes": 622,
+        "total_edges": 622,
+        "node_counts": {
+          "directory": 43,
+          "file": 579
+        },
+        "edge_counts": {
+          "CONTAINS": 622
+        },
+        "total_files": 579,
+        "total_dirs": 43,
+        "dir_node_counts": {
+          ".agentkg": 373,
+          ".claude": 54,
+          ".mcp.json": 1,
+          ".mcp.json.sav": 1,
+          ".metabokg": 2,
+          ".pre-commit-config.yaml": 1,
+          ".secrets.baseline": 1,
+          "AGENT_PERSPECTIVE.md": 1,
+          "CHANGELOG.md": 1,
+          "CLAUDE.md": 1,
+          "Claude.mcp.json": 1,
+          "LICENSE": 1,
+          "PORTABLE_KNOWLEDGE_VISION.md": 1,
+          "README.md": 1,
+          "agent-kg.skill": 1,
+          "analysis": 9,
+          "apply-doc-kg-patches.sh": 1,
+          "articles": 4,
+          "books": 12,
+          "commit.txt": 1,
+          "docs": 41,
+          "kgrag.code-workspace": 1,
+          "ode_to_the_knowledge_graph.md": 1,
+          "patents": 43,
+          "pepys": 6,
+          "poetry.lock": 1,
+          "poetry.toml": 1,
+          "pyproject.toml": 1,
+          "scripts": 5,
+          "settings.json.template": 1,
+          "src": 44,
+          "tests": 9
+        }
+      },
+      "deltas": {
+        "vs_previous": null,
+        "vs_baseline": {
+          "nodes": 381,
+          "edges": 381,
+          "files_delta": 374,
+          "dirs_delta": 7
+        }
+      }
+    },
+    {
+      "key": "14ee905aebe477097d662e1f66b01357b463a20b",
+      "branch": "main",
+      "timestamp": "2026-04-16T04:10:34.092534+00:00",
+      "version": "0.5.0",
+      "file": "14ee905aebe477097d662e1f66b01357b463a20b.json",
+      "metrics": {
+        "total_nodes": 1379,
+        "total_edges": 1379,
+        "node_counts": {
+          "directory": 52,
+          "file": 1327
+        },
+        "edge_counts": {
+          "CONTAINS": 1379
+        },
+        "total_files": 1327,
+        "total_dirs": 52,
+        "dir_node_counts": {
+          ".agentkg": 1102,
+          ".claude": 41,
+          ".mcp.json": 1,
+          ".mcp.json.sav": 1,
+          ".memorykg": 23,
+          ".metabokg": 2,
+          ".pre-commit-config.yaml": 1,
+          ".pycodekg": 2,
+          ".secrets.baseline": 1,
+          "AGENT_PERSPECTIVE.md": 1,
+          "CHANGELOG.md": 1,
+          "CLAUDE.md": 1,
+          "CLAUDE_T_IDENTITY.md": 1,
+          "Claude.mcp.json": 1,
+          "KGRAG_ANALYSIS.md": 1,
+          "LICENSE": 1,
+          "PORTABLE_KNOWLEDGE_VISION.md": 1,
+          "README.md": 1,
+          "agent-kg.skill": 1,
+          "analysis": 11,
+          "apply-doc-kg-patches.sh": 1,
+          "articles": 4,
+          "books": 12,
+          "commit.txt": 1,
+          "docs": 51,
+          "kgrag.code-workspace": 1,
+          "ode_to_the_knowledge_graph.md": 1,
+          "patents": 43,
+          "pepys": 6,
+          "poetry.lock": 1,
+          "poetry.toml": 1,
+          "pyproject.toml": 1,
+          "scripts": 5,
+          "settings.json.template": 1,
+          "src": 45,
+          "tests": 10
+        }
+      },
+      "deltas": {
+        "vs_previous": null,
+        "vs_baseline": {
+          "nodes": 1138,
+          "edges": 1138,
+          "files_delta": 1122,
+          "dirs_delta": 16
         }
       }
     }

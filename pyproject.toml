@@ -71,33 +71,27 @@ param = { version = ">=2.0.0", optional = true }
 markdown = { version = ">=3.6", optional = true }
 trame-vtk = { version = ">=2.0.0", optional = true }
 pip = "^26.0.1"
+spacy = {version = ">=3.7.0", optional = true}
 
-# snapshot infrastructure (no third-party deps)
-kg-snapshot = { git = "https://github.com/Flux-Frontiers/kg_snapshot.git" }
 
 # our own adaptors
-doc-kg = {git = "https://github.com/Flux-Frontiers/doc_kg.git"}
+kg-snapshot = { git = "https://github.com/Flux-Frontiers/kg_snapshot.git" }
 kg-utils = {git = "https://github.com/Flux-Frontiers/kg_utils.git"}
-pycode-kg = {git = "https://github.com/Flux-Frontiers/pycode_kg.git"}
-agent-kg = {git = "https://github.com/Flux-Frontiers/agent_kg.git"}
-ftree-kg = {git = "https://github.com/Flux-Frontiers/ftree_kg.git"}
-
-spacy = {version = ">=3.7.0", optional = true}
-# ftree-kg = {path = "../FTreeKG", develop = true}
-
-# we really don't need these
-# diary-kg = {git = "https://github.com/Flux-Frontiers/diary_kg.git"}
+pycode-kg = {git = "https://github.com/Flux-Frontiers/pycode_kg.git", optional=true}
+agent-kg = {git = "https://github.com/Flux-Frontiers/agent_kg.git", optional=true}
+ftree-kg = {git = "https://github.com/Flux-Frontiers/ftree_kg.git", optional=true}
+diary-kg = {git = "https://github.com/Flux-Frontiers/diary_kg.git", optional=true}
 metabo-kg = {git = "https://github.com/Flux-Frontiers/metabo_kg.git", optional=true}
+doc-kg = {git = "https://github.com/Flux-Frontiers/doc_kg.git", optional=true}
+memory-kg = {git = "https://github.com/Flux-Frontiers/memory_kg.git", optional=true}
+
 
 [tool.poetry.extras]
 viz = ["streamlit", "pyvis", "plotly"]
 viz2d = ["PyQt5"]
 qt = ["PyQt5"]
 viz3d = ["pyvista", "pyvistaqt", "PyQt5", "param", "markdown", "trame-vtk"]
-diary-kg = ["diary-kg"]
-ftree-kg = ["ftree-kg"]
-metabo-kg = ["metabo-kg"]
-
+kg = ["diary-kg", "pycode-kg", "agent-kg", "ftree-kg", "metabo-kg", "doc-kg", "memory-kg"]
 
 [tool.poetry.group.qt]
 optional = true
@@ -183,6 +177,15 @@ include = ["src"]
 [tool.dockg]
 # Exclude directories from the knowledge graph by default.
 exclude = ["bundles", "dist", "books"]
+
+[tool.memorykg]
+# Claude_T self-knowledge corpus — architecture, identity, and stack docs.
+# Built with: memorykg build --source docs/ --extra CLAUDE_T_IDENTITY.md,CLAUDE.md,README.md
+# Registered with: kgrag register --name claude_t_self --path .memorykg/
+source = ["docs"]
+extra = ["CLAUDE_T_IDENTITY.md", "CLAUDE.md", "README.md", "PORTABLE_KNOWLEDGE_VISION.md", "AGENT_PERSPECTIVE.md"]
+output = ".memorykg"
+corpus_name = "claude_t_self"
 
 [tool.poe.tasks.docs]
 help = "Generate project documentation and user guide PDFs"
