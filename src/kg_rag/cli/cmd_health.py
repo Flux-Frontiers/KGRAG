@@ -13,11 +13,17 @@ Usage::
     kgrag health               # report all issues + suggested fix commands
     kgrag health --fix         # auto-repair fixable issues, print the rest
     kgrag health --json        # machine-readable JSON output
+
+Author: Eric G. Suchanek, PhD
+Last Revision: 2026-04-16 00:18:34
+License: Elastic 2.0
 """
 
 from __future__ import annotations
 
 import json
+import shlex
+import subprocess
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -75,6 +81,59 @@ def _build_cmd(kind: str, repo: Path) -> str:
     """
     tpl = _BUILD_CMD_TPL.get(kind, "# {kind}kg build --repo {repo}  (check docs)")
     return tpl.format(repo=repo, kind=kind)
+
+
+# ---------------------------------------------------------------------------
+# Subprocess execution helper
+# ---------------------------------------------------------------------------
+
+
+def _run_fix_cmd(
+    cmd: str,
+    console: Console,
+    *,
+    label: str = "",
+    auto_confirm: bool = False,
+) -> bool:
+    """Prompt for confirmation, then execute *cmd*, streaming its output.
+
+    :param cmd: Shell command string to execute.
+    :param console: Rich Console used for all output.
+    :param label: Human-readable description shown in the confirmation prompt.
+    :param auto_confirm: Skip the confirmation prompt (for non-interactive / JSON mode).
+    :return: ``True`` if the command exited with code 0, ``False`` otherwise.
+    """
+    display = label or cmd
+    if not auto_confirm:
+        if not click.confirm(f"  Run: [cyan]{cmd}[/cyan]", default=False):
+            console.print(f"  [dim]skipped  {display}[/dim]")
+            return False
+
+    console.print(f"\n  [dim]$ {cmd}[/dim]")
+    try:
+        proc = subprocess.Popen(
+            shlex.split(cmd),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        )
+        assert proc.stdout is not None
+        for line in proc.stdout:
+            console.print(f"    {line.rstrip()}")
+        proc.wait()
+    except FileNotFoundError:
+        console.print(
+            f"  [bold red]✖  command not found:[/bold red] {shlex.split(cmd)[0]}"
+        )
+        return False
+
+    if proc.returncode == 0:
+        console.print(f"  [green]✔  {display}[/green]")
+        return True
+    else:
+        console.print(f"  [bold red]✖  exit {proc.returncode}  {display}[/bold red]")
+        return False
 
 
 # ---------------------------------------------------------------------------
@@ -203,7 +262,9 @@ def _check_corpora(
                             severity="warning",
                             check="corpus_unbuilt_member",
                             target=corpus.name,
-                            message=(f"Member '{entry.name}' ({entry.kind.value}) is not built"),
+                            message=(
+                                f"Member '{entry.name}' ({entry.kind.value}) is not built"
+                            ),
                             fix_cmd=_build_cmd(entry.kind.value, entry.repo_path),
                             auto_fixable=False,
                         )
@@ -219,27 +280,36 @@ def _apply_fixes(
     issues: list[HealthIssue],
     kg_reg: KGRegistry,
     corpus_reg: CorpusRegistry,
+    console: Console,
+    *,
+    auto_confirm: bool = False,
 ) -> tuple[list[HealthIssue], list[str]]:
-    """Apply auto-fixable repairs and return remaining issues and a fix log.
+    """Apply all repairs: registry-level changes immediately; build commands
+    via subprocess with streaming output.
 
     :param issues: All detected issues.
     :param kg_reg: Open KGRegistry for write operations.
     :param corpus_reg: Open CorpusRegistry for write operations.
+    :param console: Rich Console for progress output.
+    :param auto_confirm: Skip confirmation prompts (non-interactive / JSON mode).
     :return: Tuple of (remaining_issues, fix_log_messages).
     """
     remaining: list[HealthIssue] = []
     log: list[str] = []
 
+    # ------------------------------------------------------------------
+    # Pass 1 — registry-level fixes (instant, no subprocess)
+    # ------------------------------------------------------------------
+    deferred: list[HealthIssue] = []
+
     for issue in issues:
         if not issue.auto_fixable:
-            remaining.append(issue)
+            deferred.append(issue)
             continue
 
         if issue.check == "missing_repo":
-            if click.confirm(
-                f"  Unregister '{issue.target}' (repo path no longer exists)?",
-                default=False,
-            ):
+            prompt = f"  Unregister '{issue.target}' (repo path no longer exists)?"
+            if auto_confirm or click.confirm(prompt, default=False):
                 kg_reg.unregister(issue.target)
                 log.append(f"Unregistered '{issue.target}' (missing repo path)")
             else:
@@ -251,12 +321,42 @@ def _apply_fixes(
             if len(parts) == 5:
                 kg_id = parts[-1]
                 corpus_reg.remove_kg(issue.target, kg_id)
-                log.append(f"Removed dangling ref {kg_id!r} from corpus '{issue.target}'")
+                log.append(
+                    f"Removed dangling ref {kg_id!r} from corpus '{issue.target}'"
+                )
             else:
                 remaining.append(issue)
 
         else:
             remaining.append(issue)
+
+    # ------------------------------------------------------------------
+    # Pass 2 — build commands (subprocess, deduplicated by fix_cmd)
+    # ------------------------------------------------------------------
+    # Group deferred issues by their fix command so each unique command
+    # is executed at most once.
+    cmd_groups: dict[str, list[HealthIssue]] = {}
+    no_cmd: list[HealthIssue] = []
+    for issue in deferred:
+        if issue.fix_cmd:
+            cmd_groups.setdefault(issue.fix_cmd, []).append(issue)
+        else:
+            no_cmd.append(issue)
+
+    resolved_cmds: set[str] = set()
+
+    for cmd, cmd_issues in cmd_groups.items():
+        targets = ", ".join(sorted({i.target for i in cmd_issues}))
+        label = f"rebuild {targets}"
+        console.print(f"\n[bold]Fix:[/bold] {targets}")
+        if _run_fix_cmd(cmd, console, label=label, auto_confirm=auto_confirm):
+            resolved_cmds.add(cmd)
+            for issue in cmd_issues:
+                log.append(f"Built '{issue.target}' — {issue.check} resolved")
+        else:
+            remaining.extend(cmd_issues)
+
+    remaining.extend(no_cmd)
 
     return remaining, log
 
@@ -325,11 +425,18 @@ def health(do_fix: bool, output_json: bool, registry: str | None) -> None:
         fix_log: list[str] = []
         if do_fix and issues:
             if not output_json:
-                console.print("\n[bold]Applying auto-repairs…[/bold]")
-            issues, fix_log = _apply_fixes(issues, kg_reg, corpus_reg)
-            if not output_json:
+                console.print("\n[bold]Applying fixes…[/bold]")
+            issues, fix_log = _apply_fixes(
+                issues,
+                kg_reg,
+                corpus_reg,
+                console,
+                auto_confirm=output_json,
+            )
+            if not output_json and fix_log:
+                console.print()
                 for msg in fix_log:
-                    console.print(f"  [green]fixed[/green]  {msg}")
+                    console.print(f"  [green]✔  fixed[/green]  {msg}")
 
     # -----------------------------------------------------------------------
     # JSON output
@@ -355,7 +462,9 @@ def health(do_fix: bool, output_json: bool, registry: str | None) -> None:
     if not issues:
         status_line = "[bold green]✔  All checks passed — stack is healthy[/bold green]"
     elif n_critical:
-        status_line = f"[bold red]✖  {n_critical} critical  {n_warning} warning(s)[/bold red]"
+        status_line = (
+            f"[bold red]✖  {n_critical} critical  {n_warning} warning(s)[/bold red]"
+        )
     else:
         status_line = f"[bold yellow]⚠  {n_warning} warning(s)[/bold yellow]"
 
@@ -385,7 +494,11 @@ def health(do_fix: bool, output_json: bool, registry: str | None) -> None:
     for issue in issues:
         sev_style = _SEVERITY_STYLE.get(issue.severity, "")
         sev_icon = _SEVERITY_ICON.get(issue.severity, "?")
-        fix_label = Text("auto", style="green") if issue.auto_fixable else Text("cmd", style="dim")
+        fix_label = (
+            Text("auto", style="green")
+            if issue.auto_fixable
+            else Text("cmd", style="dim")
+        )
         table.add_row(
             Text(sev_icon, style=sev_style),
             Text(issue.check, style=sev_style),
