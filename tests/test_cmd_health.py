@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 from click.testing import CliRunner
 
@@ -369,3 +370,144 @@ class TestHealthJSON:
         data = json.loads(result.output)
         assert len(data["fixed"]) == 1
         assert len(data["issues"]) == 0
+
+
+# ---------------------------------------------------------------------------
+# Subprocess execution (--fix with build commands)
+# ---------------------------------------------------------------------------
+
+
+def _make_proc(returncode: int = 0, output: str = "build ok\n") -> MagicMock:
+    """Return a mock Popen object that streams *output* and exits with *returncode*."""
+    proc = MagicMock()
+    proc.stdout = iter(output.splitlines(keepends=True))
+    proc.returncode = returncode
+    proc.wait.return_value = None
+    return proc
+
+
+class TestHealthFixSubprocess:
+    def test_fix_runs_build_command_on_unbuilt_kg(self, tmp_path):
+        """--fix should invoke the build command for an unbuilt KG."""
+        db = _reg_db(tmp_path)
+        entry = _make_unbuilt_entry(tmp_path, "stale-code", kind=KGKind.CODE)
+        with KGRegistry(db_path=db) as reg:
+            reg.register(entry)
+
+        with patch("subprocess.Popen", return_value=_make_proc(0)) as mock_popen:
+            result = _runner().invoke(
+                cli, ["health", "--fix"] + _reg_args(db), input="y\n"
+            )
+
+        assert result.exit_code == 0
+        mock_popen.assert_called_once()
+        called_cmd = mock_popen.call_args[0][0]
+        assert called_cmd[0] == "codekg"
+        assert "build" in called_cmd
+
+    def test_fix_shows_streaming_output(self, tmp_path):
+        """Build command output lines should appear in the terminal."""
+        db = _reg_db(tmp_path)
+        entry = _make_unbuilt_entry(tmp_path, "stale-code", kind=KGKind.CODE)
+        with KGRegistry(db_path=db) as reg:
+            reg.register(entry)
+
+        fake_output = "Indexing modules…\nDone — 42 nodes\n"
+        with patch("subprocess.Popen", return_value=_make_proc(0, fake_output)):
+            result = _runner().invoke(
+                cli, ["health", "--fix"] + _reg_args(db), input="y\n"
+            )
+
+        assert "Indexing modules" in result.output
+        assert "Done" in result.output
+
+    def test_fix_reports_success(self, tmp_path):
+        """A successful build should print the green checkmark summary."""
+        db = _reg_db(tmp_path)
+        entry = _make_unbuilt_entry(tmp_path, "stale-code", kind=KGKind.CODE)
+        with KGRegistry(db_path=db) as reg:
+            reg.register(entry)
+
+        with patch("subprocess.Popen", return_value=_make_proc(0)):
+            result = _runner().invoke(
+                cli, ["health", "--fix"] + _reg_args(db), input="y\n"
+            )
+
+        assert "✔" in result.output or "fixed" in result.output.lower()
+
+    def test_fix_reports_failure(self, tmp_path):
+        """A failed build (non-zero exit) should surface an error line."""
+        db = _reg_db(tmp_path)
+        entry = _make_unbuilt_entry(tmp_path, "stale-code", kind=KGKind.CODE)
+        with KGRegistry(db_path=db) as reg:
+            reg.register(entry)
+
+        with patch("subprocess.Popen", return_value=_make_proc(1, "error!\n")):
+            result = _runner().invoke(
+                cli, ["health", "--fix"] + _reg_args(db), input="y\n"
+            )
+
+        assert result.exit_code == 0  # health command itself doesn't fail
+        assert "✖" in result.output or "exit 1" in result.output
+
+    def test_fix_skips_build_when_declined(self, tmp_path):
+        """Answering 'n' to the confirmation should not spawn a subprocess."""
+        db = _reg_db(tmp_path)
+        entry = _make_unbuilt_entry(tmp_path, "stale-code", kind=KGKind.CODE)
+        with KGRegistry(db_path=db) as reg:
+            reg.register(entry)
+
+        with patch("subprocess.Popen") as mock_popen:
+            result = _runner().invoke(
+                cli, ["health", "--fix"] + _reg_args(db), input="n\n"
+            )
+
+        assert result.exit_code == 0
+        mock_popen.assert_not_called()
+
+    def test_fix_deduplicates_same_build_command(self, tmp_path):
+        """Two issues sharing an identical fix_cmd should trigger only one subprocess."""
+        db = _reg_db(tmp_path)
+        repo = tmp_path / "myrepo"
+        repo.mkdir()
+        # SQLite path registered but missing → stale_sqlite
+        # LanceDB path registered but missing → stale_lancedb
+        # Both map to the same "codekg build --repo ..." command.
+        db_dir = repo / ".codekg"
+        db_dir.mkdir()
+        sqlite = db_dir / "graph.sqlite"
+        sqlite.touch()  # exists → is_built = True; stale checks proceed
+        entry = KGEntry(
+            name="dual-stale",
+            kind=KGKind.CODE,
+            repo_path=repo,
+            venv_path=repo / ".venv",
+            sqlite_path=repo / ".codekg" / "nope.sqlite",  # missing
+            lancedb_path=db_dir / "lancedb",  # missing
+        )
+        with KGRegistry(db_path=db) as reg:
+            reg.register(entry)
+
+        with patch("subprocess.Popen", return_value=_make_proc(0)) as mock_popen:
+            result = _runner().invoke(
+                cli, ["health", "--fix"] + _reg_args(db), input="y\n"
+            )
+
+        assert result.exit_code == 0
+        # Same fix_cmd for both stale issues → executed exactly once
+        assert mock_popen.call_count == 1
+
+    def test_fix_command_not_found_handled(self, tmp_path):
+        """A missing executable should not crash the health command."""
+        db = _reg_db(tmp_path)
+        entry = _make_unbuilt_entry(tmp_path, "stale-code", kind=KGKind.CODE)
+        with KGRegistry(db_path=db) as reg:
+            reg.register(entry)
+
+        with patch("subprocess.Popen", side_effect=FileNotFoundError):
+            result = _runner().invoke(
+                cli, ["health", "--fix"] + _reg_args(db), input="y\n"
+            )
+
+        assert result.exit_code == 0
+        assert "not found" in result.output
