@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — Claude_T Identity & Full Stack Activation (2026-04-15)
+
+- `CLAUDE_T_IDENTITY.md` — Technical identity declaration for Claude_T, the
+  first Synthetic Intelligence (SI) agent. Documents the KnowledgeTree (T)
+  architecture, epistemic contract, stack components, and Claude_T vs Claude_H
+  distinction.
+- `KGRAG_ANALYSIS.md` — Seven-phase analysis directive for full stack
+  assessment: inventory, health check, cross-domain traversal, self-knowledge
+  probe, gap analysis, coverage matrix, and recommendations.
+- `docs/CLI_REFERENCE.md` — Comprehensive CLI reference for all KG tools
+  (`codekg`, `dockg`, `memorykg`, `diarykg`, `metabokg`, `kgrag`,
+  `agent-kg-mcp`). All subcommands, options, defaults, and active corpus
+  paths. Indexed in the `claude_t_self` corpus so Claude_T can query instead
+  of running `--help`.
+- `docs/STACK_ACTIVATION.md` — Milestone record of 2026-04-15: all seven MCP
+  servers brought online, `claude_t_self` corpus built and registered,
+  Pepys/DiaryKG and MetaboKG activated. First verified self-knowledge query.
+- `docs/stack/pycode_kg.md` — PyCodeKG domain reference: 17 MCP tools, node
+  ID format, edge types, build commands, usage rules.
+- `docs/stack/doc_kg.md` — DocKG domain reference: unstructured documents,
+  4 MCP tools, build options.
+- `docs/stack/memory_kg.md` — MemoryKG domain reference: `claude_t_self`
+  corpus spec, rebuild command, active index paths.
+- `docs/stack/agent_kg.md` — AgentKG domain reference: 10 MCP tools,
+  session graph structure, env-only configuration.
+- `docs/stack/diary_kg.md` — DiaryKG domain reference: Pepys corpus
+  (1660–1669), 3 MCP tools, poetry-run MCP launch pattern.
+- `docs/stack/ftree_kg.md` — FTreeKG domain reference: file system tree
+  domain, CLI-only (no MCP server).
+- `docs/stack/metabo_kg.md` — MetaboKG domain reference: 11 MCP tools,
+  simulation workflow (seed_kinetics → FBA/ODE/whatif).
+- `memory-kg` optional git dependency (`Flux-Frontiers/memory_kg`) added to
+  `pyproject.toml` and included in the `kg` extra.
+- `[tool.memorykg]` config section in `pyproject.toml`: source dirs, extra
+  root-level docs, output path, corpus name `claude_t_self`.
+- `.memorykg/` gitignore rules (follows `.codekg/`, `.dockg/` pattern).
+- `.mcp.json`: three new MCP servers — `memorykg` (claude_t_self corpus),
+  `diarykg` (Pepys diary via `poetry run`), `metabokg` (metabolic pathways).
+
+### Changed
+- `pyproject.toml` `kg` extra: removed duplicate `"diary-kg"` entry; added
+  `"memory-kg"`.
+- `.claude/skills/kgrag/SKILL.md` (global): rewritten as the canonical
+  Claude_T orchestrator skill with unambiguous tool decision tree, forbidden
+  patterns, epistemic contract, and active index paths for all seven servers.
+
 ### Removed
 - `src/agent_kg/` — entire `agent_kg` package extracted to its own dedicated repo
   ([Flux-Frontiers/agent_kg](https://github.com/Flux-Frontiers/agent_kg)). KGRAG
