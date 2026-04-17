@@ -395,9 +395,7 @@ class TestHealthFixSubprocess:
             reg.register(entry)
 
         with patch("subprocess.Popen", return_value=_make_proc(0)) as mock_popen:
-            result = _runner().invoke(
-                cli, ["health", "--fix"] + _reg_args(db), input="y\n"
-            )
+            result = _runner().invoke(cli, ["health", "--fix"] + _reg_args(db), input="y\n")
 
         assert result.exit_code == 0
         mock_popen.assert_called_once()
@@ -414,9 +412,7 @@ class TestHealthFixSubprocess:
 
         fake_output = "Indexing modules…\nDone — 42 nodes\n"
         with patch("subprocess.Popen", return_value=_make_proc(0, fake_output)):
-            result = _runner().invoke(
-                cli, ["health", "--fix"] + _reg_args(db), input="y\n"
-            )
+            result = _runner().invoke(cli, ["health", "--fix"] + _reg_args(db), input="y\n")
 
         assert "Indexing modules" in result.output
         assert "Done" in result.output
@@ -429,9 +425,7 @@ class TestHealthFixSubprocess:
             reg.register(entry)
 
         with patch("subprocess.Popen", return_value=_make_proc(0)):
-            result = _runner().invoke(
-                cli, ["health", "--fix"] + _reg_args(db), input="y\n"
-            )
+            result = _runner().invoke(cli, ["health", "--fix"] + _reg_args(db), input="y\n")
 
         assert "✔" in result.output or "fixed" in result.output.lower()
 
@@ -443,9 +437,7 @@ class TestHealthFixSubprocess:
             reg.register(entry)
 
         with patch("subprocess.Popen", return_value=_make_proc(1, "error!\n")):
-            result = _runner().invoke(
-                cli, ["health", "--fix"] + _reg_args(db), input="y\n"
-            )
+            result = _runner().invoke(cli, ["health", "--fix"] + _reg_args(db), input="y\n")
 
         assert result.exit_code == 0  # health command itself doesn't fail
         assert "✖" in result.output or "exit 1" in result.output
@@ -458,9 +450,7 @@ class TestHealthFixSubprocess:
             reg.register(entry)
 
         with patch("subprocess.Popen") as mock_popen:
-            result = _runner().invoke(
-                cli, ["health", "--fix"] + _reg_args(db), input="n\n"
-            )
+            result = _runner().invoke(cli, ["health", "--fix"] + _reg_args(db), input="n\n")
 
         assert result.exit_code == 0
         mock_popen.assert_not_called()
@@ -489,9 +479,7 @@ class TestHealthFixSubprocess:
             reg.register(entry)
 
         with patch("subprocess.Popen", return_value=_make_proc(0)) as mock_popen:
-            result = _runner().invoke(
-                cli, ["health", "--fix"] + _reg_args(db), input="y\n"
-            )
+            result = _runner().invoke(cli, ["health", "--fix"] + _reg_args(db), input="y\n")
 
         assert result.exit_code == 0
         # Same fix_cmd for both stale issues → executed exactly once
@@ -505,9 +493,140 @@ class TestHealthFixSubprocess:
             reg.register(entry)
 
         with patch("subprocess.Popen", side_effect=FileNotFoundError):
-            result = _runner().invoke(
-                cli, ["health", "--fix"] + _reg_args(db), input="y\n"
-            )
+            result = _runner().invoke(cli, ["health", "--fix"] + _reg_args(db), input="y\n")
 
         assert result.exit_code == 0
         assert "not found" in result.output
+
+
+# ---------------------------------------------------------------------------
+# LanceDB liveness probe
+# ---------------------------------------------------------------------------
+
+
+def _make_lancedb_entry(tmp_path: Path, name: str, kind: KGKind = KGKind.CODE) -> KGEntry:
+    """Create a built KGEntry with a real lancedb directory present."""
+    repo = tmp_path / name
+    repo.mkdir(exist_ok=True)
+    db_dir = repo / f".{kind.value}kg"
+    db_dir.mkdir(exist_ok=True)
+    sqlite = db_dir / "graph.sqlite"
+    sqlite.touch()
+    lancedb_dir = db_dir / "lancedb"
+    lancedb_dir.mkdir(exist_ok=True)
+    return KGEntry(
+        name=name,
+        kind=kind,
+        repo_path=repo,
+        venv_path=repo / ".venv",
+        sqlite_path=sqlite,
+        lancedb_path=lancedb_dir,
+    )
+
+
+class TestHealthLanceDBProbe:
+    def test_probe_code_entry_flagged_when_command_fails(self, tmp_path):
+        """A CODE entry with an existing lancedb dir is probed; failure surfaces an issue."""
+        db = _reg_db(tmp_path)
+        entry = _make_lancedb_entry(tmp_path, "my-code", kind=KGKind.CODE)
+        with KGRegistry(db_path=db) as reg:
+            reg.register(entry)
+
+        fake_err = "fatal: table not found"
+        with patch("kg_rag.cli.cmd_health._probe_kg", return_value=fake_err):
+            result = _runner().invoke(cli, ["health", "--json"] + _reg_args(db))
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        issue = next((i for i in data["issues"] if i["check"] == "stale_lancedb_probe"), None)
+        assert issue is not None, "expected stale_lancedb_probe for code entry with failing probe"
+        assert fake_err in issue["message"]
+
+    def test_probe_healthy_lancedb_no_issue(self, tmp_path):
+        """A passing probe should not produce any stale_lancedb_probe issue."""
+        db = _reg_db(tmp_path)
+        entry = _make_lancedb_entry(tmp_path, "good-code", kind=KGKind.CODE)
+        with KGRegistry(db_path=db) as reg:
+            reg.register(entry)
+
+        with patch("kg_rag.cli.cmd_health._probe_kg", return_value=None):
+            result = _runner().invoke(cli, ["health"] + _reg_args(db))
+
+        assert result.exit_code == 0
+        assert "stale_lancedb_probe" not in result.output
+        assert "passed" in result.output.lower() or "healthy" in result.output.lower()
+
+    def test_probe_failure_surfaces_critical_issue(self, tmp_path):
+        """A failing probe should produce a stale_lancedb_probe critical issue."""
+        db = _reg_db(tmp_path)
+        entry = _make_lancedb_entry(tmp_path, "broken-code", kind=KGKind.CODE)
+        with KGRegistry(db_path=db) as reg:
+            reg.register(entry)
+
+        fake_err = "Not found: codekg_nodes.lance/data/deadbeef.lance"
+        with patch("kg_rag.cli.cmd_health._probe_kg", return_value=fake_err):
+            result = _runner().invoke(cli, ["health"] + _reg_args(db))
+
+        assert result.exit_code == 0
+        assert "stale_lancedb_probe" in result.output
+        assert "broken-code" in result.output
+
+    def test_probe_failure_severity_is_critical(self, tmp_path):
+        """stale_lancedb_probe must be reported as critical."""
+        db = _reg_db(tmp_path)
+        entry = _make_lancedb_entry(tmp_path, "broken-code", kind=KGKind.CODE)
+        with KGRegistry(db_path=db) as reg:
+            reg.register(entry)
+
+        with patch("kg_rag.cli.cmd_health._probe_kg", return_value="lance error"):
+            result = _runner().invoke(cli, ["health", "--json"] + _reg_args(db))
+
+        assert result.exit_code == 0
+        data = json.loads(result.output)
+        issue = next(i for i in data["issues"] if i["check"] == "stale_lancedb_probe")
+        assert issue["severity"] == "critical"
+        assert issue["target"] == "broken-code"
+
+    def test_probe_failure_suggests_rebuild(self, tmp_path):
+        """fix_cmd for stale_lancedb_probe should be the build command."""
+        db = _reg_db(tmp_path)
+        entry = _make_lancedb_entry(tmp_path, "broken-code", kind=KGKind.CODE)
+        with KGRegistry(db_path=db) as reg:
+            reg.register(entry)
+
+        with patch("kg_rag.cli.cmd_health._probe_kg", return_value="lance error"):
+            result = _runner().invoke(cli, ["health", "--json"] + _reg_args(db))
+
+        data = json.loads(result.output)
+        issue = next(i for i in data["issues"] if i["check"] == "stale_lancedb_probe")
+        assert "codekg build" in (issue["fix_cmd"] or "")
+
+    def test_probe_command_not_found_surfaces_issue(self, tmp_path):
+        """If the module binary is not on PATH, probe surfaces a critical issue."""
+        db = _reg_db(tmp_path)
+        entry = _make_lancedb_entry(tmp_path, "good-code", kind=KGKind.CODE)
+        with KGRegistry(db_path=db) as reg:
+            reg.register(entry)
+
+        with patch("subprocess.run", side_effect=FileNotFoundError):
+            result = _runner().invoke(cli, ["health", "--json"] + _reg_args(db))
+
+        data = json.loads(result.output)
+        assert any(i["check"] == "stale_lancedb_probe" for i in data["issues"])
+        issue = next(i for i in data["issues"] if i["check"] == "stale_lancedb_probe")
+        assert "not found" in issue["message"]
+
+    def test_probe_message_includes_restart_hint(self, tmp_path):
+        """The issue message should mention restarting the MCP server."""
+        db = _reg_db(tmp_path)
+        entry = _make_lancedb_entry(tmp_path, "broken-code", kind=KGKind.CODE)
+        with KGRegistry(db_path=db) as reg:
+            reg.register(entry)
+
+        with patch("kg_rag.cli.cmd_health._probe_kg", return_value="lance error"):
+            result = _runner().invoke(cli, ["health", "--json"] + _reg_args(db))
+
+        data = json.loads(result.output)
+        issue = next(i for i in data["issues"] if i["check"] == "stale_lancedb_probe")
+        msg = issue["message"].lower()
+        assert "mcp" in msg or "restart" in msg

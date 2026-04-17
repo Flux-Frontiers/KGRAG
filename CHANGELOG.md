@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — Health Command: LanceDB Liveness Probe (2026-04-16)
+
+- `src/kg_rag/cli/cmd_health.py` — `_probe_kg()` helper runs each module's own
+  CLI (`codekg query`, `dockg query`, etc.) against the live index to detect
+  stale LanceDB file handles. MCP servers hold open handles on LanceDB data
+  files; after a rebuild the old handles point to deleted files, causing silent
+  `Not found` failures that the previous directory-existence check could not
+  catch.
+- `_check_kgs()` — new `stale_lancedb_probe` critical issue emitted when a KG's
+  LanceDB directory exists but the liveness probe fails. Issue message includes
+  the probe error and instructs the operator to rebuild then restart the MCP
+  server.
+- `analysis/kgrag_analysis_20260416.md` — Seven-phase full-stack assessment
+  (2026-04-16): stack inventory, federated health checks (5/5 pass), cross-domain
+  traversal, self-knowledge probe, gap analysis, coverage matrix, and
+  recommendations. Identifies LanceDB stale-handle issue as the critical new
+  finding; confirms all 91 KGs built (3 previously unbuilt are now built).
+- `tests/test_cmd_health.py` — `TestHealthLanceDBProbe` class: 7 new tests
+  covering probe-failure surfacing, healthy-probe no-issue, severity=critical,
+  fix_cmd contains build command, `FileNotFoundError` from missing binary, and
+  restart-hint in issue message.
+
+### Changed
+- `.mcp.json` — removed `diarykg` MCP server entry (diarykg is accessed via
+  the poetry-run pattern in `diary_kg` repo; not needed in kgrag `.mcp.json`).
+- KG snapshots updated for commit `2d0a87b9` (2026-04-16): codekg 4,228 nodes /
+  5,678 edges (333 meaningful), dockg 10,262 nodes / 84,481 edges (94.5%
+  coverage), filetreekg 1,591 nodes / 1,591 edges (1,537 files, 54 dirs).
+
 ### Added — Claude_T Identity & Full Stack Activation (2026-04-15)
 
 - `CLAUDE_T_IDENTITY.md` — Technical identity declaration for Claude_T, the
