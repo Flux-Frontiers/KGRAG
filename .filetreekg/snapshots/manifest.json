@@ -1,6 +1,6 @@
 {
   "format": "1.0",
-  "last_update": "2026-04-17T16:37:09.925105+00:00",
+  "last_update": "2026-04-17T21:22:25.932134+00:00",
   "snapshots": [
     {
       "key": "9cfb7637bea115948f3eeb62abe5308184cd40a8",
@@ -671,6 +671,73 @@
           "nodes": 1937,
           "edges": 1937,
           "files_delta": 1918,
+          "dirs_delta": 19
+        }
+      }
+    },
+    {
+      "key": "10ac32328ca0f3b6baf01e4e8d1588c64f75cd87",
+      "branch": "main",
+      "timestamp": "2026-04-17T21:22:25.926581+00:00",
+      "version": "0.5.0",
+      "file": "10ac32328ca0f3b6baf01e4e8d1588c64f75cd87.json",
+      "metrics": {
+        "total_nodes": 2950,
+        "total_edges": 2950,
+        "node_counts": {
+          "directory": 55,
+          "file": 2895
+        },
+        "edge_counts": {
+          "CONTAINS": 2950
+        },
+        "total_files": 2895,
+        "total_dirs": 55,
+        "dir_node_counts": {
+          ".agentkg": 2643,
+          ".claude": 40,
+          ".mcp.json": 1,
+          ".mcp.json.sav": 1,
+          ".memorykg": 24,
+          ".pre-commit-config.yaml": 1,
+          ".pycodekg": 25,
+          ".secrets.baseline": 1,
+          "ADAPTER_AUDIT.md": 1,
+          "AGENT_PERSPECTIVE.md": 1,
+          "CHANGELOG.md": 1,
+          "CLAUDE.md": 1,
+          "CLAUDE_T_IDENTITY.md": 1,
+          "Claude.mcp.json": 1,
+          "KGRAG_ANALYSIS.md": 1,
+          "LICENSE": 1,
+          "PORTABLE_KNOWLEDGE_VISION.md": 1,
+          "README.md": 1,
+          "agent-kg.skill": 1,
+          "analysis": 12,
+          "apply-doc-kg-patches.sh": 1,
+          "articles": 4,
+          "books": 12,
+          "commit.txt": 1,
+          "docs": 51,
+          "kgrag.code-workspace": 1,
+          "ode_to_the_knowledge_graph.md": 1,
+          "patents": 50,
+          "pepys": 6,
+          "poetry.lock": 1,
+          "poetry.toml": 1,
+          "pyproject.toml": 1,
+          "scripts": 5,
+          "settings.json.template": 1,
+          "src": 45,
+          "tests": 10
+        }
+      },
+      "deltas": {
+        "vs_previous": null,
+        "vs_baseline": {
+          "nodes": 2709,
+          "edges": 2709,
+          "files_delta": 2690,
           "dirs_delta": 19
         }
       }

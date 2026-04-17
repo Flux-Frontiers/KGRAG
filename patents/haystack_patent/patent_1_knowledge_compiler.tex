@@ -206,28 +206,30 @@ fraction of the build cost.
 \section*{Brief Description of the Drawings}
 % -----------------------------------------------------------------------
 
-\textbf{FIG.~1} is a phase diagram illustrating the separation of the compilation
+\textbf{FIG.~1} is a conceptual mapping diagram illustrating the
+ontology-determinism principle, showing how the formal grammar or schema of each
+supported source domain maps to a corresponding set of node kinds and edge types
+in the compiled knowledge graph.
+
+\textbf{FIG.~2} is a phase diagram illustrating the separation of the compilation
 phase from the query phase, with the build-time operations of parsing, graph
 construction, and embedding on the left, and the query-time operations of
 semantic seeding, structural traversal, and provenance extraction on the right.
 
-\textbf{FIG.~2} is a data structure diagram illustrating the stable node
+\textbf{FIG.~3} is a data structure diagram illustrating the stable node
 addressing scheme, showing how a node identifier encodes the kind prefix, source
 file path, and qualified entity name.
-
-\textbf{FIG.~3} is a flow diagram illustrating the two-pass abstract syntax tree
-compiler for Python source code, showing the definition extraction pass and the
-call-graph and data-flow extraction pass.
 
 \textbf{FIG.~4} is a flow diagram illustrating the hybrid retrieval algorithm,
 showing the semantic seeding stage followed by the bounded breadth-first
 structural traversal stage, and the composite ranking function applied to the
 reached nodes.
 
-\textbf{FIG.~5} is a conceptual mapping diagram illustrating the
-ontology-determinism principle, showing how the formal grammar or schema of each
-supported source domain maps to a corresponding set of node kinds and edge types
-in the compiled knowledge graph.
+\textbf{FIG.~5} is a comparison diagram illustrating the semantic search failure
+mode in which the correct answer is not the most semantically similar document
+(the ``needle in a haystack'' problem), and the structural traversal solution in
+which the compiled call graph or document cross-reference links navigate directly
+to the correct node from a semantically adjacent seed.
 
 \textbf{FIG.~6} is a data flow diagram illustrating the provenance-grounded
 synthesis pipeline, showing knowledge graph retrieval producing provenance-tagged
@@ -235,11 +237,11 @@ result records that are injected into an LLM prompt, with the LLM performing
 synthesis over explicitly sourced facts rather than generating facts from trained
 weights.
 
-\textbf{FIG.~7} is a comparison diagram illustrating the semantic search failure
-mode in which the correct answer is not the most semantically similar document
-(the ``needle in a haystack'' problem), and the structural traversal solution in
-which the compiled call graph or document cross-reference links navigate directly
-to the correct node from a semantically adjacent seed.
+\textbf{FIG.~7} is a flow diagram illustrating the three-pass abstract syntax
+tree compiler for Python source code, showing the structural extraction pass
+(Pass~1), the call-graph extraction pass (Pass~2), the data-flow extraction
+pass (Pass~3) with its \texttt{@property} pre-scan, and the post-build symbol
+resolution step that emits \texttt{RESOLVES\_TO} edges.
 
 \textbf{FIG.~8} is an architecture diagram illustrating the multi-domain compiler
 registry, showing multiple domain-specific compilers for code, documentation,
@@ -268,7 +270,7 @@ the ontology be formally specified---derived from a grammar, schema, or protocol
 specification---rather than approximated from training data or encoded by human
 annotators~\cite{pan2024unifyingllmkg, hogan2021knowledge}.
 
-Referring to FIG.~\ref{fig:5}, the ontology-determinism principle holds that for
+Referring to FIG.~\ref{fig:1}, the ontology-determinism principle holds that for
 any source domain whose structure is governed by a formal specification, a
 compiler can extract a knowledge graph from any conforming source artifact with
 the same guarantee of correctness that a parser has with respect to its grammar:
@@ -278,12 +280,12 @@ by the specification; no node or edge is hypothesized, inferred, or approximated
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.95\textwidth]{fig5.png}
+  \includegraphics[width=0.95\textwidth]{fig1.png}
   \caption{The Ontology-Determinism Principle. For each source domain governed
     by a formal specification, the specification itself constitutes the
     compilation ontology. The resulting knowledge graph carries the same
     epistemic guarantees as the source artifact.}
-  \label{fig:5}
+  \label{fig:1}
 \end{figure}
 
 The following source domains possess formal specifications from which ontologies
@@ -340,18 +342,18 @@ source.
 % ---
 \subsection{II.\quad The Two-Phase Compilation Architecture}
 
-Referring to FIG.~\ref{fig:1}, the present invention separates knowledge graph
+Referring to FIG.~\ref{fig:2}, the present invention separates knowledge graph
 construction into two strictly ordered phases.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.95\textwidth]{fig1.png}
+  \includegraphics[width=0.95\textwidth]{fig2.png}
   \caption{Phase diagram illustrating the Build Phase (left) and Query Phase
     (right), separated by the Compile/Execute Boundary. Build-time operations
     (parsing, graph storage, canonical text construction, semantic indexing) are
     executed once per corpus version; query-time operations execute in bounded
     time per query.}
-  \label{fig:1}
+  \label{fig:2}
 \end{figure}
 
 \subsubsection{II.A\quad The Build Phase}
@@ -434,30 +436,32 @@ after which any entry or thematic query executes in milliseconds.
 % ---
 \subsection{III.\quad The Stable Node Addressing Scheme}
 
-Referring to FIG.~\ref{fig:2}, the present invention assigns each node in the
+Referring to FIG.~\ref{fig:3}, the present invention assigns each node in the
 compiled knowledge graph a stable string identifier constructed by a
 deterministic function of three components: a kind prefix, a source file path,
 and a qualified entity name or positional identifier.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.88\textwidth]{fig2.png}
+  \includegraphics[width=0.88\textwidth]{fig3.png}
   \caption{The stable node addressing scheme. Each node identifier encodes kind
     prefix, repository-relative source file path, and dot-qualified entity name.
-    Example: \texttt{fn:src/orchestrator.py:KGRAG.query} identifies the
+    Example: \texttt{m:src/kg\_rag/orchestrator.py:KGRAG.query} identifies the
     \texttt{query} method of the \texttt{KGRAG} class.}
-  \label{fig:2}
+  \label{fig:3}
 \end{figure}
 
 For Python code nodes, the identifier takes the form \texttt{kind:path:qualified},
 where \texttt{kind} is a short string encoding the node kind (\texttt{fn} for
-function, \texttt{cl} for class, \texttt{mo} for module, \texttt{me} for method),
-\texttt{path} is the repository-relative path to the source file, and
-\texttt{qualified} is the dot-qualified name of the entity within the file. For
-example, \texttt{fn:src/orchestrator.py:KGRAG.query} is the stable identifier of
+function, \texttt{cls} for class, \texttt{mod} for module, \texttt{m} for
+method, \texttt{sym} for unresolved symbol stub), \texttt{path} is the
+repository-relative path to the source file, and \texttt{qualified} is the
+dot-qualified name of the entity within the file. For example,
+\texttt{m:src/kg\_rag/orchestrator.py:KGRAG.query} is the stable identifier of
 the \texttt{query} method of the \texttt{KGRAG} class defined in the file
-\texttt{src/orchestrator.py}. This identifier encodes the full provenance of the
-entity---its type, location, and qualified name---in a single string.
+\texttt{src/kg\_rag/orchestrator.py}. This identifier encodes the full
+provenance of the entity---its type, location, and qualified name---in a single
+string.
 
 For documentation nodes, the identifier takes the form \texttt{kind:path:heading}
 or \texttt{kind:path:position}, where \texttt{heading} is the normalized heading
@@ -555,19 +559,19 @@ composite function. A pure semantic retrieval system would not find this calling
 function unless its canonical text happened to be semantically similar to the
 query---which it may not be. The structural traversal finds it deterministically.
 
-Referring to FIG.~\ref{fig:7}, the structural traversal addresses the
+Referring to FIG.~\ref{fig:5}, the structural traversal addresses the
 needle-in-a-haystack problem by using the compiled graph to navigate from
 approximate semantic matches to exact structural neighbors, effectively converting
 the global approximate search problem into a local exact navigation problem.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.92\textwidth]{fig7.png}
+  \includegraphics[width=0.92\textwidth]{fig5.png}
   \caption{The needle-in-a-haystack problem and its structural solution. Left:
     semantic search returns the most similar document, which is not the target.
     Right: structural traversal from a semantically adjacent seed node reaches
     the exact target via compiled graph edges.}
-  \label{fig:7}
+  \label{fig:5}
 \end{figure}
 
 % ---
@@ -646,29 +650,38 @@ sufficient structural context through graph traversal to eliminate the need to
 appeal to training knowledge.
 
 % ---
-\subsection{VI.\quad The Two-Pass AST Compiler for Python Source Code}
+\subsection{VI.\quad The Three-Pass AST Compiler for Python Source Code}
 
-Referring to FIG.~\ref{fig:3}, the Python source code compiler is described in
-detail as the primary preferred embodiment of the build-phase parser.
+Referring to FIG.~\ref{fig:7}, the Python source code compiler is described in
+detail as the primary preferred embodiment of the build-phase parser. The
+compiler operates in three sequential passes over the abstract syntax tree of
+each source file, followed by a post-build symbol resolution step applied once
+across the full compiled graph.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.95\textwidth]{fig3.png}
-  \caption{The two-pass AST compiler for Python source code. Pass~1 (definition
-    extraction) emits module, class, function, and method node records with
-    \texttt{CONTAINS}, \texttt{IMPORTS}, and \texttt{INHERITS} edges. Pass~2
-    (call-graph extraction) emits \texttt{CALLS} edges and resolves call-site
-    stubs to first-party definitions via \texttt{RESOLVES\_TO} edges.}
-  \label{fig:3}
+  \includegraphics[width=0.95\textwidth]{fig7.png}
+  \caption{The three-pass AST compiler for Python source code. Pass~1
+    (structural extraction) emits module, class, function, and method node
+    records with \texttt{CONTAINS}, \texttt{IMPORTS}, and \texttt{INHERITS}
+    edges. Pass~2 (call-graph extraction) emits \texttt{CALLS} edges from
+    calling nodes to resolved or stub destinations. Pass~3 (data-flow
+    extraction) emits \texttt{READS}, \texttt{WRITES}, and
+    \texttt{ATTR\_ACCESS} edges via a scope-tracking visitor, including
+    \texttt{CALLS} edges for \texttt{@property} accesses discovered in a
+    pre-scan. A post-build symbol resolution step emits \texttt{RESOLVES\_TO}
+    edges from call-site stubs to first-party definitions.}
+  \label{fig:7}
 \end{figure}
 
-\subsubsection{VI.A\quad First Pass: Definition Extraction}
+\subsubsection{VI.A\quad First Pass: Structural Extraction}
 
-The first pass traverses the abstract syntax tree of every \texttt{.py} file in
-the source repository. The traversal visits the following AST node types:
-\texttt{Module} (one per file), \texttt{ClassDef}, \texttt{FunctionDef},
-\texttt{AsyncFunctionDef}, and \texttt{Import} and \texttt{ImportFrom}
-statements. For each visited node, the compiler emits:
+The first pass traverses the top-level body of the module (not a full
+\texttt{ast.walk}) of every \texttt{.py} file in the source repository.
+The traversal visits the following AST statement types:
+\texttt{ClassDef}, \texttt{FunctionDef}, \texttt{AsyncFunctionDef},
+\texttt{Import}, and \texttt{ImportFrom}. For each visited node, the compiler
+emits:
 
 A \emph{Module} node record with identifier \texttt{mo:relative\_path} and
 metadata comprising the file's docstring, line count, and import list.
@@ -684,46 +697,86 @@ methods) and metadata comprising the function's docstring, parameter list, retur
 annotation, and decorator names. Coroutines receive a Boolean \texttt{is\_async}
 field in their metadata.
 
-A \emph{Symbol} node record for each module-level name assignment whose value is
-a function reference, class reference, or constant that is referenced by other
-nodes.
-
 \texttt{CONTAINS} edges are emitted from each parent node to each child node
 (module to class, class to method, module to top-level function).
 
 \texttt{IMPORTS} edges are emitted from each module node to each imported module
-or symbol, with the import path and alias stored as edge evidence.
+or symbol, with the import path and alias stored as edge evidence. A supplemental
+\texttt{ast.walk} over the full tree extends the import alias map with imports
+that appear inside function bodies, ensuring call resolution in Pass~2 can
+resolve symbols imported locally.
 
 \texttt{INHERITS} edges are emitted from each class node to each named base
 class, with the base class expression stored as edge evidence.
 
-\subsubsection{VI.B\quad Second Pass: Call Graph and Data-Flow Extraction}
+\subsubsection{VI.B\quad Second Pass: Call Graph Extraction}
 
-The second pass traverses the abstract syntax tree a second time, this time
-visiting \texttt{Call}, \texttt{Attribute}, and \texttt{Name} AST node types
-within function and method bodies. For each \texttt{Call} node, the compiler
-resolves the callee expression to a qualified name using a scope-tracking
-resolver, emits a \texttt{CALLS} edge from the calling function or method node to
-a call-site stub node, and records the call argument count and keyword argument
-names as edge evidence.
+The second pass constructs a parent-map over the full abstract syntax tree by a
+single \texttt{ast.walk}, then performs a second \texttt{ast.walk} visiting
+every \texttt{Call} node. For each \texttt{Call} node, the compiler locates the
+nearest enclosing \texttt{FunctionDef} or \texttt{AsyncFunctionDef} via the
+parent map, resolves the callee expression to a qualified name using the
+following priority order: (1)~first-party module locals from Pass~1; (2)~import
+alias map from Pass~1; (3)~attribute access on an imported name;
+(4)~\texttt{self.method} resolved against the enclosing class's method set;
+(5)~unresolved \texttt{sym:} stub. The compiler emits a \texttt{CALLS} edge
+from the enclosing function or method node to the resolved destination node or
+stub, recording the call-site line number and callee expression as edge evidence.
 
-A symbol resolution post-pass attempts to match each call-site stub node to a
-first-party definition node by comparing the resolved qualified name to the set
-of known function and method identifiers. Successful matches emit
-\texttt{RESOLVES\_TO} edges from the stub node to the definition node. Unresolved
-call-site stubs remain as nodes of kind \texttt{stub} and are available for query
-but not traversal through \texttt{RESOLVES\_TO} edges.
+\subsubsection{VI.C\quad Third Pass: Data-Flow Extraction}
 
-\texttt{ATTR\_ACCESS} edges are emitted for each \texttt{Attribute} node whose
-value is a \texttt{Name} node bound to a known object in scope.
-\texttt{READS} and \texttt{WRITES} edges are emitted for \texttt{Name} nodes
-appearing in \texttt{Load} and \texttt{Store} contexts, respectively, when the
-name is bound to a known module-level or class-level symbol.
+The third pass instantiates a scope-tracking \texttt{PyCodeKGVisitor} and
+invokes it on the full module tree. Before the main visit, the visitor performs
+a \emph{property pre-scan}: it walks the tree to register every
+\texttt{@property}-decorated method by short name, so that subsequent attribute
+accesses of the form \texttt{obj.attr} can emit \texttt{CALLS} edges to the
+corresponding property method even when the access precedes the definition in
+source order.
 
-\subsubsection{VI.C\quad Determinism and Reproducibility}
+During the main visit, the visitor emits:
 
-The two-pass AST compiler is deterministic: for any given \texttt{.py} file and
-Python version, it produces the same node records and edge records on every
+\texttt{READS} edges for every \texttt{ast.Name} node in a \texttt{Load}
+context within an assignment right-hand side, call argument, or keyword argument
+value, recording the variable as a data-flow source within the enclosing scope.
+
+\texttt{WRITES} edges for every \texttt{ast.Name} node in a \texttt{Store}
+context, recording the assignment target within the enclosing scope.
+
+\texttt{ATTR\_ACCESS} edges for every \texttt{ast.Attribute} node whose object
+is a simple \texttt{ast.Name}, connecting the object's variable node to the
+accessed attribute node within the current scope.
+
+\texttt{CALLS} edges from the enclosing function to registered \texttt{@property}
+method nodes when an \texttt{ast.Attribute} access matches a property name
+discovered in the pre-scan.
+
+Nodes and edges produced by Pass~3 are merged into the graph using
+\texttt{setdefault} semantics: Pass~1 and Pass~2 nodes and edges are
+authoritative for any coincident \texttt{CONTAINS} or \texttt{CALLS} entries.
+
+\subsubsection{VI.D\quad Post-Build Symbol Resolution}
+
+After all three passes have been applied to all files in the repository, a
+post-build symbol resolution step is executed once against the compiled graph
+storage layer. This step queries all \texttt{sym:} stub nodes and all
+non-symbol definition nodes from the relational database, constructs a name-to-
+definitions index, and for each stub whose short name matches one or more
+first-party definition nodes emits a \texttt{RESOLVES\_TO} edge from the stub to
+each matching definition. Unresolved stubs remain as \texttt{symbol}-kind nodes
+and are available for query but do not participate in \texttt{RESOLVES\_TO}
+traversal. The operation is idempotent: duplicate edges are silently ignored on
+repeated invocation.
+
+This post-build step is analogous to the linker phase in a compiled language
+toolchain~\cite{aho2006compilers}: the three AST passes are the compiler proper,
+emitting relocatable object code (node and edge records with unresolved external
+references as stubs); the symbol resolution step is the linker, resolving
+external references to their definitions.
+
+\subsubsection{VI.E\quad Determinism and Reproducibility}
+
+The three-pass AST compiler is deterministic: for any given \texttt{.py} file
+and Python version, it produces the same node records and edge records on every
 invocation. Node identifiers are constructed from the same function of kind,
 path, and qualified name on every invocation. This determinism enables the
 stability guarantees described in Section~III.
@@ -926,9 +979,9 @@ In alternative embodiments, the stable node identifier format may encode
 additional provenance fields including the content hash of the source file at
 build time, enabling detection of source-level changes between compilation runs.
 
-In alternative embodiments, the two-pass AST compiler for Python source code may
-be extended with additional passes extracting type annotation edges, decorator
-relationship edges, metaclass edges, and dataclass field edges.
+In alternative embodiments, the three-pass AST compiler for Python source code
+may be extended with additional passes extracting type annotation edges,
+decorator relationship edges, metaclass edges, and dataclass field edges.
 
 In alternative embodiments, the formal specification used to derive the domain
 ontology may itself be stored as a machine-readable artifact and versioned
@@ -1007,21 +1060,28 @@ generated or approximated summary.
 The system of claim~1, wherein the parsing operation for a Python source code
 artifact comprises:
 \begin{itemize}[leftmargin=2.5em]
-  \item a \emph{first pass} that traverses the abstract syntax tree of each
-    source file, extracts module, class, function, and method definition nodes,
-    and emits \texttt{CONTAINS} edges from parent nodes to their contained
-    children, \texttt{IMPORTS} edges from module nodes to referenced module
-    names, and \texttt{INHERITS} edges from class nodes to their base class
-    names; and
-  \item a \emph{second pass} that traverses the abstract syntax tree a second
-    time, extracts \texttt{Call}, \texttt{Attribute}, and \texttt{Name}
-    expression nodes within function and method bodies, emits \texttt{CALLS}
-    edges from calling function or method nodes to call-site stub nodes, and
-    performs a post-pass symbol resolution step that emits \texttt{RESOLVES\_TO}
-    edges from call-site stub nodes to first-party definition nodes whose
-    qualified names match the resolved callee expression;
-  \item whereby the compiled call graph is a deterministic theorem derived from
-    the abstract syntax tree rather than a probabilistic inference.
+  \item a \emph{first pass} that traverses the top-level body of each source
+    file's abstract syntax tree, extracts module, class, function, and method
+    definition nodes, emits \texttt{CONTAINS} edges from parent nodes to their
+    contained children, \texttt{IMPORTS} edges from module nodes to referenced
+    module names and symbols, \texttt{INHERITS} edges from class nodes to their
+    base class names, and builds an import alias map extended by a supplemental
+    full-tree walk to capture imports inside function bodies;
+  \item a \emph{second pass} that constructs a parent-node map via
+    \texttt{ast.walk} and visits every \texttt{Call} node, resolving each callee
+    to a first-party definition node or a \texttt{sym:} stub via the import
+    alias map and module-local name registry, and emitting \texttt{CALLS} edges;
+  \item a \emph{third pass} that runs a scope-tracking visitor including a
+    pre-scan for \texttt{@property}-decorated methods, then emits \texttt{READS}
+    and \texttt{WRITES} edges for variable loads and stores,
+    \texttt{ATTR\_ACCESS} edges for attribute accesses on known objects, and
+    \texttt{CALLS} edges for accesses to registered property methods; and
+  \item a \emph{post-build symbol resolution step} that matches \texttt{sym:}
+    stub nodes to first-party definition nodes by name and emits
+    \texttt{RESOLVES\_TO} edges, leaving unresolvable stubs as
+    \texttt{symbol}-kind nodes;
+  \item whereby the compiled call and data-flow graph is a deterministic theorem
+    derived from the abstract syntax tree rather than a probabilistic inference.
 \end{itemize}
 
 \bigskip
@@ -1163,17 +1223,25 @@ compilation ontology is derived from the Python abstract syntax tree
 specification, and wherein traversing the source artifact according to the
 compilation ontology comprises:
 \begin{itemize}[leftmargin=2.5em]
-  \item performing a first traversal pass that visits \texttt{Module},
-    \texttt{ClassDef}, \texttt{FunctionDef}, \texttt{AsyncFunctionDef}, and
-    \texttt{Import} AST node types, emitting module node records, class node
-    records, function and method node records, \texttt{CONTAINS} edges,
-    \texttt{IMPORTS} edges, and \texttt{INHERITS} edges; and
-  \item performing a second traversal pass that visits \texttt{Call},
-    \texttt{Attribute}, and \texttt{Name} AST node types within function and
-    method body subtrees, emitting \texttt{CALLS} edges to call-site stub nodes
-    and performing symbol resolution to emit \texttt{RESOLVES\_TO} edges
-    connecting call-site stubs to first-party definition nodes whose identifiers
-    match the resolved callee qualified name.
+  \item performing a \emph{first pass} over the top-level body of each source
+    file that visits \texttt{ClassDef}, \texttt{FunctionDef},
+    \texttt{AsyncFunctionDef}, \texttt{Import}, and \texttt{ImportFrom} AST
+    node types, emitting module, class, function, and method node records with
+    \texttt{CONTAINS}, \texttt{IMPORTS}, and \texttt{INHERITS} edges, and
+    building an import alias map supplemented by a full-tree walk to capture
+    imports inside function bodies;
+  \item performing a \emph{second pass} that constructs a parent-node map over
+    the full abstract syntax tree and visits every \texttt{Call} node, resolving
+    each callee via the import alias map and module-local name registry and
+    emitting \texttt{CALLS} edges to resolved nodes or \texttt{sym:} stubs;
+  \item performing a \emph{third pass} via a scope-tracking visitor that
+    pre-scans for \texttt{@property} methods and then emits \texttt{READS},
+    \texttt{WRITES}, and \texttt{ATTR\_ACCESS} edges for data-flow within
+    function and method bodies, and \texttt{CALLS} edges for property accesses;
+    and
+  \item performing a \emph{post-build symbol resolution step} that matches
+    \texttt{sym:} stub nodes to first-party definition nodes by name and emits
+    \texttt{RESOLVES\_TO} edges across the fully assembled graph.
 \end{itemize}
 
 \bigskip

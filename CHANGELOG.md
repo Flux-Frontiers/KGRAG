@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — Patent 1 Final Pass: Correct Node-ID Prefixes & Three-Pass Compiler (2026-04-17)
+
+- `patents/haystack_patent/patent_1_knowledge_compiler.tex` — corrected node-ID
+  kind prefix table (`fn`/`cls`/`mod`/`m`/`sym`) and all examples to match the
+  canonical implementation in `pycode_kg` (`utils.py:node_id`); updated example
+  identifier from `fn:src/orchestrator.py:KGRAG.query` to
+  `m:src/kg_rag/orchestrator.py:KGRAG.query`; fixed stale "two-pass AST compiler"
+  reference in Section X to "three-pass," consistent with Section VI and
+  Claims 4/12.
+- `patents/haystack_patent/# Patent 1 — Figure Image Generation Pro.litcoffee` —
+  updated FIG. 2 (Stable Node Addressing), FIG. 3 (Three-Pass AST Compiler), and
+  FIG. 6 (Synthesis Pipeline) prompts to use corrected kind prefixes and example
+  identifiers, ready for figure regeneration.
+- Updated figures: `fig1.png`, `fig2.png`, `fig3.png`, `fig5.png`, `fig6.png`,
+  `fig7.png` — regenerated to reflect corrections.
+- `ADAPTER_AUDIT.md` — cross-repo audit of `codekg → pycodekg` migration status
+  across all KG repos (pyproject.toml deps, pre-commit hook binaries, .gitignore
+  paths, `[tool.pycodekg]` sections).
+
 ### Added — Health Command: LanceDB Liveness Probe (2026-04-16)
 
 - `src/kg_rag/cli/cmd_health.py` — `_probe_kg()` helper runs each module's own
