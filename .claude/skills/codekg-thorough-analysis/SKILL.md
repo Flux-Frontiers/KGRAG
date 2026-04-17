@@ -94,7 +94,7 @@ Compile findings into:
 # Runs all 8 analysis phases and writes both outputs automatically:
 #   Markdown report → <repo>_analysis_<YYYYMMDD>.md  (cwd)
 #   JSON snapshot   → ~/.claude/codekg_analysis_latest.json
-codekg analyze /path/to/repo
+pycodekg analyze /path/to/repo
 ```
 
 ### 2. Read the JSON snapshot
@@ -204,25 +204,25 @@ Structure:
 
 ```bash
 # Analyze current directory (writes .md + .json automatically)
-codekg analyze .
+pycodekg analyze .
 
 # Analyze specific path
-codekg analyze /path/to/repo
+pycodekg analyze /path/to/repo
 
 # Custom Markdown report path
-codekg analyze /path/to/repo --output /tmp/analysis.md
+pycodekg analyze /path/to/repo --output /tmp/analysis.md
 
 # Custom JSON snapshot path
-codekg analyze /path/to/repo --json /tmp/analysis.json
+pycodekg analyze /path/to/repo --json /tmp/analysis.json
 
 # Both custom paths
-codekg analyze /path/to/repo -o /tmp/report.md -j /tmp/metrics.json
+pycodekg analyze /path/to/repo -o /tmp/report.md -j /tmp/metrics.json
 
 # Non-default SQLite / LanceDB paths
-codekg analyze /path/to/repo --db /path/to/graph.sqlite --lancedb /path/to/lancedb
+pycodekg analyze /path/to/repo --db /path/to/graph.sqlite --lancedb /path/to/lancedb
 
 # Suppress Rich console table (CI / pipe use)
-codekg analyze /path/to/repo --quiet
+pycodekg analyze /path/to/repo --quiet
 ```
 
 ## Skill Output Example

@@ -93,8 +93,8 @@ git push origin main --tags
 
 ## After Release
 
-- Update `.claude/skills/codekg/SKILL.md` if the install command or version references changed
-- Save a snapshot: `codekg snapshot save X.Y.Z --repo . --branch main`
+- Update `.claude/skills/pycodekg/SKILL.md` if the install command or version references changed
+- Save a snapshot: `pycodekg snapshot save X.Y.Z --repo . --branch main`
 
 ---
 
