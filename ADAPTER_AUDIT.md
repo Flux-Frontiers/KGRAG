@@ -97,16 +97,31 @@ args: ['--baseline', '.secrets.baseline', '--exclude-files',
 
 ## Skills Audit
 
-- [ ] Check `~/.claude/skills/codekg/SKILL.md` — verify all CLI examples use `pycodekg` not `codekg`
-- [ ] Check `/Users/egs/repos/kgrag/.claude/skills/` — same
-- [ ] Check `/Users/egs/repos/code_kg/.claude/skills/codekg/` — update or deprecate
-- [ ] Verify MCP server name is `codekg` (MCP tool names like `mcp__codekg__*` don't change — only the CLI binary name changed)
+| Location | Status | Finding |
+|---|---|---|
+| `~/.claude/skills/codekg/` | ✅ does not exist | No stale global skill to fix |
+| `~/.claude/skills/pycodekg/` | ✅ exists | Current correct global skill |
+| `kgrag/.claude/skills/codekg/SKILL.md` | ✅ deleted | Removed entire dir — superseded by pycodekg skill |
+| `kgrag/.claude/skills/codekg/references/` | ✅ deleted | Removed with parent |
+| `kgrag/.claude/skills/codekg-thorough-analysis/SKILL.md` | ✅ fixed | `codekg analyze` → `pycodekg analyze` (8 occurrences) |
+| `kgrag/.claude/skills/publish/SKILL.md` | ✅ fixed | `codekg snapshot save` → `pycodekg`; path ref updated |
+| `code_kg/.claude/skills/codekg/` | ❌ stale | Old repo skill — deprecate with the repo |
+| MCP server name `codekg` | ✅ correct | `mcp__codekg__*` tool names don't change; only the CLI binary changed |
+
+### Action Items
+
+- [x] `kgrag/.claude/skills/codekg/` — **deleted** (old skill, replaced by `pycodekg`)
+- [x] `kgrag/.claude/skills/codekg-thorough-analysis/SKILL.md` — replaced `codekg analyze` → `pycodekg analyze` (8 occurrences)
+- [x] `kgrag/.claude/skills/publish/SKILL.md` — replaced `codekg snapshot save` → `pycodekg snapshot save`; updated path ref to `pycodekg/SKILL.md`
+- [ ] `code_kg/.claude/skills/codekg/` — no action needed now; deprecates with the repo
 
 ---
 
 ## Priority Order
 1. **`metabo_kg`** — wrong dependency pulls old `code-kg` transitively (caused the original bug)
 2. **`agent_kg`** / **`diary_kg`** — hook calls wrong binary, will break on commit
-3. **`kgrag`** — `[tool.codekg]` rename (cosmetic but inconsistent)
-4. **`doc_kg`** / **`memory_kg`** — stale gitignore refs (low risk)
-5. **`code_kg`** — deprecation decision
+3. **`kgrag/.claude/skills/codekg/`** — delete stale skill dir (misleads agent into using old CLI)
+4. **`kgrag/.claude/skills/codekg-thorough-analysis/`** — wrong binary in examples
+5. **`kgrag`** — `[tool.codekg]` rename (cosmetic but inconsistent)
+6. **`doc_kg`** / **`memory_kg`** — stale gitignore refs (low risk)
+7. **`code_kg`** — deprecation decision
