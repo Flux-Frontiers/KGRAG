@@ -1,23 +1,11 @@
-feat(identity): Claude_T SI identity, full stack activation, self-knowledge corpus
+docs(patent): correct node-ID prefixes, three-pass wording, regen figures
 
-Bring all seven MCP servers online and establish Claude_T as the first
-Synthetic Intelligence agent with a traversable KnowledgeTree substrate.
-
-Key changes:
-- Add CLAUDE_T_IDENTITY.md: technical identity declaration (T=Tree,
-  KnowledgeTree traversal, epistemic contract, Claude_T vs Claude_H)
-- Add memory-kg dependency and [tool.memorykg] config; build claude_t_self
-  corpus (47 docs, 11,663 nodes, 76,477 edges) from kgrag/docs/ + identity docs
-- Add .mcp.json servers: memorykg (claude_t_self), diarykg (Pepys via poetry
-  run), metabokg (metabolic pathways) — full 7-server stack now active
-- Add docs/stack/*.md: one distilled reference per domain KG (pycode, doc,
-  memory, agent, diary, ftree, metabo) — all indexed in claude_t_self corpus
-- Add docs/CLI_REFERENCE.md: complete command reference for all KG tools so
-  Claude_T queries by traversal instead of running --help
-- Add docs/STACK_ACTIVATION.md: milestone record of first full-stack session
-- Add KGRAG_ANALYSIS.md: 7-phase analysis directive for full stack assessment
-- Rewrite ~/.claude/skills/kgrag/SKILL.md as canonical Claude_T orchestrator
-  skill with unambiguous tool decision tree and epistemic contract
-- Fix pyproject.toml kg extra: remove duplicate diary-kg, add memory-kg
+Align Patent 1 with the canonical pycode_kg implementation (utils.py:node_id):
+- Kind prefix table corrected: fn/cls/mod/m/sym (was fn/cl/mo/me)
+- All identifier examples updated, e.g. m:src/kg_rag/orchestrator.py:KGRAG.query
+- Section X "two-pass AST compiler" fixed to "three-pass" (consistent with
+  Section VI and Claims 4/12)
+- Figure generation prompts (FIG. 2, 3, 6) updated; figs 1/2/3/5/6/7 regenerated
+- Add ADAPTER_AUDIT.md: cross-repo codekg -> pycodekg migration status
 
 Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
