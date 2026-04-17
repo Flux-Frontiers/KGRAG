@@ -1,0 +1,55 @@
+{
+  "key": "57188084793736d70ae1e86cdcd1f2abbb8e57ab",
+  "branch": "claude/patent-figure-descriptions-BuMqM",
+  "timestamp": "2026-04-17T16:24:50.783201+00:00",
+  "version": "0.5.0",
+  "metrics": {
+    "total_nodes": 2030,
+    "total_edges": 2030,
+    "node_counts": {
+      "directory": 51,
+      "file": 1979
+    },
+    "edge_counts": {
+      "CONTAINS": 2030
+    },
+    "total_files": 1979,
+    "total_dirs": 51,
+    "dir_node_counts": {
+      ".agentkg": 1746,
+      ".claude": 43,
+      ".gitignore.old": 1,
+      ".memorykg": 24,
+      ".metabokg": 2,
+      ".pre-commit-config.yaml": 1,
+      ".pycodekg": 32,
+      ".secrets.baseline": 1,
+      "CHANGELOG.md": 1,
+      "LICENSE": 1,
+      "README.md": 1,
+      "analysis": 8,
+      "apply-doc-kg-patches.sh": 1,
+      "articles": 8,
+      "commit.txt": 1,
+      "docs": 19,
+      "patches": 3,
+      "patents": 52,
+      "pepys": 34,
+      "poetry.lock": 1,
+      "poetry.toml": 1,
+      "pyproject.toml": 1,
+      "scripts": 2,
+      "src": 37,
+      "tests": 9
+    }
+  },
+  "hotspots": [],
+  "issues": [],
+  "vs_previous": null,
+  "vs_baseline": {
+    "nodes": 68,
+    "edges": 68,
+    "files_delta": 68,
+    "dirs_delta": 0
+  }
+}

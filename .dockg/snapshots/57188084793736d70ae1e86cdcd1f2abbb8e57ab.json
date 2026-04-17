@@ -1,0 +1,123 @@
+{
+  "key": "57188084793736d70ae1e86cdcd1f2abbb8e57ab",
+  "branch": "claude/patent-figure-descriptions-BuMqM",
+  "timestamp": "2026-04-17T16:24:47.957862+00:00",
+  "version": "0.7.0",
+  "metrics": {
+    "db_path": "/Users/egs/repos/kgrag/.dockg/graph.sqlite",
+    "total_nodes": 6200,
+    "total_edges": 48257,
+    "node_counts": {
+      "chunk": 1681,
+      "document": 33,
+      "entity": 1424,
+      "keyword": 1393,
+      "section": 662,
+      "topic": 1007
+    },
+    "edge_counts": {
+      "CONTAINS": 2343,
+      "CO_OCCURS_WITH": 28826,
+      "HAS_KEYWORD": 6534,
+      "HAS_TOPIC": 1685,
+      "MENTIONS_ENTITY": 6451,
+      "NEXT": 1005,
+      "REFERENCES": 58,
+      "SIMILAR_TO": 1355
+    },
+    "meaningful_nodes": 6167,
+    "coverage_score": 0.9510212175292484,
+    "issues_count": 0,
+    "complexity_median": 18.0
+  },
+  "hotspots": [
+    {
+      "id": "chunk:articles/patent_1_knowledge_compiler.md:0028",
+      "file_path": "articles/patent_1_knowledge_compiler.md",
+      "label": "Patent Application",
+      "references": 0,
+      "semantic_links": 18,
+      "total_links": 19
+    },
+    {
+      "id": "chunk:articles/patent_1_knowledge_compiler.md:0088",
+      "file_path": "articles/patent_1_knowledge_compiler.md",
+      "label": "Patent Application",
+      "references": 0,
+      "semantic_links": 18,
+      "total_links": 19
+    },
+    {
+      "id": "chunk:articles/patent_2_kgrag.md:0075",
+      "file_path": "articles/patent_2_kgrag.md",
+      "label": "chunk:0076",
+      "references": 0,
+      "semantic_links": 18,
+      "total_links": 19
+    },
+    {
+      "id": "chunk:articles/patent_3_tree_of_knowledge.md:0002",
+      "file_path": "articles/patent_3_tree_of_knowledge.md",
+      "label": "Patent Application",
+      "references": 0,
+      "semantic_links": 18,
+      "total_links": 19
+    },
+    {
+      "id": "chunk:patents/embedder_patent/PATENT_APPLICATION.md:0019",
+      "file_path": "patents/embedder_patent/PATENT_APPLICATION.md",
+      "label": "A.1 Method Overview",
+      "references": 0,
+      "semantic_links": 18,
+      "total_links": 19
+    },
+    {
+      "id": "chunk:analysis/KGRAG_analysis_20260315.md:0034",
+      "file_path": "analysis/KGRAG_analysis_20260315.md",
+      "label": "Graph Traversal Node Edge",
+      "references": 0,
+      "semantic_links": 17,
+      "total_links": 18
+    },
+    {
+      "id": "chunk:analysis/arch.md:0013",
+      "file_path": "analysis/arch.md",
+      "label": "Module Dependencies",
+      "references": 0,
+      "semantic_links": 17,
+      "total_links": 18
+    },
+    {
+      "id": "chunk:articles/patent_2_kgrag.md:0001",
+      "file_path": "articles/patent_2_kgrag.md",
+      "label": "chunk:0002",
+      "references": 0,
+      "semantic_links": 17,
+      "total_links": 18
+    },
+    {
+      "id": "chunk:articles/patent_2_kgrag.md:0052",
+      "file_path": "articles/patent_2_kgrag.md",
+      "label": "chunk:0053",
+      "references": 0,
+      "semantic_links": 17,
+      "total_links": 18
+    },
+    {
+      "id": "chunk:articles/patent_2_kgrag.md:0054",
+      "file_path": "articles/patent_2_kgrag.md",
+      "label": "chunk:0055",
+      "references": 0,
+      "semantic_links": 17,
+      "total_links": 18
+    }
+  ],
+  "issues": [],
+  "vs_previous": null,
+  "vs_baseline": {
+    "nodes": 3252,
+    "edges": 27911,
+    "coverage_delta": 0.04165101783646796,
+    "issues_delta": 0
+  }
+}
