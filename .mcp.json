@@ -62,17 +62,6 @@
         "--repo", "/Users/egs/repos/kgrag"
       ]
     },
-    "diarykg": {
-      "command": "/Users/egs/.local/bin/poetry",
-      "args": [
-        "run", "diarykg-mcp",
-        "--repo", "/Users/egs/repos/diary_kg"
-      ],
-      "env": {
-        "POETRY_VIRTUALENVS_IN_PROJECT": "true"
-      },
-      "cwd": "/Users/egs/repos/diary_kg"
-    },
     "metabokg": {
       "command": "/Users/egs/repos/kgrag/.venv/bin/metabokg",
       "args": [

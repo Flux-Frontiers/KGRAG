@@ -84,6 +84,58 @@ def _build_cmd(kind: str, repo: Path) -> str:
 
 
 # ---------------------------------------------------------------------------
+# KG liveness probe
+# ---------------------------------------------------------------------------
+
+_PROBE_CMD_TPL: dict[str, str] = {
+    "code": "codekg query --sqlite {sqlite} --lancedb {lancedb} -k 1 health",
+    "doc": "dockg query --sqlite {sqlite} --lancedb {lancedb} -k 1 health",
+    "memory": "memorykg query --sqlite {sqlite} --lancedb {lancedb} -k 1 health",
+    "diary": "diarykg status {repo}",
+}
+
+
+def _probe_kg(entry: object) -> str | None:
+    """Run the module's own status/query command to verify the index is live.
+
+    Uses each module's CLI rather than importing lancedb directly, so the
+    probe is always consistent with how the module itself reads the index.
+
+    LanceDB holds **exclusive file handles** on the current data files.  If a
+    build has replaced those files since the MCP server started, the server
+    will return ``Not found`` errors.  When this probe *fails*, rebuild and
+    restart the MCP server.  When this probe *passes* but MCP queries still
+    fail, only the MCP server restart is needed.
+
+    :param entry: KGEntry with ``kind``, ``repo_path``, ``sqlite_path``, and
+        ``lancedb_path`` attributes.
+    :return: Error description string, or ``None`` if the probe passes.
+    """
+    kind = entry.kind.value  # type: ignore[attr-defined]
+    tpl = _PROBE_CMD_TPL.get(kind)
+    if tpl is None:
+        return None  # no probe available for this kind
+
+    cmd = tpl.format(
+        sqlite=entry.sqlite_path or "",  # type: ignore[attr-defined]
+        lancedb=entry.lancedb_path or "",  # type: ignore[attr-defined]
+        repo=entry.repo_path,  # type: ignore[attr-defined]
+    )
+    try:
+        result = subprocess.run(shlex.split(cmd), capture_output=True, timeout=30)
+        if result.returncode != 0:
+            stderr = result.stderr.decode(errors="replace").strip() if result.stderr else ""
+            return stderr[:200] or f"probe exited with code {result.returncode}"
+        return None
+    except subprocess.TimeoutExpired:
+        return "probe timed out after 30 s"
+    except FileNotFoundError:
+        return f"command not found: {shlex.split(cmd)[0]}"
+    except OSError as exc:
+        return str(exc)[:200]
+
+
+# ---------------------------------------------------------------------------
 # Subprocess execution helper
 # ---------------------------------------------------------------------------
 
@@ -123,9 +175,7 @@ def _run_fix_cmd(
             console.print(f"    {line.rstrip()}")
         proc.wait()
     except FileNotFoundError:
-        console.print(
-            f"  [bold red]✖  command not found:[/bold red] {shlex.split(cmd)[0]}"
-        )
+        console.print(f"  [bold red]✖  command not found:[/bold red] {shlex.split(cmd)[0]}")
         return False
 
     if proc.returncode == 0:
@@ -227,6 +277,26 @@ def _check_kgs(entries: list, issues: list[HealthIssue]) -> None:
                 )
             )
 
+        # --- LanceDB directory exists but index is unreadable ---
+        # Catches: corrupted indices, partial builds, and data-file deletions.
+        # Note: if this probe *passes* but MCP semantic queries still fail,
+        # the MCP server has stale open handles — restart it.
+        elif e.lancedb_path and Path(e.lancedb_path).exists():
+            probe_err = _probe_kg(e)
+            if probe_err:
+                issues.append(
+                    HealthIssue(
+                        severity="critical",
+                        check="stale_lancedb_probe",
+                        target=e.name,
+                        message=(
+                            f"LanceDB unreadable — rebuild then restart MCP server: {probe_err}"
+                        ),
+                        fix_cmd=_build_cmd(e.kind.value, e.repo_path),
+                        auto_fixable=False,
+                    )
+                )
+
 
 def _check_corpora(
     corpora: list,
@@ -262,9 +332,7 @@ def _check_corpora(
                             severity="warning",
                             check="corpus_unbuilt_member",
                             target=corpus.name,
-                            message=(
-                                f"Member '{entry.name}' ({entry.kind.value}) is not built"
-                            ),
+                            message=(f"Member '{entry.name}' ({entry.kind.value}) is not built"),
                             fix_cmd=_build_cmd(entry.kind.value, entry.repo_path),
                             auto_fixable=False,
                         )
@@ -321,9 +389,7 @@ def _apply_fixes(
             if len(parts) == 5:
                 kg_id = parts[-1]
                 corpus_reg.remove_kg(issue.target, kg_id)
-                log.append(
-                    f"Removed dangling ref {kg_id!r} from corpus '{issue.target}'"
-                )
+                log.append(f"Removed dangling ref {kg_id!r} from corpus '{issue.target}'")
             else:
                 remaining.append(issue)
 
@@ -462,9 +528,7 @@ def health(do_fix: bool, output_json: bool, registry: str | None) -> None:
     if not issues:
         status_line = "[bold green]✔  All checks passed — stack is healthy[/bold green]"
     elif n_critical:
-        status_line = (
-            f"[bold red]✖  {n_critical} critical  {n_warning} warning(s)[/bold red]"
-        )
+        status_line = f"[bold red]✖  {n_critical} critical  {n_warning} warning(s)[/bold red]"
     else:
         status_line = f"[bold yellow]⚠  {n_warning} warning(s)[/bold yellow]"
 
@@ -494,11 +558,7 @@ def health(do_fix: bool, output_json: bool, registry: str | None) -> None:
     for issue in issues:
         sev_style = _SEVERITY_STYLE.get(issue.severity, "")
         sev_icon = _SEVERITY_ICON.get(issue.severity, "?")
-        fix_label = (
-            Text("auto", style="green")
-            if issue.auto_fixable
-            else Text("cmd", style="dim")
-        )
+        fix_label = Text("auto", style="green") if issue.auto_fixable else Text("cmd", style="dim")
         table.add_row(
             Text(sev_icon, style=sev_style),
             Text(issue.check, style=sev_style),
