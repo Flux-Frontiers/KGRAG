@@ -219,14 +219,13 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
-# CodeKG generated artifacts — databases are transient/reproducible, snapshots are tracked
-# MUST include .codekg/snapshots!
-# This is the correct pattern
-.codekg/lancedb/
-.codekg/lancedb-*
-.codekg/graph.sqlite
-.codekg/graph.sqlite*
-.codekg/models
+# PyCodeKG generated artifacts — databases are transient/reproducible, snapshots are tracked
+# MUST include .pycodekg/snapshots!
+.pycodekg/lancedb/
+.pycodekg/lancedb-*
+.pycodekg/graph.sqlite
+.pycodekg/graph.sqlite*
+.pycodekg/models
 
 # DocKG generated artifacts — same pattern as CodeKG; snapshots will be tracked once added
 .dockg/lancedb/
@@ -272,5 +271,5 @@ __marimo__/
 .DS_Store
 commit.txt
 
-# Patents — sensitive IP, keep local only
-patents/
+patents/haystack_patent/old/
+patents/**/*.pdf
