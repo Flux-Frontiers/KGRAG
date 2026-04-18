@@ -36,8 +36,8 @@ class CodeKGAdapter(KGAdapter):
         lancedb = str(entry.lancedb_path) if entry.lancedb_path else None
         self._kg = CodeKG(
             repo_root=str(entry.repo_path),
-            db_path=sqlite or str(entry.repo_path / ".codekg" / "graph.sqlite"),
-            lancedb_dir=lancedb or str(entry.repo_path / ".codekg" / "lancedb"),
+            db_path=sqlite or str(entry.repo_path / ".pycodekg" / "graph.sqlite"),
+            lancedb_dir=lancedb or str(entry.repo_path / ".pycodekg" / "lancedb"),
         )
 
     def is_available(self) -> bool:

@@ -34,7 +34,7 @@ console = Console()
 
 # KG layer → (dot-directory, build CLI name)
 _LAYER_SPEC: dict[str, tuple[str, str]] = {
-    "code": (".codekg", "codekg"),
+    "code": (".pycodekg", "pycodekg"),
     "doc": (".dockg", "dockg"),
 }
 
@@ -161,17 +161,8 @@ def init(repo_path, wipe, name_prefix, layers, corpus_name, registry):
 
         # Build
         console.rule(f"[bold]{kind} layer[/bold]")
-        cmd = [
-            cli_name,
-            "build",
-            "--repo",
-            str(repo),
-            "--sqlite",
-            str(sqlite_path),
-            "--lancedb",
-            str(lancedb_path),
-        ]
-        if wipe:
+        cmd = [cli_name, "build", "--repo", str(repo)]
+        if wipe and cli_name != "dockg":
             cmd.append("--wipe")
         console.print(f"Running: {' '.join(cmd)}")
 
