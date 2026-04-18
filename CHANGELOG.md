@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed — Rename code KG index directory from `.codekg` to `.pycodekg` (2026-04-17)
+
+- `src/kg_rag/cli/cmd_init.py` — layer spec updated: code layer now detects `.pycodekg/` instead of `.codekg/`; build CLI name updated to `pycodekg`.
+- `src/kg_rag/cli/cmd_registry.py` — scan markers updated: `.pycodekg` replaces `.codekg` as the code-kind marker; docstrings corrected.
+- `src/kg_rag/adapters/codekg_adapter.py` — default fallback paths updated to `.pycodekg/graph.sqlite` and `.pycodekg/lancedb`.
+- `src/kg_rag/cli/cmd_hooks.py` — pre-commit hook template updated to probe `.pycodekg/` and reference PyCodeKG in all user-facing messages.
+- `tests/conftest.py`, `tests/test_cli.py`, `tests/test_cmd_health.py` — all test fixtures updated to create `.pycodekg/` directories instead of `.codekg/`.
+
 ### Added — Patent 1 Final Pass: Correct Node-ID Prefixes & Three-Pass Compiler (2026-04-17)
 
 - `patents/haystack_patent/patent_1_knowledge_compiler.tex` — corrected node-ID

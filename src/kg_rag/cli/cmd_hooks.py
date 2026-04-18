@@ -5,7 +5,7 @@ CLI command for installing KGRAG git hooks:
 
   install-hooks — install the pre-commit snapshot hook into .git/hooks/
 
-The KGRAG hook orchestrates snapshots for all registered KGs (CodeKG, DocKG,
+The KGRAG hook orchestrates snapshots for all registered KGs (PyCodeKG, DocKG,
 etc.) that live in the workspace, then runs quality checks.
 
   Author: Eric G. Suchanek, PhD
@@ -46,17 +46,17 @@ TREE_HASH=$(git write-tree)
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
 # ---------------------------------------------------------------------------
-# CodeKG — rebuild + snapshot if present in workspace
+# PyCodeKG — rebuild + snapshot if present in workspace
 # ---------------------------------------------------------------------------
 CODEKG_REPO="${WORKSPACE_ROOT}/code_kg"
-if [ -d "$CODEKG_REPO/.codekg" ]; then
+if [ -d "$CODEKG_REPO/.pycodekg" ]; then
     (cd "$CODEKG_REPO" && "$CODEKG_REPO/.venv/bin/codekg" build --repo . || exit 1)
     (cd "$CODEKG_REPO" && "$CODEKG_REPO/.venv/bin/codekg" snapshot save \\
         --repo . \\
         --tree-hash "$TREE_HASH" \\
         --branch "$BRANCH") \\
       || { echo "[kgrag] codekg snapshot skipped" >&2; }
-    (cd "$CODEKG_REPO" && git add .codekg/snapshots/ 2>/dev/null || true)
+    (cd "$CODEKG_REPO" && git add .pycodekg/snapshots/ 2>/dev/null || true)
 fi
 
 # ---------------------------------------------------------------------------
@@ -64,7 +64,7 @@ fi
 # ---------------------------------------------------------------------------
 DOCKG_REPO="${WORKSPACE_ROOT}/doc_kg"
 if [ -d "$DOCKG_REPO/.dockg" ]; then
-    (cd "$DOCKG_REPO" && "$DOCKG_REPO/.venv/bin/dockg" build --wipe || exit 1)
+    (cd "$DOCKG_REPO" && "$DOCKG_REPO/.venv/bin/dockg" build || exit 1)
     (cd "$DOCKG_REPO" && "$DOCKG_REPO/.venv/bin/dockg" snapshot save \\
         --repo . \\
         --tree-hash "$TREE_HASH" \\
@@ -118,7 +118,7 @@ def install_hooks(repo: str, force: bool) -> None:
     """Install the KGRAG pre-commit git hook.
 
     After installation, before each commit the hook will:
-      1. Rebuild + snapshot CodeKG (if workspace/code_kg is built)
+      1. Rebuild + snapshot PyCodeKG (if workspace/code_kg is built)
       2. Rebuild + snapshot DocKG (if workspace/doc_kg is built)
       3. Rebuild + snapshot FTreeKG (if workspace/FTreeKG is built)
       4. Stage all snapshot directories atomically
@@ -151,4 +151,4 @@ def install_hooks(repo: str, force: bool) -> None:
 
     click.echo(f"OK Installed pre-commit hook: {hook_path}")
     click.echo("  Snapshots will be captured automatically before each commit.")
-    click.echo("  Orchestrates: CodeKG, DocKG, FTreeKG (if built).")
+    click.echo("  Orchestrates: PyPyCodeKG, DocKG, FTreeKG (if built).")

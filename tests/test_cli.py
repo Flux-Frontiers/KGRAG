@@ -236,7 +236,7 @@ class TestCLIScan:
     def test_scan_finds_codekg(self, tmp_path):
         repo = tmp_path / "myrepo"
         repo.mkdir()
-        codekg_dir = repo / ".codekg"
+        codekg_dir = repo / ".pycodekg"
         codekg_dir.mkdir()
         (codekg_dir / "graph.sqlite").touch()
 
@@ -247,7 +247,7 @@ class TestCLIScan:
     def test_scan_auto_register(self, tmp_path):
         repo = tmp_path / "myrepo"
         repo.mkdir()
-        codekg_dir = repo / ".codekg"
+        codekg_dir = repo / ".pycodekg"
         codekg_dir.mkdir()
         (codekg_dir / "graph.sqlite").touch()
 

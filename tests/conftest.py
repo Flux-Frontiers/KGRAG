@@ -44,7 +44,7 @@ def built_entry(tmp_path: Path) -> KGEntry:
     repo.mkdir()
     venv = repo / ".venv"
     venv.mkdir()
-    db_dir = repo / ".codekg"
+    db_dir = repo / ".pycodekg"
     db_dir.mkdir()
     sqlite = db_dir / "graph.sqlite"
     sqlite.touch()

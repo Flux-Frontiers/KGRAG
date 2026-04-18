@@ -228,7 +228,7 @@ class TestHealthStalePaths:
             kind=KGKind.CODE,
             repo_path=repo,
             venv_path=repo / ".venv",
-            sqlite_path=repo / ".codekg" / "graph.sqlite",  # path set but file absent
+            sqlite_path=repo / ".pycodekg" / "graph.sqlite",  # path set but file absent
         )
         with KGRegistry(db_path=db) as reg:
             reg.register(entry)
@@ -243,7 +243,7 @@ class TestHealthStalePaths:
         repo = tmp_path / "myrepo"
         repo.mkdir()
         # SQLite exists so is_built=True; LanceDB dir is absent
-        db_dir = repo / ".codekg"
+        db_dir = repo / ".pycodekg"
         db_dir.mkdir()
         sqlite = db_dir / "graph.sqlite"
         sqlite.touch()
@@ -463,7 +463,7 @@ class TestHealthFixSubprocess:
         # SQLite path registered but missing → stale_sqlite
         # LanceDB path registered but missing → stale_lancedb
         # Both map to the same "codekg build --repo ..." command.
-        db_dir = repo / ".codekg"
+        db_dir = repo / ".pycodekg"
         db_dir.mkdir()
         sqlite = db_dir / "graph.sqlite"
         sqlite.touch()  # exists → is_built = True; stale checks proceed
@@ -472,7 +472,7 @@ class TestHealthFixSubprocess:
             kind=KGKind.CODE,
             repo_path=repo,
             venv_path=repo / ".venv",
-            sqlite_path=repo / ".codekg" / "nope.sqlite",  # missing
+            sqlite_path=repo / ".pycodekg" / "nope.sqlite",  # missing
             lancedb_path=db_dir / "lancedb",  # missing
         )
         with KGRegistry(db_path=db) as reg:
