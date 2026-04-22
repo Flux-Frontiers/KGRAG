@@ -34,11 +34,12 @@ class KGAdapter(ABC):
         """
 
     @abstractmethod
-    def query(self, q: str, k: int = 8) -> list[CrossHit]:
+    def query(self, q: str, k: int = 8, min_score: float = 0.0) -> list[CrossHit]:
         """Query the KG and return ranked hits.
 
         :param q: Natural-language query string.
         :param k: Number of results to return.
+        :param min_score: Minimum relevance score; hits below this are dropped.
         :return: List of CrossHit objects ranked by score.
         """
 

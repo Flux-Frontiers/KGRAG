@@ -52,18 +52,22 @@ class CodeKGAdapter(KGAdapter):
         except ImportError:
             return False
 
-    def query(self, q: str, k: int = 8) -> list[CrossHit]:
+    def query(self, q: str, k: int = 8, min_score: float = 0.0) -> list[CrossHit]:
         """Query the PyCodeKG and return ranked hits.
 
         :param q: Natural-language query string.
         :param k: Number of results to return.
+        :param min_score: Minimum relevance score; hits below this are dropped.
         :return: List of CrossHit objects ranked by score.
         """
         self._load()
-        result = self._kg.query(q, k=k)
+        result = self._kg.query(q, k=k, min_score=min_score)
         hits = []
         for node in result.nodes[:k]:
             relevance = node.get("relevance") or {}
+            score = relevance.get("score", 0.0)
+            if score < min_score:
+                continue
             hits.append(
                 CrossHit(
                     kg_name=self.entry.name,
@@ -71,7 +75,7 @@ class CodeKGAdapter(KGAdapter):
                     node_id=node["id"],
                     name=node.get("name", ""),
                     kind=node.get("kind", ""),
-                    score=relevance.get("score", 0.0),
+                    score=score,
                     summary=node.get("docstring") or "",
                     source_path=node.get("module_path") or "",
                 )

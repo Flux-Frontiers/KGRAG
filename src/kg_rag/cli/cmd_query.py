@@ -30,8 +30,15 @@ def _parse_kinds(kind: str | None) -> list[KGKind] | None:
 @k_option
 @kind_option
 @click.option("--json", "output_json", is_flag=True, help="Output as JSON.")
+@click.option(
+    "--min-score",
+    "min_score",
+    default=0.0,
+    show_default=True,
+    help="Drop hits with score below this threshold (e.g. 0.35 to suppress off-topic KGs).",
+)
 @registry_option
-def query(query_text, k, kind, output_json, registry):
+def query(query_text, k, kind, output_json, min_score, registry):
     """Cross-KG semantic query — search all registered KGs.
 
     \b
@@ -43,10 +50,11 @@ def query(query_text, k, kind, output_json, registry):
         kgrag query "knowledge graph extraction"
         kgrag query "metabolic pathway" --kind meta -k 5
         kgrag query "document chunking" --kind doc
+        kgrag query "what did Twain think about justice" --min-score 0.35
     """
     reg_path = Path(registry).resolve() if registry else None
     with KGRAG(registry_path=reg_path) as kg:
-        result = kg.query(query_text, k=k, kinds=_parse_kinds(kind))
+        result = kg.query(query_text, k=k, kinds=_parse_kinds(kind), min_score=min_score)
 
     if result.kgs_queried == 0:
         console.print("[yellow]No available KGs to query. Register and build some first.[/yellow]")

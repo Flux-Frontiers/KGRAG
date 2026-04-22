@@ -117,12 +117,16 @@ class KGRAG:
         q: str,
         k: int = 8,
         kinds: Sequence[KGKind] | None = None,
+        min_score: float = 0.0,
     ) -> CrossQueryResult:
         """Federated query across all (or selected) registered KGs.
 
         :param q: Natural-language query string.
         :param k: Max hits to return per KG.
         :param kinds: Optional filter: only query KGs of these kinds.
+        :param min_score: Minimum relevance score; hits below this are dropped
+            across all KGs.  Set to e.g. ``0.35`` to suppress low-confidence
+            hits from KGs whose domain does not match the query.
         :return: Aggregated and globally ranked CrossQueryResult.
         """
         all_hits: list[CrossHit] = []
@@ -134,7 +138,7 @@ class KGRAG:
             if adapter is None:
                 continue
             try:
-                hits = adapter.query(q, k=k)
+                hits = adapter.query(q, k=k, min_score=min_score)
                 all_hits.extend(hits)
                 by_kg[entry.name] = hits
                 kgs_queried += 1
@@ -247,12 +251,14 @@ class KGRAG:
         corpus_name: str,
         q: str,
         k: int = 8,
+        min_score: float = 0.0,
     ) -> CrossQueryResult:
         """Federated query scoped to a named corpus.
 
         :param corpus_name: Name or UUID of the corpus to query.
         :param q: Natural-language query string.
         :param k: Max hits to return per KG.
+        :param min_score: Minimum relevance score; hits below this are dropped.
         :return: Aggregated and globally ranked CrossQueryResult.
         :raises KeyError: If corpus not found.
         """
@@ -266,7 +272,7 @@ class KGRAG:
             if adapter is None:
                 continue
             try:
-                hits = adapter.query(q, k=k)
+                hits = adapter.query(q, k=k, min_score=min_score)
                 all_hits.extend(hits)
                 by_kg[entry.name] = hits
                 kgs_queried += 1
@@ -366,12 +372,14 @@ class KGRAG:
         person_name: str,
         q: str,
         k: int = 8,
+        min_score: float = 0.0,
     ) -> CrossQueryResult:
         """Federated query scoped to a person corpus.
 
         :param person_name: Name or UUID of the person corpus.
         :param q: Natural-language query string.
         :param k: Max hits to return per KG.
+        :param min_score: Minimum relevance score; hits below this are dropped.
         :return: Aggregated and globally ranked CrossQueryResult.
         :raises KeyError: If person corpus not found.
         """
@@ -385,7 +393,7 @@ class KGRAG:
             if adapter is None:
                 continue
             try:
-                hits = adapter.query(q, k=k)
+                hits = adapter.query(q, k=k, min_score=min_score)
                 all_hits.extend(hits)
                 by_kg[entry.name] = hits
                 kgs_queried += 1

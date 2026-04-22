@@ -72,11 +72,12 @@ class StubKGAdapter(KGAdapter):
         except ImportError:
             return False
 
-    def query(self, q: str, k: int = 8) -> list[CrossHit]:
+    def query(self, q: str, k: int = 8, min_score: float = 0.0) -> list[CrossHit]:
         """Query the KG; returns empty list if library is unavailable.
 
         :param q: Natural-language query string.
         :param k: Number of results to return.
+        :param min_score: Minimum relevance score; hits below this are dropped.
         :return: List of CrossHit objects, or empty if unavailable.
         """
         if not self.is_available():
@@ -86,6 +87,9 @@ class StubKGAdapter(KGAdapter):
             raw = self._kg.query(q, k=k)
             hits = []
             for hit in (getattr(raw, "ranked_hits", None) or [])[:k]:
+                score = getattr(hit, "score", 0.0)
+                if score < min_score:
+                    continue
                 node = getattr(hit, "node", hit)
                 hits.append(
                     CrossHit(
@@ -94,7 +98,7 @@ class StubKGAdapter(KGAdapter):
                         node_id=getattr(node, "id", str(node)),
                         name=getattr(node, "name", str(node)),
                         kind=getattr(node, "kind", self._kind.value),
-                        score=getattr(hit, "score", 0.0),
+                        score=score,
                         summary=getattr(node, "description", "") or "",
                         source_path=getattr(node, "source", "") or "",
                     )

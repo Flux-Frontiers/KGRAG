@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — `min_score` filtering across all adapters and federated query (2026-04-22)
+
+- `src/kg_rag/adapters/base.py` — abstract `query()` signature extended with
+  `min_score: float = 0.0`; all concrete adapters implement and respect it.
+- `src/kg_rag/adapters/{_stub,agent,diary,dockg,metakg,pycodekg}_adapter.py` —
+  each `query()` now applies `min_score` before appending a hit; score is
+  extracted once and reused for both the gate check and the `CrossHit` field.
+- `src/kg_rag/orchestrator.py` — `KGRAG.query()`, `corpus_query()`, and
+  `person_query()` accept `min_score` and thread it through to every adapter
+  call, enabling cross-KG relevance gating in one place.
+- `src/kg_rag/cli/cmd_query.py` — `--min-score` option added to `kgrag query`;
+  e.g. `kgrag query "…" --min-score 0.35` suppresses off-topic KG hits.
+
+### Fixed — `DocKGAdapter` position-based score fallback removed (2026-04-22)
+
+- `src/kg_rag/adapters/dockg_adapter.py` — dead position-rank proxy (`1.0 - i /
+  (n+1)`) removed now that DocKG ≥ 0.9.1 injects a real `relevance.score` (from
+  LanceDB cosine distance) into every node dict. DocKG scores are now
+  apples-to-apples with CodeKG scores, making `--min-score` semantically
+  consistent across KG kinds.
+- `poetry.lock` — `doc-kg` bumped from 0.8.1 → 0.9.1 (adds `relevance` dict).
+
+### Changed — Migrate `MetaKGAdapter` from `metakg` to `metabokg` (2026-04-22)
+
+- `src/kg_rag/adapters/metakg_adapter.py` — import target changed from
+  `metakg.orchestrator.MetaKGOrchestrator` to `metabokg.orchestrator.MetaKG`;
+  `is_available()` probe updated; error and analysis messages updated throughout.
+- `tests/test_adapters.py` — all `sys.modules` patches and fixture lookups
+  updated from `metakg` → `metabokg`.
+
 ### Changed — Migrate code KG adapter from `code-kg` to `pycode-kg` (2026-04-22)
 
 - `src/kg_rag/adapters/codekg_adapter.py` → renamed to `pycodekg_adaptor.py`; updated
