@@ -29,10 +29,9 @@
         "WORKSPACE_ID": "kgrag"
       }
     },
-    "codekg": {
-      "command": "/Users/egs/repos/kgrag/.venv/bin/codekg",
+    "pycodekg": {
+      "command": "/Users/egs/repos/kgrag/.venv/bin/pycodekg-mcp",
       "args": [
-        "mcp",
         "--repo", "/Users/egs/repos/kgrag"
       ]
     },
