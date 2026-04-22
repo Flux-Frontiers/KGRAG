@@ -12,9 +12,9 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 
 from kg_rag.adapters import make_adapter
-from kg_rag.adapters.codekg_adapter import CodeKGAdapter
 from kg_rag.adapters.dockg_adapter import DocKGAdapter
 from kg_rag.adapters.metakg_adapter import MetaKGAdapter
+from kg_rag.adapters.pycodekg_adaptor import CodeKGAdapter
 from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry, KGKind
 
 # ---------------------------------------------------------------------------
@@ -76,21 +76,21 @@ class TestMakeAdapter:
 class TestCodeKGAdapterIsAvailable:
     def test_unavailable_when_import_fails(self, tmp_path):
         entry = _entry(tmp_path, KGKind.CODE)
-        with patch.dict("sys.modules", {"code_kg": None}):
+        with patch.dict("sys.modules", {"pycode_kg": None}):
             adapter = CodeKGAdapter(entry)
             assert adapter.is_available() is False
 
     def test_unavailable_when_not_built(self, tmp_path):
         entry = _entry(tmp_path, KGKind.CODE)  # no sqlite
-        mock_code_kg = MagicMock()
-        with patch.dict("sys.modules", {"code_kg": mock_code_kg}):
+        mock_pycode_kg = MagicMock()
+        with patch.dict("sys.modules", {"pycode_kg": mock_pycode_kg}):
             adapter = CodeKGAdapter(entry)
             assert adapter.is_available() is False
 
     def test_available_when_built(self, tmp_path):
         entry = _entry(tmp_path, KGKind.CODE, with_sqlite=True)
-        mock_code_kg = MagicMock()
-        with patch.dict("sys.modules", {"code_kg": mock_code_kg}):
+        mock_pycode_kg = MagicMock()
+        with patch.dict("sys.modules", {"pycode_kg": mock_pycode_kg}):
             adapter = CodeKGAdapter(entry)
             assert adapter.is_available() is True
 

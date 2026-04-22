@@ -1,7 +1,7 @@
 """
-codekg_adapter.py
+pycodekg_adaptor.py
 
-Adapter wrapping the code_kg.CodeKG class.
+Adapter wrapping the pycode_kg.PyCodeKG class.
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry, KGKind
 
 
 class CodeKGAdapter(KGAdapter):
-    """Adapter for CodeKG (Python code knowledge graphs).
+    """Adapter for PyCodeKG (Python code knowledge graphs).
 
     :param entry: KGEntry with kind=KGKind.CODE.
     """
@@ -26,34 +26,34 @@ class CodeKGAdapter(KGAdapter):
         if self._kg is not None:
             return
         try:
-            from code_kg.kg import CodeKG  # pylint: disable=import-outside-toplevel
+            from pycode_kg.kg import PyCodeKG  # pylint: disable=import-outside-toplevel
         except ImportError as e:
             raise ImportError(
-                "code-kg is not installed. Install it with: pip install code-kg"
+                "pycode-kg is not installed. Install it with: pip install pycode-kg"
             ) from e
         entry = self.entry
         sqlite = str(entry.sqlite_path) if entry.sqlite_path else None
         lancedb = str(entry.lancedb_path) if entry.lancedb_path else None
-        self._kg = CodeKG(
+        self._kg = PyCodeKG(
             repo_root=str(entry.repo_path),
             db_path=sqlite or str(entry.repo_path / ".pycodekg" / "graph.sqlite"),
             lancedb_dir=lancedb or str(entry.repo_path / ".pycodekg" / "lancedb"),
         )
 
     def is_available(self) -> bool:
-        """Return True if code_kg is installed and the DB is built.
+        """Return True if pycode-kg is installed and the DB is built.
 
         :return: True if this adapter can serve queries.
         """
         try:
-            import code_kg  # noqa: F401  # pylint: disable=import-outside-toplevel
+            import pycode_kg  # noqa: F401  # pylint: disable=import-outside-toplevel
 
             return self.entry.is_built
         except ImportError:
             return False
 
     def query(self, q: str, k: int = 8) -> list[CrossHit]:
-        """Query the CodeKG and return ranked hits.
+        """Query the PyCodeKG and return ranked hits.
 
         :param q: Natural-language query string.
         :param k: Number of results to return.
@@ -79,7 +79,7 @@ class CodeKGAdapter(KGAdapter):
         return hits
 
     def pack(self, q: str, k: int = 8, context: int = 5) -> list[CrossSnippet]:
-        """Query the CodeKG and return source snippets.
+        """Query the PyCodeKG and return source snippets.
 
         :param q: Natural-language query string.
         :param k: Number of snippets to return.
@@ -107,7 +107,7 @@ class CodeKGAdapter(KGAdapter):
         return snippets
 
     def stats(self) -> dict[str, Any]:
-        """Return basic statistics about this CodeKG instance.
+        """Return basic statistics about this PyCodeKG instance.
 
         :return: Dict with node_count, edge_count.
         """
@@ -123,7 +123,7 @@ class CodeKGAdapter(KGAdapter):
             return {"kind": "code", "error": "stats unavailable"}
 
     def analyze(self) -> str:
-        """Run full architectural analysis on this CodeKG.
+        """Run full architectural analysis on this PyCodeKG.
 
         :return: Markdown-formatted analysis report.
         """
