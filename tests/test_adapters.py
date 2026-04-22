@@ -122,7 +122,7 @@ class TestCodeKGAdapterQuery:
         assert isinstance(hits[0], CrossHit)
         assert hits[0].kg_kind == KGKind.CODE
         assert hits[0].score == 0.9
-        mock_kg.query.assert_called_once_with("test query", k=5)
+        mock_kg.query.assert_called_once_with("test query", k=5, min_score=0.0)
 
     def test_query_respects_k_limit(self, tmp_path):
         entry = _entry(tmp_path, KGKind.CODE, with_sqlite=True)
@@ -250,14 +250,14 @@ class TestDocKGAdapterQuery:
 class TestMetaKGAdapterIsAvailable:
     def test_unavailable_when_import_fails(self, tmp_path):
         entry = _entry(tmp_path, KGKind.META)
-        with patch.dict("sys.modules", {"metakg": None}):
+        with patch.dict("sys.modules", {"metabokg": None}):
             adapter = MetaKGAdapter(entry)
             assert adapter.is_available() is False
 
     def test_available_when_built(self, tmp_path):
         entry = _entry(tmp_path, KGKind.META, with_sqlite=True)
         mock_metakg = MagicMock()
-        with patch.dict("sys.modules", {"metakg": mock_metakg}):
+        with patch.dict("sys.modules", {"metabokg": mock_metakg}):
             adapter = MetaKGAdapter(entry)
             assert adapter.is_available() is True
 
@@ -375,7 +375,7 @@ class TestDocKGAdapterAnalyze:
 class TestMetaKGAdapterAnalyze:
     def test_analyze_unavailable_returns_message(self, tmp_path):
         entry = _entry(tmp_path, KGKind.META)  # no sqlite -> not built
-        with patch.dict("sys.modules", {"metakg": None}):
+        with patch.dict("sys.modules", {"metabokg": None}):
             adapter = MetaKGAdapter(entry)
             report = adapter.analyze()
         assert "# MetaKG Analysis Report" in report
@@ -390,7 +390,7 @@ class TestMetaKGAdapterAnalyze:
         adapter = MetaKGAdapter(entry)
         adapter._kg = mock_kg
 
-        with patch.dict("sys.modules", {"metakg": mock_metakg}):
+        with patch.dict("sys.modules", {"metabokg": mock_metakg}):
             report = adapter.analyze()
 
         assert "# MetaKG Analysis Report" in report
@@ -404,7 +404,7 @@ class TestMetaKGAdapterAnalyze:
         adapter = MetaKGAdapter(entry)
         adapter._kg = mock_kg
 
-        with patch.dict("sys.modules", {"metakg": mock_metakg}):
+        with patch.dict("sys.modules", {"metabokg": mock_metakg}):
             report = adapter.analyze()
 
         assert "# MetaKG Analysis Report" in report
@@ -414,7 +414,7 @@ class TestMetaKGAdapterAnalyze:
 class TestMetaKGAdapterStats:
     def test_stats_unavailable_when_not_built(self, tmp_path):
         entry = _entry(tmp_path, KGKind.META)
-        with patch.dict("sys.modules", {"metakg": None}):
+        with patch.dict("sys.modules", {"metabokg": None}):
             adapter = MetaKGAdapter(entry)
             s = adapter.stats()
         assert s["kind"] == "meta"
@@ -429,7 +429,7 @@ class TestMetaKGAdapterStats:
         adapter = MetaKGAdapter(entry)
         adapter._kg = mock_kg
 
-        with patch.dict("sys.modules", {"metakg": mock_metakg}):
+        with patch.dict("sys.modules", {"metabokg": mock_metakg}):
             s = adapter.stats()
 
         assert s["node_count"] == 55

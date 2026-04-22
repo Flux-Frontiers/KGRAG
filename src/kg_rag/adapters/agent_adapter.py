@@ -88,16 +88,20 @@ class AgentKGAdapter(KGAdapter):
         default_db = self.entry.repo_path / ".agentkg" / "graph.sqlite"
         return default_db.exists()
 
-    def query(self, q: str, k: int = 8) -> list[CrossHit]:
+    def query(self, q: str, k: int = 8, min_score: float = 0.0) -> list[CrossHit]:
         """Semantic search over the conversation graph.
 
         :param q: Natural-language query string.
         :param k: Number of results to return.
+        :param min_score: Minimum relevance score; hits below this are dropped.
         :return: Ranked list of :class:`~kg_rag.primitives.CrossHit` objects.
         """
         self._load()
         hits = []
         for h in self._kg.index.search(q, k=k):
+            score = h.get("score", 0.0)
+            if score < min_score:
+                continue
             hits.append(
                 CrossHit(
                     kg_name=self.entry.name,
@@ -105,7 +109,7 @@ class AgentKGAdapter(KGAdapter):
                     node_id=h.get("node_id", ""),
                     name=h.get("label", h.get("text", ""))[:80],
                     kind=h.get("kind", "turn"),
-                    score=h.get("score", 0.0),
+                    score=score,
                     summary=h.get("text", "")[:200],
                     source_path=str(self.entry.repo_path / ".agentkg" / "graph.sqlite"),
                 )

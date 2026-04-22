@@ -48,7 +48,7 @@ class DiaryKGAdapter(KGAdapter):
         except ImportError:
             return False
 
-    def query(self, q: str, k: int = 8) -> list[CrossHit]:
+    def query(self, q: str, k: int = 8, min_score: float = 0.0) -> list[CrossHit]:
         """Semantic search over the diary corpus.
 
         ``CrossHit.source_path`` is set to the original diary ``.txt`` file
@@ -56,11 +56,15 @@ class DiaryKGAdapter(KGAdapter):
 
         :param q: Natural-language query string.
         :param k: Number of results to return.
+        :param min_score: Minimum relevance score; hits below this are dropped.
         :return: Ranked list of CrossHit objects.
         """
         self._load()
         hits = []
         for h in self._kg.query(q, k=k):
+            score = h.get("score", 0.0)
+            if score < min_score:
+                continue
             hits.append(
                 CrossHit(
                     kg_name=self.entry.name,
@@ -68,7 +72,7 @@ class DiaryKGAdapter(KGAdapter):
                     node_id=h.get("node_id", ""),
                     name=h.get("timestamp") or h.get("source_file", ""),
                     kind="chunk",
-                    score=h.get("score", 0.0),
+                    score=score,
                     summary=h.get("summary", ""),
                     source_path=h.get("source_file", ""),
                 )

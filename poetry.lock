@@ -1489,7 +1489,7 @@ files = [
 
 [[package]]
 name = "doc-kg"
-version = "0.8.1"
+version = "0.9.1"
 description = "A tool to build a semantically searchable knowledge graph from markdown and text documents"
 optional = true
 python-versions = ">=3.12,<3.14"
@@ -1509,7 +1509,7 @@ numpy = ">=1.24.0"
 pandas = ">=2.0.0"
 pyyaml = ">=6.0.0"
 rich = ">=13.0.0"
-sentence-transformers = ">=2.7.0"
+sentence-transformers = "^5.4.1"
 
 [package.extras]
 kg = ["agent-kg @ git+https://github.com/Flux-Frontiers/agent_kg.git", "ftree-kg @ git+https://github.com/Flux-Frontiers/ftree_kg.git", "memory-kg @ git+https://github.com/Flux-Frontiers/memory_kg.git", "pycode-kg @ git+https://github.com/Flux-Frontiers/pycode_kg.git"]
@@ -1519,7 +1519,7 @@ viz = []
 type = "git"
 url = "https://github.com/Flux-Frontiers/doc_kg.git"
 reference = "HEAD"
-resolved_reference = "6dae302a7972b3af81c4c02d404ca3f4b498c6bc"
+resolved_reference = "4ea40bac578f89ba984deeebbb79be1f525d2cbc"
 
 [[package]]
 name = "docstring-parser"

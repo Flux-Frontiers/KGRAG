@@ -50,18 +50,22 @@ class DocKGAdapter(KGAdapter):
         except ImportError:
             return False
 
-    def query(self, q: str, k: int = 8) -> list[CrossHit]:
+    def query(self, q: str, k: int = 8, min_score: float = 0.0) -> list[CrossHit]:
         """Query the DocKG and return ranked hits.
 
         :param q: Natural-language query string.
         :param k: Number of results to return.
+        :param min_score: Minimum relevance score; hits below this are dropped.
         :return: List of CrossHit objects ranked by score.
         """
         self._load()
         result = self._kg.query(q, k=k)
+        nodes = result.nodes[:k]
         hits = []
-        for node in result.nodes[:k]:
-            relevance = node.get("relevance") or {}
+        for node in nodes:
+            score = node.get("relevance", {}).get("score", 0.0)
+            if score < min_score:
+                continue
             hits.append(
                 CrossHit(
                     kg_name=self.entry.name,
@@ -69,7 +73,7 @@ class DocKGAdapter(KGAdapter):
                     node_id=node["id"],
                     name=node.get("name") or node.get("title", ""),
                     kind=node.get("kind", "chunk"),
-                    score=relevance.get("score", 0.0),
+                    score=round(score, 4),
                     summary=node.get("text") or node.get("title", ""),
                     source_path=node.get("file_path") or "",
                 )

@@ -1,7 +1,7 @@
 """
 metakg_adapter.py
 
-Adapter wrapping the metakg package.
+Adapter wrapping the metabokg package.
 """
 
 from __future__ import annotations
@@ -26,13 +26,11 @@ class MetaKGAdapter(KGAdapter):
         if self._kg is not None:
             return
         try:
-            from metakg.orchestrator import (  # pylint: disable=import-outside-toplevel
-                MetaKGOrchestrator,
-            )
+            from metabokg.orchestrator import MetaKG  # pylint: disable=import-outside-toplevel
         except ImportError as e:
-            raise ImportError("metakg is not installed.") from e
+            raise ImportError("metabo-kg is not installed.") from e
         entry = self.entry
-        self._kg = MetaKGOrchestrator(
+        self._kg = MetaKG(
             db_path=str(entry.sqlite_path) if entry.sqlite_path else None,
             lancedb_dir=str(entry.lancedb_path) if entry.lancedb_path else None,
         )
@@ -43,17 +41,18 @@ class MetaKGAdapter(KGAdapter):
         :return: True if this adapter can serve queries.
         """
         try:
-            import metakg  # noqa: F401  # pylint: disable=import-outside-toplevel
+            import metabokg  # noqa: F401  # pylint: disable=import-outside-toplevel
 
             return self.entry.is_built
         except ImportError:
             return False
 
-    def query(self, q: str, k: int = 8) -> list[CrossHit]:
+    def query(self, q: str, k: int = 8, min_score: float = 0.0) -> list[CrossHit]:
         """Query the MetaKG and return ranked hits.
 
         :param q: Natural-language query string.
         :param k: Number of results to return.
+        :param min_score: Minimum relevance score; hits below this are dropped.
         :return: List of CrossHit objects ranked by score.
         """
         self._load()
@@ -61,6 +60,9 @@ class MetaKGAdapter(KGAdapter):
             result = self._kg.query(q, k=k)
             hits = []
             for hit in (result.ranked_hits if hasattr(result, "ranked_hits") else [])[:k]:
+                score = getattr(hit, "score", 0.0)
+                if score < min_score:
+                    continue
                 node = hit.node if hasattr(hit, "node") else hit
                 hits.append(
                     CrossHit(
@@ -69,7 +71,7 @@ class MetaKGAdapter(KGAdapter):
                         node_id=getattr(node, "id", str(node)),
                         name=getattr(node, "name", str(node)),
                         kind=getattr(node, "kind", "pathway"),
-                        score=getattr(hit, "score", 0.0),
+                        score=score,
                         summary=getattr(node, "description", "") or "",
                         source_path=getattr(node, "source", "") or "",
                     )
@@ -144,7 +146,7 @@ class MetaKGAdapter(KGAdapter):
             f"**KG:** `{self.entry.name}`  |  **repo:** `{self.entry.repo_path}`\n"
         )
         if not self.is_available():
-            return header + "\n**Status:** unavailable — metakg library not installed.\n"
+            return header + "\n**Status:** unavailable — metabo-kg library not installed.\n"
 
         try:
             self._load()
@@ -170,7 +172,7 @@ class MetaKGAdapter(KGAdapter):
                 "",
                 "> Detailed analysis requires the MetaKGOrchestrator to expose an"
                 " `analyze()` method. Implement `MetaKGOrchestrator.analyze()` in"
-                " the metakg package to enable full reporting.",
+                " the metabokg package to enable full reporting.",
                 "",
             ]
             return "\n".join(lines)
