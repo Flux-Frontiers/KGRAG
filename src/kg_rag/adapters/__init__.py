@@ -3,7 +3,6 @@
 from kg_rag.adapters._stub_adapter import StubKGAdapter
 from kg_rag.adapters.agent_adapter import AgentKGAdapter
 from kg_rag.adapters.base import KGAdapter
-from kg_rag.adapters.codekg_adapter import CodeKGAdapter
 from kg_rag.adapters.diary_adapter import DiaryKGAdapter
 from kg_rag.adapters.disulfide_adapter import DisulfideKGAdapter
 from kg_rag.adapters.dockg_adapter import DocKGAdapter
@@ -12,6 +11,7 @@ from kg_rag.adapters.memory_adapter import MemoryKGAdapter
 from kg_rag.adapters.metakg_adapter import MetaKGAdapter
 from kg_rag.adapters.pdbfile_adapter import PDBFileKGAdapter
 from kg_rag.adapters.person_adapter import PersonKGAdapter
+from kg_rag.adapters.pycodekg_adaptor import CodeKGAdapter
 from kg_rag.adapters.verse_adapter import VerseKGAdapter
 from kg_rag.primitives import KGKind
 

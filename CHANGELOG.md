@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed — Migrate code KG adapter from `code-kg` to `pycode-kg` (2026-04-22)
+
+- `src/kg_rag/adapters/codekg_adapter.py` → renamed to `pycodekg_adaptor.py`; updated
+  imports from `code_kg.CodeKG` to `pycode_kg.PyCodeKG`, error messages, and all
+  docstrings to reflect the `pycode-kg` package name.
+- `src/kg_rag/adapters/__init__.py` — import updated to reference `pycodekg_adaptor`.
+- `tests/test_adapters.py` — import and `sys.modules` patches updated from `code_kg`
+  to `pycode_kg`; all 195 tests pass.
+- `articles/kgrag.code-workspace` — stale VS Code workspace file removed.
+
 ### Changed — Switch MCP server from `codekg` to `pycodekg-mcp` (2026-04-22)
 
 - `.mcp.json` — renamed `codekg` server entry to `pycodekg`; updated command from
