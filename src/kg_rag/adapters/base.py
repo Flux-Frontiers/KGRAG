@@ -34,22 +34,43 @@ class KGAdapter(ABC):
         """
 
     @abstractmethod
-    def query(self, q: str, k: int = 8, min_score: float = 0.0) -> list[CrossHit]:
+    def query(
+        self,
+        q: str,
+        k: int = 8,
+        min_score: float = 0.0,
+        semantic_floor: float = 0.0,
+    ) -> list[CrossHit]:
         """Query the KG and return ranked hits.
 
         :param q: Natural-language query string.
         :param k: Number of results to return.
         :param min_score: Minimum relevance score; hits below this are dropped.
+        :param semantic_floor: Minimum score the best hit must reach.  If the
+            top result is below this value the entire result set is discarded
+            rather than returning k noisy near-neighbor hits.  Set to e.g.
+            ``0.5`` to silence KGs that have no domain-relevant content for
+            the query.
         :return: List of CrossHit objects ranked by score.
         """
 
     @abstractmethod
-    def pack(self, q: str, k: int = 8, context: int = 5) -> list[CrossSnippet]:
+    def pack(
+        self,
+        q: str,
+        k: int = 8,
+        context: int = 5,
+        semantic_floor: float = 0.0,
+    ) -> list[CrossSnippet]:
         """Query the KG and return source snippets.
 
         :param q: Natural-language query string.
         :param k: Number of snippets to return.
         :param context: Lines of context around code (code KGs only).
+        :param semantic_floor: Minimum score the best result must reach.  If
+            the top result is below this value the entire result set is
+            discarded.  Mirrors the behaviour of the same parameter on
+            :meth:`query`.
         :return: List of CrossSnippet objects.
         """
 

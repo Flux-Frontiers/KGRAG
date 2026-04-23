@@ -52,20 +52,39 @@ class CodeKGAdapter(KGAdapter):
         except ImportError:
             return False
 
-    def query(self, q: str, k: int = 8, min_score: float = 0.0) -> list[CrossHit]:
+    def query(
+        self,
+        q: str,
+        k: int = 8,
+        min_score: float = 0.0,
+        semantic_floor: float = 0.0,
+    ) -> list[CrossHit]:
         """Query the PyCodeKG and return ranked hits.
 
         :param q: Natural-language query string.
         :param k: Number of results to return.
         :param min_score: Minimum relevance score; hits below this are dropped.
+        :param semantic_floor: If the best hit's score is below this value the
+            entire result set is discarded — returns [] rather than k noisy
+            near-neighbor hits from an irrelevant KG.
         :return: List of CrossHit objects ranked by score.
         """
         self._load()
         result = self._kg.query(q, k=k, min_score=min_score)
+        nodes = result.nodes[:k]
+        if semantic_floor > 0.0 and nodes:
+            best = nodes[0].get("relevance") or {}
+            # Use the raw LanceDB cosine similarity ("semantic") rather than
+            # the reranked "score", which is normalized so the top result in
+            # each query always reaches 1.0 regardless of actual relevance.
+            # "semantic" is 1-dist, directly comparable to DocKG's score.
+            best_score = best.get("semantic", best.get("score", 0.0))
+            if best_score < semantic_floor:
+                return []
         hits = []
-        for node in result.nodes[:k]:
+        for node in nodes:
             relevance = node.get("relevance") or {}
-            score = relevance.get("score", 0.0)
+            score = relevance.get("semantic", relevance.get("score", 0.0))
             if score < min_score:
                 continue
             hits.append(
@@ -82,18 +101,32 @@ class CodeKGAdapter(KGAdapter):
             )
         return hits
 
-    def pack(self, q: str, k: int = 8, context: int = 5) -> list[CrossSnippet]:
+    def pack(
+        self,
+        q: str,
+        k: int = 8,
+        context: int = 5,
+        semantic_floor: float = 0.0,
+    ) -> list[CrossSnippet]:
         """Query the PyCodeKG and return source snippets.
 
         :param q: Natural-language query string.
         :param k: Number of snippets to return.
         :param context: Lines of context around code.
+        :param semantic_floor: If the best snippet's score is below this value
+            the entire result set is discarded.
         :return: List of CrossSnippet objects.
         """
         self._load()
         pack = self._kg.pack(q, k=k, context=context)
+        nodes = pack.nodes
+        if semantic_floor > 0.0 and nodes:
+            best = nodes[0].get("relevance") or {}
+            best_score = best.get("semantic", best.get("score", 0.0))
+            if best_score < semantic_floor:
+                return []
         snippets = []
-        for node in pack.nodes:
+        for node in nodes:
             snippet = node.get("snippet") or {}
             relevance = node.get("relevance") or {}
             snippets.append(
