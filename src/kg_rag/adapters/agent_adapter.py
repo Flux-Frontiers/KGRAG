@@ -14,7 +14,12 @@ Storage layout (auto-created on first use)::
 
     ~/.kgrag/profiles/<person_id>/
         userprofile.sqlite # global UserProfile (Preference, Expertise, etc.)
+
+Author: Eric G. Suchanek, PhD
+Last Revision: 2026-04-22 19:27:45
+License: Elastic 2.0
 """
+
 # pylint: disable=import-outside-toplevel
 
 from __future__ import annotations
@@ -88,17 +93,29 @@ class AgentKGAdapter(KGAdapter):
         default_db = self.entry.repo_path / ".agentkg" / "graph.sqlite"
         return default_db.exists()
 
-    def query(self, q: str, k: int = 8, min_score: float = 0.0) -> list[CrossHit]:
+    def query(
+        self,
+        q: str,
+        k: int = 8,
+        min_score: float = 0.0,
+        semantic_floor: float = 0.0,
+    ) -> list[CrossHit]:
         """Semantic search over the conversation graph.
 
         :param q: Natural-language query string.
         :param k: Number of results to return.
         :param min_score: Minimum relevance score; hits below this are dropped.
+        :param semantic_floor: If the best hit's score is below this value the
+            entire result set is discarded.
         :return: Ranked list of :class:`~kg_rag.primitives.CrossHit` objects.
         """
         self._load()
+        raw = list(self._kg.index.search(q, k=k))
+        if semantic_floor > 0.0 and raw:
+            if raw[0].get("score", 0.0) < semantic_floor:
+                return []
         hits = []
-        for h in self._kg.index.search(q, k=k):
+        for h in raw:
             score = h.get("score", 0.0)
             if score < min_score:
                 continue
@@ -116,17 +133,29 @@ class AgentKGAdapter(KGAdapter):
             )
         return hits
 
-    def pack(self, q: str, k: int = 8, context: int = 5) -> list[CrossSnippet]:
+    def pack(
+        self,
+        q: str,
+        k: int = 8,
+        context: int = 5,
+        semantic_floor: float = 0.0,
+    ) -> list[CrossSnippet]:
         """Return conversation snippets for LLM context injection.
 
         :param q: Natural-language query string.
         :param k: Number of snippets to return.
         :param context: Unused (no line-number semantics in AgentKG).
+        :param semantic_floor: If the best snippet's score is below this value
+            the entire result set is discarded.
         :return: List of :class:`~kg_rag.primitives.CrossSnippet` objects.
         """
         self._load()
+        raw = list(self._kg.pack(q, k=k))
+        if semantic_floor > 0.0 and raw:
+            if raw[0].get("score", 0.0) < semantic_floor:
+                return []
         snippets = []
-        for s in self._kg.pack(q, k=k):
+        for s in raw:
             snippets.append(
                 CrossSnippet(
                     kg_name=self.entry.name,

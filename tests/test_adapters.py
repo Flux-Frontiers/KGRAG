@@ -11,6 +11,8 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from kg_rag.adapters import make_adapter
 from kg_rag.adapters.dockg_adapter import DocKGAdapter
 from kg_rag.adapters.metakg_adapter import MetaKGAdapter
@@ -137,6 +139,53 @@ class TestCodeKGAdapterQuery:
 
         hits = adapter.query("q", k=3)
         assert len(hits) == 3
+
+    def test_query_uses_semantic_over_score(self, tmp_path):
+        # When PyCodeKG returns both "semantic" (raw cosine similarity) and
+        # "score" (reranked, normalized per result set), the adapter must use
+        # "semantic" so cross-KG comparisons aren't inflated by reranking.
+        entry = _entry(tmp_path, KGKind.CODE, with_sqlite=True)
+        node = {
+            "id": "fn:src/f.py:bar",
+            "name": "bar",
+            "kind": "function",
+            "docstring": "",
+            "module_path": "src/f.py",
+            "relevance": {"score": 1.0, "semantic": 0.52},
+        }
+        mock_result = MagicMock()
+        mock_result.nodes = [node]
+        mock_kg = MagicMock()
+        mock_kg.query.return_value = mock_result
+
+        adapter = CodeKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        hits = adapter.query("q", k=5)
+        assert len(hits) == 1
+        assert hits[0].score == pytest.approx(0.52)
+
+    def test_query_falls_back_to_score_when_semantic_absent(self, tmp_path):
+        # Older PyCodeKG builds may not emit "semantic"; fall back to "score".
+        entry = _entry(tmp_path, KGKind.CODE, with_sqlite=True)
+        node = {
+            "id": "fn:src/f.py:bar",
+            "name": "bar",
+            "kind": "function",
+            "docstring": "",
+            "module_path": "src/f.py",
+            "relevance": {"score": 0.75},
+        }
+        mock_result = MagicMock()
+        mock_result.nodes = [node]
+        mock_kg = MagicMock()
+        mock_kg.query.return_value = mock_result
+
+        adapter = CodeKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        hits = adapter.query("q", k=5)
+        assert hits[0].score == pytest.approx(0.75)
 
 
 class TestCodeKGAdapterPack:

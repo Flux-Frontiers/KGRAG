@@ -238,7 +238,7 @@ class TestKGRAGPack:
         assert isinstance(pack, CrossSnippetPack)
         assert len(pack.snippets) == 1
         assert pack.kgs_queried == 1
-        mock.pack.assert_called_once_with("query", k=5, context=3)
+        mock.pack.assert_called_once_with("query", k=5, context=3, semantic_floor=0.0)
 
     def test_pack_empty_registry(self, tmp_path):
         with KGRAG(registry_path=tmp_path / "reg.sqlite") as kgrag:
