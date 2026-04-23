@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — `semantic_floor` per-KG noise gate (2026-04-22)
+
+- `src/kg_rag/adapters/base.py` — abstract `query()` and `pack()` signatures
+  extended with `semantic_floor: float = 0.0`; implemented in every concrete
+  adapter. When the best hit from a KG scores below this value the entire result
+  set is discarded, preventing k-NN always returning k results regardless of
+  domain relevance.
+- `src/kg_rag/adapters/{_stub,agent,diary,dockg,metakg,pycodekg}_adapter.py` —
+  each `query()` and `pack()` materialises the result list once, checks the
+  first element against the floor, and returns `[]` early if below threshold.
+- `src/kg_rag/orchestrator.py` — `KGRAG.query`, `pack`, `query_corpus`,
+  `pack_corpus`, `query_person`, and `pack_person` all accept and thread through
+  `semantic_floor` to every adapter call.
+- `src/kg_rag/cli/cmd_query.py` — `--semantic-floor` option added to both
+  `kgrag query` and `kgrag pack`; reusable `_semantic_floor_option` decorator.
+
+### Added — `--scope` corpus/person routing for `kgrag query` and `kgrag pack` (2026-04-22)
+
+- `src/kg_rag/cli/cmd_query.py` — `--scope NAME` option restricts a query to
+  a named corpus or person corpus. Resolution order: `CorpusRegistry` first,
+  `PersonCorpusRegistry` second; raises a `UsageError` listing all known scopes
+  on miss. `--scope` and `--kind` are mutually exclusive. Added helpers:
+  `_known_scopes`, `_resolve_scoped_query`, `_resolve_scoped_pack`.
+- `tests/test_cmd_query.py` — new test module (66 tests) covering scope routing,
+  semantic-floor forwarding, mutual exclusion, and CLI help text.
+
+### Changed — PyCodeKG adapter uses raw cosine similarity for cross-KG score (2026-04-22)
+
+- `src/kg_rag/adapters/pycodekg_adaptor.py` — `query()` and `pack()` now use the
+  `"semantic"` field (raw LanceDB cosine similarity, `1−dist`) rather than the
+  reranked `"score"` field when applying `min_score` and `semantic_floor`. The
+  reranked score is normalised so the top result always reaches `1.0`, making it
+  incomparable across KGs; the raw cosine score is directly comparable to DocKG
+  and DiaryKG cosine scores federation-wide.
+- `tests/test_adapters.py` — two new tests: `test_query_uses_semantic_over_score`
+  and `test_query_falls_back_to_score_when_semantic_absent`.
+
+### Removed
+
+- `docs/SNAPSHOT_REFACTOR.md` — stale planning document superseded by the
+  implementation that shipped in earlier commits.
+
 ### Added — `min_score` filtering across all adapters and federated query (2026-04-22)
 
 - `src/kg_rag/adapters/base.py` — abstract `query()` signature extended with
