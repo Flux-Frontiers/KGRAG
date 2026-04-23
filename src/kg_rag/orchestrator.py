@@ -4,7 +4,11 @@ orchestrator.py
 KGRAG — cross-KG query orchestrator.
 
 Loads adapters from the registry and executes federated queries across
-multiple KG instances (CodeKG, DocKG, MetaKG) simultaneously.
+multiple KG instances (PyCodeKG, DocKG, MetaKG) simultaneously.
+
+Author: Eric G. Suchanek, PhD
+Last Revision: 2026-04-22 19:27:45
+License: Elastic 2.0
 """
 
 from __future__ import annotations
@@ -118,6 +122,7 @@ class KGRAG:
         k: int = 8,
         kinds: Sequence[KGKind] | None = None,
         min_score: float = 0.0,
+        semantic_floor: float = 0.0,
     ) -> CrossQueryResult:
         """Federated query across all (or selected) registered KGs.
 
@@ -127,6 +132,9 @@ class KGRAG:
         :param min_score: Minimum relevance score; hits below this are dropped
             across all KGs.  Set to e.g. ``0.35`` to suppress low-confidence
             hits from KGs whose domain does not match the query.
+        :param semantic_floor: Per-KG gate: if the best hit from a KG is below
+            this value, that KG's entire result set is discarded.  Use to
+            silence KGs that return k near-neighbor hits with no real relevance.
         :return: Aggregated and globally ranked CrossQueryResult.
         """
         all_hits: list[CrossHit] = []
@@ -138,7 +146,7 @@ class KGRAG:
             if adapter is None:
                 continue
             try:
-                hits = adapter.query(q, k=k, min_score=min_score)
+                hits = adapter.query(q, k=k, min_score=min_score, semantic_floor=semantic_floor)
                 all_hits.extend(hits)
                 by_kg[entry.name] = hits
                 kgs_queried += 1
@@ -164,6 +172,7 @@ class KGRAG:
         k: int = 8,
         context: int = 5,
         kinds: Sequence[KGKind] | None = None,
+        semantic_floor: float = 0.0,
     ) -> CrossSnippetPack:
         """Federated snippet pack across all (or selected) registered KGs.
 
@@ -171,6 +180,8 @@ class KGRAG:
         :param k: Max snippets per KG.
         :param context: Lines of context for code snippets.
         :param kinds: Optional filter: only query KGs of these kinds.
+        :param semantic_floor: Per-KG gate: if the best snippet from a KG is
+            below this value, that KG's entire result set is discarded.
         :return: CrossSnippetPack with all snippets ranked by score.
         """
         all_snippets: list[CrossSnippet] = []
@@ -181,7 +192,7 @@ class KGRAG:
             if adapter is None:
                 continue
             try:
-                snippets = adapter.pack(q, k=k, context=context)
+                snippets = adapter.pack(q, k=k, context=context, semantic_floor=semantic_floor)
                 all_snippets.extend(snippets)
                 kgs_queried += 1
             except Exception:  # pylint: disable=broad-exception-caught
@@ -252,6 +263,7 @@ class KGRAG:
         q: str,
         k: int = 8,
         min_score: float = 0.0,
+        semantic_floor: float = 0.0,
     ) -> CrossQueryResult:
         """Federated query scoped to a named corpus.
 
@@ -259,6 +271,8 @@ class KGRAG:
         :param q: Natural-language query string.
         :param k: Max hits to return per KG.
         :param min_score: Minimum relevance score; hits below this are dropped.
+        :param semantic_floor: Per-KG gate: if the best hit from a KG is below
+            this value, that KG's entire result set is discarded.
         :return: Aggregated and globally ranked CrossQueryResult.
         :raises KeyError: If corpus not found.
         """
@@ -272,7 +286,7 @@ class KGRAG:
             if adapter is None:
                 continue
             try:
-                hits = adapter.query(q, k=k, min_score=min_score)
+                hits = adapter.query(q, k=k, min_score=min_score, semantic_floor=semantic_floor)
                 all_hits.extend(hits)
                 by_kg[entry.name] = hits
                 kgs_queried += 1
@@ -295,6 +309,7 @@ class KGRAG:
         q: str,
         k: int = 8,
         context: int = 5,
+        semantic_floor: float = 0.0,
     ) -> CrossSnippetPack:
         """Federated snippet pack scoped to a named corpus.
 
@@ -302,6 +317,8 @@ class KGRAG:
         :param q: Natural-language query string.
         :param k: Max snippets per KG.
         :param context: Lines of context for code snippets.
+        :param semantic_floor: Per-KG gate: if the best snippet from a KG is
+            below this value, that KG's entire result set is discarded.
         :return: CrossSnippetPack with all snippets ranked by score.
         :raises KeyError: If corpus not found.
         """
@@ -314,7 +331,7 @@ class KGRAG:
             if adapter is None:
                 continue
             try:
-                snippets = adapter.pack(q, k=k, context=context)
+                snippets = adapter.pack(q, k=k, context=context, semantic_floor=semantic_floor)
                 all_snippets.extend(snippets)
                 kgs_queried += 1
             except Exception:  # pylint: disable=broad-exception-caught
@@ -373,6 +390,7 @@ class KGRAG:
         q: str,
         k: int = 8,
         min_score: float = 0.0,
+        semantic_floor: float = 0.0,
     ) -> CrossQueryResult:
         """Federated query scoped to a person corpus.
 
@@ -380,6 +398,8 @@ class KGRAG:
         :param q: Natural-language query string.
         :param k: Max hits to return per KG.
         :param min_score: Minimum relevance score; hits below this are dropped.
+        :param semantic_floor: Per-KG gate: if the best hit from a KG is below
+            this value, that KG's entire result set is discarded.
         :return: Aggregated and globally ranked CrossQueryResult.
         :raises KeyError: If person corpus not found.
         """
@@ -393,7 +413,7 @@ class KGRAG:
             if adapter is None:
                 continue
             try:
-                hits = adapter.query(q, k=k, min_score=min_score)
+                hits = adapter.query(q, k=k, min_score=min_score, semantic_floor=semantic_floor)
                 all_hits.extend(hits)
                 by_kg[entry.name] = hits
                 kgs_queried += 1
@@ -416,6 +436,7 @@ class KGRAG:
         q: str,
         k: int = 8,
         context: int = 5,
+        semantic_floor: float = 0.0,
     ) -> CrossSnippetPack:
         """Federated snippet pack scoped to a person corpus.
 
@@ -423,6 +444,8 @@ class KGRAG:
         :param q: Natural-language query string.
         :param k: Max snippets per KG.
         :param context: Lines of context for code snippets.
+        :param semantic_floor: Per-KG gate: if the best snippet from a KG is
+            below this value, that KG's entire result set is discarded.
         :return: CrossSnippetPack with all snippets ranked by score.
         :raises KeyError: If person corpus not found.
         """
@@ -435,7 +458,7 @@ class KGRAG:
             if adapter is None:
                 continue
             try:
-                snippets = adapter.pack(q, k=k, context=context)
+                snippets = adapter.pack(q, k=k, context=context, semantic_floor=semantic_floor)
                 all_snippets.extend(snippets)
                 kgs_queried += 1
             except Exception:  # pylint: disable=broad-exception-caught

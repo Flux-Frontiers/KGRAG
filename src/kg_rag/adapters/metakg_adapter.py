@@ -2,6 +2,10 @@
 metakg_adapter.py
 
 Adapter wrapping the metabokg package.
+
+Author: Eric G. Suchanek, PhD
+Last Revision: 2026-04-22 19:27:45
+License: Elastic 2.0
 """
 
 from __future__ import annotations
@@ -47,19 +51,31 @@ class MetaKGAdapter(KGAdapter):
         except ImportError:
             return False
 
-    def query(self, q: str, k: int = 8, min_score: float = 0.0) -> list[CrossHit]:
+    def query(
+        self,
+        q: str,
+        k: int = 8,
+        min_score: float = 0.0,
+        semantic_floor: float = 0.0,
+    ) -> list[CrossHit]:
         """Query the MetaKG and return ranked hits.
 
         :param q: Natural-language query string.
         :param k: Number of results to return.
         :param min_score: Minimum relevance score; hits below this are dropped.
+        :param semantic_floor: If the best hit's score is below this value the
+            entire result set is discarded.
         :return: List of CrossHit objects ranked by score.
         """
         self._load()
         try:
             result = self._kg.query(q, k=k)
+            ranked = (result.ranked_hits if hasattr(result, "ranked_hits") else [])[:k]
+            if semantic_floor > 0.0 and ranked:
+                if getattr(ranked[0], "score", 0.0) < semantic_floor:
+                    return []
             hits = []
-            for hit in (result.ranked_hits if hasattr(result, "ranked_hits") else [])[:k]:
+            for hit in ranked:
                 score = getattr(hit, "score", 0.0)
                 if score < min_score:
                     continue
@@ -80,19 +96,31 @@ class MetaKGAdapter(KGAdapter):
         except Exception:  # pylint: disable=broad-exception-caught
             return []
 
-    def pack(self, q: str, k: int = 8, context: int = 5) -> list[CrossSnippet]:
+    def pack(
+        self,
+        q: str,
+        k: int = 8,
+        context: int = 5,
+        semantic_floor: float = 0.0,
+    ) -> list[CrossSnippet]:
         """Query the MetaKG and return source snippets.
 
         :param q: Natural-language query string.
         :param k: Number of snippets to return.
         :param context: Lines of context (unused for meta KGs).
+        :param semantic_floor: If the best snippet's score is below this value
+            the entire result set is discarded.
         :return: List of CrossSnippet objects.
         """
         self._load()
         try:
             pack = self._kg.pack(q, k=k)
+            raw_snippets = getattr(pack, "snippets", [])
+            if semantic_floor > 0.0 and raw_snippets:
+                if getattr(raw_snippets[0], "score", 0.0) < semantic_floor:
+                    return []
             snippets = []
-            for s in getattr(pack, "snippets", []):
+            for s in raw_snippets:
                 snippets.append(
                     CrossSnippet(
                         kg_name=self.entry.name,

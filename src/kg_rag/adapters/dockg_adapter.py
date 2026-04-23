@@ -50,17 +50,29 @@ class DocKGAdapter(KGAdapter):
         except ImportError:
             return False
 
-    def query(self, q: str, k: int = 8, min_score: float = 0.0) -> list[CrossHit]:
+    def query(
+        self,
+        q: str,
+        k: int = 8,
+        min_score: float = 0.0,
+        semantic_floor: float = 0.0,
+    ) -> list[CrossHit]:
         """Query the DocKG and return ranked hits.
 
         :param q: Natural-language query string.
         :param k: Number of results to return.
         :param min_score: Minimum relevance score; hits below this are dropped.
+        :param semantic_floor: If the best hit's score is below this value the
+            entire result set is discarded — returns [] rather than k noisy
+            near-neighbor hits from an irrelevant KG.
         :return: List of CrossHit objects ranked by score.
         """
         self._load()
         result = self._kg.query(q, k=k)
         nodes = result.nodes[:k]
+        if semantic_floor > 0.0 and nodes:
+            if nodes[0].get("relevance", {}).get("score", 0.0) < semantic_floor:
+                return []
         hits = []
         for node in nodes:
             score = node.get("relevance", {}).get("score", 0.0)
@@ -80,18 +92,30 @@ class DocKGAdapter(KGAdapter):
             )
         return hits
 
-    def pack(self, q: str, k: int = 8, context: int = 5) -> list[CrossSnippet]:
+    def pack(
+        self,
+        q: str,
+        k: int = 8,
+        context: int = 5,
+        semantic_floor: float = 0.0,
+    ) -> list[CrossSnippet]:
         """Query the DocKG and return source snippets.
 
         :param q: Natural-language query string.
         :param k: Number of snippets to return.
         :param context: Lines of context (unused for doc KGs).
+        :param semantic_floor: If the best snippet's score is below this value
+            the entire result set is discarded.
         :return: List of CrossSnippet objects.
         """
         self._load()
         pack = self._kg.pack(q, k=k)
+        nodes = pack.nodes
+        if semantic_floor > 0.0 and nodes:
+            if (nodes[0].get("relevance") or {}).get("score", 0.0) < semantic_floor:
+                return []
         snippets = []
-        for node in pack.nodes:
+        for node in nodes:
             relevance = node.get("relevance") or {}
             snippets.append(
                 CrossSnippet(
