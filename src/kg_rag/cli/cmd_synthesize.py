@@ -201,7 +201,7 @@ def synthesize(
                 if corpus_entry is None:
                     raise click.ClickException(f"Corpus not found: {corpus!r}")
                 kg_ids = corpus_entry.kg_ids
-                entries = [kreg.get_by_id(gid) for gid in kg_ids]
+                entries = [kreg.get(gid) for gid in kg_ids]
                 entries = [e for e in entries if e is not None]
 
             if not entries:
