@@ -264,7 +264,10 @@ def corpus_info(name_or_id, registry):
         for kg_id in entry.kg_ids:
             kg_entry = kg_reg.get(kg_id)
             if kg_entry:
-                kg_lines.append(f"  [{kg_entry.kind.value}] {kg_entry.name} ({kg_id})")
+                kg_lines.append(
+                    f"  [{kg_entry.kind.value}] {kg_entry.name} "
+                    f"[dim]v{kg_entry.builder_version}[/dim] ({kg_id})"
+                )
             else:
                 kg_lines.append(f"  [dim]missing[/dim] {kg_id}")
 
@@ -655,7 +658,10 @@ def person_info(name_or_id, registry):
         for kg_id in entry.kg_ids:
             kg_entry = kg_reg.get(kg_id)
             if kg_entry:
-                kg_lines.append(f"  [{kg_entry.kind.value}] {kg_entry.name} ({kg_id})")
+                kg_lines.append(
+                    f"  [{kg_entry.kind.value}] {kg_entry.name} "
+                    f"[dim]v{kg_entry.builder_version}[/dim] ({kg_id})"
+                )
             else:
                 kg_lines.append(f"  [dim]missing[/dim] {kg_id}")
 
