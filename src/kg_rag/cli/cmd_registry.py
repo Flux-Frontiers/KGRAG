@@ -18,7 +18,7 @@ from rich.table import Table
 
 from kg_rag.cli.group import cli
 from kg_rag.cli.options import _KIND_CHOICES, kind_option, registry_option
-from kg_rag.config import read_pyproject_version
+from kg_rag.config import read_builder_version, read_pyproject_version
 from kg_rag.primitives import KGEntry, KGKind
 from kg_rag.registry import KGRegistry, default_registry_path
 
@@ -126,6 +126,7 @@ def register(name, kind, repo_path, venv_path, sqlite_path, lancedb_path, versio
         sqlite_path=Path(sqlite_path) if sqlite_path else None,
         lancedb_path=Path(lancedb_path) if lancedb_path else None,
         version=version,
+        builder_version=read_builder_version(sqlite_path),
         tags=resolved_tags,
     )
 
@@ -224,6 +225,7 @@ def info(name_or_id, registry):
         f"[bold]Name[/bold]     : {entry.name}",
         f"[bold]Kind[/bold]     : {entry.kind.value}",
         f"[bold]Version[/bold]  : {entry.version}",
+        f"[bold]Builder[/bold]  : {entry.builder_version}",
         f"[bold]Built[/bold]    : {'yes' if entry.is_built else 'no'}",
         f"[bold]Repo[/bold]     : {entry.repo_path}",
         f"[bold]Venv[/bold]     : {entry.venv_path}",
@@ -267,6 +269,40 @@ def status(registry):
             console.print(i)
     else:
         console.print("\n[green]All registered KGs look healthy.[/green]")
+
+
+@cli.command("refresh-versions")
+@registry_option
+def refresh_versions(registry):
+    """Re-read ``builder_version`` from each registered KG's SQLite stamp.
+
+    Walks the registry, opens each KG's ``sqlite_path``, reads the
+    ``_kgrag_meta`` builder-version stamp (see
+    ``docs/KG_BUILDER_VERSION_SPEC.md``), and updates the registry row.
+    Use this after rebuilding KGs with a newer builder.
+    """
+    reg_path = Path(registry).resolve() if registry else None
+    updated = 0
+    unchanged = 0
+    unstamped = 0
+    with KGRegistry(db_path=reg_path) as reg:
+        for entry in reg.list():
+            new_ver = read_builder_version(entry.sqlite_path)
+            if new_ver == "unknown":
+                unstamped += 1
+                console.print(f"  [dim]{entry.name}[/dim]: no stamp")
+                continue
+            if new_ver == entry.builder_version:
+                unchanged += 1
+                continue
+            reg.update(entry.id, builder_version=new_ver)
+            updated += 1
+            console.print(f"  [green]{entry.name}[/green]: {entry.builder_version} → {new_ver}")
+    console.print(
+        f"\n[bold]Updated[/bold] {updated}  "
+        f"[bold]Unchanged[/bold] {unchanged}  "
+        f"[bold]Unstamped[/bold] {unstamped}"
+    )
 
 
 @cli.command("scan")
@@ -324,6 +360,7 @@ def scan(root_path, auto_register, registry):
                     sqlite_path=f["sqlite"],
                     lancedb_path=f["lancedb"],
                     version=read_pyproject_version(repo_dir),
+                    builder_version=read_builder_version(f["sqlite"]),
                     tags=[date.today().isoformat()],
                 )
                 reg.register(entry)

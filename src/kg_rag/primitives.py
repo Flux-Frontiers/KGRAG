@@ -48,7 +48,15 @@ class KGEntry:
     :param venv_path: Absolute path to the Python virtual environment.
     :param sqlite_path: Absolute path to the SQLite database file (if any).
     :param lancedb_path: Absolute path to the LanceDB directory (if any).
-    :param version: Version string of the KG package.
+    :param version: Version of the source repository (from its pyproject.toml).
+        Meaningful for code-like KGs where the repo is the source of truth;
+        often ``"unknown"`` for doc/memory/diary corpora assembled from loose
+        files.
+    :param builder_version: Version of the KG builder package (doc_kg,
+        pycode_kg, metabokg, …) that produced the database.  Captured at
+        registration time by reading the ``_kgrag_meta`` table stamped
+        inside the built SQLite.  This is the version that actually defines
+        the database schema and ingestion contract.
     :param tags: Optional list of tags for grouping/filtering.
     :param created_at: When this entry was registered.
     :param updated_at: When this entry was last updated.
@@ -63,6 +71,7 @@ class KGEntry:
     sqlite_path: Path | None = None
     lancedb_path: Path | None = None
     version: str = "unknown"
+    builder_version: str = "unknown"
     tags: list[str] = field(default_factory=list)
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))

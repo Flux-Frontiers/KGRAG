@@ -53,6 +53,7 @@ class KGRegistry:
         sqlite_path TEXT,
         lancedb_path TEXT,
         version     TEXT NOT NULL DEFAULT 'unknown',
+        builder_version TEXT NOT NULL DEFAULT 'unknown',
         tags        TEXT NOT NULL DEFAULT '[]',
         metadata    TEXT NOT NULL DEFAULT '{}',
         created_at  TEXT NOT NULL,
@@ -68,7 +69,18 @@ class KGRegistry:
         self._conn = sqlite3.connect(str(self._db_path), check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._conn.executescript(self._SCHEMA)
+        self._migrate()
         self._conn.commit()
+
+    def _migrate(self) -> None:
+        """Apply in-place schema migrations for existing registry DBs."""
+        cols = {
+            row["name"] for row in self._conn.execute("PRAGMA table_info(kg_entries)").fetchall()
+        }
+        if "builder_version" not in cols:
+            self._conn.execute(
+                "ALTER TABLE kg_entries ADD COLUMN builder_version TEXT NOT NULL DEFAULT 'unknown'"
+            )
 
     @property
     def db_path(self) -> Path:
@@ -108,6 +120,7 @@ class KGRegistry:
                 sqlite_path=entry.sqlite_path,
                 lancedb_path=entry.lancedb_path,
                 version=entry.version,
+                builder_version=entry.builder_version,
                 tags=entry.tags,
                 created_at=existing.created_at,
                 updated_at=datetime.now(UTC),
@@ -117,8 +130,8 @@ class KGRegistry:
             """
             INSERT OR REPLACE INTO kg_entries
                 (id, name, kind, repo_path, venv_path, sqlite_path, lancedb_path,
-                 version, tags, metadata, created_at, updated_at)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+                 version, builder_version, tags, metadata, created_at, updated_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
             """,
             (
                 entry.id,
@@ -129,6 +142,7 @@ class KGRegistry:
                 str(entry.sqlite_path) if entry.sqlite_path else None,
                 str(entry.lancedb_path) if entry.lancedb_path else None,
                 entry.version,
+                entry.builder_version,
                 json.dumps(entry.tags),
                 json.dumps(entry.metadata),
                 entry.created_at.isoformat(),
@@ -260,6 +274,9 @@ class KGRegistry:
             sqlite_path=Path(row["sqlite_path"]) if row["sqlite_path"] else None,
             lancedb_path=Path(row["lancedb_path"]) if row["lancedb_path"] else None,
             version=row["version"],
+            builder_version=row["builder_version"]
+            if "builder_version" in row.keys()
+            else "unknown",
             tags=json.loads(row["tags"]),
             created_at=datetime.fromisoformat(row["created_at"]),
             updated_at=datetime.fromisoformat(row["updated_at"]),

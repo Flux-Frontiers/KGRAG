@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — KG builder version stamping (2026-04-23)
+
+- `docs/KG_BUILDER_VERSION_SPEC.md` — new contract document for the
+  `_kgrag_meta` SQLite stamp that KG builder packages (doc_kg, pycode_kg,
+  metabokg, …) write at build time; includes schema, reference
+  implementation, and back-compat rules.
+- `src/kg_rag/config.py` — `read_builder_version(sqlite_path)` reads the
+  `builder_version` key from the `_kgrag_meta` table; returns `"unknown"`
+  gracefully when the file is absent, unreadable, or not yet stamped.
+- `src/kg_rag/primitives.py` — `KGEntry.builder_version` field (default
+  `"unknown"`) distinguishes the builder-package version from the
+  source-repo `version`; docstring clarifies when each is meaningful.
+- `src/kg_rag/registry.py` — `builder_version` column added to the
+  `kg_entries` table; `_migrate()` adds the column in-place on existing
+  registry databases so no manual migration is needed.
+- `src/kg_rag/cli/cmd_registry.py` — `register` and `scan` auto-read
+  `builder_version` from the SQLite stamp; `kgrag info` shows a
+  `Builder:` line; new `kgrag refresh-versions` command re-reads stamps
+  for all registered KGs after a rebuild.
+- `src/kg_rag/cli/cmd_corpus.py` — `kgrag corpus info` and `kgrag person
+  info` now render `v<builder_version>` alongside each KG entry.
+
 ### Added — `semantic_floor` per-KG noise gate (2026-04-22)
 
 - `src/kg_rag/adapters/base.py` — abstract `query()` and `pack()` signatures
