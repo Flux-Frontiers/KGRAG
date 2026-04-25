@@ -37,6 +37,10 @@ class DocKGAdapter(KGAdapter):
             db_path=sqlite or str(entry.repo_path / ".dockg" / "graph.sqlite"),
             lancedb_dir=lancedb or str(entry.repo_path / ".dockg" / "lancedb"),
         )
+        if self._embedder is not None:
+            # Same KGModule lazy-init pattern as CodeKGAdapter — inject before
+            # the first query so SemanticIndex receives our backend.
+            self._kg._embedder = self._embedder
 
     def is_available(self) -> bool:
         """Return True if doc_kg is installed and the DB is built.

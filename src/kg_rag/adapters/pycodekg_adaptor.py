@@ -39,6 +39,11 @@ class CodeKGAdapter(KGAdapter):
             db_path=sqlite or str(entry.repo_path / ".pycodekg" / "graph.sqlite"),
             lancedb_dir=lancedb or str(entry.repo_path / ".pycodekg" / "lancedb"),
         )
+        if self._embedder is not None:
+            # Inject before KGModule.index is first accessed so the lazy-init
+            # in KGModule.embedder never fires and SemanticIndex receives our
+            # backend instead of the default SentenceTransformerEmbedder.
+            self._kg._embedder = self._embedder
 
     def is_available(self) -> bool:
         """Return True if pycode-kg is installed and the DB is built.

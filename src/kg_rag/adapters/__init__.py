@@ -16,10 +16,14 @@ from kg_rag.adapters.verse_adapter import VerseKGAdapter
 from kg_rag.primitives import KGKind
 
 
-def make_adapter(entry) -> KGAdapter:
+def make_adapter(entry, embedder=None) -> KGAdapter:
     """Factory: return the correct adapter for a KGEntry.
 
     :param entry: A KGEntry instance.
+    :param embedder: Optional :class:`~kg_rag.embed.Embedder` to inject into
+        the underlying KG backend, overriding its default sentence-transformers
+        model.  Pass a :class:`~kg_rag.embed.LlamaCppEmbedder` here to enable
+        llama.cpp-based embedding on ARM / Raspberry Pi.
     :return: The appropriate KGAdapter subclass.
     :raises ValueError: If the KGKind is unknown.
     """
@@ -39,7 +43,7 @@ def make_adapter(entry) -> KGAdapter:
     cls = _map.get(entry.kind)
     if cls is None:
         raise ValueError(f"Unknown KGKind: {entry.kind}")
-    return cls(entry)  # type: ignore[abstract]
+    return cls(entry, embedder=embedder)  # type: ignore[abstract]
 
 
 __all__ = [
