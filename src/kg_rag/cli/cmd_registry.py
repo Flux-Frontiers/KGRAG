@@ -241,34 +241,187 @@ def info(name_or_id, registry):
     console.print(Panel("\n".join(lines), title=f"[bold]{entry.label}[/bold]", expand=False))
 
 
+def _fmt_domain(s: dict) -> str:
+    """Format domain-specific stats into a compact display string."""
+    kind = s.get("kind", "")
+    if kind == "doc":
+        parts = []
+        if s.get("document_count"):
+            parts.append(f"docs:{s['document_count']}")
+        if s.get("chunk_count"):
+            parts.append(f"chunks:{s['chunk_count']}")
+        if s.get("topic_count"):
+            parts.append(f"topics:{s['topic_count']}")
+        if s.get("entity_count"):
+            parts.append(f"entities:{s['entity_count']}")
+        return "  ".join(parts) or "—"
+    if kind == "code":
+        cov = s.get("docstring_coverage", 0)
+        parts = [
+            f"mod:{s.get('module_count', 0)}",
+            f"cls:{s.get('class_count', 0)}",
+            f"fn:{s.get('function_count', 0)}",
+            f"meth:{s.get('method_count', 0)}",
+            f"cov:{int(cov * 100)}%",
+        ]
+        return "  ".join(parts)
+    if kind == "meta":
+        parts = []
+        if s.get("pathway_count"):
+            parts.append(f"paths:{s['pathway_count']}")
+        if s.get("compound_count"):
+            parts.append(f"cpds:{s['compound_count']}")
+        if s.get("reaction_count"):
+            parts.append(f"rxns:{s['reaction_count']}")
+        return "  ".join(parts) or "—"
+    if kind in ("diary", "memory", "verse"):
+        ec = s.get("entry_count", 0)
+        return f"entries:{ec}"
+    if kind == "agent":
+        return f"turns:{s.get('turn_count', 0)}"
+    return "—"
+
+
 @cli.command("status")
+@click.argument("name_or_id", required=False, default=None)
+@click.option(
+    "--stats",
+    "show_stats",
+    is_flag=True,
+    default=False,
+    help="Load each KG and show live domain counts (slower).",
+)
+@click.option(
+    "--kind",
+    "kind_filter",
+    default=None,
+    type=click.Choice(
+        list(_KIND_CHOICES) + ["agent", "memory", "diary", "verse"], case_sensitive=False
+    ),
+    help="Filter --stats output to a specific KG kind.",
+)
 @registry_option
-def status(registry):
-    """Show registry health: counts, built/unbuilt, missing paths."""
+def status(name_or_id, show_stats, kind_filter, registry):
+    """Show registry health: counts, built/unbuilt, missing paths.
+
+    With --stats, open each built KG and display live domain counts
+    (chunks, nodes, coverage, etc.).  Pass a NAME_OR_ID to limit to one KG.
+
+    \b
+    Examples:
+        kgrag status
+        kgrag status --stats
+        kgrag status --stats --kind doc
+        kgrag status my-dockg --stats
+    """
     reg_path = Path(registry).resolve() if registry else default_registry_path()
     with KGRegistry(db_path=reg_path) as reg:
-        stats = reg.stats()
-        entries = reg.list()
+        reg_stats = reg.stats()
+        if name_or_id:
+            entry = reg.get(name_or_id)
+            entries = [entry] if entry else []
+        else:
+            entries = reg.list()
 
-    console.print(f"[bold]Registry[/bold] : {reg_path}")
-    console.print(f"[bold]Total KGs[/bold] : {stats.total}")
-    for k, v in stats.by_kind.items():
-        console.print(f"  {k:8s} : {v}")
-    console.print(f"[bold]Built[/bold]    : {stats.built} / {stats.total}")
+    if not show_stats:
+        # ── fast registry-only view ──────────────────────────────────────
+        console.print(f"[bold]Registry[/bold] : {reg_path}")
+        console.print(f"[bold]Total KGs[/bold] : {reg_stats.total}")
+        for k, v in reg_stats.by_kind.items():
+            console.print(f"  {k:8s} : {v}")
+        console.print(f"[bold]Built[/bold]    : {reg_stats.built} / {reg_stats.total}")
 
-    issues = []
-    for e in entries:
-        if not e.repo_path.exists():
-            issues.append(f"  [red]missing[/red] {e.name}: repo_path missing ({e.repo_path})")
-        if not e.is_built:
-            issues.append(f"  [dim]-[/dim] {e.name}: no databases found (run build first)")
+        issues = []
+        for e in entries:
+            if not e.repo_path.exists():
+                issues.append(f"  [red]missing[/red] {e.name}: repo_path missing ({e.repo_path})")
+            if not e.is_built:
+                issues.append(f"  [dim]-[/dim] {e.name}: no databases found (run build first)")
 
-    if issues:
-        console.print("\n[bold]Issues:[/bold]")
-        for i in issues:
-            console.print(i)
-    else:
-        console.print("\n[green]All registered KGs look healthy.[/green]")
+        if issues:
+            console.print("\n[bold]Issues:[/bold]")
+            for i in issues:
+                console.print(i)
+        else:
+            console.print("\n[green]All registered KGs look healthy.[/green]")
+        return
+
+    # ── live stats view ──────────────────────────────────────────────────
+    from kg_rag.orchestrator import KGRAG  # pylint: disable=import-outside-toplevel
+
+    if kind_filter:
+        entries = [e for e in entries if e.kind.value == kind_filter]
+
+    if not entries:
+        console.print("[yellow]No matching KGs found.[/yellow]")
+        return
+
+    if len(entries) > 20 and not name_or_id:
+        console.print(
+            f"[yellow]Loading stats for {len(entries)} KGs — this may take a moment…[/yellow]"
+        )
+
+    table = Table(title="KG Live Stats", box=box.ROUNDED, show_lines=False)
+    table.add_column("Name", style="bold cyan", no_wrap=False, max_width=38)
+    table.add_column("Kind", style="magenta", width=6)
+    table.add_column("Builder", width=9)
+    table.add_column("Nodes", justify="right", width=7)
+    table.add_column("Edges", justify="right", width=7)
+    table.add_column("MB", justify="right", width=5)
+    table.add_column("Domain Counts")
+
+    with KGRAG(registry_path=reg_path) as kg:
+        for entry in entries:
+            if not entry.is_built:
+                table.add_row(
+                    entry.name,
+                    entry.kind.value,
+                    entry.builder_version,
+                    "—",
+                    "—",
+                    "—",
+                    "[dim]not built[/dim]",
+                )
+                continue
+            adapter = kg._get_adapter(entry)
+            if adapter is None:
+                table.add_row(
+                    entry.name,
+                    entry.kind.value,
+                    entry.builder_version,
+                    "—",
+                    "—",
+                    "—",
+                    "[dim]no adapter[/dim]",
+                )
+                continue
+            try:
+                s = adapter.stats()
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                table.add_row(
+                    entry.name,
+                    entry.kind.value,
+                    entry.builder_version,
+                    "—",
+                    "—",
+                    "—",
+                    f"[red]error: {exc}[/red]",
+                )
+                continue
+
+            bver = s.get("builder_version", "?")
+            nodes = str(s.get("node_count", "—"))
+            edges = str(s.get("edge_count", "—"))
+            mb = str(s.get("db_size_mb", "—"))
+            err = s.get("error")
+            if err:
+                domain = f"[red]{err}[/red]"
+            else:
+                domain = _fmt_domain(s)
+
+            table.add_row(entry.name, entry.kind.value, bver, nodes, edges, mb, domain)
+
+    console.print(table)
 
 
 @cli.command("refresh-versions")

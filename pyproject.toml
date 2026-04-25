@@ -76,13 +76,12 @@ spacy = {version = ">=3.7.0", optional = true}
 
 # our own adaptors
 kg-snapshot = { git = "https://github.com/Flux-Frontiers/kg_snapshot.git" }
-kg-utils = {git = "https://github.com/Flux-Frontiers/kg_utils.git"}
-pycode-kg = {git = "https://github.com/Flux-Frontiers/pycode_kg.git", optional=true}
+pycode-kg = {version = ">=0.16.0", optional=true}
+doc-kg = {version = ">=0.11.0", optional=true}
 agent-kg = {git = "https://github.com/Flux-Frontiers/agent_kg.git", optional=true}
 ftree-kg = {git = "https://github.com/Flux-Frontiers/ftree_kg.git", optional=true}
 diary-kg = {git = "https://github.com/Flux-Frontiers/diary_kg.git", optional=true}
 metabo-kg = {git = "https://github.com/Flux-Frontiers/metabo_kg.git", optional=true}
-doc-kg = {git = "https://github.com/Flux-Frontiers/doc_kg.git", optional=true}
 memory-kg = {git = "https://github.com/Flux-Frontiers/memory_kg.git", optional=true}
 
 
