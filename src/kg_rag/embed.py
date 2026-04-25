@@ -110,6 +110,21 @@ class LlamaCppEmbedder:
             n_gpu_layers=n_gpu_layers,
             verbose=verbose,
         )
+        # Resolve embedding dimension from model metadata so .dim matches
+        # pycode_kg's Embedder interface (used by SemanticIndex at build time).
+        self.dim: int = self._llm.n_embd()
+
+    def embed_texts(self, texts: list[str]) -> list[list[float]]:
+        """Embed a batch of strings.
+
+        :param texts: List of strings to embed.
+        :return: List of float32 vectors.
+        """
+        result = self._llm.embed(texts)
+        # llm.embed(list) returns list[list[float]]; normalise single-item edge case.
+        if texts and not isinstance(result[0], list):
+            return [result]
+        return result
 
     def embed_query(self, text: str) -> list[float]:
         """Embed a single query string.
@@ -126,7 +141,7 @@ class LlamaCppEmbedder:
         return result
 
     def __repr__(self) -> str:
-        return f"LlamaCppEmbedder(model={self._model_path.name!r})"
+        return f"LlamaCppEmbedder(model={self._model_path.name!r}, dim={self.dim})"
 
 
 class SentenceTransformerEmbedder:
@@ -150,6 +165,15 @@ class SentenceTransformerEmbedder:
                 "or switch to embed_backend='llama'."
             ) from exc
         self._model = SentenceTransformer(model_name)
+        self.dim: int = self._model.get_sentence_embedding_dimension()
+
+    def embed_texts(self, texts: list[str]) -> list[list[float]]:
+        """Embed a batch of strings.
+
+        :param texts: List of strings to embed.
+        :return: List of float32 vectors.
+        """
+        return self._model.encode(texts, convert_to_numpy=True).tolist()
 
     def embed_query(self, text: str) -> list[float]:
         """Embed a single query string.
@@ -160,7 +184,7 @@ class SentenceTransformerEmbedder:
         return self._model.encode(text, convert_to_numpy=True).tolist()
 
     def __repr__(self) -> str:
-        return f"SentenceTransformerEmbedder(model={self._model!r})"
+        return f"SentenceTransformerEmbedder(model={self._model!r}, dim={self.dim})"
 
 
 def make_embedder(config: dict) -> "Embedder | None":
