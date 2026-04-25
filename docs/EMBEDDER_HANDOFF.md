@@ -15,17 +15,21 @@ done and pushed to `claude/raspberry-pi-query-design-dOWGL`.  What remains is:
 | Adapter | KGRAG injection | Upstream PR needed |
 |---|---|---|
 | `CodeKGAdapter` | ✅ monkey-patch (works) | ✅ pycode_kg — see below |
-| `DocKGAdapter` | ✅ monkey-patch (works) | ⬜ doc_kg — same 2-file pattern |
+| `DocKGAdapter` | ✅ clean constructor param | ✅ done — `DocKG.__init__` accepts `embedder=` |
 | `DiaryKGAdapter` | ⬜ not wired | ⬜ diary_kg — verify KGModule, then same pattern |
 | `AgentKGAdapter` | ⬜ not wired | ⬜ agent_kg — verify KGModule, then same pattern |
 | `MetaKGAdapter` | ⬜ not wired | ⬜ metabo_kg — verify KGModule, then same pattern |
 
 ---
 
-## PR pattern (same for every KGModule-based repo)
+## PR pattern
 
-Every repo that extends `KGModule` needs the same two-file change.  Verify the
-repo uses `KGModule` as its base class, then apply this pattern:
+**Note:** Only `pycode_kg` extends `KGModule`.  `DocKG`, `DiaryKG`, `AgentKG`,
+and `MetaKG` are plain classes — each has its own embedding architecture and
+needs a different injection approach (see per-repo notes below).
+
+The `KGModule` two-file pattern applies only to `pycode_kg` (and any future
+repo that actually subclasses `KGModule`):
 
 ### File 1: `src/<pkg>/module/base.py` — `KGModule.__init__`
 

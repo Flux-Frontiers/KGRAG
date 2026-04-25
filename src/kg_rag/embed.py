@@ -115,16 +115,16 @@ class LlamaCppEmbedder:
         self.dim: int = self._llm.n_embd()
 
     def embed_texts(self, texts: list[str]) -> list[list[float]]:
-        """Embed a batch of strings.
+        """Embed a batch of strings one at a time.
+
+        llama.cpp's batch budget is measured in tokens, not texts, so passing
+        multiple texts at once is unreliable for variable-length inputs.
+        Looping with embed_query is safe and avoids llama_decode -1 errors.
 
         :param texts: List of strings to embed.
         :return: List of float32 vectors.
         """
-        result = self._llm.embed(texts)
-        # llm.embed(list) returns list[list[float]]; normalise single-item edge case.
-        if texts and not isinstance(result[0], list):
-            return [result]
-        return result
+        return [self.embed_query(t) for t in texts]
 
     def embed_query(self, text: str) -> list[float]:
         """Embed a single query string.
@@ -165,7 +165,12 @@ class SentenceTransformerEmbedder:
                 "or switch to embed_backend='llama'."
             ) from exc
         self._model = SentenceTransformer(model_name)
-        self.dim: int = self._model.get_sentence_embedding_dimension()
+        get_dim = getattr(self._model, "get_embedding_dimension", None) or getattr(
+            self._model, "get_sentence_embedding_dimension", None
+        )
+        if get_dim is None:
+            raise AttributeError("SentenceTransformer has no get_embedding_dimension method")
+        self.dim: int = get_dim()
 
     def embed_texts(self, texts: list[str]) -> list[list[float]]:
         """Embed a batch of strings.
@@ -187,7 +192,7 @@ class SentenceTransformerEmbedder:
         return f"SentenceTransformerEmbedder(model={self._model!r}, dim={self.dim})"
 
 
-def make_embedder(config: dict) -> "Embedder | None":
+def make_embedder(config: dict) -> Embedder | None:
     """Instantiate the correct embedder from ``[tool.kgrag]`` config.
 
     Returns ``None`` if no ``embed_backend`` is configured, meaning each KG
@@ -223,7 +228,4 @@ def make_embedder(config: dict) -> "Embedder | None":
             verbose=bool(config.get("llama_verbose", False)),
         )
 
-    raise ValueError(
-        f"Unknown embed_backend: {backend!r}. "
-        "Supported values: 'llama'."
-    )
+    raise ValueError(f"Unknown embed_backend: {backend!r}. Supported values: 'llama'.")

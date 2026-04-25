@@ -15,5 +15,5 @@ class VerseKGAdapter(StubKGAdapter):
     _pkg_name: str = "verse_kg"
     _kind: KGKind = KGKind.VERSE
 
-    def __init__(self, entry: KGEntry) -> None:
-        super().__init__(entry)
+    def __init__(self, entry: KGEntry, embedder=None) -> None:
+        super().__init__(entry, embedder=embedder)

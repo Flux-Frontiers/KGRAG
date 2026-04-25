@@ -1,30 +1,23 @@
-feat(query): add semantic_floor noise gate and --scope routing; bump to 0.5.0
+feat(adapters): propagate embedder= through all adapter constructors; fix llama.cpp build
 
-Introduces two new cross-KG query controls and correct score semantics for
-federated comparisons.
+StubKGAdapter and all concrete KGAdapter subclasses now accept and forward
+`embedder=None` to `super().__init__()` so `make_adapter(entry, embedder=...)`
+works without TypeError. Previously only the base class stored the embedder;
+every subclass __init__ silently dropped it.
 
-**semantic_floor (per-KG noise gate)**
-`query()` and `pack()` on every adapter now accept `semantic_floor: float`.
-If the best hit from a KG scores below the floor, the entire result set for
-that KG is silently dropped — preventing k-NN from always returning k results
-regardless of domain relevance.  Threads through orchestrator (all 6 methods)
-and CLI (`--semantic-floor` option on `kgrag query` and `kgrag pack`).
+DocKGAdapter: replace post-construction monkey-patch (_kg._embedder = ...)
+with clean DocKG(embedder=self._embedder) constructor injection, matching the
+embedder= param added to DocKG.__init__ in the upstream doc_kg change.
 
-**--scope routing (kgrag query / kgrag pack)**
-`--scope NAME` restricts a query to a named corpus or person corpus without
-having to know which registry holds it.  Resolution: CorpusRegistry first,
-PersonCorpusRegistry second; `UsageError` lists all known scopes on miss.
-`--scope` and `--kind` are mutually exclusive.
+LlamaCppEmbedder.embed_texts: fix llama_decode -1 crash on corpus builds.
+llama.cpp's batch budget is in tokens, not texts — passing a full node list
+blows the budget immediately. Loop via embed_query (one at a time) instead.
 
-**Raw cosine score in PyCodeKG adapter**
-The reranked `"score"` field is normalised to 1.0 per query (top result is
-always 1.0), making it incomparable across KGs.  Adapter now uses `"semantic"`
-(raw LanceDB cosine similarity, `1-dist`) for `min_score` and `semantic_floor`
-checks so all KG scores are on the same scale.
+SentenceTransformerEmbedder: use get_embedding_dimension() with fallback to
+get_sentence_embedding_dimension() to silence FutureWarning in ST >= 3.x.
 
-**Tests**
-`tests/test_cmd_query.py` — 66 new tests covering scope routing, floor
-forwarding, mutual exclusion.  `tests/test_adapters.py` — 2 new tests for
-semantic-vs-score behaviour.
+Tests: update side_effect lambdas / _fake_adapter to accept embedder= kwarg.
+Benchmarks: add scripts/test_llama_embed.py (Jaccard=1.0 query parity) and
+scripts/test_llama_build.py (2.4 ms/vector, full DocKG build end-to-end).
 
 Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
