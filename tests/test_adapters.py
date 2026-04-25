@@ -467,7 +467,7 @@ class TestMetaKGAdapterStats:
             adapter = MetaKGAdapter(entry)
             s = adapter.stats()
         assert s["kind"] == "meta"
-        assert s["status"] == "unavailable"
+        assert s["available"] is False
 
     def test_stats_includes_counts_when_orchestrator_provides_them(self, tmp_path):
         entry = _entry(tmp_path, KGKind.META, with_sqlite=True)

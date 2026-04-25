@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — `CITATION.cff` academic citation metadata (2026-04-25)
+
+- `CITATION.cff` — CFF 1.2.0 citation file for KGRAG; records title, abstract,
+  author (Eric G. Suchanek, ORCID `0009-0009-0891-1507`), version `0.5.1`,
+  release date 2026-04-24, Elastic 2.0 license, and repository URL.
+- `README.md` — version badge updated `0.3.5 → 0.5.1`; Zenodo DOI badge added.
+
+### Added — `kgrag status --stats` live domain counts (2026-04-25)
+
+- `src/kg_rag/cli/cmd_registry.py` — `kgrag status` enhanced with three new
+  options and an optional `NAME_OR_ID` positional argument:
+  - `--stats` loads each built KG via its adapter and renders a Rich table with
+    live node/edge counts, `db_size_mb`, `builder_version`, and domain-specific
+    counts (chunks/topics/entities for doc KGs; modules/classes/functions/
+    methods/docstring-coverage for code KGs; pathways/compounds/reactions for
+    meta KGs).
+  - `--kind` filters the `--stats` table to a single KG kind.
+  - Without `--stats` the command retains its fast registry-only view.
+- `src/kg_rag/cli/cmd_registry.py` — new private `_fmt_domain(s)` helper
+  formats domain-specific stats into a compact display string used by the table.
+
+### Changed — Adapter `stats()` returns rich envelope (2026-04-25)
+
+- `src/kg_rag/adapters/dockg_adapter.py` — `stats()` now calls `self._kg.stats()`
+  (live graph stats) instead of `self._kg.store.stats()`; returns `kg_name`,
+  `builder_version`, `available`, `db_size_mb`, `document_count`, `chunk_count`,
+  `section_count`, `topic_count`, `entity_count`, and `keyword_count`; error path
+  preserves the envelope with an `error` key.
+- `src/kg_rag/adapters/metakg_adapter.py` — `stats()` adds `kg_name`,
+  `builder_version`, `available` (bool, was string `"available"`/`"unavailable"`),
+  `db_size_mb`, `pathway_count`, `compound_count`, and `reaction_count`.
+- `src/kg_rag/adapters/pycodekg_adaptor.py` — `stats()` adds `kg_name`,
+  `builder_version`, `available`, `db_size_mb`, `module_count`, `class_count`,
+  `function_count`, `method_count`, `docstring_coverage`, and `snapshot_count`;
+  error path preserves envelope with `error` key.
+
+### Changed — Dependency version constraints for `pycode-kg` and `doc-kg` (2026-04-25)
+
+- `pyproject.toml` — `pycode-kg` updated from a git-source pin to
+  `>=0.16.0` (optional); `doc-kg` updated from a git-source pin to
+  `>=0.11.0` (optional), enabling installation from PyPI/releases.
+- `poetry.lock` — `pycode-kg` 0.14.0 → 0.15.0; `doc-kg` 0.9.1 → 0.10.0
+  (trimmed `kg` extras to `agent-kg` + `pycode-kg`).
+
 ### Added — llama.cpp embedder validation and adapter embedder propagation (2026-04-25)
 
 - `scripts/test_llama_embed.py` — query parity benchmark: LlamaCppEmbedder vs

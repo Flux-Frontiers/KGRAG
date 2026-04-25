@@ -131,20 +131,39 @@ class DocKGAdapter(KGAdapter):
         return snippets
 
     def stats(self) -> dict[str, Any]:
-        """Return basic statistics about this DocKG instance.
+        """Return live statistics about this DocKG instance.
 
-        :return: Dict with node_count, edge_count.
+        :return: Standard envelope plus doc-specific counts (chunks, topics, etc.).
         """
         self._load()
+        db_size = 0.0
+        if self.entry.sqlite_path and self.entry.sqlite_path.exists():
+            db_size = round(self.entry.sqlite_path.stat().st_size / 1_048_576, 2)
         try:
-            s = self._kg.store.stats()
+            s = self._kg.stats()
             return {
-                "node_count": s.get("total_nodes", "n/a"),
-                "edge_count": s.get("total_edges", "n/a"),
                 "kind": "doc",
+                "kg_name": self.entry.name,
+                "builder_version": self.entry.builder_version,
+                "available": True,
+                "db_size_mb": db_size,
+                "node_count": s.get("node_count", "n/a"),
+                "edge_count": s.get("edge_count", "n/a"),
+                "document_count": s.get("document_count", 0),
+                "chunk_count": s.get("chunk_count", 0),
+                "section_count": s.get("section_count", 0),
+                "topic_count": s.get("topic_count", 0),
+                "entity_count": s.get("entity_count", 0),
+                "keyword_count": s.get("keyword_count", 0),
             }
-        except Exception:  # pylint: disable=broad-exception-caught
-            return {"kind": "doc", "error": "stats unavailable"}
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            return {
+                "kind": "doc",
+                "kg_name": self.entry.name,
+                "available": True,
+                "db_size_mb": db_size,
+                "error": str(exc),
+            }
 
     def analyze(self) -> str:
         """Run full corpus analysis on this DocKG.

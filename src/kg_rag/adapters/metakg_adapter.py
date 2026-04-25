@@ -144,9 +144,15 @@ class MetaKGAdapter(KGAdapter):
 
         :return: Dict with kind, status, and where available node_count/edge_count.
         """
+        db_size = 0.0
+        if self.entry.sqlite_path and self.entry.sqlite_path.exists():
+            db_size = round(self.entry.sqlite_path.stat().st_size / 1_048_576, 2)
         base: dict[str, Any] = {
             "kind": "meta",
-            "status": "available" if self.is_available() else "unavailable",
+            "kg_name": self.entry.name,
+            "builder_version": self.entry.builder_version,
+            "available": self.is_available(),
+            "db_size_mb": db_size,
         }
         if not self.is_available():
             return base
@@ -155,7 +161,10 @@ class MetaKGAdapter(KGAdapter):
             raw = self._kg.stats() if callable(getattr(self._kg, "stats", None)) else {}
             if isinstance(raw, dict):
                 base["node_count"] = raw.get("node_count") or raw.get("total_nodes", "n/a")
-                base["edge_count"] = raw.get("edge_count") or raw.get("total_edges", "n/a")
+                base["edge_count"] = raw.get("total_edges", "n/a")
+                base["pathway_count"] = raw.get("pathway_count", 0)
+                base["compound_count"] = raw.get("compound_count", 0)
+                base["reaction_count"] = raw.get("reaction_count", 0)
         except Exception:  # pylint: disable=broad-exception-caught
             pass
         return base

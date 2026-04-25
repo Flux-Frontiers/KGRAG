@@ -1,0 +1,32 @@
+cff-version: "1.2.0"
+message: "If you use this software, please cite it using the metadata below."
+type: software
+title: "KGRAG: Knowledge Graph Orchestration & Retrieval Framework"
+abstract: >
+  KGRAG is a unified orchestration layer for building and querying knowledge
+  graphs across diverse domains — Python codebases, document corpora, legal
+  archives, personal memories, scientific structure databases, and more.
+  It integrates CodeKG, DocKG, and a growing family of specialized KG types
+  under a single management interface, enabling semantic search augmented by
+  structural relationships and cross-KG federated queries via MCP.
+authors:
+  - family-names: Suchanek
+    given-names: "Eric G., PhD"
+    orcid: "https://orcid.org/0009-0009-0891-1507"
+    email: suchanek@flux-frontiers.com
+    affiliation: "Flux-Frontiers"
+version: "0.5.1"
+date-released: "2026-04-24"
+license-url: "https://www.elastic.co/licensing/elastic-license"
+repository-code: "https://github.com/Flux-Frontiers/KGRAG"
+url: "https://github.com/Flux-Frontiers/KGRAG"
+keywords:
+  - knowledge-graph
+  - code-analysis
+  - document-retrieval
+  - semantic-search
+  - retrieval-augmented-generation
+  - python
+  - lancedb
+  - mcp
+  - kgrag
