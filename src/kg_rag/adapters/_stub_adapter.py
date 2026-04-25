@@ -36,8 +36,8 @@ class StubKGAdapter(KGAdapter):
     _pkg_name: str = ""  # set by subclass; empty = library not yet released
     _kind: KGKind = KGKind.CODE  # overridden by subclass
 
-    def __init__(self, entry: KGEntry) -> None:
-        super().__init__(entry)
+    def __init__(self, entry: KGEntry, embedder=None) -> None:
+        super().__init__(entry, embedder=embedder)
         self._kg: Any = None
 
     # ------------------------------------------------------------------

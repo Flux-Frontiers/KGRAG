@@ -18,8 +18,8 @@ class DocKGAdapter(KGAdapter):
     :param entry: KGEntry with kind=KGKind.DOC.
     """
 
-    def __init__(self, entry: KGEntry) -> None:
-        super().__init__(entry)
+    def __init__(self, entry: KGEntry, embedder=None) -> None:
+        super().__init__(entry, embedder=embedder)
         self._kg: Any = None
 
     def _load(self):
@@ -36,11 +36,8 @@ class DocKGAdapter(KGAdapter):
             corpus_root=str(entry.repo_path),
             db_path=sqlite or str(entry.repo_path / ".dockg" / "graph.sqlite"),
             lancedb_dir=lancedb or str(entry.repo_path / ".dockg" / "lancedb"),
+            embedder=self._embedder,
         )
-        if self._embedder is not None:
-            # Same KGModule lazy-init pattern as CodeKGAdapter — inject before
-            # the first query so SemanticIndex receives our backend.
-            self._kg._embedder = self._embedder
 
     def is_available(self) -> bool:
         """Return True if doc_kg is installed and the DB is built.

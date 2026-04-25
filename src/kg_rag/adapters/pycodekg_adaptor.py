@@ -18,8 +18,8 @@ class CodeKGAdapter(KGAdapter):
     :param entry: KGEntry with kind=KGKind.CODE.
     """
 
-    def __init__(self, entry: KGEntry) -> None:
-        super().__init__(entry)
+    def __init__(self, entry: KGEntry, embedder=None) -> None:
+        super().__init__(entry, embedder=embedder)
         self._kg: Any = None
 
     def _load(self):

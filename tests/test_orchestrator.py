@@ -163,7 +163,7 @@ class TestKGRAGQuery:
             hits2 = [_make_hit("kg2", score=0.7)]
             adapters = {e1.name: _mock_adapter(hits=hits1), e2.name: _mock_adapter(hits=hits2)}
 
-            def _fake_adapter(entry):
+            def _fake_adapter(entry, embedder=None):
                 return adapters[entry.name]
 
             with patch("kg_rag.orchestrator.make_adapter", side_effect=_fake_adapter):
@@ -194,7 +194,10 @@ class TestKGRAGQuery:
                 code_entry.name: _mock_adapter(hits=[_make_hit("code-kg")]),
                 doc_entry.name: _mock_adapter(hits=[_make_hit("doc-kg")]),
             }
-            with patch("kg_rag.orchestrator.make_adapter", side_effect=lambda e: adapters[e.name]):
+            with patch(
+                "kg_rag.orchestrator.make_adapter",
+                side_effect=lambda e, embedder=None: adapters[e.name],
+            ):
                 result = kgrag.query("test", kinds=[KGKind.CODE])
 
         assert result.kgs_queried == 1
@@ -256,7 +259,10 @@ class TestKGRAGPack:
                 e1.name: _mock_adapter(snippets=[_make_snippet("a", 0.5)]),
                 e2.name: _mock_adapter(snippets=[_make_snippet("b", 0.9)]),
             }
-            with patch("kg_rag.orchestrator.make_adapter", side_effect=lambda e: adapters[e.name]):
+            with patch(
+                "kg_rag.orchestrator.make_adapter",
+                side_effect=lambda e, embedder=None: adapters[e.name],
+            ):
                 pack = kgrag.pack("q")
 
         assert pack.snippets[0].score >= pack.snippets[1].score
