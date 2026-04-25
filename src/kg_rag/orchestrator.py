@@ -17,7 +17,9 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from kg_rag.adapters import KGAdapter, make_adapter
+from kg_rag.config import load_kgrag_config
 from kg_rag.corpus_registry import CorpusRegistry
+from kg_rag.embed import Embedder, make_embedder
 from kg_rag.person_registry import PersonCorpusRegistry
 from kg_rag.primitives import (
     CrossHit,
@@ -38,22 +40,52 @@ class KGRAG:
     library is not installed, that KG is silently skipped unless
     ``strict=True``.
 
+    **Embedding backend**
+
+    By default each KG library uses its own built-in embedder
+    (``SentenceTransformerEmbedder``).  Pass an explicit ``embedder`` or
+    configure ``embed_backend`` in ``[tool.kgrag]`` to override this for all
+    KGs at once.  A single shared embedder instance is used across every
+    adapter so the GGUF model is loaded only once.
+
+    Example ``pyproject.toml`` configuration for Raspberry Pi / ARM:
+
+    .. code-block:: toml
+
+        [tool.kgrag]
+        embed_backend    = "llama"
+        llama_model_path = "~/.kgrag/bge-small-en-v1.5-Q8_0.gguf"
+
     :param registry_path: Path to the registry SQLite file. Defaults to
         ``~/.kgrag/registry.sqlite`` (or KGRAG_REGISTRY env var).
     :param strict: If True, raise ImportError when a required KG library
         is not installed. Default False (skip unavailable KGs).
+    :param embedder: Explicit :class:`~kg_rag.embed.Embedder` instance to use
+        for all KG adapters.  When ``None`` (default), the embedder is
+        auto-created from ``[tool.kgrag]`` config, or each KG uses its own
+        default if no ``embed_backend`` is configured.
+    :param project_root: Root directory to search for ``pyproject.toml`` when
+        auto-creating the embedder from config.  Defaults to ``Path.cwd()``.
     """
 
     def __init__(
         self,
         registry_path: Path | None = None,
         strict: bool = False,
+        embedder: "Embedder | None" = None,
+        project_root: Path | None = None,
     ) -> None:
         self._registry = KGRegistry(db_path=registry_path)
         self._corpus_registry = CorpusRegistry(db_path=registry_path)
         self._person_registry = PersonCorpusRegistry(db_path=registry_path)
         self._strict = strict
         self._adapters: dict[str, KGAdapter] = {}  # name → adapter
+
+        if embedder is not None:
+            self._embedder: Embedder | None = embedder
+        else:
+            cfg = load_kgrag_config(project_root)
+            self._embedder = make_embedder(cfg)
 
     @property
     def registry(self) -> KGRegistry:
@@ -88,7 +120,7 @@ class KGRAG:
 
     def _get_adapter(self, entry: KGEntry) -> KGAdapter | None:
         if entry.name not in self._adapters:
-            adapter = make_adapter(entry)
+            adapter = make_adapter(entry, embedder=self._embedder)
             if not adapter.is_available():
                 if self._strict:
                     raise ImportError(

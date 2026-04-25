@@ -21,10 +21,18 @@ class KGAdapter(ABC):
     interface for querying, packing, and introspecting a single KG instance.
 
     :param entry: The KGEntry this adapter serves.
+    :param embedder: Optional shared embedding backend.  When provided,
+        adapters that wrap a ``KGModule``-based backend inject this object
+        into the underlying KG's ``_embedder`` slot before the first query,
+        replacing the default ``SentenceTransformerEmbedder`` with whatever
+        backend the caller has configured (e.g.
+        :class:`~kg_rag.embed.LlamaCppEmbedder`).  ``None`` means each KG
+        library uses its own built-in default.
     """
 
-    def __init__(self, entry: KGEntry) -> None:
+    def __init__(self, entry: KGEntry, embedder=None) -> None:
         self.entry = entry
+        self._embedder = embedder
 
     @abstractmethod
     def is_available(self) -> bool:
