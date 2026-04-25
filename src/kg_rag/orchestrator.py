@@ -72,7 +72,7 @@ class KGRAG:
         self,
         registry_path: Path | None = None,
         strict: bool = False,
-        embedder: "Embedder | None" = None,
+        embedder: Embedder | None = None,
         project_root: Path | None = None,
     ) -> None:
         self._registry = KGRegistry(db_path=registry_path)
