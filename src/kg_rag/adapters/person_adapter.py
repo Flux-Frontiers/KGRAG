@@ -18,5 +18,5 @@ class PersonKGAdapter(StubKGAdapter):
     _pkg_name: str = "person_kg"
     _kind: KGKind = KGKind.PERSON
 
-    def __init__(self, entry: KGEntry) -> None:
-        super().__init__(entry)
+    def __init__(self, entry: KGEntry, embedder=None) -> None:
+        super().__init__(entry, embedder=embedder)

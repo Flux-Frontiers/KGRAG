@@ -51,6 +51,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `poetry.lock` — `pycode-kg` 0.14.0 → 0.15.0; `doc-kg` 0.9.1 → 0.10.0
   (trimmed `kg` extras to `agent-kg` + `pycode-kg`).
 
+### Added — llama.cpp embedder validation and adapter embedder propagation (2026-04-25)
+
+- `scripts/test_llama_embed.py` — query parity benchmark: LlamaCppEmbedder vs
+  SentenceTransformerEmbedder on a live DocKG; confirmed Jaccard=1.0 and Top-1
+  match across all tested queries (same bge-small-en-v1.5 weights, GGUF Q8_0 vs
+  float32).
+- `scripts/test_llama_build.py` — full DocKG build timing benchmark; llama.cpp
+  at 2.4 ms/vector vs ST at 0.7 ms/vector on Apple Silicon; validates the path
+  end-to-end for ARM/Pi deployments.
+
+### Fixed — embedder= not forwarded by adapter constructors (2026-04-25)
+
+- `StubKGAdapter` and all concrete adapters (`CodeKGAdapter`, `DocKGAdapter`,
+  `DiaryKGAdapter`, `AgentKGAdapter`, `MetaKGAdapter`, `DisulfideKGAdapter`,
+  `LegalKGAdapter`, `MemoryKGAdapter`, `PDBFileKGAdapter`, `PersonKGAdapter`,
+  `VerseKGAdapter`) — `__init__` now accepts `embedder=None` and forwards it
+  to `super().__init__(entry, embedder=embedder)` so `make_adapter` can inject
+  a custom backend without a `TypeError`.
+- `DocKGAdapter._load()` — replaced post-construction monkey-patch
+  (`self._kg._embedder = self._embedder`) with clean constructor injection
+  (`DocKG(..., embedder=self._embedder)`), matching the `embedder=` parameter
+  added to `DocKG.__init__` in the upstream doc_kg PR.
+- `LlamaCppEmbedder.embed_texts` — previous implementation passed the full
+  text list to `llama_cpp.Llama.embed()`; llama.cpp's batch budget is measured
+  in tokens, not texts, causing `llama_decode returned -1` on any corpus
+  larger than a handful of short strings.  Now loops via `embed_query` (one
+  text at a time), which is safe for arbitrarily large and variable-length
+  inputs.
+- `SentenceTransformerEmbedder.__init__` — replaced
+  `get_sentence_embedding_dimension()` (deprecated in sentence-transformers
+  ≥ 3.x) with `get_embedding_dimension` falling back to the old name; raises
+  `AttributeError` explicitly if neither is present.
+- `tests/test_orchestrator.py` — updated `side_effect` lambdas and
+  `_fake_adapter` to accept `embedder=None` so patched `make_adapter` calls
+  no longer raise `TypeError`.
+- `docs/EMBEDDER_HANDOFF.md` — corrected false claim that all sister repos
+  extend `KGModule` (only `pycode_kg` does); marked `DocKGAdapter` injection
+  as done.
+
 ### Added — KG builder version stamping (2026-04-23)
 
 - `docs/KG_BUILDER_VERSION_SPEC.md` — new contract document for the

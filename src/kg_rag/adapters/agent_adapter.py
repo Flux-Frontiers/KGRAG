@@ -45,8 +45,8 @@ class AgentKGAdapter(KGAdapter):
                   ``entry.metadata["person_id"]`` sets the UserProfile identity.
     """
 
-    def __init__(self, entry: KGEntry) -> None:
-        super().__init__(entry)
+    def __init__(self, entry: KGEntry, embedder=None) -> None:
+        super().__init__(entry, embedder=embedder)
         self._kg: Any = None
 
     # ------------------------------------------------------------------
