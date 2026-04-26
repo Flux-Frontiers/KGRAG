@@ -437,7 +437,7 @@ CODEKG_SKIP_SNAPSHOT=1 git commit ...
 
 - **[CodeKG](https://github.com/Flux-Frontiers/code_kg)** — Deterministic knowledge graph for Python codebases (structural analysis)
 - **[DocKG](https://github.com/Flux-Frontiers/doc_kg)** — Semantic knowledge graph for document corpora (Markdown, plain text)
-- **[MetaKG](https://github.com/Flux-Frontiers/meta_kg)** — Example KGRAG application for metabolic pathway analysis
+- **[MetaboKG](https://github.com/Flux-Frontiers/metabo_kg)** — Example KGRAG application for metabolic pathway analysis
 
 ---
 

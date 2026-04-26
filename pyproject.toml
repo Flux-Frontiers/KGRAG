@@ -19,6 +19,36 @@
 # Author: Eric G. Suchanek, PhD
 # Last Revision: 2026-03-18 23:54:25
 #
+# Quick install (poetry) — recommended
+# -------------------------------------
+#   poetry install                               core orchestrator only
+#   poetry install --extras "kg"                 core + all KG adapters (doc, code, diary, memory, agent, ftree, metabo)
+#   poetry install --extras "viz"                core + 2D visualization (streamlit, pyvis, plotly)
+#   poetry install --extras "viz3d"              core + 3D visualization (pyvista, pyvistaqt, PyQt5)
+#   poetry install --extras "pi"                 core + llama-cpp-python (Raspberry Pi / local LLM)
+#   poetry install --extras "kg viz" --with dev  KG adapters + viz + dev tools
+#   poetry install --all-extras --with dev       everything
+#
+# Quick install (pip)
+# -------------------
+#   pip install -e "."                           core only
+#   pip install -e ".[kg]"                       core + all KG adapters
+#   pip install -e ".[viz]"                      core + 2D visualization
+#   pip install -e ".[kg,viz]"                   KG adapters + 2D visualization
+#
+# Run tests
+# ---------
+#   pytest                                       uses [tool.pytest.ini_options]
+#
+# MCP server
+# ----------
+#   kgrag-mcp                                    start the KGRAG MCP server
+#
+# Build KG indices (run inside each repo after code changes)
+# -----------------------------------------------------------
+#   pycodekg build --repo .                      rebuild code KG
+#   dockg build --repo .                         rebuild doc KG
+#   memorykg build                               rebuild memory KG
 
 
 [build-system]
