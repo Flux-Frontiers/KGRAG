@@ -27,7 +27,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "kg-rag"
-version = "0.5.2"
+version = "0.5.3"
 description = "Orchestration layer for the KGRAG(tm) components."
 authors = ["Eric G. Suchanek, PhD <suchanek@mac.com>"]
 license = "Elastic-2.0"
@@ -201,3 +201,7 @@ cmd = "python scripts/generate_wiki.py"
 [tool.poe.tasks.wiki-preview]
 help = "Preview wiki generation without publishing"
 cmd = "python scripts/generate_wiki.py --dry-run"
+
+[tool.kgrag]
+embed_backend = "sentence_transformers"
+# st_model = "default"  # resolves to BAAI/bge-small-en-v1.5; override with any alias or HF repo id

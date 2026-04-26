@@ -17,6 +17,7 @@ import kg_rag.cli.cmd_health  # noqa: F401
 import kg_rag.cli.cmd_hooks  # noqa: F401
 import kg_rag.cli.cmd_init  # noqa: F401
 import kg_rag.cli.cmd_mcp  # noqa: F401
+import kg_rag.cli.cmd_models  # noqa: F401
 import kg_rag.cli.cmd_query  # noqa: F401
 import kg_rag.cli.cmd_registry  # noqa: F401
 import kg_rag.cli.cmd_synthesize  # noqa: F401

@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — Centralized embedding model cache via `ModelCoordinator` (2026-04-26)
+
+- `src/kg_rag/model_coordinator.py` — new `ModelCoordinator` class that downloads
+  HuggingFace embedding models once to `~/.kgrag/models/` and reuses them across
+  all KG adapters (PyCodeKG, DocKG, DiaryKG, MetaboKG, …).  Key design points:
+  - `ensure(model_id)` downloads via `huggingface_hub.snapshot_download` (with
+    an ignore list for ONNX/Flax/TF/Rust variants) and records the result in a
+    `manifest.json` registry.
+  - `get_embedder(model_id)` returns a `SentenceTransformerEmbedder` cached in
+    memory; repeated calls for the same model return the same instance.
+  - `export_env()` / `apply_env()` set `KGRAG_MODEL_DIR`, `CODEKG_MODEL_DIR`,
+    and `DOCKG_MODEL_DIR` so downstream libraries resolve to the shared cache.
+  - Module-level `get_coordinator()` singleton for use by `make_embedder`.
+  - `KNOWN_MODELS` alias table: `"default"` / `"bge-small"` → `BAAI/bge-small-en-v1.5`,
+    `"bge-large"`, `"nomic"`, `"all-MiniLM-L6-v2"`, `"all-mpnet-base-v2"`.
+- `src/kg_rag/cli/cmd_models.py` — `kgrag models` command group with eight sub-commands:
+  `list`, `download`, `remove`, `path`, `env`, `aliases`, `cleanup`, `test-embed`.
+  All commands accept `--model-dir` to override the default cache root.
+- `src/kg_rag/cli/main.py` — imports `cmd_models` so the `models` group is registered.
+- `src/kg_rag/embed.py` — new `"sentence_transformers"` backend in `make_embedder()`;
+  delegates to `ModelCoordinator.get_embedder(st_model)` (config key `st_model`,
+  default `"default"`).
+- `pyproject.toml` — `[tool.kgrag]` section added with `embed_backend = "sentence_transformers"`.
+- `docs/shared-model-cache.md` — integration guide for downstream KG libraries
+  describing the env-var protocol, per-repo `_model_dir()` helper pattern, and
+  the `export_env()` extension point.
+- `tests/test_model_coordinator.py` — 20+ unit tests covering alias resolution,
+  `default_model_dir` env-var override, `ensure`/`model_path`/`list_cached`/
+  `remove`/`cleanup`, embedder caching and unloading, `encode`, `export_env`/
+  `apply_env`, manifest persistence and corruption recovery, and the singleton.
+
 ### Added — `CITATION.cff` academic citation metadata (2026-04-25)
 
 - `CITATION.cff` — CFF 1.2.0 citation file for KGRAG; records title, abstract,
