@@ -107,8 +107,8 @@ llama-cpp-python = { version = ">=0.3.0", optional = true }
 
 # our own adaptors
 kg-snapshot = { git = "https://github.com/Flux-Frontiers/kg_snapshot.git" }
-pycode-kg = {version = ">=0.16.0", optional=true}
-doc-kg = {version = ">=0.11.0", optional=true}
+pycode-kg = {version = ">=0.18.1", optional=true}
+doc-kg = {version = ">=0.12.3", optional=true}
 agent-kg = {git = "https://github.com/Flux-Frontiers/agent_kg.git", optional=true}
 ftree-kg = {git = "https://github.com/Flux-Frontiers/ftree_kg.git", optional=true}
 diary-kg = {git = "https://github.com/Flux-Frontiers/diary_kg.git", optional=true}
@@ -206,6 +206,10 @@ include = ["src"]
 # exclude = ["tests", "benchmarks"]
 
 [tool.dockg]
+# Exclude directories from the knowledge graph by default.
+exclude = ["bundles", "dist", "books"]
+
+[tool.filetreekg]
 # Exclude directories from the knowledge graph by default.
 exclude = ["bundles", "dist", "books"]
 
