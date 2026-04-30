@@ -329,7 +329,7 @@ kgrag info myproject-code
    python -c "import code_kg"  # for CodeKGs
    python -c "import doc_kg"   # for DocKGs
    ```
-   If import fails, install: `pip install code-kg` or `pip install doc-kg`
+   If import fails, install: `pip install pycode-kg` or `pip install doc-kg`
 
 2. **Check if databases exist:**
    ```bash

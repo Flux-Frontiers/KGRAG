@@ -181,9 +181,9 @@ KGRAG works with CodeKG, DocKG, and MetaKG. These are optional — if not instal
 ### CodeKG (required for code analysis)
 
 ```bash
-pip install code-kg
+pip install pycode-kg
 # or
-poetry add code-kg
+poetry add pycode-kg
 ```
 
 ### DocKG (required for documentation analysis)
@@ -223,7 +223,7 @@ poetry run kgrag --version
 
 **Solution:** Install CodeKG:
 ```bash
-pip install code-kg
+pip install pycode-kg
 ```
 
 Then retry:

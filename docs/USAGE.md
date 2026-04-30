@@ -28,7 +28,7 @@ released.
 
 | Kind | Status | Backing library | Description |
 |------|--------|-----------------|-------------|
-| `code` | **Available** | `code-kg` | Python source code: functions, classes, call graph |
+| `code` | **Available** | `pycode-kg` | Python source code: functions, classes, call graph |
 | `doc` | **Available** | `doc-kg` | Markdown / RST documentation |
 | `meta` | **Available** | `metakg` | Metabolic pathway graphs |
 | `diary` | *Stubbed* | `diary_kg` *(unreleased)* | Personal diary / journal entries |

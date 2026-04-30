@@ -295,7 +295,7 @@ Seed after a fresh clone (run once after the initial `codekg build` / `dockg bui
 ```bash
 # CodeKG — uses git tree hash as key
 codekg snapshot save $(python -c "import importlib.metadata; \
-    print(importlib.metadata.version('code-kg'))") --repo .
+    print(importlib.metadata.version('pycode-kg'))") --repo .
 
 # DocKG — uses git commit hash as key
 dockg snapshot save $(python -c "import importlib.metadata; \
@@ -599,7 +599,7 @@ class CrossSnippet:
 
 | Module | Kind | Library | `analyze()` Source | Status |
 |--------|------|---------|-------------------|--------|
-| CodeKG-Python | `code` | `code-kg` | `CodeKG.analyze()` | ✅ Production |
+| CodeKG-Python | `code` | `pycode-kg` | `CodeKG.analyze()` | ✅ Production |
 | DocKG | `doc` | `doc-kg` | `DocKGAnalyzer.run_analysis()` | ✅ Production |
 | MetaKG | `meta` | `metakg` | `MetaKGOrchestrator.analyze()` + fallback | ✅ Adapter ready |
 | CodeKG-TypeScript | `code` | `tskg` (planned) | `TypeScriptKG.analyze()` | 🔲 Planned |

@@ -22,7 +22,7 @@ downloading independently. **No adaptor interfaces change.**
 
 ## Changes Per Repo
 
-### code-kg
+### pycode-kg
 
 Wherever the model is downloaded/loaded (e.g. `embeddings.py`, `model.py`), replace
 the hardcoded cache path with an env-var-aware helper:
@@ -106,7 +106,7 @@ def export_env(self) -> dict[str, str]:
 
 | Repo | Env Var | Change Size |
 |------|---------|-------------|
-| code-kg | `CODEKG_MODEL_DIR` | ~5 lines |
+| pycode-kg | `CODEKG_MODEL_DIR` | ~5 lines |
 | doc-kg | `DOCKG_MODEL_DIR` | ~5 lines |
 | diary-kg | `DIARYKG_MODEL_DIR` | ~5 lines |
 | metabo-kg | `METABOKG_MODEL_DIR` | ~5 lines |
