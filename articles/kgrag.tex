@@ -27,7 +27,9 @@
   rulecolor=\color{gray!40},
 }
 
-\title{KGRAG: A Knowledge Compiler and Federated Retrieval Layer\\
+\title{KGRAG: A Knowledge Compiler\thanks{The \emph{Knowledge Compiler}
+concept and its execution are the subject of a pending patent application
+(U.S.\ provisional filed). Patent Pending.} and Federated Retrieval Layer\\
 for Ontologically Grounded Domains}
 
 \author{Eric G. Suchanek, PhD\\
@@ -42,7 +44,7 @@ Flux-Frontiers, Liberty Township OH\\[4pt]
 \begin{abstract}
 KGRAG is a federation and orchestration layer for structural knowledge graphs
 derived from heterogeneous source domains: Python source code (CodeKG), natural
-language documentation (DocKG), scientific or domain-specific corpora (MetaKG),
+language documentation (DocKG), scientific or domain-specific corpora (MetaboKG),
 and a growing set of formally structured domains including biochemical pathway
 data, protein structure files, legal codes, personal diary corpora, scriptural
 texts, and biographical knowledge graphs. Each backend constructs its knowledge
@@ -137,6 +139,8 @@ Diary / journal entries & Document structure + temporal order & \texttt{diary} \
 Scripture / verse & Book $\rightarrow$ Chapter $\rightarrow$ Verse, cross-refs & \texttt{verse} \\
 Episodic memory & Temporal event graphs & \texttt{memory} \\
 Personal knowledge & Biographical and relational graphs & \texttt{person} \\
+Conversational memory & Turn/topic/task graph (live session) & \texttt{agent} \\
+File system tree & Directory/file/module/dependency graph & \texttt{filetree} \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -266,12 +270,16 @@ representation.
 %-------------------------------------------------------------------
 
 Each knowledge graph module derives its graph from the formal structure of its
-source domain. Three parsers are currently implemented; stub adapters provide
-the protocol boundary for seven additional domains under development.
+source domain. Six full adapters are currently implemented---code (PyCodeKG),
+documentation (DocKG), metabolic pathways (MetaboKG), diary corpora (DiaryKG),
+conversational memory (AgentKG), and file system trees (FTreeKG)---with stub
+adapters providing the protocol boundary for six additional domains under active
+development: \texttt{pdbfile}, \texttt{disulfide}, \texttt{legal},
+\texttt{verse}, \texttt{memory}, and \texttt{person}.
 
-\subsection{Python Codebase Parsing (CodeKG)}
+\subsection{Python Codebase Parsing (PyCodeKG)}
 
-\texttt{CodeGraph.extract()} performs two deterministic AST passes over all
+\texttt{PyCodeKG.extract()} performs three deterministic AST passes over all
 \texttt{.py} files in a repository. Pass~1 extracts definitions and emits
 structural edges: \texttt{CONTAINS} (module to class, class to method),
 \texttt{IMPORTS} (module-level import relationships), and \texttt{INHERITS}
@@ -279,18 +287,21 @@ structural edges: \texttt{CONTAINS} (module to class, class to method),
 edges annotated with call-site evidence: the line number and expression text of
 each call site, extracted directly from the AST node.
 
-A data-flow visitor (\texttt{CodeKGVisitor}) extends \texttt{ast.NodeVisitor}
-to emit three additional edge types per function: \texttt{READS} (variable
-consumption), \texttt{WRITES} (variable assignment), and \texttt{ATTR\_ACCESS}
-(attribute access on a named object). These capture intra-function data movement
-without requiring execution or type inference.
+Pass~3 runs a data-flow visitor (\texttt{PyCodeKGVisitor}) that extends
+\texttt{ast.NodeVisitor} to emit three additional edge types per function:
+\texttt{READS} (variable consumption), \texttt{WRITES} (variable assignment),
+and \texttt{ATTR\_ACCESS} (attribute access on a named object). These capture
+intra-function data movement without requiring execution or type inference.
 
 A post-build step, \texttt{resolve\_symbols()}, name-matches every unresolved
 call target (represented as a \texttt{sym:} stub node) against all first-party
 definitions and writes \texttt{RESOLVES\_TO} edges. This enables cross-module
 fan-in queries: given a function, which functions in other modules call it?
 
-All nine edge relations are derived from syntax. No relation is inferred.
+All nine declared edge relations---\texttt{CONTAINS}, \texttt{IMPORTS},
+\texttt{INHERITS}, \texttt{CALLS}, \texttt{READS}, \texttt{WRITES},
+\texttt{ATTR\_ACCESS}, \texttt{DEPENDS\_ON}, and \texttt{RESOLVES\_TO}---are
+derived from syntax. No relation is inferred.
 
 \subsection{Document Corpus Parsing (DocKG)}
 
@@ -300,14 +311,22 @@ extracted: \texttt{document}, \texttt{section}, \texttt{chunk}, \texttt{entity},
 edges follow the document hierarchy; semantic edges are derived from
 co-occurrence and overlap analysis without language model involvement.
 
-\subsection{Domain Corpus Parsing (MetaKG and Beyond)}
+\subsection{Domain Corpus Parsing (MetaboKG and Beyond)}
 
-MetaKG wraps a domain-specific backend---initially targeting metabolic pathway
-databases---via the same \texttt{KGAdapter} interface. The parsing strategy is
-domain-defined; the interface contract is uniform. A biochemical pathway graph
-derived from KEGG, a legal ontology derived from regulatory filings, a protein
-topology derived from PDB ATOM records, and a verse graph derived from scripture
-chapter/verse structure all surface identically to the federation layer.
+MetaboKG wraps a domain-specific backend---initially targeting metabolic pathway
+databases---via the same \texttt{KGAdapter} interface. DiaryKG parses dated
+diary entries (plain text or PDF) into timestamped chunk graphs with temporal
+edges. AgentKG builds a live conversational memory graph from session turn
+sequences, emitting Turn, Topic, Task, and Summary nodes that are queryable
+across sessions. FTreeKG derives a structural graph of a file system repository:
+directories, files, modules, and their dependency and import relationships,
+enabling layout and architecture queries over any codebase or document tree. The parsing strategy of each backend is domain-defined; the
+interface contract is uniform. A biochemical pathway graph derived from KEGG,
+a diary corpus derived from plain-text journal files, a conversational session
+derived from turn sequences, and---once the corresponding compilers are
+complete---a protein topology derived from PDB ATOM records, a legal code derived
+from statutory filings, and a verse graph derived from scripture chapter/verse
+structure will all surface identically to the federation layer.
 
 This uniformity is not accidental. It is the central claim of the ontology
 principle: \emph{where formal structure exists, structural parsing produces
@@ -324,7 +343,7 @@ string identifier, a kind, a name, and a JSON metadata blob. Edge records carry
 source node ID, relation name, destination node ID, and optional JSON evidence.
 
 Node identifiers are deterministically constructed from kind, source path, and
-qualified name. For example: \texttt{fn:src/kg\_rag/orchestrator.py:KGRAG.query}.
+qualified name. For example: \texttt{m:src/kg\_rag/orchestrator.py:KGRAG.query} (methods use the \texttt{m:} prefix; module-level functions use \texttt{fn:}).
 This means a node ID is stable across rebuilds as long as the source does not
 move, and it is human-readable and directly linkable to the source.
 
@@ -388,17 +407,20 @@ interface and through no other.
 
 \begin{lstlisting}[language=Python]
 class KGAdapter(ABC):
-    def __init__(self, entry: KGEntry) -> None: ...
+    def __init__(self, entry: KGEntry, embedder=None) -> None: ...
 
     @abstractmethod
     def is_available(self) -> bool: ...
 
     @abstractmethod
-    def query(self, q: str, k: int = 8) -> list[CrossHit]: ...
+    def query(self, q: str, k: int = 8,
+              min_score: float = 0.0,
+              semantic_floor: float = 0.0) -> list[CrossHit]: ...
 
     @abstractmethod
     def pack(self, q: str, k: int = 8,
-             context: int = 5) -> list[CrossSnippet]: ...
+             context: int = 5,
+             semantic_floor: float = 0.0) -> list[CrossSnippet]: ...
 
     @abstractmethod
     def stats(self) -> dict[str, Any]: ...
@@ -406,7 +428,8 @@ class KGAdapter(ABC):
     @abstractmethod
     def analyze(self) -> str: ...
 
-    @abstractmethod
+    # Concrete template method -- not abstract; subclasses override
+    # _collect_snapshot_metrics() to add domain-specific fields.
     def snapshot(self, version: str,
                  label: str | None = None) -> dict[str, Any]: ...
 
@@ -415,13 +438,16 @@ class KGAdapter(ABC):
     def _graph_stats(self) -> dict[str, int]: ...
 \end{lstlisting}
 
-The \texttt{snapshot} method captures a point-in-time record of the KG's state,
-returning at minimum a version string, an ISO~8601 UTC timestamp, and integer
-node and edge counts. The \texttt{\_graph\_stats} helper is a concrete method on
-the base class that strips all domain-specific keys from \texttt{stats()} and
-normalises counts to integers; the orchestrator calls it to aggregate graph-size
-totals across heterogeneous KG kinds without being confused by domain-specific
-fields such as \texttt{reaction\_count} or \texttt{chunk\_count}.
+The \texttt{snapshot} method is a \emph{concrete template method} on the base
+class: it builds a standard envelope (version string, ISO~8601 UTC timestamp,
+node count, edge count) and merges in any domain-specific data returned by the
+subclass hook \texttt{\_collect\_snapshot\_metrics()}. Subclasses extend the
+snapshot by overriding only that hook, not \texttt{snapshot} itself. The
+\texttt{\_graph\_stats} helper is likewise concrete: it strips all
+domain-specific keys from \texttt{stats()} and normalises counts to integers so
+the orchestrator can aggregate graph-size totals uniformly across heterogeneous
+KG kinds without being confused by domain-specific fields such as
+\texttt{reaction\_count} or \texttt{chunk\_count}.
 
 A \texttt{StubKGAdapter} base class provides a graceful default implementation
 for domains whose backing library has not yet been released. Stub adapters
@@ -546,8 +572,9 @@ role is synthesis---connecting, explaining, summarizing---not construction of
 the knowledge itself. The critical consequence is that \textbf{hallucination
 risk at the knowledge-retrieval stage is zero.} The model cannot fabricate a
 function call that is not in the graph, because the graph was derived from the
-AST; it cannot invent a statute cross-reference that is not in the legal KG,
-because the legal KG was derived from the formal text; it cannot hallucinate a
+AST; once LegalKG is compiled, it will not be able to invent a statute
+cross-reference absent from that graph, because the graph will be derived from
+the formal text; it cannot hallucinate a
 protein bond that is not in the PDB file, because the bond graph was derived
 from atomic coordinates.
 
@@ -631,8 +658,9 @@ but are unanswerable without them:
   \item \emph{How has the Pepys corpus changed since last week?} \\
     Compare the two nearest snapshots by tree hash. The delta carries exact node
     and edge counts added and removed, the set of new topic labels that entered
-    the corpus, and the change in semantic coverage score. This is \texttt{kgrag
-    snapshot diff} operating on two snapshot keys.
+    the corpus, and the change in semantic coverage score. This is
+    \texttt{pycodekg snapshot diff} (or \texttt{dockg snapshot diff}) operating
+    on two snapshot keys; each backend CLI exposes this command directly.
 
   \item \emph{What new ideas have entered the Pepys corpus this month?} \\
     Execute a federated query against both snapshots, compute the set difference
@@ -823,10 +851,10 @@ summarization.
 
 \bibitem{suchanek2025codekg}
 Eric G. Suchanek.
-\newblock {CodeKG}: Deterministic code navigation via knowledge graphs,
+\newblock {PyCodeKG}: Deterministic code navigation via knowledge graphs,
 semantic indexing, and grounded context packing.
 \newblock Technical report, Flux-Frontiers, 2025.
-\newblock \url{https://github.com/Flux-Frontiers/code\_kg}
+\newblock \url{https://github.com/Flux-Frontiers/pycode\_kg}
 
 \bibitem{reimers2019sbert}
 Nils Reimers and Iryna Gurevych.
