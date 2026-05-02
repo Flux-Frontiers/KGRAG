@@ -6,6 +6,7 @@ from kg_rag.adapters.base import KGAdapter
 from kg_rag.adapters.diary_adapter import DiaryKGAdapter
 from kg_rag.adapters.disulfide_adapter import DisulfideKGAdapter
 from kg_rag.adapters.dockg_adapter import DocKGAdapter
+from kg_rag.adapters.ftree_adapter import FTreeKGAdapter
 from kg_rag.adapters.legal_adapter import LegalKGAdapter
 from kg_rag.adapters.memory_adapter import MemoryKGAdapter
 from kg_rag.adapters.metakg_adapter import MetaKGAdapter
@@ -39,6 +40,7 @@ def make_adapter(entry, embedder=None) -> KGAdapter:
         KGKind.LEGAL: LegalKGAdapter,
         KGKind.PERSON: PersonKGAdapter,
         KGKind.AGENT: AgentKGAdapter,
+        KGKind.FILETREE: FTreeKGAdapter,
     }
     cls = _map.get(entry.kind)
     if cls is None:
@@ -60,5 +62,6 @@ __all__ = [
     "LegalKGAdapter",
     "AgentKGAdapter",
     "PersonKGAdapter",
+    "FTreeKGAdapter",
     "make_adapter",
 ]

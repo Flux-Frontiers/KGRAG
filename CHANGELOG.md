@@ -7,6 +7,101 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — `FTreeKGAdapter` and `KGKind.FILETREE` federation kind (2026-05-01)
+
+- `src/kg_rag/adapters/ftree_adapter.py` — new `FTreeKGAdapter` wrapping the
+  external `ftree_kg.FileTreeKG` package. Implements the full five-method
+  `KGAdapter` contract (`is_available`, `query`, `pack`, `stats`, `analyze`)
+  plus `_collect_snapshot_metrics`. Lazy-loads the backing library on first
+  use; `is_available()` correctly degrades to `False` when `ftree_kg` is not
+  installed or the LanceDB / SQLite indices have not been built. `pack()`
+  consumes the new `SnippetPack.snippets` shape (dict-based) so the file-tree
+  metadata blob (kind, path, size, EXIF prose) flows through to downstream
+  consumers.
+- `src/kg_rag/primitives.py` — `KGKind.FILETREE = "filetree"` added to the
+  enum so registry entries can be tagged with the new kind.
+- `src/kg_rag/adapters/__init__.py` — `FTreeKGAdapter` imported, registered
+  in the `make_adapter` dispatch map, and re-exported via `__all__`.
+- This brings the count of fully wrapped domains in kgrag from five to six
+  (code, doc, meta, diary, agent, filetree); the wrapper preserves the
+  dependency-inversion contract (kgrag depends on ftree_kg, not the reverse).
+
+### Added — KGRAG paper architecture figure and a major rewrite of `articles/kgrag.tex` (2026-05-01)
+
+- `assets/kgrag_arch.png` — five-layer architecture diagram (portrait, 896×1120)
+  inserted at Section 4 of the paper, replacing the previous text-tabular
+  layer stack.  Sized at `0.68\textwidth` with `keepaspectratio`.
+- `articles/kgrag.tex` — substantial rewrite focused on positioning, accuracy,
+  and length:
+  - **New abstract framing** as a *Knowledge Compiler and Federated Retrieval
+    Layer for Ontologically Grounded Domains*; multiple typos fixed
+    (`PyCodeKGCodeKG → PyCodeKG`, missing-comma DiaryKG/MemoryKG parentheticals,
+    `knowledgegraph → knowledge graph`, `verifiable, and a complete → verifiable, and complete`).
+  - **Ontology Principle subsection** kept; new companion subsection
+    **"The Unstructured Case: Deterministic NLP Enrichment"** documents how
+    DocKG / DiaryKG handle prose corpora via spaCy + lexical co-occurrence
+    without invoking a language model, and argues this is the second pillar
+    of the design alongside formal-structure extraction.
+  - **DocKG subsection expanded** to surface the multi-pass NLP pipeline
+    (chunking + spaCy NER + noun-phrase extraction in Pass 1; lexical
+    co-occurrence and overlap clustering for topics in Pass 2) — the central
+    differentiator from inference-based GraphRAG.
+  - **New "Ontology-Aware Result Enrichment" subsection** in Query Execution
+    documenting that adapters return results in domain-native vocabulary
+    (enzyme names + reactions for MetaboKG, qualified names for PyCodeKG,
+    section-heading paths for DocKG, dated entries for DiaryKG, turn/topic/task
+    labels for AgentKG) rather than raw internal identifiers.
+  - **New "Modest Models, Generous Context" subsection** under Grounded
+    Synthesis arguing that because retrieval is correct-by-construction and
+    domain-named, synthesis collapses to summarisation — a mid-tier model with
+    a generous context window suffices for routine workloads, with frontier
+    models reserved for genuinely hard reasoning. Reconciled with the abstract,
+    TreeOfKnowledge close, and Conclusion to remove "largest available model"
+    framing throughout.
+  - **Dependency-inversion adapter framing** in Section 4: `KGAdapter` is now
+    explicitly described as the *internal contract between kgrag's federation
+    layer and the per-domain wrapper classes that live alongside it in
+    `src/kg_rag/adapters/`*. The wrapped sibling libraries (`pycode_kg`,
+    `doc_kg`, `diary_kg`, `agent_kg`, `metabokg`) are independent packages
+    with no compile- or run-time dependency on kgrag and have evolved
+    separately against the stable contract — kgrag depends on them, never
+    the reverse.
+  - **Layer 1 source-parsing roster corrected**: six fully wrapped domains
+    (code / doc / meta / diary / agent / filetree); six stubs (`pdbfile`,
+    `disulfide`, `legal`, `verse`, `memory`, `person`).
+  - **Domains table at Section 2** corrected: `memory` and `person` no longer
+    bolded (they are stubs in kgrag). FTreeKG row reinstated and bolded now
+    that the wrapper has shipped.
+  - **TreeOfKnowledge / Corpus Scientia material removed** from the abstract,
+    contributions list, dedicated section (~50 lines deleted), and conclusion
+    bullet — net shorter despite adding the new subsections.
+  - **Comparison and Grounded Synthesis examples** restricted to real adapters
+    (no more `LegalKG` / `DisulfideKG` / `PDBFileKG` examples that misrepresent
+    delivered functionality).
+  - **`graphicx` package** added to the LaTeX preamble.
+- `articles/kgrag.pdf` — recompiled to reflect the rewrite.
+
+### Changed — README aligned with the new paper framing (2026-05-01)
+
+- `README.md` — repositioned as *Knowledge Compiler and Federated Retrieval
+  Layer for Ontologically Grounded Domains* with a *Patent Pending* notice;
+  KG Types section split into **Fully Implemented** (code, doc, meta, diary,
+  agent, filetree) and **Stub Adapters** (pdbfile, disulfide, legal, verse,
+  memory, person) tables; backend links updated for the renamed sibling
+  packages; description rewritten to match the paper's claims about
+  structure-as-ground-truth and embeddings-as-acceleration-layer.
+
+### Refreshed — analysis snapshot
+
+- `analysis/filetreekg_analysis.md` — regenerated from the current FTreeKG
+  build (8,552 paths, 215 MB; updated size-by-top-directory bars).
+
+### Removed — stale design docs
+
+- `docs/METABOKG_SNAPSHOT_REFACTOR.md` and `docs/RASPBERRY_PI_QUERY_DESIGN.md`
+  deleted; their content has been folded into the corresponding repos
+  (`metabokg/` and the kgrag embedder configuration respectively).
+
 ### Added — Centralized embedding model cache via `ModelCoordinator` (2026-04-26)
 
 - `src/kg_rag/model_coordinator.py` — new `ModelCoordinator` class that downloads

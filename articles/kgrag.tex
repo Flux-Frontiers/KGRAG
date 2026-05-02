@@ -8,6 +8,7 @@
 \usepackage{titlesec}
 \usepackage{listings}
 \usepackage{xcolor}
+\usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{enumitem}
 \usepackage{cite}
@@ -29,7 +30,7 @@
 
 \title{KGRAG: A Knowledge Compiler\thanks{The \emph{Knowledge Compiler}
 concept and its execution are the subject of a pending patent application
-(U.S.\ provisional filed). Patent Pending.} and Federated Retrieval Layer\\
+(U.S.\ provisional filed). Patent Pending. }\ and Federated Retrieval Layer\\
 for Ontologically Grounded Domains}
 
 \author{Eric G. Suchanek, PhD\\
@@ -43,19 +44,22 @@ Flux-Frontiers, Liberty Township OH\\[4pt]
 
 \begin{abstract}
 KGRAG is a federation and orchestration layer for structural knowledge graphs
-derived from heterogeneous source domains: Python source code (CodeKG), natural
-language documentation (DocKG), scientific or domain-specific corpora (MetaboKG),
-and a growing set of formally structured domains including biochemical pathway
-data, protein structure files, legal codes, personal diary corpora, scriptural
-texts, and biographical knowledge graphs. Each backend constructs its knowledge
-graph from the formal structure of its source---abstract syntax trees for code,
-document section and reference graphs for text, domain ontologies for scientific
-data---without any language model participation in graph construction.
+derived from heterogeneous source domains: Python source code (PyCodeKG), natural
+language documentation (DocKG), metabolic pathway data (MetaboKG), personal diary
+corpora (DiaryKG), agentic memory (MemoryKG), and a growing set of formally structured
+domains including legal codes, scriptural texts, and a collection of literary works
+(GutenbergKG). Each backend constructs its knowledge graph from the formal structure
+of its source---abstract syntax trees for code, document section and reference graphs
+for text, domain ontologies for scientific data---without any language model
+participation in graph construction. The upfront computational cost of this approach
+is analogous to compiling a computer program; the resulting knowledge graph is a
+deterministic, verifiable, and complete representation of the source domain.
+Retrieval is guaranteed to be correct by construction and does not require any inference.
 
 The central thesis of this work is that the power of structural knowledge-graph
 retrieval scales directly with the formal completeness of the source domain's
 ontology. Programming languages represent the ideal case: their grammars are
-complete formal specifications, and the derived call graph is correct by
+complete formal specifications, and the derived graph is correct by
 theorem. The same principle applies to biochemical pathway schemas, statutory
 hierarchies in books of law, protein data bank file formats, and the structured
 hierarchies of scripture and diary. KGRAG treats all of these domains
@@ -72,11 +76,11 @@ risk is bounded to the synthesis stage and is zero at the knowledge-retrieval
 stage.
 
 An MCP server exposes the full federated query surface---including corpus-scoped
-and person-scoped operations---to any MCP-compatible AI agent. The long-term
-goal of this architecture is the \emph{TreeOfKnowledge\texttrademark}, also
-termed the \emph{Corpus Scientia}: all human knowledge, all domains, one
-interface, one query, coupled with the largest available language model for
-grounded synthesis.
+and person-scoped operations---to any MCP-compatible AI agent. Because retrieval
+is correct by construction and results are returned in domain-native vocabulary,
+synthesis does not require a frontier-scale model: a mid-tier language model
+with a sufficiently large context window is enough to produce grounded answers
+over the packed query result.
 \end{abstract}
 
 %-------------------------------------------------------------------
@@ -124,31 +128,55 @@ relationship without any inference. The derived call graph is not an
 approximation---it is a theorem about the source code. The same property holds,
 to varying degrees, across a surprising breadth of domains:
 
-\begin{center}
+\begin{table}[h]
+\centering
+\caption{Knowledge graph domains supported by KGRAG. Bold rows indicate fully implemented adapters.}
+\label{tab:domains}
 \begin{tabular}{lll}
 \toprule
 Domain & Formal structure & KG kind \\
 \midrule
-Python source code & Abstract syntax tree & \texttt{code} \\
-Markdown / RST documentation & Document parse tree, hyperlinks & \texttt{doc} \\
-Biochemical pathways & Reaction schemas (KEGG, BioCyc) & \texttt{meta} \\
+\textbf{Python source code} & \textbf{Abstract syntax tree} & \textbf{\texttt{code}} \\
+\textbf{Markdown / RST documentation} & \textbf{Document parse tree, hyperlinks} & \textbf{\texttt{doc}} \\
+\textbf{Biochemical pathways} & \textbf{Reaction schemas (KEGG, BioCyc)} & \textbf{\texttt{meta}} \\
 Protein structures & PDB file format (ATOM, SEQRES) & \texttt{pdbfile} \\
-Disulfide bond networks & Bond topology from PDB coordinates & \texttt{disulfide} \\
+Disulfide bond families & Bond topology from PDB coordinates & \texttt{disulfide} \\
 Books of law & Title $\rightarrow$ Chapter $\rightarrow$ Section $\rightarrow$ Clause & \texttt{legal} \\
-Diary / journal entries & Document structure + temporal order & \texttt{diary} \\
+\textbf{Diary / journal entries} & \textbf{Document structure + temporal order} & \textbf{\texttt{diary}} \\
 Scripture / verse & Book $\rightarrow$ Chapter $\rightarrow$ Verse, cross-refs & \texttt{verse} \\
 Episodic memory & Temporal event graphs & \texttt{memory} \\
 Personal knowledge & Biographical and relational graphs & \texttt{person} \\
-Conversational memory & Turn/topic/task graph (live session) & \texttt{agent} \\
-File system tree & Directory/file/module/dependency graph & \texttt{filetree} \\
+\textbf{Conversational memory} & \textbf{Turn/topic/task graph (live session)} & \textbf{\texttt{agent}} \\
+\textbf{File system tree} & \textbf{Directory/file/module/dependency graph} & \textbf{\texttt{filetree}} \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 In every case, the formal structure of the source \emph{is} the ontology, and a
 knowledge graph derived from it carries the same correctness guarantees as the
 source itself. This is the foundational principle of KGRAG: build knowledge
 graphs from formal structure, and the graphs are correct by construction.
+
+\subsection{The Unstructured Case: Deterministic NLP Enrichment}
+
+Not every domain offers a complete formal grammar. Prose---technical
+documentation, journals, correspondence, literary works---typically carries
+only a lightweight document hierarchy (Markdown headings, paragraph breaks,
+list nesting) and must recover the rest of its structure from the surface
+form of the text. KGRAG handles such domains by replacing formal parsing with
+\emph{deterministic NLP enrichment}: spaCy for tokenisation, named-entity
+recognition, and noun-phrase extraction; lexical co-occurrence analysis for
+topic clustering; structural overlap heuristics for cross-document references.
+The pipeline is still deterministic, still LLM-free, and still emits
+verifiable provenance for every node and edge---but the resulting graph is an
+enrichment of the source rather than a theorem about it.
+
+This is the second pillar of the design and the principal differentiator from
+inference-based systems: where formal structure exists, KGRAG extracts it
+exactly; where it does not, KGRAG recovers what deterministic linguistic
+analysis can yield. The two regimes coexist in the federation behind one
+adapter interface, and neither relies on a language model to construct the
+graph.
 
 \subsection{Contributions}
 
@@ -158,10 +186,12 @@ federation layer, termed a \emph{knowledge compiler}, that makes heterogeneous
 structural knowledge graphs queryable as a single unified corpus. Specifically:
 
 \begin{enumerate}
-  \item A five-method adapter protocol (\texttt{KGAdapter}) that decouples the
-    federation layer from all backend-specific logic, enabling new knowledge
-    domains to be added by implementing five methods with no changes to the
-    orchestrator, registry, CLI, or MCP server.
+  \item A five-method adapter protocol (\texttt{KGAdapter}), implemented
+    inside kgrag as one thin wrapper class per domain, that fully decouples
+    the federation layer from each backend. The wrapped domain libraries
+    have no dependency on kgrag and have evolved independently against this
+    stable contract; new domains are added by writing one wrapper class with
+    no changes to the orchestrator, registry, CLI, or MCP server.
   \item A corpus abstraction grouping multiple KG instances for scoped federated
     queries, and a person corpus abstraction extending this with personal metadata.
   \item A complete MCP server exposing registry, corpus, and person tools to
@@ -175,8 +205,6 @@ structural knowledge graphs queryable as a single unified corpus. Specifically:
   \item An incremental ingestion pipeline with diversity-preserving temporal
     sampling and resumable state, enabling progressive compilation of large
     corpora without blocking queries.
-  \item A long-term architectural roadmap toward the \emph{TreeOfKnowledge\texttrademark}
-    (\emph{Corpus Scientia}): all human knowledge, all domains, one federated interface.
 \end{enumerate}
 
 %-------------------------------------------------------------------
@@ -234,29 +262,11 @@ shows their arrangement.
 
 \begin{figure}[h]
 \centering
-\begin{tabular}{|c|}
-\hline
-\textbf{Layer~5: Federation} \\
-\texttt{KGRAG} orchestrator, \texttt{KGRegistry}, \texttt{CorpusRegistry},
-\texttt{PersonCorpusRegistry}, MCP server \\
-\hline
-\textbf{Layer~4: Adapter Protocol} \\
-\texttt{KGAdapter}: \texttt{is\_available}, \texttt{query}, \texttt{pack},
-\texttt{stats}, \texttt{analyze} \\
-\hline
-\textbf{Layer~3: Semantic Indexing} \\
-LanceDB vector store, sentence-transformer embeddings \\
-\hline
-\textbf{Layer~2: Graph Storage} \\
-SQLite, typed nodes and edges, BFS traversal, provenance \\
-\hline
-\textbf{Layer~1: Source Parsing} \\
-AST (code), document parse tree (docs), ontological schema (domain) \\
-\hline
-\end{tabular}
+\includegraphics[width=0.68\textwidth,keepaspectratio]{../assets/kgrag_arch.png}
 \caption{KGRAG abstraction layers. Each layer depends only on those below it.
 The adapter protocol at Layer~4 is the boundary between domain-specific and
-domain-agnostic components.}
+domain-agnostic components: everything above it is uniform across domains;
+everything below it is domain-defined.}
 \label{fig:layers}
 \end{figure}
 
@@ -270,11 +280,11 @@ representation.
 %-------------------------------------------------------------------
 
 Each knowledge graph module derives its graph from the formal structure of its
-source domain. Six full adapters are currently implemented---code (PyCodeKG),
-documentation (DocKG), metabolic pathways (MetaboKG), diary corpora (DiaryKG),
-conversational memory (AgentKG), and file system trees (FTreeKG)---with stub
-adapters providing the protocol boundary for six additional domains under active
-development: \texttt{pdbfile}, \texttt{disulfide}, \texttt{legal},
+source domain. Six domains are currently wrapped in kgrag with full adapters:
+code (PyCodeKG), documentation (DocKG), metabolic pathways (MetaboKG), diary
+corpora (DiaryKG), conversational memory (AgentKG), and file system trees
+(FTreeKG). Stub adapters provide the protocol boundary for six further domains
+under active development: \texttt{pdbfile}, \texttt{disulfide}, \texttt{legal},
 \texttt{verse}, \texttt{memory}, and \texttt{person}.
 
 \subsection{Python Codebase Parsing (PyCodeKG)}
@@ -305,28 +315,35 @@ derived from syntax. No relation is inferred.
 
 \subsection{Document Corpus Parsing (DocKG)}
 
-DocKG parses Markdown corpora into a heterogeneous graph. Six node kinds are
-extracted: \texttt{document}, \texttt{section}, \texttt{chunk}, \texttt{entity},
-\texttt{keyword}, and \texttt{topic}. Eight edge types connect them. Structural
-edges follow the document hierarchy; semantic edges are derived from
-co-occurrence and overlap analysis without language model involvement.
+DocKG is the canonical example of the unstructured-text regime. The Markdown
+heading hierarchy and link graph supply the structural skeleton; the prose
+body inside each section is processed by a multi-pass NLP pipeline. Pass~1
+chunks each section into overlapping windows and applies spaCy for
+tokenisation, named-entity recognition, and noun-phrase extraction. Pass~2
+performs lexical co-occurrence and overlap analysis to cluster keywords into
+topics. Six node kinds are emitted (\texttt{document}, \texttt{section},
+\texttt{chunk}, \texttt{entity}, \texttt{keyword}, \texttt{topic}) connected
+by eight edge types. No language model participates; every node carries a
+deterministic origin (file path, section path, character span) and every edge
+records its source. DiaryKG reuses the same pipeline and adds a temporal
+axis: dated entries become time-ordered chunks with explicit \texttt{PRECEDES}
+edges and date-anchored seeds for temporal queries.
 
 \subsection{Domain Corpus Parsing (MetaboKG and Beyond)}
 
-MetaboKG wraps a domain-specific backend---initially targeting metabolic pathway
-databases---via the same \texttt{KGAdapter} interface. DiaryKG parses dated
-diary entries (plain text or PDF) into timestamped chunk graphs with temporal
-edges. AgentKG builds a live conversational memory graph from session turn
-sequences, emitting Turn, Topic, Task, and Summary nodes that are queryable
-across sessions. FTreeKG derives a structural graph of a file system repository:
-directories, files, modules, and their dependency and import relationships,
-enabling layout and architecture queries over any codebase or document tree. The parsing strategy of each backend is domain-defined; the
-interface contract is uniform. A biochemical pathway graph derived from KEGG,
-a diary corpus derived from plain-text journal files, a conversational session
-derived from turn sequences, and---once the corresponding compilers are
-complete---a protein topology derived from PDB ATOM records, a legal code derived
-from statutory filings, and a verse graph derived from scripture chapter/verse
-structure will all surface identically to the federation layer.
+MetaboKG wraps a domain-specific backend---initially targeting metabolic
+pathway databases---via the same \texttt{KGAdapter} interface. DiaryKG parses
+dated diary entries (plain text or PDF) into timestamped chunk graphs with
+temporal edges. AgentKG builds a live conversational memory graph from session
+turn sequences, emitting Turn, Topic, Task, and Summary nodes that are
+queryable across sessions. The parsing strategy of each backend is
+domain-defined; the interface contract is uniform. A biochemical pathway
+graph derived from KEGG, a diary corpus derived from plain-text journal
+files, a conversational session derived from turn sequences, and---once the
+corresponding compilers are complete---a protein topology derived from PDB
+ATOM records, a legal code derived from statutory filings, and a verse
+graph derived from scripture chapter/verse structure will all surface
+identically to the federation layer.
 
 This uniformity is not accidental. It is the central claim of the ontology
 principle: \emph{where formal structure exists, structural parsing produces
@@ -401,9 +418,22 @@ there, addressable in constant time.
 \section{Layer 4: The Adapter Protocol}
 %-------------------------------------------------------------------
 
-\texttt{KGAdapter} is an abstract base class with five abstract methods. Every
-knowledge graph module exposes itself to the federation layer through this
-interface and through no other.
+\texttt{KGAdapter} is an abstract base class with five abstract methods. It
+is the internal contract between kgrag's federation layer and the per-domain
+wrapper classes that live alongside it in the kgrag source tree (under
+\texttt{src/kg\_rag/adapters/}). For each supported domain, kgrag holds one
+thin adapter subclass that implements the five-method contract by translating
+into calls on the wrapped library's native API.
+
+The wrapped libraries themselves---\texttt{pycode\_kg}, \texttt{doc\_kg},
+\texttt{diary\_kg}, \texttt{agent\_kg}, \texttt{metabokg}---are independent
+packages that have no compile- or run-time dependency on kgrag. They are
+installable and usable standalone, expose their own domain-native interfaces,
+and have evolved separately against this stable contract: kgrag depends on
+them, never the reverse. This dependency inversion is the load-bearing
+architectural choice. Domain specialists ship new compilers (or update
+existing ones) without touching the federation layer; the federation layer
+admits a new domain by adding one wrapper class without touching any compiler.
 
 \begin{lstlisting}[language=Python]
 class KGAdapter(ABC):
@@ -550,6 +580,32 @@ After each adapter completes, the orchestrator merges results and performs a
 final global sort by score. End-to-end latency for a federated query over a
 codebase of $\sim$100\,k lines is typically under one second on commodity hardware.
 
+\subsection{Ontology-Aware Result Enrichment}
+
+Every adapter returns results in the proper semantic vocabulary of its domain,
+not the raw internal identifiers of the underlying graph. A MetaboKG query
+does not surface opaque reaction codes such as \texttt{R00200}; it returns
+the catalysing enzyme name, the reaction in human-readable form
+(\emph{phosphoenolpyruvate $\rightarrow$ pyruvate}), the EC number, and the
+pathway membership. A PyCodeKG query does not surface internal hashes; it
+returns qualified names such as \texttt{KGRAG.query} together with the file
+path and line span. A DocKG query returns the document title and section
+heading path (\emph{``Architecture~$\rightarrow$~Layer~4: Adapter Protocol''})
+rather than chunk offsets. A DiaryKG query returns the entry date and any
+extracted title (\emph{``1665-09-04 — fire reaches Pudding Lane''}) instead
+of a row index. An AgentKG query returns the conversational turn with its
+topic and task labels rather than a session-internal turn number.
+
+The internal identifiers remain available---every result carries its stable
+node ID, which a downstream language model may use as a deterministic
+citation key or pass back through any KGRAG tool for verification---but the
+surface presentation is the form a domain expert would write or read. The
+federation layer never collapses domain-specific naming into a generic
+representation; each adapter is responsible for restoring the vocabulary of
+its source domain on output. The result is dual-audience: immediately legible
+to humans, semantically meaningful to language models, and precisely
+addressable for verification against the original artefact.
+
 %-------------------------------------------------------------------
 \section{Grounded Synthesis and the Hallucination Bound}
 %-------------------------------------------------------------------
@@ -571,69 +627,44 @@ The language model is presented with \emph{facts}, not \emph{embeddings}. Its
 role is synthesis---connecting, explaining, summarizing---not construction of
 the knowledge itself. The critical consequence is that \textbf{hallucination
 risk at the knowledge-retrieval stage is zero.} The model cannot fabricate a
-function call that is not in the graph, because the graph was derived from the
-AST; once LegalKG is compiled, it will not be able to invent a statute
-cross-reference absent from that graph, because the graph will be derived from
-the formal text; it cannot hallucinate a
-protein bond that is not in the PDB file, because the bond graph was derived
-from atomic coordinates.
+PyCodeKG function call that is not in the graph, because the graph was derived
+from the AST; it cannot invent a MetaboKG reaction edge absent from the
+pathway schema; it cannot surface a DocKG entity that spaCy did not extract
+from a recorded character span, nor a DiaryKG entry on a date that does not
+exist in the corpus.
 
 Hallucination risk is confined to the synthesis stage alone---where the model
 may reason incorrectly over correct facts. This risk is substantially lower and
 is addressed by standard techniques (chain-of-thought, self-consistency,
-re-querying). The knowledge foundation is provably correct by construction.
+re-querying). The knowledge foundation is correct by construction in the
+formal domains and verifiably-sourced in the NLP-derived domains; in neither
+case can the model invent facts that are absent from the underlying source.
 
 This is the decisive advantage of structural KG-RAG over inference-based
 approaches: the correctness guarantee is unconditional with respect to the
 structural layer and does not depend on prompt engineering, model scale, or
 retrieval quality.
 
-%-------------------------------------------------------------------
-\section{The TreeOfKnowledge\texttrademark: Corpus Scientia}
-%-------------------------------------------------------------------
+\subsection{Modest Models, Generous Context}
 
-The architecture described in this paper is a foundation for a larger goal:
-the \emph{TreeOfKnowledge\texttrademark}, also termed the \emph{Corpus Scientia}.
+A practical consequence of the enrichment described above is that the
+synthesis model does not need to be large. Conventional RAG pipelines lean on
+frontier-scale models in part to compensate for noisy retrieval: the model
+must guess which fragments are relevant, reconcile contradictory snippets,
+and infer entity identity from surface similarity. KGRAG removes that work
+upstream. The packed context is already deduplicated, ranked deterministically,
+labelled with domain-native names, and tagged with verifiable provenance.
+Synthesis collapses to summarisation and exposition over facts that are
+already correct.
 
-\begin{quote}
-\textit{All human knowledge. All domains. One interface. One query.}
-\end{quote}
-
-The ontology principle establishes that any domain with well-defined formal
-structure can be compiled into a knowledge graph using the KGRAG adapter
-protocol. The federation layer then makes all such graphs queryable as a
-single unified corpus. As domain-specific compilers (DiaryKG, LegalKG,
-DisulfideKG, PDBFileKG, VerseKG, MemoryKG, PersonKG) are built and
-registered, the system progressively approaches completeness across domains:
-
-\begin{itemize}
-  \item \textbf{Code corpora} across all first-party software projects
-  \item \textbf{Scientific literature} structured by citation graphs and
-    domain ontologies
-  \item \textbf{Legal codes} structured by the hierarchical organization of
-    statutes, regulations, and case law
-  \item \textbf{Biological structure} structured by PDB file format and
-    pathway reaction schemas
-  \item \textbf{Personal knowledge} structured by diary timelines, memory
-    graphs, and biographical records
-  \item \textbf{Cultural and religious texts} structured by the canonical
-    book/chapter/verse hierarchies of scripture and the formal apparatus of
-    commentary traditions
-\end{itemize}
-
-Coupled with the largest available language model and maximum context window,
-a query to the Corpus Scientia retrieves the most relevant subgraph across
-\emph{all} registered knowledge, passes it to the model with full provenance,
-and receives a synthesis that is grounded, traceable, and verifiably correct
-at the knowledge layer. This is not retrieval-augmented generation; it is
-\emph{knowledge-compiler-augmented synthesis}.
-
-The architecture is ready. The adapter protocol requires five methods per new
-domain. The orchestrator, registry, CLI, MCP server, corpus, and person
-abstractions require no changes as new domains are added. The path to the
-Corpus Scientia is, in engineering terms, incremental: one domain compiler
-at a time, each following the same pattern, each extending the unified query
-surface without modifying the federation layer.
+A mid-tier model with a generous context window---enough to hold the full
+snippet pack of a federated query and the user's question---is sufficient
+for high-quality answers. The bottleneck shifts from model capability to
+context capacity: how much of the compiled corpus can be presented at once.
+This inverts the usual deployment economics. Rather than paying for the
+largest available model on every query, KGRAG users can run a smaller model
+with a long context for routine work and reserve frontier-scale synthesis
+for genuinely difficult reasoning over the same already-correct facts.
 
 %-------------------------------------------------------------------
 \section{Snapshot System and Differential Queries}
@@ -753,12 +784,16 @@ is bounded by extraction prompt quality and model comprehension. Errors
 introduced during extraction are silent: the system has no mechanism to verify
 that an extracted relationship corresponds to anything in the source.
 
-In KGRAG, knowledge graphs are derived from formal artifacts by deterministic
-programs. A \texttt{CALLS} edge exists because a call expression was found in
-the AST at the recorded line number. A metabolic reaction edge exists because
-it appears in the source schema. A statutory cross-reference edge exists because
-a citation was found in the formal text. No edge is inferred; every edge is
-verified against a source address.
+In KGRAG, knowledge graphs are derived from the source by deterministic
+programs. A PyCodeKG \texttt{CALLS} edge exists because a call expression was
+found in the AST at the recorded line number. A MetaboKG reaction edge exists
+because it appears in the source pathway schema. A DocKG \texttt{MENTIONS}
+edge exists because spaCy named-entity recognition matched a span in the
+section text at a recorded character offset. A DiaryKG \texttt{PRECEDES} edge
+exists because two entries are dated. No edge is inferred by a language model;
+every edge is verified against a deterministic source address---whether that
+address is an AST node, a schema row, or a character span produced by a
+deterministic NLP pass.
 
 \begin{table}[h]
 \centering
@@ -773,7 +808,7 @@ Graph correctness   & Probabilistic                 & Deterministic \\
 Edge evidence       & NL relationship description   & Source address + line \\
 LLM required to build  & Yes                        & No \\
 LLM required to query  & No                         & No \\
-Domain generality   & Text corpora                  & Any formally structured domain \\
+Domain generality   & Text corpora                  & Formal-structure + NLP-enriched prose \\
 Hallucination risk (KG layer) & Present             & Zero \\
 Hallucination risk (synthesis) & Present            & Present (bounded) \\
 Result provenance   & Document reference            & Node ID + file + line \\
@@ -801,10 +836,14 @@ The central findings of this work are:
 \begin{enumerate}
 
 \item \textbf{The Ontology Principle.} The power of structural KG retrieval
-  scales with the formal completeness of the source domain's ontology.
-  Programming languages are the ideal case; biochemical pathways, legal codes,
-  protein structure files, and scripture hierarchies follow the same pattern.
-  Where formal structure exists, the derived graph is correct by construction.
+  scales with how well the source domain's ontology is specified. Programming
+  languages are the ideal case (PyCodeKG, full grammar); biochemical pathways
+  follow with explicit reaction schemas (MetaboKG); prose corpora and journals
+  carry only lightweight Markdown and temporal structure but yield to
+  deterministic NLP enrichment (DocKG, DiaryKG). Where formal structure
+  exists, the derived graph is correct by construction. Where it does not,
+  the graph is verifiably sourced from deterministic linguistic analysis. In
+  neither regime does a language model construct the graph.
 
 \item \textbf{The Knowledge Compiler.} KGRAG is not a retrieval system that
   happens to use graphs. It is a knowledge compiler: it transforms formally
@@ -824,19 +863,17 @@ The central findings of this work are:
   guarantee: it holds regardless of model scale, prompt engineering, or
   retrieval quality.
 
-\item \textbf{The Path to the Corpus Scientia.} The \emph{TreeOfKnowledge\texttrademark}
-  is achievable. Each new domain requires five adapter methods. The federation
-  layer requires no changes. The architecture is ready; the remaining work is
-  building the domain compilers.
-
 \end{enumerate}
 
 The result is a retrieval system that is fast, auditable, and correct by
-construction at the structural layer. When coupled with the largest available
-language model for synthesis, it provides grounded context whose every element
-can be verified against the source. The correctness guarantee holds regardless
-of the language model's accuracy, because the model receives facts rather than
-constructs them. That is the ultimate power of the design.
+construction at the structural layer. Because the retrieved context is already
+correct, deduplicated, and presented in domain-native vocabulary, synthesis
+is a comparatively light task: a mid-tier language model with a generous
+context window suffices for most workloads, and the largest available models
+can be reserved for genuinely hard reasoning over the same already-correct
+facts. The correctness guarantee holds regardless of the synthesis model's
+scale, because the model receives facts rather than constructs them. That is
+the ultimate power of the design.
 
 %-------------------------------------------------------------------
 \begin{thebibliography}{9}

@@ -28,6 +28,7 @@ class KGKind(StrEnum):
     LEGAL = "legal"
     PERSON = "person"
     AGENT = "agent"
+    FILETREE = "filetree"
 
     @classmethod
     def from_str(cls, s: str) -> KGKind:
