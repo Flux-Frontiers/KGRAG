@@ -194,6 +194,14 @@ __marimo__/
 .DS_Store
 commit.txt
 
+# Local MCP config — contains user-specific absolute paths; use Claude.mcp.json as template
+.mcp.json
+.mcp.json.sav
+
+# Local Claude Code settings — personal hooks and permissions; use settings.json.template as template
+.claude/settings.json
+.claude/settings.local.json
+
 # Confidential — moved to kgrag_priv
 patents/
 CLAUDE_T_IDENTITY.md
