@@ -506,15 +506,15 @@ numpy = {version = ">=1.19.0,<3.0.0", markers = "python_version >= \"3.9\""}
 
 [[package]]
 name = "cachetools"
-version = "7.0.6"
+version = "7.1.1"
 description = "Extensible memoizing collections and decorators"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
 markers = "extra == \"viz\""
 files = [
-    {file = "cachetools-7.0.6-py3-none-any.whl", hash = "sha256:4e94956cfdd3086f12042cdd29318f5ced3893014f7d0d059bf3ead3f85b7f8b"},
-    {file = "cachetools-7.0.6.tar.gz", hash = "sha256:e5d524d36d65703a87243a26ff08ad84f73352adbeafb1cde81e207b456aaf24"},
+    {file = "cachetools-7.1.1-py3-none-any.whl", hash = "sha256:0335cd7a0952d2b22327441fb0628139e234c565559eeb91a8a4ac7551c5353d"},
+    {file = "cachetools-7.1.1.tar.gz", hash = "sha256:27bdf856d68fd3c71c26c01b5edc312124ed427524d1ddb31aa2b7746fe20d4b"},
 ]
 
 [[package]]
@@ -807,14 +807,14 @@ colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
 name = "cloudpathlib"
-version = "0.23.0"
+version = "0.24.0"
 description = "pathlib-style classes for cloud storage services."
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "cloudpathlib-0.23.0-py3-none-any.whl", hash = "sha256:8520b3b01468fee77de37ab5d50b1b524ea6b4a8731c35d1b7407ac0cd716002"},
-    {file = "cloudpathlib-0.23.0.tar.gz", hash = "sha256:eb38a34c6b8a048ecfd2b2f60917f7cbad4a105b7c979196450c2f541f4d6b4b"},
+    {file = "cloudpathlib-0.24.0-py3-none-any.whl", hash = "sha256:b1c51e2d2ec7dc4fed6538991f4aea849d6cf11a7e6b9069f86e461aa1f9b5b4"},
+    {file = "cloudpathlib-0.24.0.tar.gz", hash = "sha256:c521a984e77b47e656fe78e20a7e3e260e0ab45fc69e33ac01094227c979e34a"},
 ]
 
 [package.extras]
@@ -1260,14 +1260,14 @@ tests = ["pytest", "pytest-cov", "pytest-xdist"]
 
 [[package]]
 name = "cyclopts"
-version = "4.11.0"
+version = "4.11.1"
 description = "Intuitive, easy CLIs based on type hints."
 optional = false
 python-versions = ">=3.10"
 groups = ["main", "viz3d"]
 files = [
-    {file = "cyclopts-4.11.0-py3-none-any.whl", hash = "sha256:34318e3823b44b5baa754a5e37ec70a5c17dc81c65e4295ed70e17bc1aeae50d"},
-    {file = "cyclopts-4.11.0.tar.gz", hash = "sha256:1ffcb9990dbd56b90da19980d31596de9e99019980a215a5d76cf88fe452e94d"},
+    {file = "cyclopts-4.11.1-py3-none-any.whl", hash = "sha256:178cf3a892c22fc35815f352d8433cc70aaeec4f930ce3b9b15a6b79d7ce158e"},
+    {file = "cyclopts-4.11.1.tar.gz", hash = "sha256:6c1d4b55a1d05bd9e1fdc4d7800e9ce69cf16f6141db34e5a5c9857bdb81887f"},
 ]
 markers = {main = "extra == \"viz3d\""}
 
@@ -1279,7 +1279,7 @@ rich-rst = ">=1.3.1,<2.0.0"
 
 [package.extras]
 debug = ["ipdb (>=0.13.9)", "line-profiler (>=3.5.1)"]
-dev = ["coverage[toml] (>=5.1)", "mkdocs (>=1.4.0)", "pre-commit (>=2.16.0)", "pydantic (>=2.11.2,<3.0.0)", "pytest (>=8.2.0)", "pytest-cov (>=3.0.0)", "pytest-mock (>=3.7.0)", "pyyaml (>=6.0.1)", "syrupy (>=4.0.0)", "toml (>=0.10.2,<1.0.0)", "trio (>=0.10.0)"]
+dev = ["coverage[toml] (>=5.1)", "mkdocs (>=1.4.0)", "pexpect (>=4.9.0) ; sys_platform != \"win32\"", "pre-commit (>=2.16.0)", "pydantic (>=2.11.2,<3.0.0)", "pytest (>=8.2.0)", "pytest-cov (>=3.0.0)", "pytest-mock (>=3.7.0)", "pyyaml (>=6.0.1)", "syrupy (>=4.0.0)", "toml (>=0.10.2,<1.0.0)", "trio (>=0.10.0)"]
 docs = ["gitpython (>=3.1.31)", "myst-parser[linkify] (>=3.0.1,<5.0.0)", "sphinx (>=7.4.7,<8.2.0)", "sphinx-autodoc-typehints (>=1.25.2,<4.0.0)", "sphinx-copybutton (>=0.5,<1.0)", "sphinx-rtd-dark-mode (>=1.3.0,<2.0.0)", "sphinx-rtd-theme (>=3.0.0,<4.0.0)"]
 mkdocs = ["markdown (>=3.3)", "mkdocs (>=1.4.0)", "pymdown-extensions (>=10.0)"]
 toml = ["tomli (>=2.0.0) ; python_version < \"3.11\""]
@@ -1902,30 +1902,28 @@ tqdm = ["tqdm"]
 
 [[package]]
 name = "ftree-kg"
-version = "0.7.0"
+version = "0.8.0"
 description = "KGModule for file tree knowledge graphs"
 optional = true
-python-versions = ">=3.12,<3.14"
+python-versions = "<3.14,>=3.12"
 groups = ["main"]
 markers = "extra == \"kg\""
-files = []
-develop = false
+files = [
+    {file = "ftree_kg-0.8.0-py3-none-any.whl", hash = "sha256:58ee8673576620fe1edf63659396c92fee9452cce153c8ed9e778233954e44cd"},
+    {file = "ftree_kg-0.8.0.tar.gz", hash = "sha256:503fcb306f27fe234a490c49ea0a650f0640a49ca0710f7551a06a27f2dd38da"},
+]
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kg-snapshot = {git = "https://github.com/Flux-Frontiers/kg_snapshot.git"}
-kgmodule-utils = ">=0.2.0"
+kgmodule-utils = ">=0.2.4"
+lancedb = ">=0.29.0"
+pillow = ">=10.0.0"
+rich = ">=13.0.0"
 
 [package.extras]
-all = ["agent-kg @ git+https://github.com/Flux-Frontiers/agent_kg.git", "black (>=22.0)", "doc-kg @ git+https://github.com/Flux-Frontiers/doc_kg.git", "mypy (>=1.10.0)", "pycode-kg @ git+https://github.com/Flux-Frontiers/pycode_kg.git", "pylint (>=4.0.5)", "pytest (>=8.0.0)", "pytest-cov (>=5.0.0)", "ruff (>=0.4.0)"]
-dev = ["black (>=22.0)", "mypy (>=1.10.0)", "pylint (>=4.0.5)", "pytest (>=8.0.0)", "pytest-cov (>=5.0.0)", "ruff (>=0.4.0)"]
-kgdeps = ["agent-kg @ git+https://github.com/Flux-Frontiers/agent_kg.git", "doc-kg @ git+https://github.com/Flux-Frontiers/doc_kg.git", "pycode-kg @ git+https://github.com/Flux-Frontiers/pycode_kg.git"]
-
-[package.source]
-type = "git"
-url = "https://github.com/Flux-Frontiers/ftree_kg.git"
-reference = "HEAD"
-resolved_reference = "b77ece58bc4e7892f7e3db8cd4578d12299a0553"
+all = ["detect-secrets (>=1.5.0)", "doc-kg (>=0.12.0)", "mypy (>=1.10.0)", "pre-commit (>=4.5.1)", "pycode-kg (>=0.17.0)", "pylint (>=4.0.5)", "pytest (>=8.0.0)", "pytest-cov (>=5.0.0)", "ruff (>=0.4.0)"]
+dev = ["detect-secrets (>=1.5.0)", "mypy (>=1.10.0)", "pre-commit (>=4.5.1)", "pylint (>=4.0.5)", "pytest (>=8.0.0)", "pytest-cov (>=5.0.0)", "ruff (>=0.4.0)"]
+kgdeps = ["doc-kg (>=0.11.0)", "pycode-kg (>=0.16.0)"]
 
 [[package]]
 name = "gitdb"
@@ -2327,24 +2325,23 @@ files = [
 
 [[package]]
 name = "jedi"
-version = "0.19.2"
+version = "0.20.0"
 description = "An autocompletion tool for Python that can be used for text editors."
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.10"
 groups = ["main", "viz3d"]
 files = [
-    {file = "jedi-0.19.2-py2.py3-none-any.whl", hash = "sha256:a8ef22bde8490f57fe5c7681a3c83cb58874daf72b4784de3cce5b6ef6edb5b9"},
-    {file = "jedi-0.19.2.tar.gz", hash = "sha256:4770dc3de41bde3966b02eb84fbcf557fb33cce26ad23da12c742fb50ecb11f0"},
+    {file = "jedi-0.20.0-py2.py3-none-any.whl", hash = "sha256:7bdd9c2634f56713299976f4cbd59cb3fa92165cc5e05ea811fb253480728b67"},
+    {file = "jedi-0.20.0.tar.gz", hash = "sha256:c3f4ccbd276696f4b19c54618d4fb18f9fc24b0aef02acf704b23f487daa1011"},
 ]
 markers = {main = "extra == \"viz\" or extra == \"viz3d\""}
 
 [package.dependencies]
-parso = ">=0.8.4,<0.9.0"
+parso = ">=0.8.6,<0.9.0"
 
 [package.extras]
-docs = ["Jinja2 (==2.11.3)", "MarkupSafe (==1.1.1)", "Pygments (==2.8.1)", "alabaster (==0.7.12)", "babel (==2.9.1)", "chardet (==4.0.0)", "commonmark (==0.8.1)", "docutils (==0.17.1)", "future (==0.18.2)", "idna (==2.10)", "imagesize (==1.2.0)", "mock (==1.0.1)", "packaging (==20.9)", "pyparsing (==2.4.7)", "pytz (==2021.1)", "readthedocs-sphinx-ext (==2.1.4)", "recommonmark (==0.5.0)", "requests (==2.25.1)", "six (==1.15.0)", "snowballstemmer (==2.1.0)", "sphinx (==1.8.5)", "sphinx-rtd-theme (==0.4.3)", "sphinxcontrib-serializinghtml (==1.1.4)", "sphinxcontrib-websupport (==1.2.4)", "urllib3 (==1.26.4)"]
-qa = ["flake8 (==5.0.4)", "mypy (==0.971)", "types-setuptools (==67.2.0.1)"]
-testing = ["Django", "attrs", "colorama", "docopt", "pytest (<9.0.0)"]
+dev = ["Django", "attrs", "colorama", "docopt", "flake8 (==7.1.2)", "pytest (<9.0.0)", "types-setuptools (==80.9.0.20250529)", "typing-extensions", "zuban (==0.7.0)"]
+docs = ["Jinja2 (==3.1.6)", "MarkupSafe (==3.0.3)", "Pygments (==2.20.0)", "Sphinx (==9.1.0)", "alabaster (==1.0.0)", "babel (==2.18.0)", "certifi (==2026.4.22)", "charset-normalizer (==3.4.7)", "docutils (==0.22.4)", "idna (==3.13)", "imagesize (==2.0.0)", "iniconfig (==2.3.0)", "packaging (==26.2)", "pluggy (==1.6.0)", "pytest (==9.0.3)", "requests (==2.33.1)", "roman-numerals (==4.1.0)", "snowballstemmer (==3.0.1)", "sphinx-rtd-theme (==3.1.0)", "sphinxcontrib-applehelp (==2.0.0)", "sphinxcontrib-devhelp (==2.0.0)", "sphinxcontrib-htmlhelp (==2.1.0)", "sphinxcontrib-jquery (==4.1)", "sphinxcontrib-jsmath (==1.0.1)", "sphinxcontrib-qthelp (==2.0.0)", "sphinxcontrib-serializinghtml (==2.0.0)", "urllib3 (==2.6.3)"]
 
 [[package]]
 name = "jinja2"
@@ -2644,29 +2641,25 @@ markers = {main = "extra == \"viz3d\""}
 name = "kg-snapshot"
 version = "0.3.0"
 description = "Shared snapshot infrastructure for KG modules — zero stdlib-only deps."
-optional = false
-python-versions = ">=3.12,<3.14"
-groups = ["main"]
-files = []
-develop = false
-
-[package.source]
-type = "git"
-url = "https://github.com/Flux-Frontiers/kg_snapshot.git"
-reference = "HEAD"
-resolved_reference = "2fbdf488b55b382ae625300b1cbbfc4cf32296c2"
-
-[[package]]
-name = "kgmodule-utils"
-version = "0.2.3"
-description = "Shared types and snapshot infrastructure for the KGModule SDK"
 optional = true
 python-versions = "<3.14,>=3.12"
 groups = ["main"]
 markers = "extra == \"kg\""
 files = [
-    {file = "kgmodule_utils-0.2.3-py3-none-any.whl", hash = "sha256:53d13cb4360ecd52f54e9d0195c854e3a9c8a807daecfeead7881955495e0b78"},
-    {file = "kgmodule_utils-0.2.3.tar.gz", hash = "sha256:418889346aa62643c2dbcbf785ad3f4d53197bb638888ea959e058e73039198f"},
+    {file = "kg_snapshot-0.3.0-py3-none-any.whl", hash = "sha256:46f5cb57eb7ac66e3d4c64b46c2a403268c65e7ffa2bd45766a871b06d5bd69b"},
+    {file = "kg_snapshot-0.3.0.tar.gz", hash = "sha256:5588e756fe6378a40577cf32f6b4a7416658aba9dff397623d5613a86f44a73f"},
+]
+
+[[package]]
+name = "kgmodule-utils"
+version = "0.2.4"
+description = "Shared types and snapshot infrastructure for the KGModule SDK"
+optional = false
+python-versions = "<3.14,>=3.12"
+groups = ["main"]
+files = [
+    {file = "kgmodule_utils-0.2.4-py3-none-any.whl", hash = "sha256:cf1b36c930709f8437403336a09173e810ec2627e59449a403f3b192f36a53dc"},
+    {file = "kgmodule_utils-0.2.4.tar.gz", hash = "sha256:ec9fc77fec00335e7e271bd86da98f753e0598fdd8927c104e4be9be703b3a1b"},
 ]
 
 [[package]]
@@ -2987,14 +2980,14 @@ files = [
 
 [[package]]
 name = "llama-cpp-python"
-version = "0.3.21"
+version = "0.3.22"
 description = "Python bindings for the llama.cpp library"
 optional = true
 python-versions = ">=3.8"
 groups = ["main"]
 markers = "extra == \"pi\""
 files = [
-    {file = "llama_cpp_python-0.3.21.tar.gz", hash = "sha256:533636e23953d1efcf16ddf5862d963405e4bc0bccfc04ba90e9ee7afefefa75"},
+    {file = "llama_cpp_python-0.3.22.tar.gz", hash = "sha256:93c54af95d917fe6d6d70039efe16ca9240634d11010f5aaf795261b9f43042f"},
 ]
 
 [package.dependencies]
@@ -3365,7 +3358,7 @@ resolved_reference = "2db1c2a4b3fbf3f9c17998115c3c6ae6bab5a3e3"
 
 [[package]]
 name = "metabo-kg"
-version = "0.7.1"
+version = "0.8.1"
 description = "Metabolic pathway parser and semantic knowledge graph with MCP support"
 optional = true
 python-versions = ">=3.12,<3.14"
@@ -3377,7 +3370,7 @@ develop = false
 [package.dependencies]
 click = ">=8.0"
 kg-snapshot = ">=0.3.0"
-kgmodule-utils = ">=0.2.0"
+kgmodule-utils = ">=0.2.4"
 lancedb = ">=0.29.0"
 mcp = ">=1.0.0"
 numpy = ">=1.24.0"
@@ -3385,10 +3378,9 @@ sentence-transformers = ">=5.4.1"
 watchdoc = ">=0.0.1"
 
 [package.extras]
-all = ["PyQt5 (>=5.15.0)", "agent-kg @ git+https://github.com/Flux-Frontiers/agent_kg.git", "doc-kg (>=0.11.0)", "ftree-kg @ git+https://github.com/Flux-Frontiers/ftree_kg.git", "matplotlib (>=3.8.0)", "memory-kg @ git+https://github.com/Flux-Frontiers/memory_kg.git", "pandas (>=2.0.0)", "param (>=2.0.0)", "pycode-kg @ git+https://github.com/Flux-Frontiers/pycode_kg.git", "pyvis (>=0.3.2)", "pyvista (>=0.44.0)", "pyvistaqt (>=0.11.0)", "rdflib (>=6.0.0)", "scipy (>=1.11.0)", "streamlit (>=1.35.0)"]
+all = ["PyQt5 (>=5.15.0)", "doc-kg (>=0.12.3)", "matplotlib (>=3.8.0)", "pandas (>=2.0.0)", "param (>=2.0.0)", "pycode-kg (>=0.18.1)", "pyvis (>=0.3.2)", "pyvista (>=0.44.0)", "pyvistaqt (>=0.11.0)", "rdflib (>=6.0.0)", "scipy (>=1.11.0)", "streamlit (>=1.35.0)"]
 biopax = ["rdflib (>=6.0.0)"]
-dev = ["detect-secrets (>=1.5.0)", "mypy (>=1.10.0)", "pre-commit (>=4.0.0)", "pylint (>=4.0.5)", "pytest (>=8.0.0)", "pytest-cov (>=5.0.0)", "pytest-timeout (>=2.4.0)", "ruff (>=0.4.0)"]
-kg = ["agent-kg @ git+https://github.com/Flux-Frontiers/agent_kg.git", "doc-kg (>=0.11.0)", "ftree-kg @ git+https://github.com/Flux-Frontiers/ftree_kg.git", "memory-kg @ git+https://github.com/Flux-Frontiers/memory_kg.git", "pycode-kg @ git+https://github.com/Flux-Frontiers/pycode_kg.git"]
+kg = ["detect-secrets (>=1.5.0)", "doc-kg (>=0.12.3)", "mypy (>=1.10.0)", "pre-commit (>=4.0.0)", "pycode-kg (>=0.18.1)", "pylint (>=4.0.5)", "pytest (>=8.0.0)", "pytest-cov (>=5.0.0)", "pytest-timeout (>=2.4.0)", "ruff (>=0.4.0)"]
 simulate = ["scipy (>=1.11.0)"]
 viz = ["matplotlib (>=3.8.0)", "pandas (>=2.0.0)", "pyvis (>=0.3.2)", "streamlit (>=1.35.0)"]
 viz3d = ["PyQt5 (>=5.15.0)", "param (>=2.0.0)", "pyvista (>=0.44.0)", "pyvistaqt (>=0.11.0)"]
@@ -3397,18 +3389,18 @@ viz3d = ["PyQt5 (>=5.15.0)", "param (>=2.0.0)", "pyvista (>=0.44.0)", "pyvistaqt
 type = "git"
 url = "https://github.com/Flux-Frontiers/metabo_kg.git"
 reference = "HEAD"
-resolved_reference = "3be8d8a6dd563e9313749afb27d848b8610416f5"
+resolved_reference = "7d5fead0bcaac97bd79f64e21919854e0e2c637e"
 
 [[package]]
 name = "mistune"
-version = "3.2.0"
+version = "3.2.1"
 description = "A sane and fast Markdown parser with useful plugins and renderers"
 optional = false
 python-versions = ">=3.8"
 groups = ["main", "viz3d"]
 files = [
-    {file = "mistune-3.2.0-py3-none-any.whl", hash = "sha256:febdc629a3c78616b94393c6580551e0e34cc289987ec6c35ed3f4be42d0eee1"},
-    {file = "mistune-3.2.0.tar.gz", hash = "sha256:708487c8a8cdd99c9d90eb3ed4c3ed961246ff78ac82f03418f5183ab70e398a"},
+    {file = "mistune-3.2.1-py3-none-any.whl", hash = "sha256:78cdb0ba5e938053ccf63651b352508d2efa9411dc8810bfb05f2dc5140c0048"},
+    {file = "mistune-3.2.1.tar.gz", hash = "sha256:7c8e5501d38bac1582e067e46c8343f17d57ea1aaa735823f3aba1fd59c88a28"},
 ]
 markers = {main = "extra == \"viz3d\""}
 
@@ -4474,14 +4466,14 @@ tests-pypy = ["cloudpickle", "ipython", "jsonschema", "nest-asyncio", "numpy"]
 
 [[package]]
 name = "parso"
-version = "0.8.6"
+version = "0.8.7"
 description = "A Python Parser"
 optional = false
 python-versions = ">=3.6"
 groups = ["main", "viz3d"]
 files = [
-    {file = "parso-0.8.6-py2.py3-none-any.whl", hash = "sha256:2c549f800b70a5c4952197248825584cb00f033b29c692671d3bf08bf380baff"},
-    {file = "parso-0.8.6.tar.gz", hash = "sha256:2b9a0332696df97d454fa67b81618fd69c35a7b90327cbe6ba5c92d2c68a7bfd"},
+    {file = "parso-0.8.7-py2.py3-none-any.whl", hash = "sha256:a8926eb2a1b915486941fdbd31e86a4baf88fe8c210f25f2f35ecec5b574ca1c"},
+    {file = "parso-0.8.7.tar.gz", hash = "sha256:eaaac4c9fdd5e9e8852dc778d2d7405897ec510f2a298071453e5e3a07914bb1"},
 ]
 markers = {main = "extra == \"viz\" or extra == \"viz3d\""}
 
@@ -4640,7 +4632,7 @@ files = [
     {file = "pillow-12.2.0-pp311-pypy311_pp73-win_amd64.whl", hash = "sha256:bfa9c230d2fe991bed5318a5f119bd6780cda2915cca595393649fc118ab895e"},
     {file = "pillow-12.2.0.tar.gz", hash = "sha256:a830b1a40919539d07806aa58e1b114df53ddd43213d9c8b75847eee6c0182b5"},
 ]
-markers = {main = "extra == \"viz\" or extra == \"viz3d\""}
+markers = {main = "extra == \"viz\" or extra == \"viz3d\" or extra == \"kg\""}
 
 [package.extras]
 docs = ["furo", "olefile", "sphinx (>=8.2)", "sphinx-autobuild", "sphinx-copybutton", "sphinx-inline-tabs", "sphinxext-opengraph"]
@@ -5143,15 +5135,15 @@ files = [
 
 [[package]]
 name = "pycode-kg"
-version = "0.18.1"
+version = "0.19.0"
 description = "A tool to build a searchable knowledge graph from Python repositories"
 optional = true
 python-versions = "<3.14,>=3.12"
 groups = ["main"]
 markers = "extra == \"kg\""
 files = [
-    {file = "pycode_kg-0.18.1-py3-none-any.whl", hash = "sha256:2a36b429312799b2ce728c5f03a75401e5c7130e0eb487870dfaa62b8e471b35"},
-    {file = "pycode_kg-0.18.1.tar.gz", hash = "sha256:7fe03315b90ff6b860895d0c341e1484a81290a67ed56b81706d88dfd4485a30"},
+    {file = "pycode_kg-0.19.0-py3-none-any.whl", hash = "sha256:5aece8f96890c4645f6982e5075bc4bb8ff2f1b7d4b345fdfefb94557e817a06"},
+    {file = "pycode_kg-0.19.0.tar.gz", hash = "sha256:53cd95a434b803634b0884bc17132cff33d71b334568daed999c80e9c7f80dcc"},
 ]
 
 [package.dependencies]
@@ -5737,14 +5729,14 @@ networkx = ">=1.11"
 
 [[package]]
 name = "pyvista"
-version = "0.47.3"
+version = "0.48.0"
 description = "Easier Pythonic interface to VTK"
 optional = false
 python-versions = ">=3.10"
 groups = ["main", "viz3d"]
 files = [
-    {file = "pyvista-0.47.3-py3-none-any.whl", hash = "sha256:8db0dd77c744d2673a1b34333694cb4e8828a9193bbe2c0a8b3ceb9bfc12dd0f"},
-    {file = "pyvista-0.47.3.tar.gz", hash = "sha256:03ce3923b42053cf8c9c151ea385431474f11b286d31fe9513cf5b7bf29fe848"},
+    {file = "pyvista-0.48.0-py3-none-any.whl", hash = "sha256:cb6fe80d4a1a7e9ef512b9b555d8b16355ea97b07799fc4f73f2897ca0109e09"},
+    {file = "pyvista-0.48.0.tar.gz", hash = "sha256:317c1590fce0d3777c34d7c2b4686dc52701a2ba03ab0a312bbd0bdae03f0d42"},
 ]
 markers = {main = "extra == \"viz3d\""}
 
@@ -5761,7 +5753,7 @@ scooby = ">=0.5.1"
 trame = {version = ">=2.5.2", optional = true, markers = "extra == \"jupyter\""}
 trame-client = {version = ">=2.12.7", optional = true, markers = "extra == \"jupyter\""}
 trame-server = {version = ">=2.11.7,<3.7.dev0 || >3.8.0", optional = true, markers = "extra == \"jupyter\""}
-trame-vtk = {version = ">=2.5.8,<2.10.3", optional = true, markers = "extra == \"jupyter\""}
+trame-vtk = {version = ">=2.5.8,<2.10.3 || >2.10.3,<2.11.0 || >2.11.0,<2.11.1 || >2.11.1,<2.11.2 || >2.11.2,<2.11.3 || >2.11.3,<2.11.4 || >2.11.4,<2.11.5 || >2.11.5,<2.11.6 || >2.11.6,<2.11.9", optional = true, markers = "extra == \"jupyter\""}
 trame-vuetify = {version = ">=2.3.1", optional = true, markers = "extra == \"jupyter\""}
 typing-extensions = ">=4.10"
 vtk = ">=9.2.2,<9.4.0 || >9.4.0,<9.4.1 || >9.4.1,<9.7.0"
@@ -5769,8 +5761,8 @@ vtk = ">=9.2.2,<9.4.0 || >9.4.0,<9.4.1 || >9.4.1,<9.7.0"
 [package.extras]
 all = ["pyvista[colormaps,io,jupyter]"]
 colormaps = ["cmcrameri", "cmocean", "colorcet"]
-io = ["imageio", "meshio (>=5.2)"]
-jupyter = ["ipywidgets", "jupyter-server-proxy", "nest-asyncio2", "trame (>=2.5.2)", "trame-client (>=2.12.7)", "trame-server (>=2.11.7,<3.7.dev0 || >3.8.0)", "trame-vtk (!=2.10.3,!=2.11.*)", "trame-vtk (>=2.5.8,<2.10.3)", "trame-vuetify (>=2.3.1)"]
+io = ["fsspec", "imageio", "meshio (>=5.2)", "pyvista-zstd (>=0.2.2)"]
+jupyter = ["ipywidgets", "jupyter-server-proxy", "nest-asyncio2", "trame (>=2.5.2)", "trame-client (>=2.12.7)", "trame-server (>=2.11.7,<3.7.dev0 || >3.8.0)", "trame-vtk (!=2.10.3,!=2.11.0,!=2.11.1,!=2.11.2,!=2.11.3,!=2.11.4,!=2.11.5,!=2.11.6)", "trame-vtk (>=2.5.8,<2.11.9)", "trame-vuetify (>=2.3.1)"]
 
 [[package]]
 name = "pyvistaqt"
@@ -7577,14 +7569,14 @@ dev = ["nox", "pre-commit", "pytest", "pytest-asyncio", "ruff"]
 
 [[package]]
 name = "trame-vtk"
-version = "2.10.2"
+version = "2.11.8"
 description = "VTK widgets for trame"
 optional = false
 python-versions = ">=3.9"
 groups = ["main", "viz3d"]
 files = [
-    {file = "trame_vtk-2.10.2-py3-none-any.whl", hash = "sha256:7ef4d7d167424e4a19f63648ff66f5986697ef0184f70364a21982b95b011a29"},
-    {file = "trame_vtk-2.10.2.tar.gz", hash = "sha256:0c298aafb117cb1d462eef3b6b399abff2e3ffb8ed5bd0bc8c71d1c581649392"},
+    {file = "trame_vtk-2.11.8-py3-none-any.whl", hash = "sha256:31c8220f59dcc3b5f2fcfe6de8b9796e8bdb7db5dcf790ee01df83d44e79a413"},
+    {file = "trame_vtk-2.11.8.tar.gz", hash = "sha256:bef4a35d86d57bf9b4af44dda8f361f917b141e4f624c9ab7278b6c48d171e74"},
 ]
 markers = {main = "extra == \"viz3d\""}
 
@@ -7720,14 +7712,14 @@ tutorials = ["matplotlib", "pandas", "tabulate"]
 
 [[package]]
 name = "typer"
-version = "0.25.0"
+version = "0.25.1"
 description = "Typer, build great CLIs. Easy to code. Based on Python type hints."
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "typer-0.25.0-py3-none-any.whl", hash = "sha256:ac01b48823d3db9a83c9e164338057eadbb1c9957a2a6b4eeb486669c560b5dc"},
-    {file = "typer-0.25.0.tar.gz", hash = "sha256:123eaf9f19bb40fd268310e12a542c0c6b4fab9c98d9d23342a01ff95e3ce930"},
+    {file = "typer-0.25.1-py3-none-any.whl", hash = "sha256:75caa44ed46a03fb2dab8808753ffacdbfea88495e74c85a28c5eefcf5f39c89"},
+    {file = "typer-0.25.1.tar.gz", hash = "sha256:9616eb8853a09ffeabab1698952f33c6f29ffdbceb4eaeecf571880e8d7664cc"},
 ]
 
 [package.dependencies]
@@ -7972,14 +7964,14 @@ watchmedo = ["PyYAML (>=3.10)"]
 
 [[package]]
 name = "wcwidth"
-version = "0.6.0"
+version = "0.7.0"
 description = "Measures the displayed width of unicode strings in a terminal"
 optional = false
 python-versions = ">=3.8"
 groups = ["main", "viz3d"]
 files = [
-    {file = "wcwidth-0.6.0-py3-none-any.whl", hash = "sha256:1a3a1e510b553315f8e146c54764f4fb6264ffad731b3d78088cdb1478ffbdad"},
-    {file = "wcwidth-0.6.0.tar.gz", hash = "sha256:cdc4e4262d6ef9a1a57e018384cbeb1208d8abbc64176027e2c2455c81313159"},
+    {file = "wcwidth-0.7.0-py3-none-any.whl", hash = "sha256:5d69154c429a82910e241c738cd0e2976fac8a2dd47a1a805f4afed1c0f136f2"},
+    {file = "wcwidth-0.7.0.tar.gz", hash = "sha256:90e3a7ea092341c44b99562e75d09e4d5160fe7a3974c6fb842a101a95e7eed0"},
 ]
 markers = {main = "extra == \"viz\" or extra == \"viz3d\""}
 
@@ -8414,4 +8406,4 @@ viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "0b8c5b67d10b083882eaa798272c29375390ec90a18d2c2dbb955a072fcbc609"
+content-hash = "7c922e5ee75cd5ce3b85a63366bc48c3e16b17006a84ac5adb0796165f6f5595"

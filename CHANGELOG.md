@@ -7,6 +7,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-05-03
+
+### Added
+
+- **`MemoryKGAdapter`** (`src/kg_rag/adapters/memory_adapter.py`) — fully
+  implemented adapter wrapping `memory_kg.MemoryKG`. Implements all five
+  `KGAdapter` methods (`is_available`, `query`, `pack`, `stats`, `analyze`,
+  `_collect_snapshot_metrics`). Uses positional scoring since `MemoryKG` nodes
+  carry no score field; prefers `excerpt` over `text` when building
+  `CrossSnippet` content. Promoted from stub to fully implemented.
+- **`GutenbergKGAdapter`** (`src/kg_rag/adapters/gutenberg_adapter.py`) and
+  **`IABookKGAdapter`** (`src/kg_rag/adapters/ia_adapter.py`) — stub adapters
+  for future Gutenberg and Internet Archive book corpora.
+- **`KGKind.GUTENBERG`** and **`KGKind.IA`** added to the `KGKind` enum in
+  `src/kg_rag/primitives.py`.
+- **`kgrag corpus pack`** and **`kgrag corpus person pack`** CLI commands
+  (`src/kg_rag/cli/cmd_corpus.py`) — produce a `CrossSnippetPack` scoped to a
+  named corpus or person corpus. Both accept `--semantic-floor` to suppress
+  KGs whose top result falls below a relevance threshold, `--out FILE` to
+  write rendered Markdown, and `-k N` to control snippet count.
+- **`tests/test_snapshots.py`** — comprehensive new test module (54 tests)
+  covering the `kg_rag.snapshots` shim, `Snapshot` model round-trips
+  (including legacy `tree_hash`/`commit` field handling), `SnapshotManifest`,
+  `PruneResult`, all `SnapshotManager` operations (`capture`, `save_snapshot`,
+  `load_snapshot`, `list_snapshots`, `diff_snapshots`, `prune_snapshots`,
+  `get_previous`, `get_baseline`), and the `KGAdapter.snapshot()` template
+  method.
+
+### Fixed
+
+- **`DocKGAdapter.pack()` used wrong field** — now reads
+  `node.get("excerpt") or node.get("text")` instead of `node.get("text")`
+  only, matching the field `DocKG.pack()` actually populates.
+- **`CrossSnippetPack.render()` micro-fragment filter** — raised minimum
+  content length from empty-string check to `< 30` characters, preventing
+  sentence fragments like `"see"` or `"sea, you"` from appearing in LLM
+  context packs.
+- **`corpus pack` / `corpus person pack` `--semantic-floor`** — option wired
+  through to `orch.pack_corpus()` / `orch.pack_person()` so off-topic KGs
+  (low top-result score) are suppressed at the corpus level.
+
+### Changed
+
+- **`kg_rag.snapshots`** converted to a backwards-compatible re-export shim
+  over `kg_utils.snapshots`; all three public names (`Snapshot`,
+  `SnapshotManifest`, `SnapshotManager`) now resolve to the canonical shared
+  implementations.
+- **README.md** updated: `MemoryKGAdapter` promoted to Fully Implemented
+  table; `GutenbergKGAdapter` and `IABookKGAdapter` added to Stub Adapters;
+  Related Projects and architecture diagram updated accordingly.
+- **`.gutenbergkg`** and **`.iakg`** dot-directory markers registered in
+  `cmd_registry.py` for auto-detection during `kgrag scan`.
+
+### Removed
+
+- Stale embedder hand-off docs (`docs/EMBEDDER_CENTRALIZATION.md`,
+  `docs/EMBEDDER_HANDOFF.md`, `docs/cwd-anchor-fix.md`) deleted; content
+  superseded by the shared `ModelCoordinator` implementation.
+
 ### Added — `FTreeKGAdapter` and `KGKind.FILETREE` federation kind (2026-05-01)
 
 - `src/kg_rag/adapters/ftree_adapter.py` — new `FTreeKGAdapter` wrapping the

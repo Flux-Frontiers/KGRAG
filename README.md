@@ -37,17 +37,19 @@ KGRAG treats **derived structure as ground truth** and uses **semantic embedding
 | `diary` | DiaryKG | Personal diary entries — timestamped chunk graphs with temporal edges |
 | `agent` | AgentKG | Conversational memory — Turn/Topic/Task/Summary graph (live session) |
 | `filetree` | FTreeKG | File system tree — directory/file/module/dependency structure |
+| `memory` | MemoryKG | Episodic memory — hybrid semantic + structural graph for conversation/event corpora |
 
 ### Stub Adapters (protocol boundary, backends under development)
 
-| Kind | Description |
-|------|-------------|
-| `pdbfile` | PDB structure files — 3D atomic coordinates and protein metadata |
-| `disulfide` | Disulfide bond data — cysteine connectivity in protein structures |
-| `verse` | Scripture/verse — Book → Chapter → Verse hierarchy and cross-references |
-| `memory` | Episodic memory — temporal event graphs |
-| `person` | Personal knowledge — biographical and relational graphs |
-| `legal` | Legal corpus — statutory codes and regulations *(TBD)* |
+| Kind | Backend | Description |
+|------|---------|-------------|
+| `gutenberg` | GutenbergKG | Project Gutenberg book corpus — literature indexed by author, genre, and chapter |
+| `ia` | IABookKG | Internet Archive book corpus — public-domain books indexed by genre and topic |
+| `pdbfile` | — | PDB structure files — 3D atomic coordinates and protein metadata |
+| `disulfide` | — | Disulfide bond data — cysteine connectivity in protein structures |
+| `verse` | — | Scripture/verse — Book → Chapter → Verse hierarchy and cross-references |
+| `person` | — | Personal knowledge — biographical and relational graphs |
+| `legal` | — | Legal corpus — statutory codes and regulations *(TBD)* |
 
 ### Corpus Abstractions
 
@@ -203,7 +205,7 @@ The server exposes 22 tools to any MCP-compatible agent (Claude Code, Cursor, Gi
 ```
 Source Domains
      ↓
-PyCodeKG  DocKG  MetaboKG  DiaryKG  AgentKG  FTreeKG  … (stubs)
+PyCodeKG  DocKG  MetaboKG  DiaryKG  AgentKG  FTreeKG  MemoryKG  GutenbergKG  IABookKG  … (stubs)
   SQLite + LanceDB per backend
      ↓
   ┌─────────────────────────────────────────────────────────┐
@@ -246,10 +248,12 @@ src/kg_rag/
 │   ├── metakg_adapter.py    # MetaKGAdapter  (meta / MetaboKG)
 │   ├── diary_adapter.py     # DiaryKGAdapter (diary)
 │   ├── agent_adapter.py     # AgentKGAdapter (agent)
+│   ├── memory_adapter.py    # MemoryKGAdapter (memory)
+│   ├── gutenberg_adapter.py # stub (gutenberg)
+│   ├── ia_adapter.py        # stub (ia)
 │   ├── disulfide_adapter.py # stub
 │   ├── pdbfile_adapter.py   # stub
 │   ├── verse_adapter.py     # stub
-│   ├── memory_adapter.py    # stub
 │   ├── legal_adapter.py     # stub
 │   └── person_adapter.py    # stub
 ├── cli/
@@ -306,6 +310,9 @@ llama_model_path = "~/.kgrag/bge-small-en-v1.5-Q8_0.gguf"
 | [DiaryKG](https://github.com/Flux-Frontiers/diary_kg) | Diary and personal journal corpus knowledge graph |
 | [AgentKG](https://github.com/Flux-Frontiers/agent_kg) | Conversational memory knowledge graph |
 | [FTreeKG](https://github.com/Flux-Frontiers/ftree_kg) | File system tree knowledge graph |
+| [MemoryKG](https://github.com/Flux-Frontiers/memory_kg) | Episodic memory knowledge graph for conversation and event corpora |
+| [GutenbergKG](https://github.com/Flux-Frontiers/gutenberg_kg) | Project Gutenberg book corpus knowledge graph *(under development)* |
+| [IABookKG](https://github.com/Flux-Frontiers/ia_kg) | Internet Archive book corpus knowledge graph *(under development)* |
 
 ---
 

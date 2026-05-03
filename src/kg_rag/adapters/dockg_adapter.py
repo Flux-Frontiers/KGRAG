@@ -117,6 +117,9 @@ class DocKGAdapter(KGAdapter):
                 return []
         snippets = []
         for node in nodes:
+            text = (node.get("excerpt") or node.get("text") or "").strip()
+            if not text:
+                continue
             relevance = node.get("relevance") or {}
             snippets.append(
                 CrossSnippet(
@@ -124,7 +127,7 @@ class DocKGAdapter(KGAdapter):
                     kg_kind=KGKind.DOC,
                     node_id=node["id"],
                     source_path=node.get("file_path") or "",
-                    content=node.get("text") or "",
+                    content=text,
                     score=relevance.get("score", 0.0),
                 )
             )

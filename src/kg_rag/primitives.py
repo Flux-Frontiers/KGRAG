@@ -29,6 +29,8 @@ class KGKind(StrEnum):
     PERSON = "person"
     AGENT = "agent"
     FILETREE = "filetree"
+    GUTENBERG = "gutenberg"
+    IA = "ia"
 
     @classmethod
     def from_str(cls, s: str) -> KGKind:
@@ -305,6 +307,8 @@ class CrossSnippetPack:
         """Render the pack as a single LLM-ready string."""
         parts = [f"# Cross-KG Pack: {self.query!r}\n"]
         for s in self.snippets:
+            if len(s.content.strip()) < 30:
+                continue
             header = f"## [{s.kg_kind.value}:{s.kg_name}] {s.source_path}"
             if s.lineno:
                 header += f":{s.lineno}-{s.end_lineno}"

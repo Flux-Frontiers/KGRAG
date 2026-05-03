@@ -57,7 +57,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "kg-rag"
-version = "0.5.3"
+version = "0.6.0"
 description = "Orchestration layer for the KGRAG(tm) components."
 authors = ["Eric G. Suchanek, PhD <suchanek@mac.com>"]
 license = "Elastic-2.0"
@@ -106,11 +106,11 @@ llama-cpp-python = { version = ">=0.3.0", optional = true }
 
 
 # our own adaptors
-kg-snapshot = { git = "https://github.com/Flux-Frontiers/kg_snapshot.git" }
+kgmodule-utils = ">=0.2.0"
 pycode-kg = {version = ">=0.18.1", optional=true}
 doc-kg = {version = ">=0.12.3", optional=true}
+ftree-kg = {version = ">=0.8.0", optional=true}
 agent-kg = {git = "https://github.com/Flux-Frontiers/agent_kg.git", optional=true}
-ftree-kg = {git = "https://github.com/Flux-Frontiers/ftree_kg.git", optional=true}
 diary-kg = {git = "https://github.com/Flux-Frontiers/diary_kg.git", optional=true}
 metabo-kg = {git = "https://github.com/Flux-Frontiers/metabo_kg.git", optional=true}
 memory-kg = {git = "https://github.com/Flux-Frontiers/memory_kg.git", optional=true}

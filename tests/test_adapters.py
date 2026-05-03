@@ -15,6 +15,9 @@ import pytest
 
 from kg_rag.adapters import make_adapter
 from kg_rag.adapters.dockg_adapter import DocKGAdapter
+from kg_rag.adapters.gutenberg_adapter import GutenbergKGAdapter
+from kg_rag.adapters.ia_adapter import IABookKGAdapter
+from kg_rag.adapters.memory_adapter import MemoryKGAdapter
 from kg_rag.adapters.metakg_adapter import MetaKGAdapter
 from kg_rag.adapters.pycodekg_adaptor import CodeKGAdapter
 from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry, KGKind
@@ -483,3 +486,366 @@ class TestMetaKGAdapterStats:
 
         assert s["node_count"] == 55
         assert s["edge_count"] == 120
+
+
+# ---------------------------------------------------------------------------
+# make_adapter — new kinds
+# ---------------------------------------------------------------------------
+
+
+class TestMakeAdapterNewKinds:
+    def test_memory_kind_returns_memory_adapter(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.MEMORY)
+        adapter = make_adapter(entry)
+        assert isinstance(adapter, MemoryKGAdapter)
+
+    def test_gutenberg_kind_returns_gutenberg_adapter(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.GUTENBERG)
+        adapter = make_adapter(entry)
+        assert isinstance(adapter, GutenbergKGAdapter)
+
+    def test_ia_kind_returns_ia_adapter(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.IA)
+        adapter = make_adapter(entry)
+        assert isinstance(adapter, IABookKGAdapter)
+
+
+# ---------------------------------------------------------------------------
+# MemoryKGAdapter
+# ---------------------------------------------------------------------------
+
+
+class TestMemoryKGAdapterIsAvailable:
+    def test_unavailable_when_import_fails(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.MEMORY)
+        with patch.dict("sys.modules", {"memory_kg": None}):
+            adapter = MemoryKGAdapter(entry)
+            assert adapter.is_available() is False
+
+    def test_unavailable_when_not_built(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.MEMORY)  # no sqlite
+        mock_memory_kg = MagicMock()
+        with patch.dict("sys.modules", {"memory_kg": mock_memory_kg}):
+            adapter = MemoryKGAdapter(entry)
+            assert adapter.is_available() is False
+
+    def test_available_when_built(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.MEMORY, with_sqlite=True)
+        mock_memory_kg = MagicMock()
+        with patch.dict("sys.modules", {"memory_kg": mock_memory_kg}):
+            adapter = MemoryKGAdapter(entry)
+            assert adapter.is_available() is True
+
+
+class TestMemoryKGAdapterQuery:
+    def _make_node(
+        self,
+        id="chunk:docs/x.md:0",
+        kind="chunk",
+        title="Overview",
+        file_path="docs/x.md",
+        text="Some text",
+    ):
+        return {
+            "id": id,
+            "kind": kind,
+            "title": title,
+            "name": None,
+            "file_path": file_path,
+            "text": text,
+        }
+
+    def test_query_returns_cross_hits(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.MEMORY, with_sqlite=True)
+        mock_result = MagicMock()
+        mock_result.nodes = [self._make_node()]
+
+        mock_kg = MagicMock()
+        mock_kg.query.return_value = mock_result
+
+        adapter = MemoryKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        hits = adapter.query("test query", k=5)
+        assert len(hits) == 1
+        assert isinstance(hits[0], CrossHit)
+        assert hits[0].kg_kind == KGKind.MEMORY
+        assert hits[0].source_path == "docs/x.md"
+
+    def test_query_positional_scores_descend(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.MEMORY, with_sqlite=True)
+        nodes = [self._make_node(id=f"chunk:x.md:{i}") for i in range(5)]
+        mock_result = MagicMock()
+        mock_result.nodes = nodes
+
+        mock_kg = MagicMock()
+        mock_kg.query.return_value = mock_result
+
+        adapter = MemoryKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        hits = adapter.query("q", k=5)
+        scores = [h.score for h in hits]
+        assert scores == sorted(scores, reverse=True)
+        assert scores[0] == 1.0
+        assert scores[-1] > 0.0
+
+    def test_query_respects_min_score(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.MEMORY, with_sqlite=True)
+        nodes = [self._make_node(id=f"chunk:x.md:{i}") for i in range(10)]
+        mock_result = MagicMock()
+        mock_result.nodes = nodes
+
+        mock_kg = MagicMock()
+        mock_kg.query.return_value = mock_result
+
+        adapter = MemoryKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        hits = adapter.query("q", k=10, min_score=0.8)
+        assert all(h.score >= 0.8 for h in hits)
+
+    def test_query_semantic_floor_suppresses_all(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.MEMORY, with_sqlite=True)
+        mock_result = MagicMock()
+        mock_result.nodes = [self._make_node()]
+
+        mock_kg = MagicMock()
+        mock_kg.query.return_value = mock_result
+
+        adapter = MemoryKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        # With 1 node, score is 1.0; floor of 1.1 should suppress
+        hits = adapter.query("q", k=5, semantic_floor=1.1)
+        assert hits == []
+
+    def test_query_uses_title_as_name(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.MEMORY, with_sqlite=True)
+        node = self._make_node(title="My Chapter", file_path="book/ch1.md")
+        mock_result = MagicMock()
+        mock_result.nodes = [node]
+
+        mock_kg = MagicMock()
+        mock_kg.query.return_value = mock_result
+
+        adapter = MemoryKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        hits = adapter.query("q")
+        assert hits[0].name == "My Chapter"
+
+
+class TestMemoryKGAdapterPack:
+    def _make_node(
+        self,
+        id="chunk:docs/y.md:0",
+        file_path="docs/y.md",
+        excerpt="Excerpt text",
+        text="Full text",
+    ):
+        return {"id": id, "kind": "chunk", "file_path": file_path, "excerpt": excerpt, "text": text}
+
+    def test_pack_returns_cross_snippets(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.MEMORY, with_sqlite=True)
+        mock_pack = MagicMock()
+        mock_pack.nodes = [self._make_node()]
+
+        mock_kg = MagicMock()
+        mock_kg.pack.return_value = mock_pack
+
+        adapter = MemoryKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        snippets = adapter.pack("test query", k=5)
+        assert len(snippets) == 1
+        s = snippets[0]
+        assert isinstance(s, CrossSnippet)
+        assert s.kg_kind == KGKind.MEMORY
+        assert s.content == "Excerpt text"
+        assert s.source_path == "docs/y.md"
+
+    def test_pack_falls_back_to_text_when_no_excerpt(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.MEMORY, with_sqlite=True)
+        node = {"id": "x", "kind": "chunk", "file_path": "f.md", "text": "Fallback text"}
+        mock_pack = MagicMock()
+        mock_pack.nodes = [node]
+
+        mock_kg = MagicMock()
+        mock_kg.pack.return_value = mock_pack
+
+        adapter = MemoryKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        snippets = adapter.pack("q")
+        assert snippets[0].content == "Fallback text"
+
+    def test_pack_semantic_floor_suppresses_all(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.MEMORY, with_sqlite=True)
+        mock_pack = MagicMock()
+        mock_pack.nodes = [self._make_node()]
+
+        mock_kg = MagicMock()
+        mock_kg.pack.return_value = mock_pack
+
+        adapter = MemoryKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        snippets = adapter.pack("q", semantic_floor=1.1)
+        assert snippets == []
+
+
+class TestMemoryKGAdapterStats:
+    def test_stats_maps_total_nodes_and_edges(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.MEMORY, with_sqlite=True)
+        mock_kg = MagicMock()
+        mock_kg.stats.return_value = {
+            "total_nodes": 120,
+            "total_edges": 300,
+            "node_counts": {"chunk": 100, "section": 20},
+            "edge_counts": {"CONTAINS": 300},
+        }
+
+        adapter = MemoryKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        s = adapter.stats()
+        assert s["kind"] == "memory"
+        assert s["node_count"] == 120
+        assert s["edge_count"] == 300
+        assert s["node_counts"]["chunk"] == 100
+
+    def test_stats_graceful_on_error(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.MEMORY, with_sqlite=True)
+        mock_kg = MagicMock()
+        mock_kg.stats.side_effect = RuntimeError("db gone")
+
+        adapter = MemoryKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        s = adapter.stats()
+        assert s["kind"] == "memory"
+        assert "error" in s
+
+
+class TestMemoryKGAdapterAnalyze:
+    def test_analyze_returns_markdown(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.MEMORY, with_sqlite=True)
+        mock_analyzer = MagicMock()
+        mock_analyzer.run_analysis.return_value = {"stats": {"total_nodes": 80, "total_edges": 200}}
+        mock_analyzer_cls = MagicMock(return_value=mock_analyzer)
+
+        mock_kg = MagicMock()
+        adapter = MemoryKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        mock_analysis_module = MagicMock()
+        mock_analysis_module.MemoryKGAnalyzer = mock_analyzer_cls
+        with patch("kg_rag.adapters.memory_adapter.MemoryKGAdapter._load"):
+            with patch.dict(
+                "sys.modules",
+                {"memory_kg.memorykg_thorough_analysis": mock_analysis_module},
+            ):
+                report = adapter.analyze()
+
+        assert "# MemoryKG Analysis Report" in report
+        assert "80" in report
+
+    def test_analyze_graceful_on_error(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.MEMORY, with_sqlite=True)
+        mock_kg = MagicMock()
+        mock_kg.analyze.side_effect = RuntimeError("analysis boom")
+
+        adapter = MemoryKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        with patch("kg_rag.adapters.memory_adapter.MemoryKGAdapter._load"):
+            with patch.dict("sys.modules", {"memory_kg.memorykg_thorough_analysis": None}):
+                report = adapter.analyze()
+
+        assert "MemoryKG Analysis" in report
+        assert "failed" in report.lower() or "error" in report.lower()
+
+
+# ---------------------------------------------------------------------------
+# GutenbergKGAdapter (stub)
+# ---------------------------------------------------------------------------
+
+
+class TestGutenbergKGAdapterStub:
+    def test_unavailable_when_not_installed(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.GUTENBERG)
+        with patch.dict("sys.modules", {"gutenberg_kg": None}):
+            adapter = GutenbergKGAdapter(entry)
+            assert adapter.is_available() is False
+
+    def test_unavailable_when_not_built(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.GUTENBERG)  # no sqlite
+        mock_pkg = MagicMock()
+        with patch.dict("sys.modules", {"gutenberg_kg": mock_pkg}):
+            adapter = GutenbergKGAdapter(entry)
+            assert adapter.is_available() is False
+
+    def test_query_returns_empty(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.GUTENBERG)
+        adapter = GutenbergKGAdapter(entry)
+        assert adapter.query("any") == []
+
+    def test_pack_returns_empty(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.GUTENBERG)
+        adapter = GutenbergKGAdapter(entry)
+        assert adapter.pack("any") == []
+
+    def test_stats_reports_unavailable(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.GUTENBERG)
+        adapter = GutenbergKGAdapter(entry)
+        s = adapter.stats()
+        assert s.get("available") is False or s.get("status") == "unavailable"
+
+    def test_analyze_reports_unavailable(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.GUTENBERG)
+        adapter = GutenbergKGAdapter(entry)
+        report = adapter.analyze()
+        assert "unavailable" in report.lower()
+
+
+# ---------------------------------------------------------------------------
+# IABookKGAdapter (stub)
+# ---------------------------------------------------------------------------
+
+
+class TestIABookKGAdapterStub:
+    def test_unavailable_when_not_installed(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.IA)
+        with patch.dict("sys.modules", {"ia_kg": None}):
+            adapter = IABookKGAdapter(entry)
+            assert adapter.is_available() is False
+
+    def test_unavailable_when_not_built(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.IA)  # no sqlite
+        mock_pkg = MagicMock()
+        with patch.dict("sys.modules", {"ia_kg": mock_pkg}):
+            adapter = IABookKGAdapter(entry)
+            assert adapter.is_available() is False
+
+    def test_query_returns_empty(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.IA)
+        adapter = IABookKGAdapter(entry)
+        assert adapter.query("any") == []
+
+    def test_pack_returns_empty(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.IA)
+        adapter = IABookKGAdapter(entry)
+        assert adapter.pack("any") == []
+
+    def test_stats_reports_unavailable(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.IA)
+        adapter = IABookKGAdapter(entry)
+        s = adapter.stats()
+        assert s.get("available") is False or s.get("status") == "unavailable"
+
+    def test_analyze_reports_unavailable(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.IA)
+        adapter = IABookKGAdapter(entry)
+        report = adapter.analyze()
+        assert "unavailable" in report.lower()

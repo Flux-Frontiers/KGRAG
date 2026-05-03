@@ -31,16 +31,24 @@ class TestKGKind:
         assert KGKind.CODE.value == "code"
         assert KGKind.DOC.value == "doc"
         assert KGKind.META.value == "meta"
+        assert KGKind.MEMORY.value == "memory"
+        assert KGKind.GUTENBERG.value == "gutenberg"
+        assert KGKind.IA.value == "ia"
 
     def test_from_str_valid(self):
         assert KGKind.from_str("code") == KGKind.CODE
         assert KGKind.from_str("doc") == KGKind.DOC
         assert KGKind.from_str("meta") == KGKind.META
+        assert KGKind.from_str("memory") == KGKind.MEMORY
+        assert KGKind.from_str("gutenberg") == KGKind.GUTENBERG
+        assert KGKind.from_str("ia") == KGKind.IA
 
     def test_from_str_case_insensitive(self):
         assert KGKind.from_str("CODE") == KGKind.CODE
         assert KGKind.from_str("Doc") == KGKind.DOC
         assert KGKind.from_str("META") == KGKind.META
+        assert KGKind.from_str("GUTENBERG") == KGKind.GUTENBERG
+        assert KGKind.from_str("IA") == KGKind.IA
 
     def test_from_str_invalid(self):
         with pytest.raises(ValueError, match="Unknown KG kind"):
@@ -281,13 +289,13 @@ class TestCrossSnippetPackRender:
             kg_kind=KGKind.CODE,
             node_id="fn:src/foo.py:bar",
             source_path="src/foo.py",
-            content="def bar(): pass",
+            content="def bar(x: int) -> int:\n    return x + 1",
             score=0.9,
         )
         rendered = self._make_pack([s]).render()
         assert "code:mykg" in rendered
         assert "src/foo.py" in rendered
-        assert "def bar(): pass" in rendered
+        assert "def bar" in rendered
         # No lineno — should not have colon after path
         assert "src/foo.py:" not in rendered
 
@@ -297,13 +305,36 @@ class TestCrossSnippetPackRender:
             kg_kind=KGKind.CODE,
             node_id="fn:src/foo.py:bar",
             source_path="src/foo.py",
-            content="def bar(): pass",
+            content="def bar(x: int) -> int:\n    return x + 1",
             score=0.9,
             lineno=5,
             end_lineno=7,
         )
         rendered = self._make_pack([s]).render()
         assert "src/foo.py:5-7" in rendered
+
+    def test_render_filters_short_snippets(self):
+        snippets = [
+            CrossSnippet(
+                kg_name="mykg",
+                kg_kind=KGKind.CODE,
+                node_id="x",
+                source_path="src/foo.py",
+                content="see",  # <30 chars — should be filtered
+                score=0.9,
+            ),
+            CrossSnippet(
+                kg_name="mykg",
+                kg_kind=KGKind.CODE,
+                node_id="y",
+                source_path="src/foo.py",
+                content="def real_function():\n    pass  # substantial content",
+                score=0.8,
+            ),
+        ]
+        rendered = self._make_pack(snippets).render()
+        assert "see" not in rendered
+        assert "real_function" in rendered
 
     def test_render_multiple_snippets(self):
         snippets = [
@@ -312,7 +343,7 @@ class TestCrossSnippetPackRender:
                 kg_kind=KGKind.CODE,
                 node_id="x",
                 source_path="a.py",
-                content="aaa",
+                content="def alpha():\n    return 'this is enough content to pass the filter'",
                 score=0.9,
             ),
             CrossSnippet(
@@ -320,12 +351,12 @@ class TestCrossSnippetPackRender:
                 kg_kind=KGKind.DOC,
                 node_id="y",
                 source_path="b.md",
-                content="bbb",
+                content="This section describes the beta feature in detail for users.",
                 score=0.7,
             ),
         ]
         rendered = self._make_pack(snippets).render()
-        assert "aaa" in rendered
-        assert "bbb" in rendered
+        assert "alpha" in rendered
+        assert "beta feature" in rendered
         assert "code:a" in rendered
         assert "doc:b" in rendered

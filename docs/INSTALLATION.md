@@ -2,9 +2,9 @@
 
 ## Prerequisites
 
-- Python 3.10 or later
+- Python 3.12 or later
 - pip or Poetry
-- (Optional) CodeKG, DocKG, or MetaKG already installed in your projects
+- (Optional) PyCodeKG, DocKG, or MetaboKG already installed in your projects
 
 ## Installation
 
@@ -12,6 +12,58 @@
 
 ```bash
 pip install kgrag
+```
+
+### Option 1b: Via pipx (fully contained)
+
+Use this when you want KGRAG, its adapter backends, and all visualization
+dependencies isolated inside one pipx virtual environment.
+
+Using local editable checkouts:
+
+```bash
+pipx install --force --editable '/absolute/path/to/kgrag[kg,viz,viz3d]'
+
+pipx inject --force --editable kg-rag \
+  '/absolute/path/to/pycode_kg[viz,viz3d]' \
+  '/absolute/path/to/doc_kg[viz]' \
+  '/absolute/path/to/ftree_kg' \
+  '/absolute/path/to/agent_kg[viz]' \
+  '/absolute/path/to/diary_kg[viz,viz3d]' \
+  '/absolute/path/to/memory_kg[viz]' \
+  '/absolute/path/to/metabo_kg[viz,viz3d]'
+```
+
+Using GitHub or package specs instead of local checkouts:
+
+```bash
+pipx install --force 'kg-rag[kg,viz,viz3d] @ git+https://github.com/Flux-Frontiers/KGRAG.git'
+
+pipx inject --force kg-rag \
+  'pycode-kg[viz,viz3d]' \
+  'doc-kg[viz]' \
+  'ftree-kg' \
+  'agent-kg[viz] @ git+https://github.com/Flux-Frontiers/agent_kg.git' \
+  'diary-kg[viz,viz3d] @ git+https://github.com/Flux-Frontiers/diary_kg.git' \
+  'memory-kg[viz] @ git+https://github.com/Flux-Frontiers/memory_kg.git' \
+  'metabo-kg[viz,viz3d] @ git+https://github.com/Flux-Frontiers/metabo_kg.git'
+```
+
+Notes:
+
+- This keeps the adapter libraries and visualization stacks inside the pipx
+  environment used by `kgrag`.
+- `pipx install` and `pipx inject` pass these package specs through to `pip`,
+  so local paths, PyPI package names, and `git+https` URLs all work.
+- To keep the setup contained, do not pass `--include-apps` to `pipx inject`
+  unless you explicitly want adapter CLI commands like `dockg` or `pycodekg`
+  exposed on your global `PATH`.
+
+To verify the pipx environment:
+
+```bash
+pipx runpip kg-rag list | egrep 'kg-rag|pycode-kg|doc-kg|ftree-kg|agent-kg|diary-kg|memory-kg|metabo-kg|pyvista|pyvistaqt|PyQt5|pyvis|plotly|streamlit|param|trame-vtk'
+kgrag analyze
 ```
 
 ### Option 2: Via Poetry

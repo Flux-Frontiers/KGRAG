@@ -7,6 +7,8 @@ from kg_rag.adapters.diary_adapter import DiaryKGAdapter
 from kg_rag.adapters.disulfide_adapter import DisulfideKGAdapter
 from kg_rag.adapters.dockg_adapter import DocKGAdapter
 from kg_rag.adapters.ftree_adapter import FTreeKGAdapter
+from kg_rag.adapters.gutenberg_adapter import GutenbergKGAdapter
+from kg_rag.adapters.ia_adapter import IABookKGAdapter
 from kg_rag.adapters.legal_adapter import LegalKGAdapter
 from kg_rag.adapters.memory_adapter import MemoryKGAdapter
 from kg_rag.adapters.metakg_adapter import MetaKGAdapter
@@ -41,6 +43,8 @@ def make_adapter(entry, embedder=None) -> KGAdapter:
         KGKind.PERSON: PersonKGAdapter,
         KGKind.AGENT: AgentKGAdapter,
         KGKind.FILETREE: FTreeKGAdapter,
+        KGKind.GUTENBERG: GutenbergKGAdapter,
+        KGKind.IA: IABookKGAdapter,
     }
     cls = _map.get(entry.kind)
     if cls is None:
@@ -63,5 +67,7 @@ __all__ = [
     "AgentKGAdapter",
     "PersonKGAdapter",
     "FTreeKGAdapter",
+    "GutenbergKGAdapter",
+    "IABookKGAdapter",
     "make_adapter",
 ]

@@ -376,6 +376,60 @@ def corpus_query(corpus_name, query_text, k, as_json, registry):
     )
 
 
+# ---------------------------------------------------------------------------
+# corpus pack
+# ---------------------------------------------------------------------------
+
+
+@corpus_group.command("pack")
+@click.argument("corpus_name")
+@click.argument("query_text")
+@k_option
+@click.option("--out", "out_path", default=None, metavar="FILE", help="Write output to FILE.")
+@click.option(
+    "--semantic-floor",
+    "semantic_floor",
+    default=0.0,
+    show_default=True,
+    help="Minimum score the top snippet must reach; KGs scoring below this are suppressed.",
+)
+@registry_option
+def corpus_pack(corpus_name, query_text, k, out_path, semantic_floor, registry):
+    """Produce a snippet pack scoped to a named corpus.
+
+    \b
+    CORPUS_NAME  Name or UUID of the corpus to query
+    QUERY_TEXT   Natural-language query string
+
+    Example:
+
+    \b
+        kgrag corpus pack gutenberg-american-literature "whale hunting at sea" -k 5
+        kgrag corpus pack my-project "auth flow" --semantic-floor 0.4 --out context.md
+    """
+    from kg_rag.orchestrator import KGRAG  # pylint: disable=import-outside-toplevel
+
+    db_path = Path(registry).resolve() if registry else None
+
+    with KGRAG(registry_path=db_path) as orch:
+        try:
+            result = orch.pack_corpus(corpus_name, query_text, k=k, semantic_floor=semantic_floor)
+        except KeyError as e:
+            console.print(f"[red]{e}[/red]")
+            raise SystemExit(1)
+
+    rendered = result.render()
+
+    if out_path:
+        Path(out_path).write_text(rendered, encoding="utf-8")
+        console.print(
+            f"[green]Written[/green] {result.total_tokens_approx} tokens "
+            f"({len(result.snippets)} snippets) → {out_path}"
+        )
+    else:
+        console.print(rendered)
+
+
 # ===========================================================================
 # Person corpus subgroup  (kgrag corpus person ...)
 # ===========================================================================
@@ -773,3 +827,57 @@ def person_query(person_name, query_text, k, as_json, registry):
     console.print(
         f"\n[dim]Total hits: {result.total_hits}  |  KGs queried: {result.kgs_queried}[/dim]"
     )
+
+
+# ---------------------------------------------------------------------------
+# corpus person pack
+# ---------------------------------------------------------------------------
+
+
+@person_group.command("pack")
+@click.argument("person_name")
+@click.argument("query_text")
+@k_option
+@click.option("--out", "out_path", default=None, metavar="FILE", help="Write output to FILE.")
+@click.option(
+    "--semantic-floor",
+    "semantic_floor",
+    default=0.0,
+    show_default=True,
+    help="Minimum score the top snippet must reach; KGs scoring below this are suppressed.",
+)
+@registry_option
+def person_pack(person_name, query_text, k, out_path, semantic_floor, registry):
+    """Produce a snippet pack scoped to a person corpus.
+
+    \b
+    PERSON_NAME  Name or UUID of the person corpus
+    QUERY_TEXT   Natural-language query string
+
+    Example:
+
+    \b
+        kgrag corpus person pack "Jane Doe" "childhood memories" -k 5
+        kgrag corpus person pack alice "travel experiences" --semantic-floor 0.4 --out alice_context.md
+    """
+    from kg_rag.orchestrator import KGRAG  # pylint: disable=import-outside-toplevel
+
+    db_path = Path(registry).resolve() if registry else None
+
+    with KGRAG(registry_path=db_path) as orch:
+        try:
+            result = orch.pack_person(person_name, query_text, k=k, semantic_floor=semantic_floor)
+        except KeyError as e:
+            console.print(f"[red]{e}[/red]")
+            raise SystemExit(1)
+
+    rendered = result.render()
+
+    if out_path:
+        Path(out_path).write_text(rendered, encoding="utf-8")
+        console.print(
+            f"[green]Written[/green] {result.total_tokens_approx} tokens "
+            f"({len(result.snippets)} snippets) → {out_path}"
+        )
+    else:
+        console.print(rendered)
