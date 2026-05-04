@@ -240,7 +240,7 @@ Use `kgrag_pack` for broad context gathering, then switch to `pack_snippets` (py
 
 All tools that accept a `kind` filter or `kinds` array support:
 
-`code` · `doc` · `meta` · `diary` · `verse` · `memory` · `disulfide` · `pdbfile` · `legal` · `person`
+`code` · `doc` · `meta` · `diary` · `agent` · `filetree` · `memory` · `gutenberg` · `ia` · `verse` · `disulfide` · `pdbfile` · `legal` · `person`
 
 ---
 

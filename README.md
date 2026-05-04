@@ -18,12 +18,14 @@
 ## Overview
 
 <p align="center">
-  <img src="assets/kgrag_infographic.png" alt="KGRAG architecture infographic" width="720"/>
+  <img src="assets/kgrag_arch.png" alt="KGRAG architecture" width="720"/>
 </p>
 
 KGRAG is a **federation and orchestration layer** for structural knowledge graphs derived from heterogeneous source domains. It integrates [PyCodeKG](https://github.com/Flux-Frontiers/pycode_kg) (Python codebase analysis), [DocKG](https://github.com/Flux-Frontiers/doc_kg) (semantic document indexing), [MetaboKG](https://github.com/Flux-Frontiers/metabo_kg) (metabolic pathways), [DiaryKG](https://github.com/Flux-Frontiers/diary_kg) (personal diary corpora), [AgentKG](https://github.com/Flux-Frontiers/agent_kg) (conversational memory), [FTreeKG](https://github.com/Flux-Frontiers/ftree_kg) (file system trees), and a growing family of domain-specific backends under a **single five-method adapter protocol**.
 
 KGRAG treats **derived structure as ground truth** and uses **semantic embeddings strictly as an acceleration layer** for locating entry points into that structure. All graph traversal, ranking, and snippet extraction is deterministic. When KGRAG output is passed to a language model for synthesis, the model receives verified facts with full source provenance — not approximate embeddings.
+
+→ [Technical paper](articles/kgrag.pdf) · [Manifesto](docs/MANIFESTO.md)
 
 ---
 
@@ -79,8 +81,6 @@ KGRAG treats **derived structure as ground truth** and uses **semantic embedding
 
 ## Quick Start
 
-### 1. Install KGRAG
-
 ```bash
 pip install kg-rag
 
@@ -94,220 +94,61 @@ pip install 'kg-rag[kg]'
 poetry install --with kgdeps
 ```
 
-### 2. Register a Knowledge Graph
-
 ```bash
-# Register a Python codebase (requires pycode-kg built in that repo)
+# Register a Python codebase
 kgrag register my-code code /path/to/my-repo
 
-# Register a document corpus (requires doc-kg built in that repo)
-kgrag register my-docs doc /path/to/docs-repo
-
-# Register a diary corpus
-kgrag register pepys-diary diary /path/to/diary-repo
-```
-
-### 3. Query Your Graphs
-
-```bash
 # Federated query across all registered KGs
 kgrag query "authentication flow"
 
-# Federated snippet pack for LLM ingestion
+# Snippet pack for LLM ingestion
 kgrag pack "database connection setup" --out context.md
 
-# Scope to a specific corpus
-kgrag query "disulfide bond patterns" --scope my-corpus
-kgrag pack "journal entries about travel" --scope alice
-```
-
-### 4. Launch the Dashboard
-
-```bash
+# Launch the dashboard
 kgrag viz
 ```
 
----
-
-## CLI Reference
-
-### Registry Management
-
-| Command | Description |
-|---------|-------------|
-| `kgrag register <name> <kind> <path>` | Register a KG instance |
-| `kgrag unregister <name>` | Remove a KG from the registry |
-| `kgrag list [--kind <kind>]` | List all registered KGs |
-| `kgrag info <name>` | Show detailed info for a KG |
-| `kgrag status [--stats]` | Check health and live stats |
-| `kgrag init` | Interactively register a new KG |
-
-### Query & Analysis
-
-| Command | Description |
-|---------|-------------|
-| `kgrag query <q> [--kind <kind>] [--scope <name>]` | Federated semantic query |
-| `kgrag pack <q> [--kind <kind>] [--scope <name>] [--out <file>]` | Snippet pack for LLM |
-| `kgrag analyze <name>` | Full analysis report for one KG |
-| `kgrag synthesize <q>` | KG-grounded synthesis via local LLM (Ollama) |
-
-### Corpus Management
-
-| Command | Description |
-|---------|-------------|
-| `kgrag corpus create <name>` | Create a named corpus |
-| `kgrag corpus add <corpus> <kg>` | Add a KG to a corpus |
-| `kgrag corpus remove <corpus> <kg>` | Remove a KG from a corpus |
-| `kgrag corpus list` | List all corpora |
-| `kgrag corpus query <name> <q>` | Query within a corpus |
-| `kgrag corpus pack <name> <q>` | Snippet pack within a corpus |
-
-### Person Corpus Management
-
-| Command | Description |
-|---------|-------------|
-| `kgrag person create <name>` | Create a person corpus |
-| `kgrag person add <person> <kg>` | Add a KG to a person corpus |
-| `kgrag person update <name> [--email ...] [--notes ...]` | Update personal metadata |
-| `kgrag person query <name> <q>` | Query across a person's KGs |
-| `kgrag person pack <name> <q>` | Snippet pack for a person |
-
-### Server & Integration
-
-| Command | Description |
-|---------|-------------|
-| `kgrag mcp` | Launch MCP server (stdio transport) |
-| `kgrag viz` | Launch Streamlit dashboard |
-| `kgrag hooks install` | Install pre-commit snapshot hook |
+→ [Full installation guide](docs/INSTALLATION.md) · [Usage guide](docs/USAGE.md) · [CLI reference](docs/CLI_REFERENCE.md)
 
 ---
 
 ## MCP Integration
 
-Launch the MCP server:
+KGRAG ships a built-in MCP server exposing **22 tools** to any MCP-compatible agent (Claude Code, Cursor, GitHub Copilot, Claude Desktop):
 
 ```bash
 kgrag mcp
 ```
 
-The server exposes 22 tools to any MCP-compatible agent (Claude Code, Cursor, GitHub Copilot, Cline, Claude Desktop):
+```json
+{
+  "mcpServers": {
+    "kgrag": {
+      "command": "/path/to/venv/bin/kgrag",
+      "args": ["mcp"]
+    }
+  }
+}
+```
 
-**Registry tools:**
+Tools span three groups: **core KG** (`kgrag_stats`, `kgrag_list`, `kgrag_info`, `kgrag_query`, `kgrag_pack`), **corpus** (8 tools), and **person corpus** (9 tools).
 
-| Tool | Description |
-|------|-------------|
-| `kgrag_stats()` | Registry summary: KG count, kinds, built status |
-| `kgrag_list([kind])` | List registered KG entries |
-| `kgrag_info(name)` | Full detail for a single KG entry |
-| `kgrag_query(q, [k, kinds])` | Federated semantic query, JSON result |
-| `kgrag_pack(q, [k, kinds])` | Federated snippet pack, Markdown output |
-
-**Corpus tools:** `kgrag_corpus_list`, `kgrag_corpus_info`, `kgrag_corpus_create`, `kgrag_corpus_delete`, `kgrag_corpus_add`, `kgrag_corpus_remove`, `kgrag_corpus_query`, `kgrag_corpus_pack`
-
-**Person tools:** `kgrag_person_list`, `kgrag_person_info`, `kgrag_person_create`, `kgrag_person_delete`, `kgrag_person_add`, `kgrag_person_remove`, `kgrag_person_update`, `kgrag_person_query`, `kgrag_person_pack`
+→ [Full MCP reference](docs/MCP.md)
 
 ---
 
-## Architecture
+## Documentation
 
-```
-Source Domains
-     ↓
-PyCodeKG  DocKG  MetaboKG  DiaryKG  AgentKG  FTreeKG  MemoryKG  GutenbergKG  IABookKG  … (stubs)
-  SQLite + LanceDB per backend
-     ↓
-  ┌─────────────────────────────────────────────────────────┐
-  │          KGAdapter (five-method protocol)               │
-  ├─────────────────────────────────────────────────────────┤
-  │   KGRAG Orchestrator · KGRegistry · CorpusRegistry      │
-  │              PersonCorpusRegistry                       │
-  └─────────────────────────────────────────────────────────┘
-             ↓                         ↓
-        CLI / Python API          MCP Server (stdio)
-     (query, pack, analyze)   (AI agents, Claude Code)
-```
-
-### Design Principles
-
-1. **Derived structure is authoritative** — graphs are extracted from formal sources by deterministic programs; embeddings are derived and disposable
-2. **Semantics accelerate; structure decides** — vector search locates entry points; BFS traversal determines what is returned
-3. **Every result is traceable** — every node carries a stable identifier encoding its origin
-4. **Determinism over approximation** — identical inputs produce identical outputs
-5. **Generality through protocol** — five adapter methods; no orchestrator changes needed for new domains
-6. **Independence from language models** — the full build and query pipeline runs locally without any LLM call
-
----
-
-## Project Structure
-
-```
-src/kg_rag/
-├── orchestrator.py          # KGRAG — cross-KG orchestrator
-├── registry.py              # KGRegistry — SQLite-backed KG registry
-├── corpus_registry.py       # CorpusRegistry — named corpus groups
-├── person_registry.py       # PersonCorpusRegistry — person-centric corpora
-├── primitives.py            # KGKind, KGEntry, CrossHit, CrossSnippet, …
-├── embed.py                 # Embedder abstraction (SentenceTransformer, LlamaCpp)
-├── adapters/
-│   ├── base.py              # KGAdapter ABC (five abstract methods)
-│   ├── _stub_adapter.py     # StubKGAdapter base for unbuilt backends
-│   ├── pycodekg_adaptor.py  # CodeKGAdapter  (code)
-│   ├── dockg_adapter.py     # DocKGAdapter   (doc)
-│   ├── metakg_adapter.py    # MetaKGAdapter  (meta / MetaboKG)
-│   ├── diary_adapter.py     # DiaryKGAdapter (diary)
-│   ├── agent_adapter.py     # AgentKGAdapter (agent)
-│   ├── memory_adapter.py    # MemoryKGAdapter (memory)
-│   ├── gutenberg_adapter.py # stub (gutenberg)
-│   ├── ia_adapter.py        # stub (ia)
-│   ├── disulfide_adapter.py # stub
-│   ├── pdbfile_adapter.py   # stub
-│   ├── verse_adapter.py     # stub
-│   ├── legal_adapter.py     # stub
-│   └── person_adapter.py    # stub
-├── cli/
-│   ├── main.py              # root Click group
-│   ├── cmd_registry.py      # register, unregister, list, info, status, init
-│   ├── cmd_query.py         # query, pack
-│   ├── cmd_corpus.py        # corpus CRUD + query/pack
-│   ├── cmd_analyze.py       # analyze
-│   ├── cmd_synthesize.py    # synthesize (Ollama-grounded)
-│   ├── cmd_mcp.py           # mcp
-│   ├── cmd_viz.py           # viz (Streamlit)
-│   ├── cmd_hooks.py         # hooks install
-│   └── cmd_models.py        # models (embedder config)
-├── mcp_server.py            # MCP server (22 tools, stdio transport)
-└── app.py                   # Streamlit dashboard
-```
-
----
-
-## Installation
-
-**Requirements:** Python ≥ 3.12, < 3.14
-
-```bash
-# Core
-pip install kg-rag
-
-# With Streamlit dashboard
-pip install 'kg-rag[viz]'
-
-# With KG adapters (PyCodeKG, DocKG, FTreeKG)
-pip install 'kg-rag[kg]'
-
-# Poetry
-poetry add kg-rag
-```
-
-### Embedding Backend (ARM / Raspberry Pi)
-
-KGRAG supports `llama.cpp`-based embedding for low-power deployment. Configure in `pyproject.toml`:
-
-```toml
-[tool.kgrag]
-embed_backend    = "llama"
-llama_model_path = "~/.kgrag/bge-small-en-v1.5-Q8_0.gguf"
-```
+| Document | Description |
+|----------|-------------|
+| [Technical Paper](articles/kgrag.pdf) | Architecture, design principles, and formal treatment |
+| [Manifesto](docs/MANIFESTO.md) | The case for Structurally-Grounded Synthetic Intelligence |
+| [Installation Guide](docs/INSTALLATION.md) | Prerequisites, venv setup, extras |
+| [Usage Guide](docs/USAGE.md) | Workflows, patterns, and examples |
+| [CLI Reference](docs/CLI_REFERENCE.md) | Complete command reference |
+| [MCP Reference](docs/MCP.md) | Tool reference and agent configuration |
+| [Adapter Spec](docs/ADAPTER_SPEC.md) | Five-method protocol for new backends |
+| [Troubleshooting](docs/TROUBLESHOOTING.md) | Common issues and fixes |
 
 ---
 
