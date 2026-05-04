@@ -3,6 +3,7 @@
 [![Version](https://img.shields.io/badge/version-0.6.0-blue.svg)](https://github.com/Flux-Frontiers/KGRAG/releases)
 [![CI](https://github.com/Flux-Frontiers/KGRAG/actions/workflows/ci.yml/badge.svg)](https://github.com/Flux-Frontiers/KGRAG/actions/workflows/ci.yml)
 [![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20018525.svg)](https://doi.org/10.5281/zenodo.20018525)
 
 <p align="center">
   <img src="assets/logo_256.png" alt="KGRAG logo" width="256"/>
@@ -331,5 +332,7 @@ llama_model_path = "~/.kgrag/bge-small-en-v1.5-Q8_0.gguf"
 [Elastic License 2.0](https://www.elastic.co/licensing/elastic-license) — see [LICENSE](LICENSE).
 
 Free to use, modify, and distribute. You may not offer the software as a hosted or managed service to third parties. Commercial internal use is permitted.
+
+If you use KGRAG in research, please cite: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20018525.svg)](https://doi.org/10.5281/zenodo.20018525)
 
 *The Knowledge Compiler concept and its execution are the subject of a pending U.S. provisional patent application.*
