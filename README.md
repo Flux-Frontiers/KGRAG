@@ -3,7 +3,6 @@
 [![Version](https://img.shields.io/badge/version-0.6.0-blue.svg)](https://github.com/Flux-Frontiers/KGRAG/releases)
 [![CI](https://github.com/Flux-Frontiers/KGRAG/actions/workflows/ci.yml/badge.svg)](https://github.com/Flux-Frontiers/KGRAG/actions/workflows/ci.yml)
 [![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
-[![DOI](https://zenodo.org/badge/PLACEHOLDER.svg)](https://zenodo.org/badge/latestdoi/PLACEHOLDER)
 
 <p align="center">
   <img src="assets/logo_256.png" alt="KGRAG logo" width="256"/>
@@ -16,6 +15,10 @@
 ---
 
 ## Overview
+
+<p align="center">
+  <img src="assets/kgrag_infographic.png" alt="KGRAG architecture infographic" width="720"/>
+</p>
 
 KGRAG is a **federation and orchestration layer** for structural knowledge graphs derived from heterogeneous source domains. It integrates [PyCodeKG](https://github.com/Flux-Frontiers/pycode_kg) (Python codebase analysis), [DocKG](https://github.com/Flux-Frontiers/doc_kg) (semantic document indexing), [MetaboKG](https://github.com/Flux-Frontiers/metabo_kg) (metabolic pathways), [DiaryKG](https://github.com/Flux-Frontiers/diary_kg) (personal diary corpora), [AgentKG](https://github.com/Flux-Frontiers/agent_kg) (conversational memory), [FTreeKG](https://github.com/Flux-Frontiers/ftree_kg) (file system trees), and a growing family of domain-specific backends under a **single five-method adapter protocol**.
 
@@ -85,6 +88,9 @@ pip install 'kg-rag[viz]'
 
 # With PyCodeKG / DocKG / FTreeKG adapters
 pip install 'kg-rag[kg]'
+
+# With git-sourced adapters (AgentKG, DiaryKG, MetaboKG, MemoryKG) — Poetry only
+poetry install --with kgdeps
 ```
 
 ### 2. Register a Knowledge Graph
