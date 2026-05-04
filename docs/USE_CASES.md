@@ -30,7 +30,7 @@ A new engineer joins the team. The codebase has 40+ modules, 1,500+ nodes. Readi
 
 ```bash
 # What are the most important things in this codebase?
-codekg centrality
+pycodekg centrality
 
 Rank  Score     Kind      Name         Inbound  XMod  Module
 ----  --------  --------  -----------  -------  ----  --------------------------
@@ -47,7 +47,7 @@ In 30 seconds, the new engineer knows: `KGRegistry.get()` is the most-called met
 
 ```bash
 # What is the federation system and how does it work?
-codekg query "federated query orchestration"
+pycodekg query "federated query orchestration"
 
 module   src/kg_rag/orchestrator.py      orchestrator
 method   src/kg_rag/orchestrator.py      KGRAG.query      — Federated query across all KGs
@@ -65,7 +65,7 @@ The new engineer now sees exactly which file, which class, and which methods imp
 
 ```bash
 # Give me code snippets to read, not just names
-codekg pack "how does the KG adapter get loaded and cached"
+pycodekg pack "how does the KG adapter get loaded and cached"
 ```
 
 Output includes the actual source of `KGAdapter` (abstract base, lines 15–55), `make_adapter` factory, and `KGRAG._get_adapter` — the three pieces needed to understand the plugin system — with file paths and line numbers.
@@ -79,7 +79,7 @@ Output includes the actual source of `KGAdapter` (abstract base, lines 15–55),
 A PR changes `KGRegistry.get()`. Before merging, the reviewer needs to know: what calls this? What breaks?
 
 ```bash
-codekg query "registry get lookup"
+pycodekg query "registry get lookup"
 
 # Results show 22 callers including:
 method   KGRegistry.get          — the method itself
@@ -103,7 +103,7 @@ The reviewer immediately sees the blast radius: 22 callers across 19 modules. Th
 
 ```bash
 # Fan-in analysis — what's most fragile to change?
-codekg analyze
+pycodekg analyze
 
 Most Called Functions (Fan-In):
   get        22 callers
@@ -123,7 +123,7 @@ Any change to `get`, `list`, or `stats` on `KGRegistry` requires reviewing all c
 Monthly architecture review. Engineering lead wants a full structural health report without scheduling 2 hours of meetings.
 
 ```bash
-codekg analyze
+pycodekg analyze
 # Writes to analysis/KGRAG_analysis_20260314.md
 
 ✓ Baseline metrics:      1,567 nodes, 1,858 edges
@@ -149,7 +149,7 @@ The full report (written to a Markdown file) includes: CodeRank top-25 ranking, 
 
 ```bash
 # Track architecture evolution across commits
-codekg viz-timeline
+pycodekg viz-timeline
 # Shows: node count, edge count, docstring coverage, top centrality nodes
 # plotted across the last 10 commits
 ```
@@ -161,7 +161,7 @@ codekg viz-timeline
 A bug report: "The adapter isn't loading when the KG library is missing." The engineer has never worked in this area.
 
 ```bash
-codekg query "adapter loading library not installed graceful fallback"
+pycodekg query "adapter loading library not installed graceful fallback"
 
 method   CodeKGAdapter.is_available  — Return True if code_kg is installed and DB exists
 method   MetaKGAdapter.is_available  — Return True if metakg is installed and DB is built
@@ -172,7 +172,7 @@ EDGES:
   KGRAG._get_adapter -[CALLS]-> MetaKGAdapter.is_available
 ```
 
-Two exact files, four exact methods. Navigate to `src/kg_rag/orchestrator.py:KGRAG._get_adapter` and `src/kg_rag/adapters/codekg_adapter.py:CodeKGAdapter.is_available`. Bug found and fixed in minutes.
+Two exact files, four exact methods. Navigate to `src/kg_rag/orchestrator.py:KGRAG._get_adapter` and `src/kg_rag/adapters/pycodekg_adaptor.py:CodeKGAdapter.is_available`. Bug found and fixed in minutes.
 
 ---
 
@@ -181,7 +181,7 @@ Two exact files, four exact methods. Navigate to `src/kg_rag/orchestrator.py:KGR
 A senior engineer wants to change the `KGEntry` dataclass — add a field, rename one.
 
 ```bash
-codekg query "KGEntry data model construction"
+pycodekg query "KGEntry data model construction"
 
 class    KGEntry           — core registry entry dataclass
 method   KGEntry.is_built  — True if at least one DB exists
@@ -202,7 +202,7 @@ Before making any change: the engineer knows `_row_to_entry` is the only factory
 A developer wants to add a new CLI subcommand. Where does new code go? What patterns to follow?
 
 ```bash
-codekg query "CLI command registration pattern"
+pycodekg query "CLI command registration pattern"
 
 function  cli              — root CLI group (src/kg_rag/cli/group.py)
 function  query            — query subcommand (src/kg_rag/cli/cmd_query.py)
@@ -616,7 +616,7 @@ Every result shown above was produced **without a single LLM call**.
 
 **The analysis pipeline (build, analyze, centrality, architecture) is pure computation over the graph.** The only inference involved is the one-time embedding of docstrings at build time — a local model, run once, cached permanently.
 
-The viz interface (`kgrag viz`, `codekg viz`) is a Streamlit app that queries the local SQLite and LanceDB directly. No network calls during interactive exploration.
+The viz interface (`kgrag viz`, `pycodekg viz`) is a Streamlit app that queries the local SQLite and LanceDB directly. No network calls during interactive exploration.
 
 ---
 
@@ -624,9 +624,9 @@ The viz interface (`kgrag viz`, `codekg viz`) is a Streamlit app that queries th
 
 | Role | Primary KG | Top Commands | Time to Value |
 |------|-----------|-------------|---------------|
-| **New hire** | CodeKG + DocKG | `codekg centrality`, `kgrag query` | Day 1 |
-| **Code reviewer** | CodeKG | `codekg query <changed fn>`, fan-in from `analyze` | Per PR, 30 seconds |
-| **Tech lead** | CodeKG | `codekg analyze`, `codekg viz-timeline` | Monthly, automated |
+| **New hire** | CodeKG + DocKG | `pycodekg centrality`, `kgrag query` | Day 1 |
+| **Code reviewer** | CodeKG | `pycodekg query <changed fn>`, fan-in from `analyze` | Per PR, 30 seconds |
+| **Tech lead** | CodeKG | `pycodekg analyze`, `pycodekg viz-timeline` | Monthly, automated |
 | **On-call engineer** | DocKG | `dockg query <symptom>` | Per incident, instant |
 | **Technical writer** | DocKG | `dockg analyze`, SIMILAR_TO edges | Monthly audit |
 | **Data scientist** | MetaKG + DocKG | `kgrag query <hypothesis>` | Per experiment |

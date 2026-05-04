@@ -206,6 +206,11 @@ falls back to a stats-based summary. The fallback includes:
 - Node count and edge count (if the orchestrator exposes `stats()`)
 - A note directing implementors to add `MetaKGOrchestrator.analyze()`
 
+**GutenbergKGAdapter** — delegates to `doc_kg.dockg_thorough_analysis.DocKGAnalyzer`,
+identical in structure to `DocKGAdapter.analyze()`. The report header reads
+`# GutenbergKG Analysis Report` and the corpus path is the registered `repo_path`.
+Returns an unavailability notice (no exception raised) when `is_available()` is False.
+
 **Future adapters** — the analyze report format is open. Implement what is
 meaningful for your domain. At minimum include the three required elements above.
 
@@ -602,6 +607,17 @@ class CrossSnippet:
 | CodeKG-Python | `code` | `pycode-kg` | `CodeKG.analyze()` | ✅ Production |
 | DocKG | `doc` | `doc-kg` | `DocKGAnalyzer.run_analysis()` | ✅ Production |
 | MetaKG | `meta` | `metakg` | `MetaKGOrchestrator.analyze()` + fallback | ✅ Adapter ready |
+| DiaryKG | `diary` | `diary-kg` | `DiaryKG` stats summary | ✅ Adapter ready |
+| AgentKG | `agent` | `agent-kg` | `AgentKG` session report | ✅ Adapter ready |
+| MemoryKG | `memory` | `memory-kg` | `MemoryKG` stats summary | ✅ Adapter ready |
+| FTreeKG | `filetree` | `ftree-kg` | `FTreeKG` stats summary | ✅ Adapter ready |
+| GutenbergKG | `gutenberg` | `doc-kg` | `DocKGAnalyzer.run_analysis()` | ✅ Adapter ready |
+| IABookKG | `ia` | `ia-kg` (planned) | — | 🔲 Stub |
+| VerseKG | `verse` | `verse-kg` (planned) | — | 🔲 Stub |
+| LegalKG | `legal` | `legal-kg` (planned) | — | 🔲 Stub |
+| PersonKG | `person` | `person-kg` (planned) | — | 🔲 Stub |
+| DisulfideKG | `disulfide` | `disulfide-kg` (planned) | — | 🔲 Stub |
+| PDBFileKG | `pdbfile` | `pdbfile-kg` (planned) | — | 🔲 Stub |
 | CodeKG-TypeScript | `code` | `tskg` (planned) | `TypeScriptKG.analyze()` | 🔲 Planned |
 | CodeKG-Cpp | `code` | `cppkg` (planned) | `CppKG.analyze()` | 🔲 Planned |
 | SchemaKG | `meta` | `schemakg` (planned) | `SchemaKGAnalyzer.run_analysis()` | 🔲 Planned |

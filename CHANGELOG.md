@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`GutenbergKGAdapter`** promoted from stub to full implementation
+  (`src/kg_rag/adapters/gutenberg_adapter.py`). Delegates to `doc_kg.DocKG`
+  for all five `KGAdapter` methods (`is_available`, `query`, `pack`, `stats`,
+  `analyze`, `_collect_snapshot_metrics`). Each registered `kind=gutenberg`
+  entry points to a DocKG-compatible index built by the `gutenberg_kg` ingest
+  pipeline (typically `<corpus-dir>/.dockg/graph.sqlite`); falls back to
+  `<repo>/.gutenbergkg/graph.sqlite` for auto-detected paths. Returns
+  `KGKind.GUTENBERG` in all `CrossHit` / `CrossSnippet` results.
+- **All `KGKind` values** now have entries in `_KG_KIND_COLOR` and
+  `_KG_KIND_ICON` in `src/kg_rag/app.py` — `gutenberg`, `ia`, `diary`,
+  `verse`, `memory`, `agent`, `filetree`, `legal`, `disulfide`, `pdbfile`,
+  and `person` each have a distinct badge color and icon in the Streamlit
+  visualizer.
+- **`_fmt_domain`** in `src/kg_rag/cli/cmd_registry.py` now handles
+  `kind=gutenberg` — `kgrag status --stats` renders doc-style counts
+  (docs / chunks / topics / entities) for Gutenberg corpus entries.
+
+### Changed
+
 - **Logo asset suite** — transparent-background PNG logos at six sizes (32, 64,
   128, 256, 512, 1024 px) derived from the master `kgrag_logo_1024x1024.png`
   source using flood-fill alpha extraction and FASTOCTREE quantisation.

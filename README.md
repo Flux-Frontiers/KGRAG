@@ -26,7 +26,7 @@ KGRAG is a **federation and orchestration layer** for structural knowledge graph
 KGRAG treats **derived structure as ground truth** and uses **semantic embeddings strictly as an acceleration layer** for locating entry points into that structure. All graph traversal, ranking, and snippet extraction is deterministic. When KGRAG output is passed to a language model for synthesis, the model receives verified facts with full source provenance — not approximate embeddings.
 
 **How this differs from RAG and KG-RAG:**
-Standard RAG embeds documents and retrieves by vector similarity — the retrieval unit is a chunk of text, the ranking is approximate, and there is no structure. Existing KG-RAG systems (GraphRAG, LlamaIndex KG) use a language model to *extract* entities and relationships from text: the resulting graph is inferred, not derived, and inherits the hallucination risk of the extractor. KGRAG builds its graphs from **formal source structure** — abstract syntax trees for code, document parse trees for prose, reaction schemas for biochemistry — without any language model participation in graph construction. The graph is correct by construction, not by inference. Embeddings are disposable; the graph is not.
+RAG embeds text chunks and retrieves by approximate similarity — no structure, no provenance. KG-RAG (GraphRAG, LlamaIndex KG) uses an LLM to extract entities and edges from text: the graph is inferred, inheriting the extractor's hallucinations. KGRAG derives its graphs from **formal source structure** — ASTs for code, parse trees for prose, reaction schemas for biochemistry — with no language model in the pipeline. The graph is correct by construction. Embeddings are disposable; the graph is not. The retrieval layer **cannot** hallucinate.
 
 → [Technical paper](articles/kgrag.pdf) · [Manifesto](docs/MANIFESTO.md)
 
@@ -45,12 +45,12 @@ Standard RAG embeds documents and retrieves by vector similarity — the retriev
 | `agent` | AgentKG | Conversational memory — Turn/Topic/Task/Summary graph (live session) |
 | `filetree` | FTreeKG | File system tree — directory/file/module/dependency structure |
 | `memory` | MemoryKG | Episodic memory — hybrid semantic + structural graph for conversation/event corpora |
+| `gutenberg` | GutenbergKG | Project Gutenberg book corpus — literature indexed by author, genre, and chapter via DocKG-compatible indices |
 
 ### Stub Adapters (protocol boundary, backends under development)
 
 | Kind | Backend | Description |
 |------|---------|-------------|
-| `gutenberg` | GutenbergKG | Project Gutenberg book corpus — literature indexed by author, genre, and chapter |
 | `ia` | IABookKG | Internet Archive book corpus — public-domain books indexed by genre and topic |
 | `pdbfile` | — | PDB structure files — 3D atomic coordinates and protein metadata |
 | `disulfide` | — | Disulfide bond data — cysteine connectivity in protein structures |
@@ -166,7 +166,7 @@ Tools span three groups: **core KG** (`kgrag_stats`, `kgrag_list`, `kgrag_info`,
 | [AgentKG](https://github.com/Flux-Frontiers/agent_kg) | Conversational memory knowledge graph |
 | [FTreeKG](https://github.com/Flux-Frontiers/ftree_kg) | File system tree knowledge graph |
 | [MemoryKG](https://github.com/Flux-Frontiers/memory_kg) | Episodic memory knowledge graph for conversation and event corpora |
-| [GutenbergKG](https://github.com/Flux-Frontiers/gutenberg_kg) | Project Gutenberg book corpus knowledge graph *(under development)* |
+| [GutenbergKG](https://github.com/Flux-Frontiers/gutenberg_kg) | Project Gutenberg book corpus knowledge graph |
 | [IABookKG](https://github.com/Flux-Frontiers/ia_kg) | Internet Archive book corpus knowledge graph *(under development)* |
 
 ---

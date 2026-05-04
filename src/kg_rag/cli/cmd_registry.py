@@ -276,6 +276,17 @@ def _fmt_domain(s: dict) -> str:
         if s.get("reaction_count"):
             parts.append(f"rxns:{s['reaction_count']}")
         return "  ".join(parts) or "—"
+    if kind == "gutenberg":
+        parts = []
+        if s.get("document_count"):
+            parts.append(f"docs:{s['document_count']}")
+        if s.get("chunk_count"):
+            parts.append(f"chunks:{s['chunk_count']}")
+        if s.get("topic_count"):
+            parts.append(f"topics:{s['topic_count']}")
+        if s.get("entity_count"):
+            parts.append(f"entities:{s['entity_count']}")
+        return "  ".join(parts) or "—"
     if kind in ("diary", "memory", "verse"):
         ec = s.get("entry_count", 0)
         return f"entries:{ec}"

@@ -30,12 +30,34 @@ _KG_KIND_COLOR: dict[str, str] = {
     "code": "#4A90D9",  # blue
     "doc": "#27AE60",  # green
     "meta": "#8E44AD",  # purple
+    "gutenberg": "#8B4513",  # saddle brown
+    "ia": "#C0392B",  # red
+    "diary": "#D4A017",  # amber
+    "verse": "#C2185B",  # rose
+    "memory": "#00838F",  # teal
+    "agent": "#4527A0",  # deep purple
+    "filetree": "#00695C",  # dark teal
+    "legal": "#1A237E",  # navy
+    "disulfide": "#E65100",  # deep orange
+    "pdbfile": "#37474F",  # blue grey
+    "person": "#F57F17",  # yellow
 }
 
 _KG_KIND_ICON: dict[str, str] = {
     "code": "💻",
     "doc": "📄",
     "meta": "🧬",
+    "gutenberg": "📚",
+    "ia": "🏛️",
+    "diary": "📔",
+    "verse": "📜",
+    "memory": "🧠",
+    "agent": "🤖",
+    "filetree": "🌲",
+    "legal": "⚖️",
+    "disulfide": "🔗",
+    "pdbfile": "🗂️",
+    "person": "👤",
 }
 
 _NODE_KIND_COLOR: dict[str, str] = {
