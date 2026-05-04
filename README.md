@@ -25,6 +25,9 @@ KGRAG is a **federation and orchestration layer** for structural knowledge graph
 
 KGRAG treats **derived structure as ground truth** and uses **semantic embeddings strictly as an acceleration layer** for locating entry points into that structure. All graph traversal, ranking, and snippet extraction is deterministic. When KGRAG output is passed to a language model for synthesis, the model receives verified facts with full source provenance — not approximate embeddings.
 
+**How this differs from RAG and KG-RAG:**
+Standard RAG embeds documents and retrieves by vector similarity — the retrieval unit is a chunk of text, the ranking is approximate, and there is no structure. Existing KG-RAG systems (GraphRAG, LlamaIndex KG) use a language model to *extract* entities and relationships from text: the resulting graph is inferred, not derived, and inherits the hallucination risk of the extractor. KGRAG builds its graphs from **formal source structure** — abstract syntax trees for code, document parse trees for prose, reaction schemas for biochemistry — without any language model participation in graph construction. The graph is correct by construction, not by inference. Embeddings are disposable; the graph is not.
+
 → [Technical paper](articles/kgrag.pdf) · [Manifesto](docs/MANIFESTO.md)
 
 ---
