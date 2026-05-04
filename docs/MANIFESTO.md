@@ -38,13 +38,35 @@ That is the difference. Not smarter guessing. Grounded knowing.
 
 ---
 
-## The Knowledge Press: A Proof of Concept
+## The Pattern in Practice
 
-GutenbergKG — *The Knowledge Press* — is the first public demonstration of SGSI at scale. Seventy-eight of history's most important works — 445,486 nodes, 4,525,716 edges — indexed as a unified, queryable knowledge graph using the DocKG + KGRAG framework.
+SGSI is not a proposal awaiting validation. It runs in production today across three radically different domains. Each demonstrates a different facet of what becomes possible when retrieval is grounded in formal structure rather than learned probability.
+
+### Code — PyCodeKG
+
+A Python codebase is a formal structure. The grammar specifies every legal program, and a deterministic parser extracts every function, class, import, and call site without inference. PyCodeKG walks the AST of every module in a repository and stores the typed relationships that actually hold the code together — `CONTAINS`, `CALLS`, `IMPORTS`, `INHERITS`, `RESOLVES_TO` — in SQLite, with a LanceDB vector index alongside.
+
+The result is a graph that knows things `grep` cannot derive. Ask *"who calls `AuthMiddleware.process_request`?"* and a two-phase reverse traversal returns every call site, including those that go through import aliases. Ask *"what are the bridge nodes in this codebase?"* and a betweenness centrality computation surfaces the architectural pinch points. Snapshot the graph across releases and watch where complexity migrates. The call graph is not an approximation — it is a theorem about the source code.
+
+### Metabolism — MetaboKG
+
+This is the case no probabilistic system can match. MetaboKG ingests metabolic pathways in the formats biology actually publishes in — KGML, SBML, BioPAX — and normalizes them into a unified graph of compounds, reactions, enzymes, and pathways with typed relationships (`SUBSTRATE_OF`, `PRODUCT_OF`, `CATALYZES`, `INHIBITS`, `ACTIVATES`). The complete *Homo sapiens* metabolome is 369 pathways, 17,000+ nodes, 40,000+ edges. The iCHO2441 genome-scale model adds 6,337 reactions, 4,174 metabolites, and 2,441 gene products.
+
+What makes MetaboKG unique is that the structural graph is also a *dynamical model*. The same nodes that answer *"trace the shortest path from glucose to ATP"* can be simulated: flux balance analysis on the steady state, kinetic ODE simulations with time courses, perturbation analysis where enzymes are knocked out and downstream effects are computed. No language model can simulate metabolism. KGRAG, sitting on top of MetaboKG, exposes both the structural query surface *and* the simulation surface to an AI agent over MCP. This is SGSI extended past retrieval, into computation.
+
+### Literature — GutenbergKG
+
+GutenbergKG — *The Knowledge Press* — demonstrates that the same pattern scales. Seventy-eight of history's most important works — 445,486 nodes, 4,525,716 edges — indexed as a unified, queryable knowledge graph using the DocKG + KGRAG framework.
 
 The name is deliberate. The Gutenberg press did not change what was written — it changed who could hold it. The Knowledge Press does the same for structured knowledge: any digitized text source, whether Project Gutenberg, the Internet Archive, or a local file corpus, feeds into the same ingestion pipeline and emerges as a queryable knowledge graph. The source is irrelevant; the structure is everything.
 
-It is a proof of concept for what becomes possible when all 75,000 works in the Project Gutenberg corpus — and the millions more in the Internet Archive — are treated not as downloadable files but as a living, queryable knowledge structure: the entire written record of human civilization, held in mind simultaneously, answerable in seconds.
+When all 75,000 works in the Project Gutenberg corpus — and the millions more in the Internet Archive — are treated not as downloadable files but as a living, queryable knowledge structure, the entire written record of human civilization becomes answerable in seconds, with every claim traceable to a specific passage in a specific work.
+
+### One Architecture
+
+Three domains. Three pipelines. One pattern: take whatever formal structure the source already has — grammar, ontology, document hierarchy — and build the knowledge graph from it. Add semantic embeddings strictly as an acceleration layer for finding entry points. Federate. Query deterministically. Synthesize, when needed, from verified facts.
+
+The same architecture handles ASTs, metabolic networks, and Russian novels because every one of them has a derivable structure. Where formal structure exists, SGSI applies. The only open question is which domain to model next.
 
 ---
 
@@ -61,5 +83,9 @@ The era of probabilistic AI has been transformative. The era of SGSI will be def
 ---
 
 *First usage of the term "Structurally-Grounded Synthetic Intelligence": April 23, 2026.*
-*GutenbergKG repository: https://github.com/Flux-Frontiers/gutenberg_kg*
+
+*KGRAG: https://github.com/Flux-Frontiers/KGRAG*
+*PyCodeKG: https://github.com/Flux-Frontiers/pycode_kg*
+*MetaboKG: https://github.com/Flux-Frontiers/metabo_kg*
+*GutenbergKG: https://github.com/Flux-Frontiers/gutenberg_kg*
 *Flux-Frontiers: https://github.com/Flux-Frontiers*
