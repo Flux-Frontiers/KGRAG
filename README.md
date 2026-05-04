@@ -1,17 +1,15 @@
 [![Python](https://img.shields.io/badge/python-3.12%20%7C%203.13-blue.svg)](https://www.python.org/)
 [![License: Elastic-2.0](https://img.shields.io/badge/License-Elastic%202.0-blue.svg)](https://www.elastic.co/licensing/elastic-license)
-[![Version](https://img.shields.io/badge/version-0.5.1-blue.svg)](https://github.com/Flux-Frontiers/KGRAG/releases)
+[![Version](https://img.shields.io/badge/version-0.6.0-blue.svg)](https://github.com/Flux-Frontiers/KGRAG/releases)
 [![CI](https://github.com/Flux-Frontiers/KGRAG/actions/workflows/ci.yml/badge.svg)](https://github.com/Flux-Frontiers/KGRAG/actions/workflows/ci.yml)
 [![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
 [![DOI](https://zenodo.org/badge/PLACEHOLDER.svg)](https://zenodo.org/badge/latestdoi/PLACEHOLDER)
 
 <p align="center">
-  <img src="assets/logo.png" alt="KGRAG logo" width="256"/>
+  <img src="assets/logo_256.png" alt="KGRAG logo" width="256"/>
 </p>
 
 **KGRAG** — Knowledge Compiler and Federated Retrieval Layer for Ontologically Grounded Domains
-
-*Patent Pending — The Knowledge Compiler concept and its execution are the subject of a pending U.S. provisional patent application.*
 
 *Author: Eric G. Suchanek, PhD · Flux-Frontiers, Liberty TWP, OH*
 
@@ -80,10 +78,13 @@ KGRAG treats **derived structure as ground truth** and uses **semantic embedding
 ### 1. Install KGRAG
 
 ```bash
-pip install 'kg-rag @ git+https://github.com/Flux-Frontiers/KGRAG.git'
+pip install kg-rag
 
 # With Streamlit dashboard
-pip install 'kg-rag[viz] @ git+https://github.com/Flux-Frontiers/KGRAG.git'
+pip install 'kg-rag[viz]'
+
+# With PyCodeKG / DocKG / FTreeKG adapters
+pip install 'kg-rag[kg]'
 ```
 
 ### 2. Register a Knowledge Graph
@@ -279,13 +280,16 @@ src/kg_rag/
 
 ```bash
 # Core
-pip install 'kg-rag @ git+https://github.com/Flux-Frontiers/KGRAG.git'
+pip install kg-rag
 
 # With Streamlit dashboard
-pip install 'kg-rag[viz] @ git+https://github.com/Flux-Frontiers/KGRAG.git'
+pip install 'kg-rag[viz]'
+
+# With KG adapters (PyCodeKG, DocKG, FTreeKG)
+pip install 'kg-rag[kg]'
 
 # Poetry
-poetry add 'kg-rag @ git+https://github.com/Flux-Frontiers/KGRAG.git'
+poetry add kg-rag
 ```
 
 ### Embedding Backend (ARM / Raspberry Pi)
@@ -321,3 +325,5 @@ llama_model_path = "~/.kgrag/bge-small-en-v1.5-Q8_0.gguf"
 [Elastic License 2.0](https://www.elastic.co/licensing/elastic-license) — see [LICENSE](LICENSE).
 
 Free to use, modify, and distribute. You may not offer the software as a hosted or managed service to third parties. Commercial internal use is permitted.
+
+*The Knowledge Compiler concept and its execution are the subject of a pending U.S. provisional patent application.*

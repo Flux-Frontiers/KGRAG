@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Logo asset suite** — transparent-background PNG logos at six sizes (32, 64,
+  128, 256, 512, 1024 px) derived from the master `kgrag_logo_1024x1024.png`
+  source using flood-fill alpha extraction and FASTOCTREE quantisation.
+  Reduces the 1024 px master from 1.2 MB to 130 KB (89% reduction).
+- **`assets/kgrag_infographic.png`** — project infographic added to the assets
+  directory.
+- **`assets/brands.md`** — gitignored (internal brand spec; not for public
+  distribution).
+
+### Changed
+
+- **`pyproject.toml`** — git-sourced KG adapters (`agent-kg`, `diary-kg`,
+  `metabo-kg`, `memory-kg`) moved from `[tool.poetry.dependencies]` to a new
+  optional `[tool.poetry.group.kgdeps]` group so PyPI publishing succeeds.
+  VCS URLs in published package metadata are rejected by PyPI. Local installs
+  still pull these via `poetry install --with kgdeps`.
+- **`pyproject.toml`** — `kg` extra narrowed to PyPI-publishable adapters only:
+  `pycode-kg`, `ftree-kg`, `doc-kg`. Git-sourced adapters removed from extras.
+- **`pyproject.toml`** — `Development Status` classifier corrected from invalid
+  `1 - Alpha` to `4 - Beta`.
+- **`README.md`** — version badge updated to 0.6.0; install instructions
+  switched from git-URL form to plain `pip install kg-rag`; logo updated to
+  `assets/logo_256.png` (transparent background).
+
 ## [0.6.0] - 2026-05-03
 
 ### Added

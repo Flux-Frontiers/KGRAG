@@ -66,7 +66,7 @@ homepage = "https://github.com/Flux-Frontiers/kg_rag"
 repository = "https://github.com/Flux-Frontiers/kg_rag"
 keywords = ["knowledge-graph", "code-analysis", "ast", "lancedb", "sqlite", "semantic-search", "kgrag"]
 classifiers = [
-    "Development Status :: 1 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
@@ -110,10 +110,6 @@ kgmodule-utils = ">=0.2.0"
 pycode-kg = {version = ">=0.18.1", optional=true}
 doc-kg = {version = ">=0.12.3", optional=true}
 ftree-kg = {version = ">=0.8.0", optional=true}
-agent-kg = {git = "https://github.com/Flux-Frontiers/agent_kg.git", optional=true}
-diary-kg = {git = "https://github.com/Flux-Frontiers/diary_kg.git", optional=true}
-metabo-kg = {git = "https://github.com/Flux-Frontiers/metabo_kg.git", optional=true}
-memory-kg = {git = "https://github.com/Flux-Frontiers/memory_kg.git", optional=true}
 
 
 [tool.poetry.extras]
@@ -121,7 +117,7 @@ viz = ["streamlit", "pyvis", "plotly"]
 viz2d = ["PyQt5"]
 qt = ["PyQt5"]
 viz3d = ["pyvista", "pyvistaqt", "PyQt5", "param", "markdown", "trame-vtk"]
-kg = ["diary-kg", "pycode-kg", "agent-kg", "ftree-kg", "metabo-kg", "doc-kg", "memory-kg"]
+kg = ["pycode-kg", "ftree-kg", "doc-kg"]
 pi = ["llama-cpp-python"]
 
 [tool.poetry.group.qt]
@@ -140,6 +136,15 @@ PyQt5 = ">=5.15.0"
 param = ">=2.0.0"
 markdown = ">=3.6"
 trame-vtk = ">=2.0.0"
+
+[tool.poetry.group.kgdeps]
+optional = true
+
+[tool.poetry.group.kgdeps.dependencies]
+agent-kg = {git = "https://github.com/Flux-Frontiers/agent_kg.git"}
+diary-kg = {git = "https://github.com/Flux-Frontiers/diary_kg.git"}
+metabo-kg = {git = "https://github.com/Flux-Frontiers/metabo_kg.git"}
+memory-kg = {git = "https://github.com/Flux-Frontiers/memory_kg.git"}
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=8.0.0"
