@@ -19,6 +19,7 @@ The PyCodeKG logo establishes the visual language: a stylized cybernetic brain f
 
 | Logo | Accent Color | Hex |
 |---|---|---|
+| SGSI | Platinum + structural navy | `#D8E0EC` / `#1E3A5F` |
 | KGRAG | Gold + spectrum satellites | `#FFD700` |
 | PyCodeKG | Teal | `#00D4D4` |
 | DocKG | Amber | `#FF8C00` |
@@ -31,6 +32,14 @@ The PyCodeKG logo establishes the visual language: a stylized cybernetic brain f
 ---
 
 ## Logo Prompts
+
+### SGSI -- Structurally-Grounded Synthetic Intelligence
+
+*The meta-concept. The paradigm under which KGRAG and all KGs sit. One rung above the family — same brand DNA, with two deliberate departures: an internal icosahedron (geometry-as-axiom, not a casual node cluster) and a crystalline pedestal beneath the brain (the mind grounded on derived structure). Platinum + structural-navy distinguishes the field from any single product.*
+
+> Flat vector logo. A stylized cybernetic brain viewed from the side. The outer shell is smooth steel-grey (#6E7899), divided into distinct lobe-region panels by sharp geometric seam lines. The panel surfaces carry a fine hex-grid or angular circuit-trace texture in a slightly lighter tone (#8A97BB), giving the form depth and tech character without gradients or shading. This is a machine mind, not biological tissue — no gyri, no sulci, no organic curves. The silhouette is clearly brain-shaped but unmistakably synthetic. Inside the brain, the knowledge graph is rendered as a **perfect crystalline icosahedron** — twelve glowing platinum-white nodes (#D8E0EC) at the vertices, connected by clean straight edges that trace every face of the polyhedron, forming a precise geometric lattice that fills the cranial cavity. The icosahedron is rotated three-quarters so several faces are visible; edges in front are bright, edges behind are dimmer to give honest geometric depth without 3D shading. Six of the vertex nodes carry small domain symbols rendered in deep structural navy (#1E3A5F): a lambda symbol (formal grammar / code), a hexagonal benzene ring (chemical structure / metabolism), a Greek alpha (scripture / text), a Q.E.D. tombstone "∎" (proof), a capital sigma "Σ" (synthesis), and a right-arrow "→" (derivation). The remaining six vertex nodes are unmarked — pure structural points. Beneath the brain, a small visible **crystalline foundation pedestal** — a translucent geometric base of intersecting platinum-white triangular panels, like the brain is resting on a perfect tetrahedral plinth — signifying that the mind is grounded on derived structure. Below the pedestal, "SGSI" in bold clean Futura sans-serif, deep structural navy #1E3A5F. Beneath, in smaller lighter weight, the subtitle "Structurally-Grounded Synthetic Intelligence" in platinum #5B7FA8. Fully transparent background (PNG with alpha). No drop shadows. No 3D shading. No gradients on the brain shell. No lens flares. No photorealism. The aesthetic is geometric, axiomatic, theorem-like — every line is exact. Square composition 1024x1024.
+
+---
 
 ### KGRAG -- The Orchestrator
 
@@ -87,4 +96,4 @@ The PyCodeKG logo establishes the visual language: a stylized cybernetic brain f
 - **DALL-E 3** -- prompts above work as-is; request SVG-friendly flat style in the system message
 - **Stable Diffusion XL** -- use with a flat-vector LoRA; set PyCodeKG logo as style reference image
 
-**For a cohesive set:** Generate all eight in one session using the same style reference. The KGRAG logo is the hero -- its multi-colored satellite nodes make the federation architecture self-evident at a glance.
+**For a cohesive set:** Generate all nine in one session using the same style reference. SGSI is the umbrella concept (platinum + crystalline pedestal). The KGRAG logo is the orchestration hero -- its multi-colored satellite nodes make the federation architecture self-evident at a glance. The remaining seven are domain-specific siblings.

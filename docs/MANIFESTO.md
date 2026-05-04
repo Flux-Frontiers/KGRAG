@@ -36,6 +36,8 @@ Ask an SGSI system the same question — one built on a knowledge graph of the a
 
 That is the difference. Not smarter guessing. Grounded knowing.
 
+→ This is not a thought experiment. See [Stoics vs. Russians on Suffering and Redemption](STOICS_VS_RUSSIANS.md) — a recorded live KGRAG run answering this exact question against the actual texts, with every passage carrying full source provenance.
+
 ---
 
 ## The Pattern in Practice
