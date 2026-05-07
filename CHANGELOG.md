@@ -9,6 +9,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`GutenbergKGAdapter` corpus-level status and snapshot methods**
+  (`src/kg_rag/adapters/gutenberg_adapter.py`) — five new methods delegate
+  to `gutenberg_kg.corpus` (the new path-parametrised library layer) rather
+  than reimplementing logic in the adapter. `corpus_status()` returns live
+  per-genre counts from the KGRAG registry; `snapshot_save()` captures and
+  writes a timestamped JSON snapshot; `snapshot_list()` / `snapshot_show()` /
+  `snapshot_diff()` query the `corpus/.snapshots/` archive. Three private
+  helpers (`_corpus_lib`, `_registry`, `_snapshots_dir`) centralise the lazy
+  import and path resolution. Module docstring added with author / revision /
+  Elastic 2.0 licence header.
+- **WaveRider brand identity** added to `assets/brands.md` — visual language
+  for the geometric-ML product family: curved triangulated manifold surface,
+  ManifoldWalker trajectory nodes, orthonormal tangent frame, extrinsic
+  observer hovering above, coral `#FF6B35` / steel-blue `#5B7FA8` palette.
+  Document title updated to *Flux-Frontiers* to cover both KG and WaveRider
+  families; WaveRider colour-palette row added to the family table.
+
+### Changed
+
+- **`docs/STOICS_VS_RUSSIANS.md`** — updated corpus statistics to the current
+  state (175 books, 850,208 nodes, 16,920,494 edges, 13 genres); identified
+  the synthesizer as **Qwen3:4b** (4 B params, Ollama, 16 K context); added
+  a paragraph explaining why grounded retrieval makes small models sufficient;
+  dated the demo run (5 May 2026).
+
+### Removed
+
+- **`docs/AGENT_PERSPECTIVE.md`** — superseded by the live SGSI demonstration
+  in `docs/STOICS_VS_RUSSIANS.md`; removed to keep the docs directory focused
+  on user-facing material.
+
+### Added
+
 - **SGSI brand identity** — `assets/sgsi_logo.png` and `assets/sgsi_logo.svg`,
   the meta-paradigm logo sitting above the KG family. Two deliberate
   departures from the family template: an internal crystalline icosahedron

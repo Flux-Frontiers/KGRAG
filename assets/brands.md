@@ -1,6 +1,15 @@
-# KG Family -- Brand Identity & Logo Generation Prompts
+# Flux-Frontiers -- Brand Identity & Logo Generation Prompts
 
-## Brand DNA
+This document covers two product families:
+
+1. **KG Family** — knowledge-graph products (KGRAG, PyCodeKG, DocKG, MemoryKG, GutenbergKG, DiaryKG, AgentKG, FTreeKG) and the umbrella paradigm (SGSI). Visual metaphor: cybernetic brain with internal node-edge graph.
+2. **WaveRider Family** — geometric ML / manifold-aware optimization. Visual metaphor: a curved manifold surface with an extrinsic observer hovering above.
+
+Both families share the same **style strategy**: flat vector, transparent background, no gradients, no drop shadows, no 3D shading, no photorealism, square 1024x1024, wordmark below in clean Futura sans-serif.
+
+---
+
+## KG Family — Brand DNA
 
 The PyCodeKG logo establishes the visual language: a stylized cybernetic brain filled with glowing KG nodes and domain-specific symbols, with a wordmark below in clean sans-serif. The brain is not biological — it is a machine-intelligence silhouette: smooth steel panels, angular circuit traces, and hex-grid surface texture. Every logo in the family follows this template — same cybernetic brain form, same node-edge graph iconography inside, different accent color and internal symbols. All logos use a transparent background.
 
@@ -28,6 +37,7 @@ The PyCodeKG logo establishes the visual language: a stylized cybernetic brain f
 | DiaryKG | Rose | `#FF6B8A` |
 | AgentKG | Electric Blue | `#00B4FF` |
 | FTreeKG | Lime | `#7FBA00` |
+| **WaveRider** *(separate family)* | Coral / sunset | `#FF6B35` |
 
 ---
 
@@ -97,3 +107,37 @@ The PyCodeKG logo establishes the visual language: a stylized cybernetic brain f
 - **Stable Diffusion XL** -- use with a flat-vector LoRA; set PyCodeKG logo as style reference image
 
 **For a cohesive set:** Generate all nine in one session using the same style reference. SGSI is the umbrella concept (platinum + crystalline pedestal). The KGRAG logo is the orchestration hero -- its multi-colored satellite nodes make the federation architecture self-evident at a glance. The remaining seven are domain-specific siblings.
+
+---
+
+## WaveRider Family
+
+WaveRider is a separate product family from the KG stack — geometric ML rather than knowledge graphs. It shares the Flux-Frontiers brand strategy (flat vector, transparent background, no shading, wordmark below, square 1024x1024) but uses a different central metaphor: **the manifold and its observer**, drawn directly from the technical substance — TurtleND's orthonormal frame, ManifoldWalker's tangent-step trajectory, ManifoldObserver hovering at altitude in the (N+1)-dim ambient space.
+
+**Shared rules (WaveRider):**
+- Central element: a curved triangulated manifold surface (saddle-shaped, ~8×6 quads), three-quarter perspective, in cool steel-blue `#5B7FA8` wireframe + lighter translucent face fill `#A8C0D8`
+- Trajectory: 6 glowing coral nodes (`#FF6B35`) connected by short straight edges, bending with the curvature
+- Tangent frame: at the latest trajectory node — two short perpendicular arrows on the tangent plane, coral
+- Observer: an upward-pointing triangle with circular "eye" inset, hovering above; three thin sensor lines descend to specific trajectory nodes
+- Axis hint: tiny `e₁`, `e₂`, `e₃` labels in lower-left corner — implies higher-dim ambient
+- Wordmark: Futura sans-serif, coral `#FF6B35`; subtitle in steel-blue `#5B7FA8`
+- Background: fully transparent (PNG with alpha)
+- No gradients, no drop shadows, no 3D shading on the mesh, no lens flares
+- Square composition, 1024x1024
+
+### Color Palette (WaveRider)
+
+| Element | Color | Hex |
+|---|---|---|
+| Manifold wireframe | Steel-blue | `#5B7FA8` |
+| Manifold face fill | Pale steel-blue | `#A8C0D8` |
+| Trajectory + tangent frame + wordmark | Coral / sunset | `#FF6B35` |
+| Observer body | Deep navy | `#1E3A5F` |
+| Observer eye pupil | Coral | `#FF6B35` |
+| Subtitle, axis labels | Steel-blue | `#5B7FA8` |
+
+---
+
+### WaveRider — Manifold-Aware Geometric ML
+
+> Flat vector logo. The central element is a **curved triangulated manifold surface** rendered in three-quarter perspective — a section of a smooth 2D surface embedded in 3D space, drawn as a clean triangular wireframe mesh in cool steel-blue (#5B7FA8) with the visible faces filled in a slightly lighter translucent tone (#A8C0D8). The mesh is dense enough to read as a curved surface (roughly 8×6 quads) and gently saddle-shaped — neither flat nor extreme — so the curvature is unmistakable. **Across the surface**, a discrete trajectory of 6 glowing coral nodes (#FF6B35) connected by short straight edges traces a path that bends with the surface — this is the ManifoldWalker's tangent-step sequence. At the **latest node** in the trajectory (rightmost), a small **orthonormal frame** is drawn: two short perpendicular arrows lying flat against the tangent plane, in bright coral (#FF6B35), one slightly bolder than the other. **Hovering above the surface** at altitude, a small geometric **observer instrument** — an upward-pointing triangle with a circular "eye" inset at its center, rendered in deep navy (#1E3A5F) with a coral pupil (#FF6B35). Three thin **sensor lines** descend from the observer's base vertices to three specific nodes on the trajectory below, indicating the (N+1)-dim extrinsic vantage. In the **lower-left corner**, three small axis labels — `e₁`, `e₂`, `e₃` — in cool steel-blue (#5B7FA8), suggesting that the visible 3D scene is itself embedded in higher dimensions. Below the manifold scene, "WaveRider" in bold clean Futura sans-serif, coral #FF6B35. Beneath, in smaller lighter weight, the subtitle "Manifold-Aware Geometric ML" in cool steel-blue (#5B7FA8). Fully transparent background (PNG with alpha). No drop shadows. No gradient fills (the translucent face tone is flat). No 3D shading on the mesh — just the clean wireframe and flat-fill faces. No lens flares. No photorealism. The aesthetic is technical, instrument-like, and geometric — every line is exact. Square composition 1024x1024.

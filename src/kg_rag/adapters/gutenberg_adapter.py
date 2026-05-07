@@ -1,7 +1,22 @@
-"""gutenberg_adapter.py — KGAdapter for GutenbergKG (Project Gutenberg book corpus)."""
+"""
+gutenberg_adapter.py
+
+KGAdapter for GutenbergKG — Project Gutenberg book corpus.
+
+Wraps a DocKG-backed knowledge graph built by the ``gutenberg_kg`` ingest
+pipeline and exposes the standard KGRAG adapter interface (query, pack, stats,
+analyze, snapshot).  Also provides corpus-level status and snapshot methods
+that delegate to ``gutenberg_kg.corpus``, covering the full genre collection
+rather than a single registered KG entry.
+
+Author: Eric G. Suchanek, PhD
+Last Revision: 2026-05-06
+License: Elastic 2.0
+"""
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from kg_rag.adapters.base import KGAdapter
@@ -269,3 +284,117 @@ class GutenbergKGAdapter(KGAdapter):
             }
         except Exception:  # pylint: disable=broad-exception-caught
             return {}
+
+    # ------------------------------------------------------------------
+    # Corpus-level status & snapshot methods (delegate to gutenberg_kg.corpus)
+    # ------------------------------------------------------------------
+
+    def _corpus_lib(self):
+        """Lazy import of gutenberg_kg.corpus; raises ImportError if absent."""
+        try:
+            import gutenberg_kg.corpus as _c  # pylint: disable=import-outside-toplevel
+
+            return _c
+        except ImportError as exc:
+            raise ImportError("gutenberg-kg is not installed") from exc
+
+    def _registry(self, registry_path: str | None) -> Path:
+        return Path(registry_path) if registry_path else Path.home() / ".kgrag" / "registry.sqlite"
+
+    def _snapshots_dir(self) -> Path:
+        return self.entry.repo_path / "corpus" / ".snapshots"
+
+    def corpus_status(self, registry_path: str | None = None) -> dict[str, Any]:
+        """Return live corpus-wide statistics from the KGRAG registry.
+
+        Reads per-book SQLite databases directly — no rebuild required.
+
+        :param registry_path: Override KGRAG registry path
+            (default: ``~/.kgrag/registry.sqlite``).
+        :return: Status dict with ``kind``, ``timestamp``, ``version``,
+            ``totals``, and ``genres``.
+        """
+        try:
+            lib = self._corpus_lib()
+        except ImportError:
+            return {
+                "kind": "corpus_status",
+                "available": False,
+                "error": "gutenberg-kg is not installed",
+            }
+        reg = self._registry(registry_path)
+        if not reg.exists():
+            return {
+                "kind": "corpus_status",
+                "available": False,
+                "error": f"Registry not found: {reg}",
+            }
+        try:
+            return lib.corpus_status(reg, self.entry.repo_path, self.entry.repo_path / "corpus")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            return {"kind": "corpus_status", "available": False, "error": str(exc)}
+
+    def snapshot_save(
+        self,
+        output: str | None = None,
+        registry_path: str | None = None,
+    ) -> dict[str, Any]:
+        """Capture current corpus metrics and save a timestamped snapshot.
+
+        :param output: Override output file path
+            (default: ``<repo>/corpus/.snapshots/snapshot-<ts>.json``).
+        :param registry_path: Override KGRAG registry path.
+        :return: The saved snapshot dict.
+        :raises FileNotFoundError: If the registry is not found.
+        :raises ImportError: If gutenberg-kg is not installed.
+        """
+        lib = self._corpus_lib()
+        reg = self._registry(registry_path)
+        if not reg.exists():
+            raise FileNotFoundError(f"Registry not found: {reg}")
+        _, snap = lib.snapshot_save(
+            reg,
+            self.entry.repo_path,
+            self.entry.repo_path / "corpus",
+            Path(output) if output else None,
+        )
+        return snap
+
+    def snapshot_list(self) -> list[dict[str, Any]]:
+        """List saved corpus snapshots, oldest first.
+
+        :return: List of snapshot dicts; empty if none found or gutenberg-kg absent.
+        """
+        try:
+            return self._corpus_lib().snapshot_list(self._snapshots_dir())
+        except ImportError:
+            return []
+
+    def snapshot_show(self, snapshot: str | None = None) -> dict[str, Any]:
+        """Return the full dict for a snapshot.
+
+        :param snapshot: Filename or timestamp prefix to match
+            (default: most recent).
+        :return: Snapshot dict, or ``{}`` if not found or gutenberg-kg absent.
+        """
+        try:
+            return self._corpus_lib().snapshot_show(self._snapshots_dir(), snapshot)
+        except ImportError:
+            return {}
+
+    def snapshot_diff(
+        self,
+        a: str | None = None,
+        b: str | None = None,
+    ) -> dict[str, Any]:
+        """Return a structured diff between two snapshots.
+
+        :param a: First snapshot filename or prefix (default: second-to-last).
+        :param b: Second snapshot filename or prefix (default: most recent).
+        :return: Diff dict with ``a``, ``b``, ``totals``, and ``changed_genres``;
+            or ``{"error": ...}`` if insufficient snapshots or gutenberg-kg absent.
+        """
+        try:
+            return self._corpus_lib().snapshot_diff(self._snapshots_dir(), a, b)
+        except ImportError:
+            return {"error": "gutenberg-kg is not installed"}

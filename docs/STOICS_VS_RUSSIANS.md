@@ -1,6 +1,6 @@
 # Stoics vs. Russian Novelists on Suffering and Redemption
 
-*A live SGSI demonstration*
+*A live SGSI demonstration* (5/4/26)
 
 **A recorded run of the question posed in [the Manifesto](MANIFESTO.md):
 *"How do the Stoics and Russian novelists differ in their understanding of
@@ -10,7 +10,7 @@ This document is the actual output of a KGRAG federated query against
 GutenbergKG, captured verbatim. The retrieval was deterministic — every
 passage below was extracted by a deterministic parser from the formal
 document structure of the source text and indexed in DocKG. A language
-model then synthesized the analysis from those retrieved passages, with
+model (Qwen3:4b with 16K context running on Ollama), then synthesized the analysis from those retrieved passages, with
 every claim quoted directly. Nothing in the cited passages was learned by
 the synthesizer; they were *held* in the graph.
 
@@ -145,12 +145,17 @@ synthesis layer (the LLM that composed the analysis) could in principle
 hallucinate, but was constrained to direct quotes. Every quote is verbatim
 from KGRAG output.
 
+The synthesizer was **Qwen3:4b** (4-billion parameter model, running locally
+via Ollama with 16K context). A frontier model was not needed — because the
+retrieval layer delivered verified passages, not approximate embeddings.
+Grounded context makes smaller models sufficient.
+
 ## Note on corpus coverage
 
 Epictetus's *Discourses* is not yet in the registered corpus, so Marcus
 Aurelius carries the Stoic side here alone. The current GutenbergKG corpus
-is 78 books, 445,486 nodes, 4,525,716 edges across nine genres. Adding the
-*Discourses* is a `gutenberg-build` away — and one of the points of SGSI is
-that the answer would update the moment the new KG is registered, with
+is **175 books, 850,208 nodes, 16,920,494 edges across 13 genres**. Adding
+the *Discourses* is a `gutenberg-build` away — and one of the points of SGSI
+is that the answer would update the moment the new KG is registered, with
 no retraining and no model change. The retrieval layer simply has more to
 hold.
