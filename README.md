@@ -6,7 +6,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20018525.svg)](https://doi.org/10.5281/zenodo.20018525)
 
 <p align="center">
-  <img src="assets/logo_256.png" alt="KGRAG logo" width="256"/>
+  <img src="assets/logos/logo_256.png" alt="KGRAG logo" width="256"/>
 </p>
 
 **KGRAG** — Knowledge Compiler and Federated Retrieval Layer for Ontologically Grounded Domains
