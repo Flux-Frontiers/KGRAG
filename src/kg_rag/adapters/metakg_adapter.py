@@ -70,28 +70,53 @@ class MetaKGAdapter(KGAdapter):
         self._load()
         try:
             result = self._kg.query(q, k=k)
-            ranked = (result.ranked_hits if hasattr(result, "ranked_hits") else [])[:k]
-            if semantic_floor > 0.0 and ranked:
-                if getattr(ranked[0], "score", 0.0) < semantic_floor:
+            # MetabolicQueryResult.hits is a list of dicts (current API).
+            # Older builds may expose result.ranked_hits as objects with .score.
+            raw: list = getattr(result, "hits", None) or getattr(result, "ranked_hits", [])
+            raw = raw[:k]
+
+            def _score(hit) -> float:
+                if isinstance(hit, dict):
+                    # _distance is cosine distance; convert to similarity
+                    return round(1.0 - float(hit.get("_distance", 1.0)), 4)
+                return float(getattr(hit, "score", 0.0))
+
+            if semantic_floor > 0.0 and raw:
+                if _score(raw[0]) < semantic_floor:
                     return []
+
             hits = []
-            for hit in ranked:
-                score = getattr(hit, "score", 0.0)
+            for hit in raw:
+                score = _score(hit)
                 if score < min_score:
                     continue
-                node = hit.node if hasattr(hit, "node") else hit
-                hits.append(
-                    CrossHit(
-                        kg_name=self.entry.name,
-                        kg_kind=KGKind.META,
-                        node_id=getattr(node, "id", str(node)),
-                        name=getattr(node, "name", str(node)),
-                        kind=getattr(node, "kind", "pathway"),
-                        score=score,
-                        summary=getattr(node, "description", "") or "",
-                        source_path=getattr(node, "source", "") or "",
+                if isinstance(hit, dict):
+                    hits.append(
+                        CrossHit(
+                            kg_name=self.entry.name,
+                            kg_kind=KGKind.META,
+                            node_id=hit.get("id", ""),
+                            name=hit.get("name", ""),
+                            kind=hit.get("kind", "node"),
+                            score=score,
+                            summary=hit.get("description", "") or hit.get("name", ""),
+                            source_path=hit.get("source_file", "") or "",
+                        )
                     )
-                )
+                else:
+                    node = hit.node if hasattr(hit, "node") else hit
+                    hits.append(
+                        CrossHit(
+                            kg_name=self.entry.name,
+                            kg_kind=KGKind.META,
+                            node_id=getattr(node, "id", str(node)),
+                            name=getattr(node, "name", str(node)),
+                            kind=getattr(node, "kind", "pathway"),
+                            score=score,
+                            summary=getattr(node, "description", "") or "",
+                            source_path=getattr(node, "source", "") or "",
+                        )
+                    )
             return hits
         except Exception:  # pylint: disable=broad-exception-caught
             return []

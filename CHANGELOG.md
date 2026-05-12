@@ -9,6 +9,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **RunPod serverless worker** (`runpod/`) — complete deployment package for
+  hosting KGRAG-powered semantic search over GutenbergKG and MetaboKG as a
+  cost-efficient cloud endpoint that scales to zero. Includes:
+  - `handler.py` — RunPod serverless handler; bootstraps a KGRegistry from a
+    mounted Network Volume at startup, loads `BAAI/bge-small-en-v1.5` once,
+    and serves federated queries across `gutenberg`, `metabo_hsa`,
+    `metabo_cge`, and `metabo_icho` corpora via the KGRAG orchestrator.
+    Optional LLM synthesis via a separate vLLM endpoint (`synthesize: true`).
+  - `Dockerfile` — `python:3.12-slim` image with the embedding model baked in
+    to eliminate cold-start downloads.
+  - `requirements.txt` — PyPI dependencies for the worker image.
+  - `build_image.sh` — builds local wheels for `kg-rag`, `gutenberg-kg`, and
+    `metabo-kg` (not yet on PyPI), then runs `docker build`.
+  - `push_indices.sh` — rsyncs pre-built `.dockg` / `.metabokg` indices from
+    the local machine to a RunPod pod over SSH (~130 MB upload).
+  - `setup_volume.sh` — runs inside a RunPod pod to build all KG indices from
+    scratch (full Gutenberg catalog download + ingest, MetaboKG build) and
+    populate the Network Volume.
+  - `build_volume.sh` — entrypoint that documents when to use each loading
+    workflow (push vs. build-in-pod).
+  - `test_local.py` — smoke-test that auto-creates symlinks to local repo
+    indices, imports the handler, and exercises all four corpora end-to-end
+    without Docker or a RunPod account.
+- **`articles/haystacks_to_forests.txt`** — plain-text version of the
+  *"We Have Been Building Haystacks When We Need Forests"* manifesto for
+  corpus ingestion into the GutenbergKG / DocKG pipeline.
+
+### Fixed
+
+- **`MetaKGAdapter.query`** (`src/kg_rag/adapters/metakg_adapter.py`) —
+  adapter was silently returning zero hits against `metabo-kg >= 0.8.x`
+  because it checked for `result.ranked_hits` (removed in the current API)
+  instead of `result.hits`. Fixed to use `result.hits` (list of dicts) as the
+  primary path; converts `_distance` → similarity score via `1 - _distance`;
+  retains the old object-based path as a fallback for backwards compatibility.
+
 - **`GutenbergKGAdapter` corpus-level status and snapshot methods**
   (`src/kg_rag/adapters/gutenberg_adapter.py`) — five new methods delegate
   to `gutenberg_kg.corpus` (the new path-parametrised library layer) rather
@@ -27,6 +63,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   families; WaveRider colour-palette row added to the family table.
 
 ### Changed
+
+- **Version bump**: `0.6.0` → `0.6.1` in `pyproject.toml` and `src/kg_rag/__init__.py`.
 
 - **`docs/STOICS_VS_RUSSIANS.md`** — updated corpus statistics to the current
   state (175 books, 850,208 nodes, 16,920,494 edges, 13 genres); identified
