@@ -43,10 +43,16 @@ WORK_DIR="${DEST}/kgrag_build"
 
 # Redirect all temp/cache I/O to the volume immediately —
 # the container root fs is typically only 5 GB.
-mkdir -p "${DEST}/.tmp" "${DEST}/.pip_cache"
+mkdir -p "${DEST}/.tmp" "${DEST}/.pip_cache" "${DEST}/.hf_cache"
 export TMPDIR="${DEST}/.tmp"
 export PIP_CACHE_DIR="${DEST}/.pip_cache"
 export PIP_TMPDIR="${DEST}/.tmp"
+
+# Force HuggingFace online mode and cache models on the volume (not the 5GB root fs)
+export HF_HOME="${DEST}/.hf_cache"
+export HF_HUB_OFFLINE=0
+export TRANSFORMERS_OFFLINE=0
+export HF_DATASETS_OFFLINE=0
 
 echo "============================================================"
 echo "  KGRAG Volume Setup"

@@ -23,9 +23,15 @@ VENV="${WORK_DIR}/venv"
 METABO_ONLY="${METABO_ONLY:-0}"
 GUTENBERG_ONLY="${GUTENBERG_ONLY:-0}"
 
+mkdir -p "${DEST}/.tmp" "${DEST}/.pip_cache" "${DEST}/.hf_cache"
 export TMPDIR="${DEST}/.tmp"
 export PIP_CACHE_DIR="${DEST}/.pip_cache"
-mkdir -p "${TMPDIR}" "${PIP_CACHE_DIR}"
+
+# Force HuggingFace online mode and cache models on the volume
+export HF_HOME="${DEST}/.hf_cache"
+export HF_HUB_OFFLINE=0
+export TRANSFORMERS_OFFLINE=0
+export HF_DATASETS_OFFLINE=0
 
 if [[ ! -x "${VENV}/bin/pip" ]]; then
     echo "ERROR: venv not found at ${VENV} — run setup_volume.sh first."
