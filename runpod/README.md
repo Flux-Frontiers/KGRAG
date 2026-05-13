@@ -21,7 +21,7 @@ RunPod Serverless — KGRAG Query Worker
 RunPod vLLM Endpoint — Qwen3-8B-Instruct
 
 RunPod Network Volume (~50 GB reserved)
-  /mnt/kgdata/
+  /workspace/                        (RunPod default mount point)
   ├── gutenberg_kg/.dockg/          (DocKG index)
   └── metabo_kg/data/
       ├── hsa_pathways/.metabokg/
@@ -64,18 +64,35 @@ repos/
 
 ## Step 3 — Populate the volume
 
-Spin up a temporary RunPod dev pod with the volume attached (any cheap GPU
-or CPU pod), then from your local machine:
+Spin up a temporary RunPod dev pod with the volume attached at `/workspace`
+(any cheap CPU pod — no GPU needed for index building).
+
+**Option A — push pre-built local indices** (~130 MB, minutes):
 
 ```bash
-# Copy the helper script to the pod
-scp build_volume.sh root@<pod-ip>:/tmp/
-
-# Run it inside the pod — adjusting DEST if the volume is at a different path
-ssh root@<pod-ip> "DEST=/mnt/kgdata bash /tmp/build_volume.sh"
+./push_indices.sh
 ```
 
-Or run it locally if the volume is reachable over SSH/SFTP.
+**Option B — build from scratch inside the pod** (full Gutenberg catalog):
+
+```bash
+# Upload the builder to the pod
+scp -P <PORT> runpod/build_kg.py root@ssh.runpod.io:/tmp/
+
+# SSH in and run
+ssh -p <PORT> root@ssh.runpod.io
+python3 /tmp/build_kg.py
+
+# Rebuild indices only (repos + venv already present):
+python3 /tmp/build_kg.py --rebuild-only
+
+# One corpus only:
+python3 /tmp/build_kg.py --metabo-only
+python3 /tmp/build_kg.py --gutenberg-only --skip-download
+
+# Full help:
+python3 /tmp/build_kg.py --help
+```
 
 ---
 
@@ -90,13 +107,13 @@ RunPod dashboard → **Serverless** → **+ New Endpoint**
 | Min workers | 0 |
 | Max workers | 3 |
 | FlashBoot | Enabled |
-| Network Volume | Attach at `/mnt/kgdata` |
+| Network Volume | Attach at `/workspace` |
 
 **Environment variables:**
 
 | Variable | Value |
 |---|---|
-| `KG_VOLUME` | `/mnt/kgdata` |
+| `KG_VOLUME` | `/workspace` |
 | `RUNPOD_API_KEY` | your RunPod API key |
 | `VLLM_ENDPOINT_URL` | `https://api.runpod.ai/v2/<vllm-endpoint-id>` (optional) |
 | `VLLM_MODEL` | `Qwen/Qwen3-8B-Instruct` (optional) |

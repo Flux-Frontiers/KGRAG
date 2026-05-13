@@ -24,9 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     `metabo-kg` (not yet on PyPI), then runs `docker build`.
   - `push_indices.sh` — rsyncs pre-built `.dockg` / `.metabokg` indices from
     the local machine to a RunPod pod over SSH (~130 MB upload).
-  - `setup_volume.sh` — runs inside a RunPod pod to build all KG indices from
-    scratch (full Gutenberg catalog download + ingest, MetaboKG build) and
-    populate the Network Volume.
+  - `build_kg.py` — Python CLI that replaces `setup_volume.sh` and
+    `rebuild_indices.sh`; flags: `--dest`, `--genres`, `--metabo-only`,
+    `--gutenberg-only`, `--skip-download`, `--rebuild-only`.  Streams
+    subprocess output line-by-line so tqdm/rich `\r` progress bars never
+    corrupt log lines.
   - `build_volume.sh` — entrypoint that documents when to use each loading
     workflow (push vs. build-in-pod).
   - `test_local.py` — smoke-test that auto-creates symlinks to local repo
@@ -65,6 +67,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Version bump**: `0.6.0` → `0.6.1` in `pyproject.toml` and `src/kg_rag/__init__.py`.
+
+- **`runpod/build_kg.py`** replaces `setup_volume.sh` and
+  `rebuild_indices.sh` with a proper Python CLI (`argparse`, streaming
+  subprocess output, `pathlib` throughout).  Default `--dest` is `/workspace`
+  (RunPod's actual Network Volume mount point); `--rebuild-only` skips
+  venv/clone/install and just rebuilds indices.  `handler.py` and `README.md`
+  updated to match the `/workspace` default.
+
+### Removed
+
+- **`runpod/setup_volume.sh`** and **`runpod/rebuild_indices.sh`** —
+  superseded by `runpod/build_kg.py`.
 
 - **`docs/STOICS_VS_RUSSIANS.md`** — updated corpus statistics to the current
   state (175 books, 850,208 nodes, 16,920,494 edges, 13 genres); identified

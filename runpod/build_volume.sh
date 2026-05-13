@@ -17,25 +17,27 @@
 #   a volume in a new region without copying from your machine.
 #
 #   1. Create a Network Volume in the RunPod dashboard (≥ 50 GB).
-#   2. Launch a temporary CPU pod with the volume attached at /mnt/kgdata.
+#   2. Launch a temporary CPU pod with the volume attached at /workspace.
 #      Any Ubuntu 22.04 image works — no GPU needed for index building.
 #   3. SSH into the pod and run:
 #
-#        # Upload setup_volume.sh to the pod first
-#        scp -P <PORT> setup_volume.sh root@ssh.runpod.io:/tmp/
+#        # Upload the builder script to the pod first
+#        scp -P <PORT> build_kg.py root@ssh.runpod.io:/tmp/
 #
 #        # Then SSH in and run it
 #        ssh -p <PORT> root@ssh.runpod.io
-#        bash /tmp/setup_volume.sh
+#        python3 /tmp/build_kg.py
 #
-#   Optionally override these env vars before running setup_volume.sh:
+#   Common flags:
 #
-#     DEST=/mnt/kgdata          # volume mount path
-#     GENRES="philosophy english-literature russian-literature"
-#     METABO_ONLY=1             # skip Gutenberg, only build MetaboKG
-#     GUTENBERG_ONLY=1          # skip MetaboKG, only build Gutenberg
-#     SKIP_DOWNLOAD=1           # skip corpus download if already present
-#     GITHUB_TOKEN=ghp_...      # only needed if metabo_kg repo is private
+#     --dest /workspace       volume mount path (default)
+#     --genres "philosophy english-literature russian-literature"
+#     --metabo-only           skip Gutenberg, only build MetaboKG
+#     --gutenberg-only        skip MetaboKG, only build Gutenberg
+#     --skip-download         skip corpus download if already present
+#     --rebuild-only          skip venv/clone/install; just rebuild indices
+#
+#   Run  python3 /tmp/build_kg.py --help  for the full option list.
 #
 # Which workflow should I use?
 # ─────────────────────────────
@@ -53,5 +55,5 @@
 # The Network Volume persists and is ready to attach to the
 # KGRAG serverless endpoint.
 
-echo "Run  ./push_indices.sh   for Workflow A (push local indices)."
-echo "Run  ./setup_volume.sh   inside a RunPod pod for Workflow B (build from scratch)."
+echo "Run  ./push_indices.sh          for Workflow A (push local indices)."
+echo "Run  python3 /tmp/build_kg.py   inside a RunPod pod for Workflow B (build from scratch)."

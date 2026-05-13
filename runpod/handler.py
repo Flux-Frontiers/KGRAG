@@ -6,7 +6,7 @@ mounted from a RunPod Network Volume.
 
 Environment variables
 ---------------------
-KG_VOLUME        Path where the network volume is mounted. Default: /mnt/kgdata
+KG_VOLUME        Path where the network volume is mounted. Default: /workspace
 EMBED_MODEL      Sentence-transformer model ID. Default: BAAI/bge-small-en-v1.5
 VLLM_ENDPOINT_URL   Optional: RunPod vLLM endpoint base URL for synthesis.
 RUNPOD_API_KEY   RunPod API key (used for vLLM auth when synthesize=true).
