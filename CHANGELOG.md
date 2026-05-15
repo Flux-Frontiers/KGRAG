@@ -74,8 +74,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (RunPod's actual Network Volume mount point); `--rebuild-only` skips
   venv/clone/install and just rebuilds indices.  `handler.py` and `README.md`
   updated to match the `/workspace` default.
+  - `--genres` now auto-detects all genres present in the corpus directory
+    when running with `--rebuild-only` (no explicit list required); falls back
+    to the standard three genres in full-build mode.
+  - `resolve_genres()` helper encapsulates the detection logic.
+
+- **`runpod/push_indices.sh`** — `DEST_BASE` default corrected from
+  `/mnt/kgdata` to `/workspace`; added `SSH_KEY` variable (default:
+  `~/.ssh/id_ed25519`) and unified `SSH_OPTS` used by both `ssh` and
+  `rsync -e` calls.
+
+- **`Claude.mcp.json`** — renamed `codekg` server to `pycodekg` (matching the
+  CLI rename); added `agent-kg`, `memorykg`, and `metabokg` MCP server entries
+  for the full KGRAG stack.
 
 ### Removed
+
+- **`runpod/`** — entire deployment package moved out of this repo; the
+  `build_kg.py`, `handler.py`, `Dockerfile`, and supporting scripts now live
+  in the dedicated deployment repository.
 
 - **`runpod/setup_volume.sh`** and **`runpod/rebuild_indices.sh`** —
   superseded by `runpod/build_kg.py`.

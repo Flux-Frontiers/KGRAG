@@ -4,13 +4,40 @@
       "command": "/home/user/KGRAG/.venv/bin/kgrag",
       "args": ["mcp"]
     },
-    "codekg": {
-      "command": "/home/user/KGRAG/.venv/bin/codekg",
+    "pycodekg": {
+      "command": "/home/user/KGRAG/.venv/bin/pycodekg",
       "args": ["mcp"]
     },
     "dockg": {
       "command": "/home/user/KGRAG/.venv/bin/dockg",
       "args": ["mcp"]
+    },
+        "kgrag": {
+      "command": "/home/user/KGRAG/.venv/bin/kgrag",
+      "args": ["mcp"]
+    },
+    "agent-kg": {
+      "type": "stdio",
+      "command": "agent-kg-mcp",
+      "env": {
+        "AGENTKG_REPO": ".",
+        "AGENTKG_PERSON": "egs"
+      }
+    },
+    "memorykg": {
+      "command": "/home/user/KGRAG/.venv/bin/memorykg",
+      "args": [
+        "mcp",
+        "--repo", "/home/user/KGRAG/.memorykg"
+      ]
+    },
+    "metabokg": {
+      "command": "/home/user/Metabo_kg/.venv/bin/metabokg",
+      "args": [
+        "mcp",
+        "--db", "/home/user/Metabo_kg/.metabokg/meta.sqlite",
+        "--lancedb", "/home/user/Metabo_kg/.metabokg/lancedb"
+      ]
     }
   }
 }
