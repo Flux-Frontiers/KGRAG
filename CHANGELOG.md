@@ -40,6 +40,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`transformers` version constraint** (`pyproject.toml`) — relaxed from
+  `^4.57.6` (blocks 5.x) to `>=4.57.6` so downstream packages requiring
+  `transformers >=5.8.1` (e.g. `gutenberg-kg`) can resolve without conflict.
+
 - **`MetaKGAdapter.query`** (`src/kg_rag/adapters/metakg_adapter.py`) —
   adapter was silently returning zero hits against `metabo-kg >= 0.8.x`
   because it checked for `result.ranked_hits` (removed in the current API)
