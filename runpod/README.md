@@ -1,7 +1,7 @@
 # KGRAG RunPod Serverless Worker
 
-Serves federated semantic search across **GutenbergKG** (Project Gutenberg
-literary corpus) and **MetaboKG** (metabolic pathway corpus) as a
+Serves federated semantic search across **GutenbergKG** (203 per-book DocKG
+indices) and **MetaboKG** (hsa / cge / icho metabolic pathway corpora) as a
 cost-efficient RunPod serverless endpoint that scales to zero.
 
 ---
@@ -13,21 +13,43 @@ Client
   │ POST /v2/<endpoint-id>/runsync
   ▼
 RunPod Serverless — KGRAG Query Worker
-  • handler.py bootstraps a KGRegistry from the Network Volume on startup
-  • BAAI/bge-small-en-v1.5 baked into the image (no cold-start download)
-  • LanceDB + SQLite indices served from Network Volume (~200 MB total)
-  │ (optional, synthesize=true)
+  • handler.py bootstraps a fresh KGRegistry at every cold start
+    by walking the Network Volume corpus directory
+  • 203 per-book GutenbergKGAdapter entries + 3 MetaKGAdapter entries
+  • BAAI/bge-small-en-v1.5 (384-dim) baked into the image layer
+  │ (optional: synthesize=true)
   ▼
 RunPod vLLM Endpoint — Qwen3-8B-Instruct
 
-RunPod Network Volume (~50 GB reserved)
-  /workspace/                        (RunPod default mount point)
-  ├── gutenberg_kg/.dockg/          (DocKG index)
-  └── metabo_kg/data/
-      ├── hsa_pathways/.metabokg/
-      ├── cge_pathways/.metabokg/
-      └── icho_model/.metabokg/
+RunPod Network Volume (KG_VOLUME=/workspace/kgdata)
+  ├── gutenberg_kg/
+  │   └── corpus/
+  │       ├── philosophy/
+  │       │   ├── Meditations (Marcus Aurelius)/
+  │       │   │   └── .dockg/  {graph.sqlite, lancedb/}
+  │       │   └── ...
+  │       ├── english-literature/...
+  │       └── <genre>/<book>/.dockg/  ← one index per book
+  └── metabo_kg/
+      └── data/
+          ├── hsa_pathways/.metabokg/  {hsa.sqlite, lancedb/}
+          ├── cge_pathways/.metabokg/
+          └── icho_model/.metabokg/
 ```
+
+### How the registry works
+
+`handler.py` runs at cold-start module load time (before the first request):
+
+1. Walks `$KG_VOLUME/gutenberg_kg/corpus/<genre>/<book>/` — registers every
+   book whose `.dockg/graph.sqlite` exists as a `KGKind.GUTENBERG` entry.
+2. Registers the three static MetaboKG entries if their `.metabokg/*.sqlite`
+   files exist (missing ones are skipped with a warning, not an error).
+3. Creates the KGRAG orchestrator with this ephemeral registry at
+   `/tmp/kgrag_worker/registry.sqlite`.
+
+The `~/.kgrag/registry.sqlite` on your laptop is **never used** — the worker
+builds its own from whatever is on the volume.
 
 ---
 
@@ -35,21 +57,21 @@ RunPod Network Volume (~50 GB reserved)
 
 ```bash
 chmod +x build_image.sh
-./build_image.sh kgrag-worker:latest
+./build_image.sh                          # tags as kgrag-worker:latest
 
 docker tag kgrag-worker:latest <your-registry>/kgrag-worker:latest
 docker push <your-registry>/kgrag-worker:latest
 ```
 
 `build_image.sh` builds local Python wheels for `kg-rag`, `gutenberg-kg`,
-and `metabo-kg` (which are not yet on PyPI), then runs `docker build`.
+and `metabo-kg` (not yet on PyPI), then runs `docker build`.
 
-Assumed repo layout (all siblings of `kgrag/`):
+Assumed repo layout (siblings of `kgrag/`):
 ```
 repos/
-├── kgrag/          ← this repo
-├── gutenberg_kg/
-└── Metabo_kg/
+├── kgrag/           ← this repo
+├── gutenberg_kg/    ← corpus/  must be built first (gutenkg ingest)
+└── Metabo_kg/       ← data/*/metabokg/ must be built first
 ```
 
 ---
@@ -57,42 +79,48 @@ repos/
 ## Step 2 — Create a Network Volume
 
 1. RunPod dashboard → **Storage** → **+ Network Volume**
-2. Size: **50 GB** (currently ~200 MB used; room to grow the Gutenberg corpus)
-3. Region: same datacenter you'll deploy the worker to
+2. Size: **50 GB** (indices are ~2 GB; room to grow the corpus)
+3. Region: same datacenter as the worker endpoint
 
 ---
 
 ## Step 3 — Populate the volume
 
-Spin up a temporary RunPod dev pod with the volume attached at `/workspace`
-(any cheap CPU pod — no GPU needed for index building).
+Attach the volume to a temporary cheap CPU pod (`/workspace` mount path).
 
-**Option A — push pre-built local indices** (~130 MB, minutes):
+**Option A — push pre-built local indices** (fastest, ~2 GB upload):
 
 ```bash
+cd runpod/
 ./push_indices.sh
+# prompts for POD_HOST and POD_PORT (from RunPod dashboard → Connect)
 ```
 
-**Option B — build from scratch inside the pod** (full Gutenberg catalog):
+`push_indices.sh` rsyncs the per-book `.dockg/` index directories only —
+raw text files are excluded. MetaboKG `.metabokg/` directories are pushed
+in full.
+
+**Option B — build from scratch inside the pod**:
 
 ```bash
-# Upload the builder to the pod
+# Upload the builder
 scp -P <PORT> runpod/build_kg.py root@ssh.runpod.io:/tmp/
 
 # SSH in and run
 ssh -p <PORT> root@ssh.runpod.io
-python3 /tmp/build_kg.py
-
-# Rebuild indices only (repos + venv already present):
-python3 /tmp/build_kg.py --rebuild-only
-
-# One corpus only:
-python3 /tmp/build_kg.py --metabo-only
-python3 /tmp/build_kg.py --gutenberg-only --skip-download
-
-# Full help:
-python3 /tmp/build_kg.py --help
+python3 /tmp/build_kg.py                      # full build
+python3 /tmp/build_kg.py --rebuild-only       # skip clone/venv
+python3 /tmp/build_kg.py --gutenberg-only     # skip MetaboKG
+python3 /tmp/build_kg.py --help               # all flags
 ```
+
+After either option, verify the layout:
+```bash
+du -sh /workspace/kgdata/gutenberg_kg/corpus
+du -sh /workspace/kgdata/metabo_kg/data/hsa_pathways/.metabokg
+```
+
+Detach or terminate the temporary pod — the volume is now ready.
 
 ---
 
@@ -103,20 +131,29 @@ RunPod dashboard → **Serverless** → **+ New Endpoint**
 | Setting | Value |
 |---|---|
 | Container image | `<your-registry>/kgrag-worker:latest` |
-| GPU | RTX 3080 16 GB (or any — embedding runs on CPU too) |
-| Min workers | 0 |
-| Max workers | 3 |
+| GPU | Any (embedding runs on CPU; GPU speeds up first query batch) |
+| Min workers | `0` (scales to zero when idle) |
+| Max workers | `3` |
 | FlashBoot | Enabled |
-| Network Volume | Attach at `/workspace` |
+| Network Volume | Attach; set mount path to `/workspace/kgdata` |
 
-**Environment variables:**
+**Environment variables** (set in the endpoint UI):
 
-| Variable | Value |
-|---|---|
-| `KG_VOLUME` | `/workspace` |
-| `RUNPOD_API_KEY` | your RunPod API key |
-| `VLLM_ENDPOINT_URL` | `https://api.runpod.ai/v2/<vllm-endpoint-id>` (optional) |
-| `VLLM_MODEL` | `Qwen/Qwen3-8B-Instruct` (optional) |
+| Variable | Required | Value |
+|---|---|---|
+| `KG_VOLUME` | yes | `/workspace/kgdata` |
+| `RUNPOD_API_KEY` | yes | your RunPod API key |
+| `EMBED_MODEL` | no | `BAAI/bge-small-en-v1.5` (default; must match index build model) |
+| `VLLM_ENDPOINT_URL` | no | `https://api.runpod.ai/v2/<vllm-endpoint-id>` |
+| `VLLM_MODEL` | no | `Qwen/Qwen3-8B-Instruct` |
+
+> **Important:** The Network Volume is always mounted read-write by RunPod.
+> Do **not** mount it read-only — LanceDB writes lock files when opening
+> indices, even for read-only queries.
+
+The Dockerfile CMD (`python -u handler.py`) calls
+`runpod.serverless.start()` which is the correct production entrypoint.
+No extra flags are needed.
 
 ---
 
@@ -141,11 +178,11 @@ curl -s -X POST \
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `query` | str | — | Natural-language query (required) |
-| `corpus` | str | `"all"` | `"gutenberg"`, `"metabo_hsa"`, `"metabo_cge"`, `"metabo_icho"`, or `"all"` |
-| `k` | int | `8` | Top-k hits |
+| `corpus` | str | `"all"` | `"gutenberg"` / `"metabo_hsa"` / `"metabo_cge"` / `"metabo_icho"` / `"all"` |
+| `k` | int | `8` | Top-k hits per KG |
 | `min_score` | float | `0.0` | Drop hits below this score |
-| `semantic_floor` | float | `0.0` | Discard an entire KG if its best hit is below this |
-| `synthesize` | bool | `false` | Generate an answer via the vLLM endpoint |
+| `semantic_floor` | float | `0.0` | Discard a KG entirely if its best hit is below this |
+| `synthesize` | bool | `false` | Call the vLLM endpoint for a generated answer |
 
 **Example response:**
 
@@ -154,18 +191,18 @@ curl -s -X POST \
   "output": {
     "query": "Marcus Aurelius on suffering and stoic virtue",
     "corpus": "gutenberg",
-    "total_hits": 8,
-    "kgs_queried": 1,
+    "kgs_queried": 203,
+    "total_hits": 808,
     "hits": [
       {
-        "kg_name": "gutenberg",
+        "kg_name": "gutenberg-philosophy-meditations-marcus-aurelius",
         "kg_kind": "gutenberg",
-        "node_id": "...",
-        "name": "...",
+        "node_id": "chunk-042",
+        "name": "Book V",
         "kind": "chunk",
-        "score": 0.8912,
-        "summary": "The impediment to action advances action. What stands in the way becomes the way.",
-        "source_path": "meditations/book5.md"
+        "score": 0.8734,
+        "summary": "Confine yourself to the present. The impediment to action ...",
+        "source_path": "meditations_marcus_aurelius.md"
       }
     ],
     "synthesis": null
@@ -175,33 +212,70 @@ curl -s -X POST \
 
 ---
 
-## Optional: vLLM generation endpoint
+## Cold start time
 
-Deploy via RunPod Hub → **vLLM**:
-- Model: `Qwen/Qwen3-8B-Instruct`
-- GPU: RTX 4090
-- `MAX_MODEL_LEN=8192`
+On first request after scale-to-zero:
 
-Then set `VLLM_ENDPOINT_URL` in the query worker's environment variables
-and pass `"synthesize": true` in requests to get a generated answer.
+1. Container pulls (skipped after first pull per worker node)
+2. Module-level startup: registry bootstrap (~203 book dir walks) + embedder
+   warmup — typically **8–15 s** on a warm node with the volume attached
+3. First query embeds the input and fans out to all registered KGs
+
+Subsequent requests on a warm worker: **< 2 s** (embedder and adapters cached
+in memory).
 
 ---
 
-## Local smoke test
+## Local smoke test (without Docker)
 
 ```bash
 cd runpod/
-KG_VOLUME=/tmp/kgvol python test_local.py
+python test_local.py
+# auto-creates symlinks under /tmp/ pointing at local repo indices
 ```
 
-The test script creates symlinks under `/tmp/kgvol` pointing at your local
-repo indices so you can validate the handler without Docker.
+## Local Docker test
+
+```bash
+docker run --rm -d \
+  --name kgrag-test \
+  -p 8000:8000 \
+  -e KG_VOLUME=/workspace/kgdata \
+  -v /path/to/gutenberg_kg/corpus:/workspace/kgdata/gutenberg_kg/corpus \
+  -v /path/to/Metabo_kg:/workspace/kgdata/metabo_kg \
+  <your-registry>/kgrag-worker:latest \
+  python handler.py --rp_serve_api --rp_api_host 0.0.0.0
+
+# wait for "[startup] ready ✓" in logs, then:
+docker logs -f kgrag-test
+
+curl -s -X POST http://localhost:8000/runsync \
+  -H "Content-Type: application/json" \
+  -d '{"input":{"query":"glycolysis ATP production","corpus":"metabo_hsa","k":4}}' \
+  | python3 -m json.tool
+
+docker stop kgrag-test
+```
+
+> **Note:** `--rp_serve_api --rp_api_host 0.0.0.0` is for local testing only.
+> The production Dockerfile CMD does not include these flags.
+> The volume must **not** be mounted `:ro` — LanceDB needs write access for
+> lock files even during read queries.
 
 ---
 
-## Adding more corpora
+## Adding more Gutenberg genres
 
-1. Build the index in the new repo (`dockg build --wipe` or equivalent)
-2. `rsync` it to the Network Volume under a new subdirectory
-3. Add an entry to `_CORPUS_MAP` in `handler.py` with the correct paths and `KGKind`
+1. Run `gutenkg ingest --genre <genre>` locally to build per-book indices
+2. Run `push_indices.sh` (or rsync the new genre dir manually) to push the
+   new `.dockg/` subdirectories to the Network Volume
+3. The worker picks them up automatically on next cold start — no image
+   rebuild needed
+
+## Adding a new corpus type
+
+1. Build the index (e.g. a new DocKG or DiaryKG)
+2. Add the static entry to `_METABO_MAP` in `handler.py` (or extend
+   `_bootstrap_registry()` for dynamic discovery)
+3. Add the corpus name to the `handler()` selector block
 4. Rebuild and push the Docker image
