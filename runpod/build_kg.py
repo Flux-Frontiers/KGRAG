@@ -359,14 +359,23 @@ def build_gutenbergkg(
         )
 
     blank()
-    step("Syncing to volume …")
-    gutenberg_dest = dest / "gutenberg_kg"
-    gutenberg_dest.mkdir(parents=True, exist_ok=True)
-    src_dockg = gutenberg_src / ".dockg"
-    dest_dockg = gutenberg_dest / ".dockg"
-    dest_dockg.mkdir(parents=True, exist_ok=True)
-    run(["rsync", "-a", f"{src_dockg}/", f"{dest_dockg}/"])
-    step(f"Done: {_du(dest_dockg)}")
+    step("Syncing per-book indices to volume …")
+    src_corpus = gutenberg_src / "corpus"
+    dest_corpus = dest / "gutenberg_kg" / "corpus"
+    dest_corpus.mkdir(parents=True, exist_ok=True)
+    # Sync only .dockg sub-dirs — skip raw text files.
+    run(
+        [
+            "rsync",
+            "-a",
+            "--include=*/",
+            "--include=.dockg/***",
+            "--exclude=*",
+            f"{src_corpus}/",
+            f"{dest_corpus}/",
+        ]
+    )
+    step(f"Done: {_du(dest_corpus)}")
 
 
 # ---------------------------------------------------------------------------
@@ -379,7 +388,7 @@ def print_summary(dest: Path) -> None:
     print("=" * 60)
     print("  Volume contents:")
     candidates = [
-        dest / "gutenberg_kg" / ".dockg",
+        dest / "gutenberg_kg" / "corpus",
         *[dest / "metabo_kg" / "data" / ds / ".metabokg" for ds in _METABO_DATASETS],
     ]
     for path in candidates:

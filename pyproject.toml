@@ -57,7 +57,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "kg-rag"
-version = "0.6.1"
+version = "0.7.0"
 description = "Orchestration layer for the KGRAG(tm) components."
 authors = ["Eric G. Suchanek, PhD <suchanek@flux-frontiers.com>"]
 license = "Elastic-2.0"
@@ -82,9 +82,9 @@ numpy = ">=1.24.0"
 # personal agent
 
 # from personal_agent
-transformers = ">=4.57.6"
+transformers = ">=4.40.0,<4.57"
 sentence-transformers = "^5.2.0"
-safetensors = "^0.5.0"
+safetensors = ">=0.5.0"
 
 torch = ">=2.5.1"
 streamlit = { version = ">=1.35.0", optional = true }

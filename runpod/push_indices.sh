@@ -2,11 +2,14 @@
 # push_indices.sh
 #
 # Push pre-built KG indices from your local machine to a RunPod Network Volume
-# via SSH.  Total upload is ~130 MB (just the indices, not the raw text corpus).
+# via SSH.
+#
+# For GutenbergKG the handler reads per-book DocKG indices from:
+#   corpus/<genre>/<book>/.dockg/{graph.sqlite,lancedb/}
+# so we sync the entire corpus/ tree (only .dockg sub-dirs, not raw text).
 #
 # This is the fastest way to get the volume populated: build locally once,
-# push the resulting .dockg / .metabokg directories.  The raw text corpus
-# stays on your machine.
+# push the resulting corpus/ + .metabokg directories.  Raw text stays local.
 #
 # Prerequisites
 # -------------
@@ -64,15 +67,17 @@ echo ""
 # ---------------------------------------------------------------------------
 
 missing=0
-for path in \
-    "${GUTENBERG_REPO}/.dockg/graph.sqlite" \
-    "${METABO_REPO}/data/hsa_pathways/.metabokg/hsa.sqlite"; do
-    if [[ ! -f "${path}" ]]; then
-        echo "ERROR: missing local index: ${path}"
-        echo "       Run the build pipeline locally first (dockg build / metabokg build)"
-        missing=1
-    fi
-done
+GUTENBERG_CORPUS="${GUTENBERG_REPO}/corpus"
+if [[ ! -d "${GUTENBERG_CORPUS}" ]]; then
+    echo "ERROR: Gutenberg corpus directory not found: ${GUTENBERG_CORPUS}"
+    echo "       Run 'gutenkg ingest' locally first to build per-book indices."
+    missing=1
+fi
+if [[ ! -f "${METABO_REPO}/data/hsa_pathways/.metabokg/hsa.sqlite" ]]; then
+    echo "ERROR: missing local index: ${METABO_REPO}/data/hsa_pathways/.metabokg/hsa.sqlite"
+    echo "       Run 'metabokg build' locally first."
+    missing=1
+fi
 [[ "${missing}" -eq 1 ]] && exit 1
 
 # ---------------------------------------------------------------------------
@@ -81,7 +86,7 @@ done
 
 ssh ${SSH_OPTS} "${SSH_TARGET}" \
     "mkdir -p \
-        ${DEST_BASE}/gutenberg_kg/.dockg \
+        ${DEST_BASE}/gutenberg_kg/corpus \
         ${DEST_BASE}/metabo_kg/data/hsa_pathways/.metabokg \
         ${DEST_BASE}/metabo_kg/data/cge_pathways/.metabokg \
         ${DEST_BASE}/metabo_kg/data/icho_model/.metabokg"
@@ -90,10 +95,13 @@ ssh ${SSH_OPTS} "${SSH_TARGET}" \
 # Push indices
 # ---------------------------------------------------------------------------
 
-echo "--- GutenbergKG .dockg/ ---"
+echo "--- GutenbergKG corpus/ (per-book .dockg indices only) ---"
 rsync -avz --progress -e "${RSYNC_SSH}" \
-    "${GUTENBERG_REPO}/.dockg/" \
-    "${SSH_TARGET}:${DEST_BASE}/gutenberg_kg/.dockg/"
+    --include="*/" \
+    --include=".dockg/***" \
+    --exclude="*" \
+    "${GUTENBERG_CORPUS}/" \
+    "${SSH_TARGET}:${DEST_BASE}/gutenberg_kg/corpus/"
 
 echo ""
 echo "--- MetaboKG hsa_pathways ---"
@@ -121,7 +129,7 @@ echo ""
 echo "==> Remote volume contents:"
 ssh "${SSH_TARGET}" -p "${POD_PORT}" \
     "du -sh \
-        ${DEST_BASE}/gutenberg_kg/.dockg \
+        ${DEST_BASE}/gutenberg_kg/corpus \
         ${DEST_BASE}/metabo_kg/data/hsa_pathways/.metabokg \
         ${DEST_BASE}/metabo_kg/data/cge_pathways/.metabokg \
         ${DEST_BASE}/metabo_kg/data/icho_model/.metabokg 2>/dev/null"

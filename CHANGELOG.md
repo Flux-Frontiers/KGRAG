@@ -9,6 +9,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Per-book Gutenberg registry** (`runpod/handler.py`) — `_bootstrap_registry()`
+  now walks `corpus/<genre>/<book>/.dockg/` at worker startup and registers each
+  book as a separate `KGKind.GUTENBERG` entry (203 books in a typical corpus).
+  Replaces the old single consolidated `.dockg` entry that was slow to build
+  (full corpus SIMILAR_TO pass on ~300 k rows) and polluted results with
+  project documentation. Each book now has its own isolated DocKG index so
+  queries return actual book text ranked by semantic relevance.
+
+### Changed
+
+- **`runpod/handler.py`** — removed `_CORPUS_MAP` (single gutenberg entry +
+  three inline metabo entries); replaced with `_METABO_MAP` (static metabo
+  paths) and `_GUTENBERG_CORPUS_DIR` constant. Docstring updated with explicit
+  volume layout tree. `_bootstrap_registry()` now skips books whose
+  `.dockg/graph.sqlite` is absent so partial volumes work without error.
+
+- **`runpod/push_indices.sh`** — gutenberg sync changed from top-level
+  `.dockg/` to the full `corpus/` tree, but using a selective rsync filter
+  (`--include=.dockg/***`) so only index files are uploaded, not raw text.
+  Verification check updated to test for the `corpus/` directory rather than
+  a specific SQLite path.
+
+- **`runpod/build_kg.py`** — `build_gutenbergkg()` now syncs `corpus/` with
+  the same selective rsync filter instead of `.dockg/`; `print_summary()`
+  reports `corpus/` size.
+
+- **`transformers` version constraint** (`pyproject.toml`) — tightened from
+  `>=4.57.6` to `>=4.40.0,<4.57` after 4.57.x (and all 5.x releases tested)
+  proved broken at import time (`ValueError: Backend tensorflow_text not in
+  BACKENDS_MAPPING`). 4.56.x is confirmed working at 384-dim embedding.
+
+- **`safetensors` version constraint** (`pyproject.toml`) — relaxed from
+  `^0.5.0` (blocks minor bumps) to `>=0.5.0`.
+
+- **Version bump**: `0.6.1` → `0.7.0` in `pyproject.toml` and
+  `src/kg_rag/__init__.py`.
+
+### Fixed
+
 - **RunPod serverless worker** (`runpod/`) — complete deployment package for
   hosting KGRAG-powered semantic search over GutenbergKG and MetaboKG as a
   cost-efficient cloud endpoint that scales to zero. Includes:
