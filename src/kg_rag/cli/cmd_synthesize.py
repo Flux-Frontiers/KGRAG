@@ -73,10 +73,12 @@ def _call_ollama(
         "stream": stream,
     }
 
+    _timeout = httpx.Timeout(connect=10.0, read=600.0, write=60.0, pool=10.0)
+
     try:
         if stream:
             full_text = ""
-            with httpx.stream("POST", url, json=payload, timeout=120) as resp:
+            with httpx.stream("POST", url, json=payload, timeout=_timeout) as resp:
                 if resp.status_code != 200:
                     raise click.ClickException(
                         f"Ollama returned HTTP {resp.status_code}. "
@@ -94,7 +96,7 @@ def _call_ollama(
             console.print()  # final newline
             return full_text
         else:
-            resp = httpx.post(url, json=payload, timeout=120)
+            resp = httpx.post(url, json=payload, timeout=_timeout)
             if resp.status_code != 200:
                 raise click.ClickException(
                     f"Ollama returned HTTP {resp.status_code}. Is Ollama running? Try: ollama serve"
@@ -150,6 +152,14 @@ def _call_ollama(
     metavar="N",
     help="Lines of surrounding context per snippet.",
 )
+@click.option(
+    "--max-context",
+    default=20,
+    show_default=True,
+    metavar="N",
+    help="Maximum total snippets passed to the LLM (top-N by score). "
+    "Prevents oversized prompts when many KGs are registered.",
+)
 @registry_option
 def synthesize(
     query_text,
@@ -161,6 +171,7 @@ def synthesize(
     no_stream,
     show_context,
     context_lines,
+    max_context,
     registry,
 ):
     """Retrieve KG context and synthesize an answer via Ollama.
@@ -223,11 +234,11 @@ def synthesize(
                 if adapter.is_available():
                     snippets.extend(adapter.pack(query_text, k=k, context=context_lines))
             snippets.sort(key=lambda s: s.score, reverse=True)
-            snippets = snippets[:k]
+            snippets = snippets[:max_context]
             kgs_queried = len(entries)
         else:
             pack_result = kg.pack(query_text, k=k, context=context_lines, kinds=kinds)
-            snippets = pack_result.snippets
+            snippets = pack_result.snippets[:max_context]
             kgs_queried = pack_result.kgs_queried
 
     if not snippets:

@@ -9,6 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`runpod/docker-compose.yml`** — local test environment for the KGRAG worker;
+  mounts GutenbergKG `corpus/` and MetaboKG directories as read-write volumes
+  (LanceDB needs write access for lock files), exposes the RunPod serverless API
+  on `http://localhost:8000`, and forwards Ollama synthesis to the host via
+  `host.docker.internal:11434`.
+
+- **`runpod/.env.example`** — template `.env` for `docker compose`; documents
+  `GUTENBERG_CORPUS`, `METABO_REPO`, and optional synthesis variables
+  (`VLLM_ENDPOINT_URL`, `VLLM_MODEL`, `RUNPOD_API_KEY`).
+
+- **`kgrag synthesize --max-context N`** (`src/kg_rag/cli/cmd_synthesize.py`) —
+  caps the number of snippets sent to the LLM at N (default 20, sorted by score).
+  Without this, querying all 211 registered KGs with `-k 8` yields ~1 900
+  snippets, producing a prompt too large for Ollama models and triggering
+  premature timeouts.
+
+### Fixed
+
+- **httpx read timeout in `kgrag synthesize`** (`src/kg_rag/cli/cmd_synthesize.py`)
+  — replaced scalar `timeout=120` with
+  `httpx.Timeout(connect=10.0, read=600.0, write=60.0, pool=10.0)`. The scalar
+  form applied the same limit to all phases; the read timeout fired after 120 s
+  of silence, which is easily exceeded while waiting for the first token from a
+  large local model like `qwen3:8b`.
+
+- **httpx read timeout in RunPod worker synthesis** (`runpod/handler.py`) —
+  same fix: `timeout=60` → `httpx.Timeout(connect=10.0, read=600.0, write=60.0,
+  pool=10.0)`, allowing up to 10 minutes of inactivity between response chunks
+  when the vLLM endpoint is under load.
+
 - **Per-book Gutenberg registry** (`runpod/handler.py`) — `_bootstrap_registry()`
   now walks `corpus/<genre>/<book>/.dockg/` at worker startup and registers each
   book as a separate `KGKind.GUTENBERG` entry (203 books in a typical corpus).

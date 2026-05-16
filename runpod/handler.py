@@ -215,7 +215,7 @@ def _synthesize(query: str, hits: list[dict]) -> str | None:
             ],
             "max_tokens": 512,
         },
-        timeout=60,
+        timeout=httpx.Timeout(connect=10.0, read=600.0, write=60.0, pool=10.0),
     )
     resp.raise_for_status()
     return resp.json()["choices"][0]["message"]["content"]
