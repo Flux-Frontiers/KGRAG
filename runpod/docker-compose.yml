@@ -30,4 +30,4 @@ services:
       - ${GUTENBERG_CORPUS:-../../../gutenberg_kg/corpus}:/workspace/kgdata/gutenberg_kg/corpus
       # MetaboKG: metabolic pathway indices
       - ${METABO_REPO:-../../../Metabo_kg}:/workspace/kgdata/metabo_kg
-    restart: "no"
+    restart: unless-stopped
