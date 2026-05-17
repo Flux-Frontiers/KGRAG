@@ -1,5 +1,5 @@
 """
-RunPod serverless handler — KGRAG query service.
+RunPod serverless handler -KGRAG query service.
 
 Serves federated semantic search across GutenbergKG and MetaboKG corpora
 mounted from a RunPod Network Volume.
@@ -23,6 +23,7 @@ Environment variables
 ---------------------
 KG_VOLUME        Path where the network volume is mounted. Default: /workspace/kgdata
 EMBED_MODEL      Sentence-transformer model ID. Default: BAAI/bge-small-en-v1.5
+HANDLER_SECRET   Optional shared secret. When set, requests must include {"secret": "<value>"}.
 VLLM_ENDPOINT_URL   Optional: RunPod vLLM endpoint base URL for synthesis.
 RUNPOD_API_KEY   RunPod API key (used for vLLM auth when synthesize=true).
 VLLM_MODEL       Model ID served by the vLLM endpoint. Default: Qwen/Qwen3-8B-Instruct
@@ -30,14 +31,15 @@ VLLM_MODEL       Model ID served by the vLLM endpoint. Default: Qwen/Qwen3-8B-In
 Request schema
 --------------
 {
-  "query":          str   — natural-language query (required)
-  "corpus":         str   — "gutenberg" | "metabo_hsa" | "metabo_cge" |
+  "query":          str   -natural-language query (required)
+  "secret":         str   -required when HANDLER_SECRET is set
+  "corpus":         str   -"gutenberg" | "metabo_hsa" | "metabo_cge" |
                            "metabo_icho" | "all"  (default: "all")
-  "k":              int   — top-k hits to return (default: 8)
-  "min_score":      float — drop hits below this score (default: 0.0)
-  "semantic_floor": float — discard a KG entirely if its best hit is below
+  "k":              int   -top-k hits to return (default: 8)
+  "min_score":      float -drop hits below this score (default: 0.0)
+  "semantic_floor": float -discard a KG entirely if its best hit is below
                            this value (default: 0.0)
-  "synthesize":     bool  — call vLLM endpoint for a generated answer
+  "synthesize":     bool  -call vLLM endpoint for a generated answer
                            (default: false)
 }
 """
@@ -61,6 +63,7 @@ VLLM_ENDPOINT = os.environ.get("VLLM_ENDPOINT_URL", "")
 RUNPOD_API_KEY = os.environ.get("RUNPOD_API_KEY", "")
 VLLM_MODEL = os.environ.get("VLLM_MODEL", "Qwen/Qwen3-8B-Instruct")
 EMBED_MODEL = os.environ.get("EMBED_MODEL", "BAAI/bge-small-en-v1.5")
+HANDLER_SECRET = os.environ.get("HANDLER_SECRET", "")
 
 # Static MetaboKG entries: name → (kind_str, repo_path, sqlite_path, lancedb_path)
 _METABO_MAP = {
@@ -167,17 +170,17 @@ def _make_embedder():
     return emb
 
 
-print("[startup] bootstrapping registry …")
+print("[startup] bootstrapping registry ...")
 _registry = _bootstrap_registry()
 
-print("[startup] loading embedder …")
+print("[startup] loading embedder ...")
 _embedder = _make_embedder()
 
-print("[startup] initialising KGRAG orchestrator …")
+print("[startup] initialising KGRAG orchestrator ...")
 from kg_rag.orchestrator import KGRAG  # noqa: E402 (after env setup)
 
 _kgrag = KGRAG(registry_path=REGISTRY_PATH, embedder=_embedder)
-print("[startup] ready ✓")
+print("[startup] ready")
 
 
 # ---------------------------------------------------------------------------
@@ -228,6 +231,10 @@ def _synthesize(query: str, hits: list[dict]) -> str | None:
 
 def handler(job: dict) -> dict:
     inp = job.get("input", {})
+
+    if HANDLER_SECRET and inp.get("secret") != HANDLER_SECRET:
+        return {"error": "unauthorized"}
+
     query = inp.get("query", "").strip()
     corpus = inp.get("corpus", "all")
     k = max(1, int(inp.get("k", 8)))

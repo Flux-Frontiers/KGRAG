@@ -144,7 +144,7 @@ class SentenceTransformerEmbedder:
         :param texts: List of strings to embed.
         :return: List of float32 vectors.
         """
-        return self._model.encode(texts, convert_to_numpy=True).tolist()
+        return self._model.encode(texts, convert_to_numpy=True, show_progress_bar=False).tolist()
 
     def embed_query(self, text: str) -> list[float]:
         """Embed a single query string.
@@ -152,7 +152,7 @@ class SentenceTransformerEmbedder:
         :param text: Query string to embed.
         :return: Dense float32 vector as a plain Python list.
         """
-        return self._model.encode(text, convert_to_numpy=True).tolist()
+        return self._model.encode(text, convert_to_numpy=True, show_progress_bar=False).tolist()
 
     def __repr__(self) -> str:
         return f"SentenceTransformerEmbedder(model={self._model!r}, dim={self.dim})"

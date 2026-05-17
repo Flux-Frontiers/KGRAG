@@ -52,6 +52,30 @@ TEST_CASES = [
     },
 ]
 
+# --- Auth tests (patched inline, no restart needed) ---
+print("\n" + "=" * 60)
+print("Auth tests")
+_orig_secret = handler.HANDLER_SECRET
+
+handler.HANDLER_SECRET = "test-secret"  # pragma: allowlist secret
+
+result = handler.handler({"input": {"query": "test", "corpus": "all"}})
+assert result == {"error": "unauthorized"}, f"Expected unauthorized, got: {result}"
+print("  PASS: missing secret → unauthorized")
+
+result = handler.handler({"input": {"query": "test", "secret": "wrong", "corpus": "all"}})
+assert result == {"error": "unauthorized"}, f"Expected unauthorized, got: {result}"
+print("  PASS: wrong secret → unauthorized")
+
+result = handler.handler(
+    {"input": {"query": "virtue", "secret": "test-secret", "corpus": "gutenberg", "k": 1}}
+)
+assert "error" not in result, f"Expected success, got: {result}"
+print("  PASS: correct secret → success")
+
+handler.HANDLER_SECRET = _orig_secret  # restore
+
+# --- Query tests ---
 for i, job in enumerate(TEST_CASES, 1):
     print(f"\n{'=' * 60}")
     print(f"Test {i}: {job['input']['query'][:60]}")

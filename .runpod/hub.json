@@ -26,6 +26,16 @@
         }
       },
       {
+        "key": "HANDLER_SECRET",
+        "input": {
+          "name": "Handler Secret",
+          "type": "string",
+          "description": "Optional shared secret. When set, every request must include {\"secret\": \"<value>\"} or it will be rejected with {\"error\": \"unauthorized\"}. Leave blank to disable auth (not recommended for public endpoints).",
+          "default": "",
+          "advanced": false
+        }
+      },
+      {
         "key": "RUNPOD_API_KEY",
         "input": {
           "name": "RunPod API Key",
