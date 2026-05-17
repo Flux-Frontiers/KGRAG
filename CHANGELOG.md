@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Removed
+
+## [0.7.1] - 2026-05-17
+
+### Added
+
 - **`.runpod/` Hub publishing config** — `hub.json` (listing metadata, GPU pool
   `ADA_24,AMPERE_16`, env var UI for `KG_VOLUME`, `RUNPOD_API_KEY`, optional
   vLLM settings), `tests.json` (three smoke tests: gutenberg query, all-corpora
