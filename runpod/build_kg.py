@@ -131,6 +131,12 @@ def parse_args() -> argparse.Namespace:
         help="Network Volume mount path (default: /workspace)",
     )
     p.add_argument(
+        "--cpu",
+        action="store_true",
+        help="Force CPU-only embedding (sets CUDA_VISIBLE_DEVICES=-1). "
+        "Use when the pod GPU driver is too old for the installed PyTorch.",
+    )
+    p.add_argument(
         "--genres",
         nargs="+",
         default=None,
@@ -177,7 +183,7 @@ def parse_args() -> argparse.Namespace:
 # ---------------------------------------------------------------------------
 
 
-def setup_env(dest: Path) -> None:
+def setup_env(dest: Path, force_cpu: bool = False) -> None:
     """Redirect all temp/cache I/O to the volume (root fs is only ~5 GB)."""
     cache_dirs: dict[str, Path] = {
         "TMPDIR": dest / ".tmp",
@@ -190,14 +196,15 @@ def setup_env(dest: Path) -> None:
         path.mkdir(parents=True, exist_ok=True)
         os.environ[var] = str(path)
 
-    os.environ.update(
-        {
-            "HF_HUB_OFFLINE": "0",
-            "TRANSFORMERS_OFFLINE": "0",
-            "HF_DATASETS_OFFLINE": "0",
-            "HF_HUB_ENABLE_HF_TRANSFER": "0",  # avoid sporadic transfer failures
-        }
-    )
+    env = {
+        "HF_HUB_OFFLINE": "0",
+        "TRANSFORMERS_OFFLINE": "0",
+        "HF_DATASETS_OFFLINE": "0",
+        "HF_HUB_ENABLE_HF_TRANSFER": "0",  # avoid sporadic transfer failures
+    }
+    if force_cpu:
+        env["CUDA_VISIBLE_DEVICES"] = "-1"
+    os.environ.update(env)
 
 
 # ---------------------------------------------------------------------------
@@ -237,7 +244,7 @@ def ensure_venv(work_dir: Path) -> Path:
     if pip.exists():
         step(f"reusing venv at {venv}")
         return venv
-    info(f"Creating venv at {venv} …")
+    info(f"Creating venv at {venv} with python3.12 …")
     shutil.rmtree(venv, ignore_errors=True)
     venv.parent.mkdir(parents=True, exist_ok=True)
     run(["python3.12", "-m", "venv", str(venv)])
@@ -272,11 +279,16 @@ def clone_repos(work_dir: Path, metabo_url: str, gutenberg_only: bool) -> None:
 def install_packages(venv: Path, work_dir: Path, gutenberg_only: bool) -> None:
     pip = venv / "bin" / "pip"
     info("Installing Python packages …")
-    run([pip, "install", "--quiet", "-e", f"{work_dir / 'kgrag'}[kg]"])
-    run([pip, "install", "--quiet", "-e", str(work_dir / "gutenberg_kg")])
+    # cu124 wheel works with driver 12.8 (forward compat). cu128 exists in torch 2.7+
+    # but cu124 is more widely tested. Override with TORCH_CUDA_INDEX env var if needed.
+    cuda_index = os.environ.get("TORCH_CUDA_INDEX", "https://download.pytorch.org/whl/cu124")
+    run([pip, "install", "--quiet", "torch", "--index-url", cuda_index])
+    run([pip, "install", "-e", str(work_dir / "kgrag")])
+    run([pip, "install", "doc-kg"])
+    run([pip, "install", "-e", str(work_dir / "gutenberg_kg")])
     metabo_dir = work_dir / "Metabo_kg"
     if not gutenberg_only and metabo_dir.exists():
-        run([pip, "install", "--quiet", "-e", str(metabo_dir)])
+        run([pip, "install", "-e", str(metabo_dir)])
     step("packages installed")
 
 
@@ -345,7 +357,11 @@ def build_gutenbergkg(
         blank()
         step(f"Genre: {genre}")
 
-        if not skip_download:
+        genre_dir = gutenberg_src / "corpus" / genre
+        already_have = genre_dir.is_dir() and any(genre_dir.iterdir())
+        if skip_download or already_have:
+            step("Skipping download (books already present)")
+        else:
             step("Downloading …")
             run(
                 [gutenkg, "download", "fetch-genre", genre, "--max-results", "200", "--yes"],
@@ -400,7 +416,21 @@ def print_summary(dest: Path) -> None:
     print("=" * 60)
 
 
-_DEFAULT_GENRES = ["philosophy", "english-literature", "russian-literature"]
+_DEFAULT_GENRES = [
+    "american-literature",
+    "ancient-classical",
+    "audel-electric",
+    "english-literature",
+    "french-literature",
+    "german-literature",
+    "philosophy",
+    "russian-literature",
+    "sacred-texts",
+    "science-fiction",
+    "shakespeare",
+    "spanish",
+    "world-literature",
+]
 
 
 def resolve_genres(args: argparse.Namespace, work_dir: Path) -> list[str]:
@@ -437,7 +467,7 @@ def main() -> None:
     dest: Path = args.dest
     work_dir = dest / "kgrag_build"
 
-    setup_env(dest)
+    setup_env(dest, force_cpu=args.cpu)
 
     genres = resolve_genres(args, work_dir)
 

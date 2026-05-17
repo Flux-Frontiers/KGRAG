@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`.runpod/` Hub publishing config** — `hub.json` (listing metadata, GPU pool
+  `ADA_24,AMPERE_16`, env var UI for `KG_VOLUME`, `RUNPOD_API_KEY`, optional
+  vLLM settings), `tests.json` (three smoke tests: gutenberg query, all-corpora
+  query, missing-query error field), and a Hub-compatible `Dockerfile` that
+  installs `kg-rag`, `gutenberg-kg`, and `metabo-kg` from GitHub instead of
+  local wheels — enabling one-click deploy from the RunPod Hub.
+
+- **`build_kg.py --cpu`** — forces CPU-only embedding by setting
+  `CUDA_VISIBLE_DEVICES=-1`; workaround for pods where the GPU driver is too
+  old for the installed PyTorch CUDA build.
+
+- **Expanded default genre list in `build_kg.py`** — grows from 3 genres
+  (`philosophy`, `english-literature`, `russian-literature`) to the full 13
+  (`american-literature`, `ancient-classical`, `audel-electric`,
+  `english-literature`, `french-literature`, `german-literature`, `philosophy`,
+  `russian-literature`, `sacred-texts`, `science-fiction`, `shakespeare`,
+  `spanish`, `world-literature`).
+
 - **`runpod/docker-compose.yml`** — local test environment for the KGRAG worker;
   mounts GutenbergKG `corpus/` and MetaboKG directories as read-write volumes
   (LanceDB needs write access for lock files), exposes the RunPod serverless API
@@ -24,6 +42,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Without this, querying all 211 registered KGs with `-k 8` yields ~1 900
   snippets, producing a prompt too large for Ollama models and triggering
   premature timeouts.
+
+### Changed
+
+- **`build_kg.py` skips downloads for genres already present** — checks whether
+  `corpus/<genre>/` is non-empty before running `gutenkg download fetch-genre`,
+  so `--rebuild-only` and interrupted builds resume without re-downloading.
+
+- **`build_kg.py` install step** — installs `torch` explicitly from the
+  `cu124` wheel index before the project packages; uses `TORCH_CUDA_INDEX`
+  env var to override the index URL. Removes `--quiet` for better progress
+  visibility on long pod builds.
+
+- **`runpod/handler.py`** — removed `_CORPUS_MAP` (single gutenberg entry +
+  three inline metabo entries); replaced with `_METABO_MAP` (static metabo
+  paths) and `_GUTENBERG_CORPUS_DIR` constant. Docstring updated with explicit
+  volume layout tree. `_bootstrap_registry()` now skips books whose
+  `.dockg/graph.sqlite` is absent so partial volumes work without error.
+
+- **`runpod/push_indices.sh`** — gutenberg sync changed from top-level
+  `.dockg/` to the full `corpus/` tree, but using a selective rsync filter
+  (`--include=.dockg/***`) so only index files are uploaded, not raw text.
+  Verification check updated to test for the `corpus/` directory rather than
+  a specific SQLite path.
 
 ### Fixed
 
@@ -46,20 +87,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (full corpus SIMILAR_TO pass on ~300 k rows) and polluted results with
   project documentation. Each book now has its own isolated DocKG index so
   queries return actual book text ranked by semantic relevance.
-
-### Changed
-
-- **`runpod/handler.py`** — removed `_CORPUS_MAP` (single gutenberg entry +
-  three inline metabo entries); replaced with `_METABO_MAP` (static metabo
-  paths) and `_GUTENBERG_CORPUS_DIR` constant. Docstring updated with explicit
-  volume layout tree. `_bootstrap_registry()` now skips books whose
-  `.dockg/graph.sqlite` is absent so partial volumes work without error.
-
-- **`runpod/push_indices.sh`** — gutenberg sync changed from top-level
-  `.dockg/` to the full `corpus/` tree, but using a selective rsync filter
-  (`--include=.dockg/***`) so only index files are uploaded, not raw text.
-  Verification check updated to test for the `corpus/` directory rather than
-  a specific SQLite path.
 
 - **`runpod/build_kg.py`** — `build_gutenbergkg()` now syncs `corpus/` with
   the same selective rsync filter instead of `.dockg/`; `print_summary()`

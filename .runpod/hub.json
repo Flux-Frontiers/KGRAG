@@ -1,0 +1,75 @@
+{
+  "title": "KGRAG Federated Semantic Search",
+  "description": "Federated semantic search across GutenbergKG (Project Gutenberg literature) and MetaboKG (KEGG metabolic pathways). Requires a pre-built Network Volume containing per-book DocKG indices.",
+  "type": "serverless",
+  "category": "language",
+
+  "config": {
+    "runsOn": "GPU",
+    "containerDiskInGb": 10,
+    "gpuCount": 1,
+    "gpuIds": "ADA_24,AMPERE_16",
+    "allowedCudaVersions": [
+      "12.8", "12.7", "12.6", "12.5", "12.4",
+      "12.3", "12.2", "12.1", "12.0"
+    ],
+
+    "env": [
+      {
+        "key": "KG_VOLUME",
+        "input": {
+          "name": "KG Volume Path",
+          "type": "string",
+          "description": "Mount path of the Network Volume holding the pre-built GutenbergKG and MetaboKG indices. Must match the mount path set on the endpoint.",
+          "default": "/workspace/kgdata",
+          "advanced": false
+        }
+      },
+      {
+        "key": "RUNPOD_API_KEY",
+        "input": {
+          "name": "RunPod API Key",
+          "type": "string",
+          "description": "Your RunPod API key. Required only when synthesize=true to call a vLLM endpoint.",
+          "default": "",
+          "advanced": false
+        }
+      },
+      {
+        "key": "VLLM_ENDPOINT_URL",
+        "input": {
+          "name": "vLLM Endpoint URL",
+          "type": "string",
+          "description": "Optional RunPod vLLM endpoint base URL for answer synthesis (e.g. https://api.runpod.ai/v2/<endpoint-id>). Leave blank to disable synthesis.",
+          "default": "",
+          "advanced": true
+        }
+      },
+      {
+        "key": "VLLM_MODEL",
+        "input": {
+          "name": "vLLM Model",
+          "type": "string",
+          "description": "Model ID served by the vLLM endpoint. Must match the model deployed there.",
+          "options": [
+            {"label": "Qwen3-8B-Instruct", "value": "Qwen/Qwen3-8B-Instruct"},
+            {"label": "Qwen3-14B-Instruct", "value": "Qwen/Qwen3-14B-Instruct"},
+            {"label": "Llama-3.1-8B-Instruct", "value": "meta-llama/Llama-3.1-8B-Instruct"}
+          ],
+          "default": "Qwen/Qwen3-8B-Instruct",
+          "advanced": true
+        }
+      },
+      {
+        "key": "EMBED_MODEL",
+        "input": {
+          "name": "Embedding Model",
+          "type": "string",
+          "description": "Sentence-transformer model for query embedding. Must match the model used when building the KG indices.",
+          "default": "BAAI/bge-small-en-v1.5",
+          "advanced": true
+        }
+      }
+    ]
+  }
+}
