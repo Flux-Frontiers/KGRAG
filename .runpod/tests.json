@@ -21,7 +21,7 @@
     },
     {
       "name": "missing_query_returns_error_field",
-      "input": {},
+      "input": {"corpus": "gutenberg"},
       "timeout": 10000
     }
   ],
