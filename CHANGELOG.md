@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [0.7.2] - 2026-05-17
+
+### Changed
+
+- **Maintenance bump** — forces RunPod Hub to pull the latest image and re-index
+  all registered corpora. No functional changes.
+
 ## [0.7.1] - 2026-05-17
 
 ### Added
