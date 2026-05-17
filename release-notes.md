@@ -1,11 +1,12 @@
-# Release Notes — v0.7.2
+# Release Notes — v0.7.3
 
 > Released: 2026-05-17
 
 ## Changed
 
-- **Maintenance bump** — forces RunPod Hub to pull the latest image and re-index
-  all registered corpora. No functional changes.
+- **`.runpod/tests.json`** — remove empty-input smoke test (test 3) that was
+  causing Hub test runs to abort.
+- **`pyproject.toml`** — tighten `doc-kg` lower bound to `>=0.15.2`.
 
 ---
 

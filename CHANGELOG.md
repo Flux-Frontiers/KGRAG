@@ -15,6 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [0.7.3] - 2026-05-17
+
+### Changed
+
+- **`.runpod/tests.json`** — remove empty-input smoke test (test 3) that was
+  causing Hub test runs to abort.
+- **`pyproject.toml`** — tighten `doc-kg` lower bound to `>=0.15.2`.
+
 ## [0.7.2] - 2026-05-17
 
 ### Changed

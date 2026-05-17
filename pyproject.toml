@@ -57,7 +57,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "kg-rag"
-version = "0.7.2"
+version = "0.7.3"
 description = "Orchestration layer for the KGRAG(tm) components."
 authors = ["Eric G. Suchanek, PhD <suchanek@flux-frontiers.com>"]
 license = "Elastic-2.0"
@@ -108,7 +108,7 @@ llama-cpp-python = { version = ">=0.3.0", optional = true }
 # our own adaptors
 kgmodule-utils = ">=0.2.0"
 pycode-kg = {version = ">=0.18.1", optional=true}
-doc-kg = {version = ">=0.12.3", optional=true}
+doc-kg = {version = ">=0.15.2", optional=true}
 ftree-kg = {version = ">=0.8.0", optional=true}
 jupyter-server = ">=2.18.0"
 mistune = ">=3.2.1"
