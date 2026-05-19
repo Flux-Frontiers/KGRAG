@@ -21,12 +21,17 @@ Volume layout (KG_VOLUME)
 
 Environment variables
 ---------------------
-KG_VOLUME        Path where the network volume is mounted. Default: /workspace/kgdata
+KG_VOLUME        Path where indices are stored. Default: /tmp/kgdata
 EMBED_MODEL      Sentence-transformer model ID. Default: BAAI/bge-small-en-v1.5
 HANDLER_SECRET   Optional shared secret. When set, requests must include {"secret": "<value>"}.
 VLLM_ENDPOINT_URL   Optional: RunPod vLLM endpoint base URL for synthesis.
 RUNPOD_API_KEY   RunPod API key (used for vLLM auth when synthesize=true).
 VLLM_MODEL       Model ID served by the vLLM endpoint. Default: Qwen/Qwen3-8B-Instruct
+S3_BUCKET        S3 bucket name holding the KG indices.
+S3_ENDPOINT_URL  S3-compatible endpoint URL (e.g. https://s3api-us-il-1.runpod.io).
+S3_REGION        S3 region name (e.g. us-il-1).
+AWS_ACCESS_KEY_ID     S3 access key.
+AWS_SECRET_ACCESS_KEY S3 secret key.
 
 Request schema
 --------------
@@ -57,13 +62,16 @@ import runpod
 # Config
 # ---------------------------------------------------------------------------
 
-VOLUME = Path(os.environ.get("KG_VOLUME", "/workspace/kgdata"))
+VOLUME = Path(os.environ.get("KG_VOLUME", "/tmp/kgdata"))
 REGISTRY_PATH = Path("/tmp/kgrag_worker/registry.sqlite")
 VLLM_ENDPOINT = os.environ.get("VLLM_ENDPOINT_URL", "")
 RUNPOD_API_KEY = os.environ.get("RUNPOD_API_KEY", "")
 VLLM_MODEL = os.environ.get("VLLM_MODEL", "Qwen/Qwen3-8B-Instruct")
 EMBED_MODEL = os.environ.get("EMBED_MODEL", "BAAI/bge-small-en-v1.5")
 HANDLER_SECRET = os.environ.get("HANDLER_SECRET", "")
+S3_BUCKET = os.environ.get("S3_BUCKET", "")
+S3_ENDPOINT_URL = os.environ.get("S3_ENDPOINT_URL", "")
+S3_REGION = os.environ.get("S3_REGION", "us-il-1")
 
 # Static MetaboKG entries: name → (kind_str, repo_path, sqlite_path, lancedb_path)
 _METABO_MAP = {
@@ -169,6 +177,36 @@ def _make_embedder():
     print("[startup] embedder ready")
     return emb
 
+
+def _sync_from_s3() -> None:
+    if not S3_BUCKET or not S3_ENDPOINT_URL:
+        print("[s3] S3_BUCKET/S3_ENDPOINT_URL not set — skipping sync")
+        return
+    import boto3
+    from botocore.config import Config
+
+    VOLUME.mkdir(parents=True, exist_ok=True)
+    s3 = boto3.client(
+        "s3",
+        endpoint_url=S3_ENDPOINT_URL,
+        region_name=S3_REGION,
+        config=Config(signature_version="s3v4"),
+    )
+    paginator = s3.get_paginator("list_objects_v2")
+    total = 0
+    for page in paginator.paginate(Bucket=S3_BUCKET):
+        for obj in page.get("Contents", []):
+            key = obj["Key"]
+            dest = VOLUME / key
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            if not dest.exists() or dest.stat().st_size != obj["Size"]:
+                s3.download_file(S3_BUCKET, key, str(dest))
+                total += 1
+    print(f"[s3] synced {total} file(s) from s3://{S3_BUCKET} → {VOLUME}")
+
+
+print("[startup] syncing indices from S3 ...")
+_sync_from_s3()
 
 print("[startup] bootstrapping registry ...")
 _registry = _bootstrap_registry()

@@ -20,6 +20,11 @@ RUN apt-get update && \
         git \
     && rm -rf /var/lib/apt/lists/*
 
+# CPU-only torch first to prevent GPU wheels being pulled in by sentence-transformers
+RUN pip install --no-cache-dir \
+    --extra-index-url https://download.pytorch.org/whl/cpu \
+    "torch>=2.5.0"
+
 # PyPI dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

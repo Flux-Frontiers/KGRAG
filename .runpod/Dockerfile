@@ -11,6 +11,7 @@ RUN apt-get update && \
         libgomp1 \
         libglib2.0-0 \
         git \
+        curl \
     && rm -rf /var/lib/apt/lists/*
 
 # PyPI deps — transformers pinned <4.57 to match doc-kg 0.15.2 constraint
@@ -43,6 +44,6 @@ SentenceTransformer(model)
 print("Done.")
 EOF
 
-COPY runpod/handler.py .
+RUN curl -fsSL https://raw.githubusercontent.com/Flux-Frontiers/KGRAG/main/runpod/handler.py -o handler.py
 
 CMD ["python", "-u", "handler.py"]
