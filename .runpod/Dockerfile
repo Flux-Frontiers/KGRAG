@@ -13,17 +13,18 @@ RUN apt-get update && \
         git \
     && rm -rf /var/lib/apt/lists/*
 
-# PyPI deps
+# PyPI deps — transformers pinned <4.57 to match doc-kg 0.15.2 constraint
 RUN pip install --no-cache-dir \
+    "transformers>=4.40.0,<4.57" \
     runpod>=1.7.0 \
-    doc-kg>=0.12.3 \
-    sentence-transformers>=3.0.0 \
-    lancedb>=0.29.0 \
-    numpy>=1.24.0 \
-    httpx>=0.27.0 \
-    rich>=14.0.0 \
-    click>=8.1.0 \
-    pandas>=2.0.0
+    "doc-kg>=0.15.2" \
+    "sentence-transformers>=5.4.1" \
+    "lancedb>=0.29.0" \
+    "numpy>=1.24.0" \
+    "httpx>=0.27.0" \
+    "rich>=13.0.0,<15.0.0" \
+    "click>=8.1.0" \
+    "pandas>=2.0.0"
 
 # GitHub-only packages (not yet on PyPI)
 RUN pip install --no-cache-dir \
