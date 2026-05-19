@@ -21,6 +21,7 @@ services:
     environment:
       KG_VOLUME: /workspace/kgdata
       EMBED_MODEL: BAAI/bge-small-en-v1.5
+      HANDLER_SECRET: ${HANDLER_SECRET:-}
       # Synthesis via Ollama running on the host (optional)
       VLLM_ENDPOINT_URL: ${VLLM_ENDPOINT_URL:-http://host.docker.internal:11434}
       VLLM_MODEL: ${VLLM_MODEL:-qwen3:4b}

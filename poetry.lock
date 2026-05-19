@@ -1596,15 +1596,15 @@ files = [
 
 [[package]]
 name = "doc-kg"
-version = "0.15.0"
+version = "0.15.2"
 description = "A tool to build a semantically searchable knowledge graph from markdown and text documents"
 optional = true
 python-versions = "<3.14,>=3.12"
 groups = ["main"]
 markers = "extra == \"kg\""
 files = [
-    {file = "doc_kg-0.15.0-py3-none-any.whl", hash = "sha256:7e8c83e2bf794997d333e48b3aaa8e299953a8b050788e1b4c391cd1a9b94b33"},
-    {file = "doc_kg-0.15.0.tar.gz", hash = "sha256:147ca7bc49ff440f2861ecb68a2048b7afeb5b518d653857d5cd37926c0ad6ec"},
+    {file = "doc_kg-0.15.2-py3-none-any.whl", hash = "sha256:61da4ba9ea4d013e4f7a00ab2239f47bb8bfd2b0e58b60ee60799373c2e3cad4"},
+    {file = "doc_kg-0.15.2.tar.gz", hash = "sha256:7394977eeb31107c743a59ca9ceb34c23f4cdb077ec8a2fde9b48d7a30664797"},
 ]
 
 [package.dependencies]
@@ -1618,13 +1618,14 @@ numpy = ">=1.24.0"
 pandas = ">=2.0.0"
 pymupdf4llm = ">=0.0.17"
 pyyaml = ">=6.0.0"
-rich = ">=13.0.0"
+rich = ">=13.0.0,<15.0.0"
 sentence-transformers = ">=5.4.1"
+transformers = ">=4.40.0,<4.57"
 
 [package.extras]
-all = ["detect-secrets (>=1.5.0)", "kg-rag (>=0.6.0)", "mypy (>=1.10.0)", "pdoc (>=14.0.0)", "plotly (>=5.14.0)", "pre-commit (>=4.5.1)", "pycode-kg (>=0.16.0)", "pylint (>=4.0.5)", "pytest (>=8.0.0)", "pytest-cov (>=5.0.0)", "pyvis (>=0.3.2)", "ruff (>=0.4.0)", "streamlit (>=1.35.0)"]
+all = ["detect-secrets (>=1.5.0)", "mypy (>=1.10.0)", "pdoc (>=14.0.0)", "plotly (>=5.14.0)", "pre-commit (>=4.5.1)", "pycode-kg (>=0.16.0)", "pylint (>=4.0.5)", "pytest (>=8.0.0)", "pytest-cov (>=5.0.0)", "pyvis (>=0.3.2)", "ruff (>=0.4.0)", "streamlit (>=1.35.0)"]
 dev = ["detect-secrets (>=1.5.0)", "mypy (>=1.10.0)", "pdoc (>=14.0.0)", "pre-commit (>=4.5.1)", "pycode-kg (>=0.16.0)", "pylint (>=4.0.5)", "pytest (>=8.0.0)", "pytest-cov (>=5.0.0)", "ruff (>=0.4.0)"]
-kgdeps = ["kg-rag (>=0.6.0)", "pycode-kg (>=0.16.0)"]
+kgdeps = ["pycode-kg (>=0.16.0)"]
 viz = ["plotly (>=5.14.0)", "pyvis (>=0.3.2)", "streamlit (>=1.35.0)"]
 
 [[package]]
@@ -8675,4 +8676,4 @@ viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "bd9d89b3c995aa930872a64036bcb9199945a4b2a77142f301963de60517b21c"
+content-hash = "2b399b841fa8b3eb563dc073dd6235b8ac19d1e194ed146a2b3beb2210f80256"
