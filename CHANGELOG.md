@@ -9,7 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`runpod/chat.py`** — Streamlit chat UI for the kgrag-worker; sends queries
+  to the `/runsync` endpoint and displays synthesized answers with collapsible
+  source hit cards. Sidebar controls for corpus, top-K, semantic floor, min
+  score, synthesize toggle, worker URL, and optional secret.
+
 ### Changed
+
+- **`runpod/handler.py`** — `_synthesize` is now fault-tolerant: catches all
+  exceptions and returns `(answer, error_message)` tuple; synthesis failures no
+  longer abort the job, hits are always returned. Added `synthesis_error` field
+  to response payload.
+- **`runpod/handler.py`** — top-K now applied globally after cross-KG ranking
+  (`result.hits[:k]`) instead of per-KG, so the response contains exactly K
+  hits total. Previously `k` was per-KG, returning up to `k × num_KGs` hits.
+- **`runpod/handler.py`** — synthesis skipped when hits list is empty, preventing
+  LLM hallucination on queries with no matching corpus content.
+- **`runpod/handler.py`** — Ollama connect timeout increased 10 → 30 s to
+  accommodate cold model loads; pylint suppressions added for intentional
+  deferred imports and broad exception catch.
+- **`runpod/docker-compose.yml`** — bind-mount `handler.py` into container for
+  live development without image rebuilds.
+- **`runpod/chat.py`** — outer httpx read timeout increased to 600 s to match
+  handler's internal Ollama timeout.
 
 ### Fixed
 

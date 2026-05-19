@@ -97,8 +97,8 @@ _GUTENBERG_CORPUS_DIR = VOLUME / "gutenberg_kg" / "corpus"
 
 
 def _bootstrap_registry():
-    from kg_rag.primitives import KGEntry, KGKind
-    from kg_rag.registry import KGRegistry
+    from kg_rag.primitives import KGEntry, KGKind  # pylint: disable=import-outside-toplevel
+    from kg_rag.registry import KGRegistry  # pylint: disable=import-outside-toplevel
 
     REGISTRY_PATH.parent.mkdir(parents=True, exist_ok=True)
     reg = KGRegistry(db_path=REGISTRY_PATH)
@@ -160,7 +160,7 @@ def _bootstrap_registry():
 
 
 def _make_embedder():
-    from kg_rag._embedders import SentenceTransformerEmbedder
+    from kg_rag._embedders import SentenceTransformerEmbedder  # pylint: disable=import-outside-toplevel
 
     print(f"[startup] loading embedder: {EMBED_MODEL}")
     emb = SentenceTransformerEmbedder(EMBED_MODEL)
@@ -201,27 +201,33 @@ def _hit_to_dict(hit) -> dict:
     }
 
 
-def _synthesize(query: str, hits: list[dict]) -> str | None:
+def _synthesize(query: str, hits: list[dict]) -> tuple[str | None, str | None]:
+    """Return (answer, error_message). Never raises — synthesis failures are non-fatal."""
     if not VLLM_ENDPOINT:
-        return None
-    import httpx
+        return None, None
+    import httpx  # pylint: disable=import-outside-toplevel
 
     ctx = "\n\n".join(f"[{h['source_path']}]\n{h['summary']}" for h in hits if h.get("summary"))
-    resp = httpx.post(
-        f"{VLLM_ENDPOINT}/v1/chat/completions",
-        headers={"Authorization": f"Bearer {RUNPOD_API_KEY}"},
-        json={
-            "model": VLLM_MODEL,
-            "messages": [
-                {"role": "system", "content": "Answer using only the provided context."},
-                {"role": "user", "content": f"Context:\n{ctx}\n\nQuestion: {query}"},
-            ],
-            "max_tokens": 512,
-        },
-        timeout=httpx.Timeout(connect=10.0, read=600.0, write=60.0, pool=10.0),
-    )
-    resp.raise_for_status()
-    return resp.json()["choices"][0]["message"]["content"]
+    try:
+        resp = httpx.post(
+            f"{VLLM_ENDPOINT}/v1/chat/completions",
+            headers={"Authorization": f"Bearer {RUNPOD_API_KEY}"},
+            json={
+                "model": VLLM_MODEL,
+                "messages": [
+                    {"role": "system", "content": "Answer using only the provided context."},
+                    {"role": "user", "content": f"Context:\n{ctx}\n\nQuestion: {query}"},
+                ],
+                "max_tokens": 512,
+            },
+            timeout=httpx.Timeout(connect=30.0, read=600.0, write=60.0, pool=10.0),
+        )
+        resp.raise_for_status()
+        return resp.json()["choices"][0]["message"]["content"], None
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        msg = f"{type(exc).__name__}: {exc}"
+        print(f"[synthesis] failed — {msg}")
+        return None, msg
 
 
 # ---------------------------------------------------------------------------
@@ -245,7 +251,7 @@ def handler(job: dict) -> dict:
     if not query:
         return {"error": "query is required"}
 
-    from kg_rag.primitives import KGKind
+    from kg_rag.primitives import KGKind  # pylint: disable=import-outside-toplevel
 
     # Resolve kind filter from corpus selector
     if corpus == "all":
@@ -267,8 +273,8 @@ def handler(job: dict) -> dict:
         semantic_floor=semantic_floor,
     )
 
-    hits = [_hit_to_dict(h) for h in result.hits]
-    synthesis = _synthesize(query, hits) if synthesize else None
+    hits = [_hit_to_dict(h) for h in result.hits[:k]]
+    synthesis, synthesis_error = _synthesize(query, hits) if (synthesize and hits) else (None, None)
 
     return {
         "query": query,
@@ -277,6 +283,7 @@ def handler(job: dict) -> dict:
         "kgs_queried": result.kgs_queried,
         "hits": hits,
         "synthesis": synthesis,
+        "synthesis_error": synthesis_error,
     }
 
 
