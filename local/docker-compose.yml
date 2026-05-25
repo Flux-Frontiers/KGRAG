@@ -1,0 +1,36 @@
+# docker-compose.yml — KGRAG worker local development environment
+#
+# Usage:
+#   cd local/
+#   cp .env.example .env          # fill in your paths and keys
+#   docker compose up             # start worker in API serve mode
+#   docker compose down           # stop and remove container
+#
+# The worker exposes the RunPod serverless API on http://localhost:8000
+# Hit it with:
+#   curl -s -X POST http://localhost:8000/runsync \
+#     -H "Content-Type: application/json" \
+#     -d '{"input":{"query":"...","corpus":"gutenberg","k":4}}' | jq .
+
+services:
+  kgrag-worker:
+    image: egsuchanek/kgrag-worker:latest
+    command: python handler.py --rp_serve_api --rp_api_host 0.0.0.0
+    ports:
+      - "8000:8000"
+    environment:
+      KG_VOLUME: /workspace/kgdata
+      EMBED_MODEL: BAAI/bge-small-en-v1.5
+      HANDLER_SECRET: ${HANDLER_SECRET:-}
+      # Synthesis via Ollama running on the host (optional)
+      VLLM_ENDPOINT_URL: ${VLLM_ENDPOINT_URL:-http://host.docker.internal:11434}
+      VLLM_MODEL: ${VLLM_MODEL:-qwen3:4b}
+      RUNPOD_API_KEY: ${RUNPOD_API_KEY:-ollama}
+    volumes:
+      # GutenbergKG: per-book DocKG indices (must NOT be :ro — LanceDB writes locks)
+      - ${GUTENBERG_CORPUS:-../../../../gutenberg_kg/corpus}:/workspace/kgdata/gutenberg_kg/corpus
+      # MetaboKG: metabolic pathway indices
+      - ${METABO_REPO:-../../../../Metabo_kg}:/workspace/kgdata/metabo_kg
+      # Live-reload handler during development — remove when baking into image
+      - ./handler.py:/app/handler.py:ro
+    restart: unless-stopped
