@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Removed
+
+## [0.8.0] - 2026-05-25
+
+### Added
+
 - **`kgrag export` / `kgrag import` CLI commands**
   (`src/kg_rag/cli/cmd_corpus_io.py`, registered in
   `src/kg_rag/cli/main.py`) — make a registered KG portable as a single
