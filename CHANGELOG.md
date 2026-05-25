@@ -9,11 +9,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`kg-git` and `all` extras** (`pyproject.toml`) — `kg-git` bundles the
+  four git-sourced KG adapters (`agent-kg`, `diary-kg`, `memory-kg`,
+  `metabo-kg`) as a single optional set; `all` rolls up every optional
+  surface (PyPI KGs + git KGs + `viz` + `viz3d` + `pi`) so the whole stack
+  installs in one shot. Enables a universal CLI install via
+  `uv tool install --editable ".[all]" --python 3.12`, which exposes every
+  `kgrag*` script (orchestrator, MCP, query, pack, analyze, viz, viz2d,
+  register/init/scan/info/list/status) on PATH from any cwd, backed by an
+  isolated uv-managed venv.
+
 ### Changed
+
+- **`[tool.poetry.dependencies]`** (`pyproject.toml`) — `agent-kg`,
+  `diary-kg`, `memory-kg`, and `metabo-kg` promoted from the
+  `[tool.poetry.group.kgdeps]` group into optional top-level dependencies
+  (with their git URLs) so pipx/uv/pip can pick them up via the new
+  `kg-git` / `all` extras. Poetry workflows that used
+  `poetry install --with kgdeps` should switch to
+  `poetry install --extras "kg-git"` (or `--extras "all"`).
+- **Install-recipe header** (`pyproject.toml`) — refreshed the poetry/pip
+  examples to reflect the new extra split and added a dedicated
+  *Universal CLI on PATH (uv)* block documenting `uv tool install`,
+  `uv tool upgrade`, and `uv tool uninstall` for the orchestrator.
+- **`poetry.lock`** — regenerated after the extras restructure so the
+  optional-deps graph stays consistent with `pyproject.toml`.
+- **`.claude/commands/release.md`** — rewrote the release workflow to be
+  scoped to the kgrag repo (`src/kg_rag/`, `Flux-Frontiers/KGRAG` remote),
+  added a `/bump`-aware skip for the version-bump step, dropped the
+  CodeKG-analysis sub-step that belonged to the code-kg template, and
+  made the tag push explicitly gated on user confirmation per
+  `feedback_no_commit_without_permission.md`.
 
 ### Fixed
 
 ### Removed
+
+- **`[tool.poetry.group.kgdeps]`** (`pyproject.toml`) — removed; its four
+  git-sourced KG adapters now live as optional top-level deps surfaced by
+  the `kg-git` / `all` extras.
 
 ## [0.8.0] - 2026-05-25
 
