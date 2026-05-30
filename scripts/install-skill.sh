@@ -214,6 +214,34 @@ for SKILL_DIR in "${SKILL_DIRS[@]}"; do
     echo "  ✓ ${REFS_DIR}/installation.md"
 done
 
+# Install the kgrag orchestrator skill (SKILL.md only — no references subdir)
+KGRAG_SKILL_DIRS=(
+    "${HOME}/.claude/skills/kgrag"
+    "${HOME}/.kilocode/skills/kgrag"
+    "${HOME}/.agents/skills/kgrag"
+)
+LOCAL_KGRAG_SKILL="${REPO_ROOT:+${REPO_ROOT}/.claude/skills/kgrag/SKILL.md}"
+
+for KGRAG_SKILL_DIR in "${KGRAG_SKILL_DIRS[@]}"; do
+    _exec mkdir -p "$KGRAG_SKILL_DIR"
+    if [ -f "$LOCAL_KGRAG_SKILL" ]; then
+        _exec cp "$LOCAL_KGRAG_SKILL" "${KGRAG_SKILL_DIR}/SKILL.md"
+    else
+        if [ -n "$DRY_RUN" ]; then
+            echo "  [dry-run] would download ${RAW_BASE}/.claude/skills/kgrag/SKILL.md → ${KGRAG_SKILL_DIR}/SKILL.md"
+        elif command -v curl &>/dev/null; then
+            curl -fsSL "${RAW_BASE}/.claude/skills/kgrag/SKILL.md" -o "${KGRAG_SKILL_DIR}/SKILL.md"
+        elif command -v wget &>/dev/null; then
+            wget -q "${RAW_BASE}/.claude/skills/kgrag/SKILL.md" -O "${KGRAG_SKILL_DIR}/SKILL.md"
+        fi
+    fi
+    if [ -z "$DRY_RUN" ] && [ ! -f "${KGRAG_SKILL_DIR}/SKILL.md" ]; then
+        echo "  ⚠  kgrag skill install failed for ${KGRAG_SKILL_DIR} — continuing"
+    else
+        echo "  ✓ ${KGRAG_SKILL_DIR}/SKILL.md"
+    fi
+done
+
 # ── Step 2: Install Claude Code commands to ~/.claude/commands/ ───────────────
 echo ""
 echo "── Step 2: Installing Claude Code commands ──────────"

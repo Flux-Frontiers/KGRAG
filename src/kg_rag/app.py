@@ -15,10 +15,20 @@ Run with:
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import streamlit as st
 
+from kg_rag.cli.cmd_synthesize import (
+    _DEFAULT_MODEL,
+    _DEFAULT_OLLAMA_URL,
+    _DEFAULT_OPENAI_MODEL,
+    _DEFAULT_OPENAI_URL,
+)
+from kg_rag.cli.cmd_synthesize import (
+    _SYSTEM_PROMPT as _SYNTH_SYSTEM,
+)
 from kg_rag.primitives import KGKind
 from kg_rag.registry import default_registry_path
 
@@ -224,7 +234,9 @@ def _render_sidebar() -> dict:
         format_func=lambda k: f"{_KG_KIND_ICON.get(k, '⬡')} {k}",
     )
 
-    all_entries = kgrag.registry.list()
+    from kg_rag.adapters import make_adapter  # pylint: disable=import-outside-toplevel
+
+    all_entries = [e for e in kgrag.registry.list() if make_adapter(e).is_available()]
     filtered_entries = [e for e in all_entries if e.kind.value in kind_filter]
     entry_labels = {e.name: e for e in filtered_entries}
 
@@ -713,29 +725,15 @@ def _tab_snippets(cfg: dict) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Tab 5 — Synthesize (Ollama inference)
+# Tab 5 — Synthesize (Ollama or OpenAI-compatible inference)
 # ---------------------------------------------------------------------------
-
-_DEFAULT_OLLAMA_URL = "http://localhost:11434"
-_DEFAULT_MODEL = "llama3.2"
-
-_SYNTH_SYSTEM = (
-    "You are a knowledgeable literary and research assistant. "
-    "You are given excerpts retrieved from a knowledge graph built from books and documents. "
-    "Use these excerpts as your primary source and synthesize a clear, accurate answer. "
-    "If the excerpts do not contain enough information, say so honestly."
-)
+# Constants (_DEFAULT_MODEL, _DEFAULT_OLLAMA_URL, _DEFAULT_OPENAI_MODEL,
+# _DEFAULT_OPENAI_URL, _SYNTH_SYSTEM) are imported from cmd_synthesize so
+# the two surfaces stay in sync automatically.
 
 
-def _call_ollama_stream(prompt: str, model: str, base_url: str):
-    """Yield tokens from Ollama /api/generate (streaming).
-
-    :param prompt: Full prompt string.
-    :param model: Ollama model name.
-    :param base_url: Ollama server base URL.
-    :yields: Response token strings.
-    :raises RuntimeError: On connection or HTTP errors.
-    """
+def _stream_ollama(prompt: str, model: str, base_url: str):
+    """Yield tokens from Ollama /api/generate for Streamlit progressive rendering."""
     import json  # pylint: disable=import-outside-toplevel
 
     try:
@@ -762,12 +760,56 @@ def _call_ollama_stream(prompt: str, model: str, base_url: str):
         ) from exc
 
 
+def _stream_openai_compat(prompt: str, model: str, base_url: str, api_key: str | None = None):
+    """Yield tokens from an OpenAI-compatible /chat/completions SSE stream."""
+    import json  # pylint: disable=import-outside-toplevel
+
+    try:
+        import httpx  # pylint: disable=import-outside-toplevel
+    except ImportError as exc:
+        raise RuntimeError("httpx is required — run `pip install httpx`") from exc
+
+    url = base_url.rstrip("/") + "/chat/completions"
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": _SYNTH_SYSTEM},
+            {"role": "user", "content": prompt},
+        ],
+        "stream": True,
+    }
+    headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+    _timeout = httpx.Timeout(connect=10.0, read=600.0, write=60.0, pool=10.0)
+    try:
+        with httpx.stream("POST", url, json=payload, headers=headers, timeout=_timeout) as resp:
+            if resp.status_code != 200:
+                raise RuntimeError(f"Server returned HTTP {resp.status_code} from {url}")
+            for line in resp.iter_lines():
+                line = line.strip()
+                if not line or line == "data: [DONE]":
+                    continue
+                if line.startswith("data: "):
+                    line = line[6:]
+                try:
+                    chunk = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                token = (chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")) or ""
+                yield token
+    except httpx.ConnectError as exc:
+        raise RuntimeError(f"Cannot connect to {base_url}. Is the server running?") from exc
+
+
 def _tab_synthesize(cfg: dict) -> None:
-    """Render the Synthesize tab — KG-grounded Ollama inference."""
+    """Render the Synthesize tab — KG-grounded inference via Ollama or OpenAI-compatible server."""
     st.header("🧠 Synthesize")
     st.caption(
         "Retrieve relevant excerpts from your KGs, then synthesize an answer "
-        "using a local [Ollama](https://ollama.com) model."
+        "using a local [Ollama](https://ollama.com) model or any "
+        "[OpenAI-compatible](https://platform.openai.com/docs/api-reference) server "
+        "(omlx, LM Studio, vLLM, …)."
     )
 
     kgrag = cfg["kgrag"]
@@ -775,7 +817,16 @@ def _tab_synthesize(cfg: dict) -> None:
         st.warning("No KGs registered. Add KGs via `kgrag init`.")
         return
 
-    # ── Controls ──────────────────────────────────────────────────────────
+    # ── Backend selector ──────────────────────────────────────────────────
+    backend = st.radio(
+        "Backend",
+        options=["openai", "ollama"],
+        horizontal=True,
+        key="synth_backend",
+        help="'ollama' uses the native Ollama API; 'openai' uses any OpenAI-compatible server.",
+    )
+
+    # ── Query + model row ────────────────────────────────────────────────
     col_q, col_model = st.columns([4, 2])
     with col_q:
         synth_query = st.text_input(
@@ -784,23 +835,63 @@ def _tab_synthesize(cfg: dict) -> None:
             key="synth_query",
         )
     with col_model:
-        model = st.text_input("Ollama model", value=_DEFAULT_MODEL, key="synth_model")
+        # Reset model to the backend-appropriate default whenever the backend changes.
+        # `value=` is ignored once a key exists in session_state, so we set it explicitly.
+        if st.session_state.get("_synth_backend_prev") != backend:
+            st.session_state["synth_model"] = (
+                _DEFAULT_MODEL if backend == "ollama" else _DEFAULT_OPENAI_MODEL
+            )
+            st.session_state["_synth_backend_prev"] = backend
+        model = st.text_input("Model", key="synth_model")
 
-    col_url, col_k = st.columns([3, 1])
-    with col_url:
-        ollama_url = st.text_input(
-            "Ollama URL",
-            value=_DEFAULT_OLLAMA_URL,
-            key="synth_ollama_url",
-            help="Set OLLAMA_URL env var to override default.",
-        )
+    # ── URL / auth row ───────────────────────────────────────────────────
+    if backend == "ollama":
+        col_url, col_k = st.columns([3, 1])
+        with col_url:
+            server_url = st.text_input(
+                "Ollama URL",
+                value=_DEFAULT_OLLAMA_URL,
+                key="synth_ollama_url",
+                help="Set OLLAMA_URL env var to change the default.",
+            )
+        api_key = None
+    else:
+        col_url, col_key, col_k = st.columns([3, 2, 1])
+        with col_url:
+            server_url = st.text_input(
+                "OpenAI-compat URL",
+                value=os.environ.get("OPENAI_BASE_URL", _DEFAULT_OPENAI_URL),
+                key="synth_openai_url",
+                help="Base URL including /v1 suffix. Reads $OPENAI_BASE_URL.",
+            )
+        with col_key:
+            api_key = (
+                st.text_input(
+                    "API key",
+                    value=os.environ.get("OPENAI_API_KEY", ""),
+                    type="password",
+                    key="synth_api_key",
+                    help="Bearer token. Reads $OPENAI_API_KEY.",
+                )
+                or None
+            )
+
     with col_k:
-        synth_k = st.number_input(
-            "Top-K snippets", min_value=1, max_value=20, value=6, key="synth_k"
+        synth_k = st.number_input("Top-K per KG", min_value=1, max_value=20, value=4, key="synth_k")
+
+    col_max, col_show = st.columns([1, 3])
+    with col_max:
+        max_context = st.number_input(
+            "Max snippets to LLM",
+            min_value=1,
+            max_value=100,
+            value=20,
+            key="synth_max_context",
+            help="Cap total snippets passed to the model (top-N by score). "
+            "Prevents oversized prompts when many KGs are registered.",
         )
-
-    show_ctx = st.checkbox("Show retrieved context", value=False, key="synth_show_ctx")
-
+    with col_show:
+        show_ctx = st.checkbox("Show retrieved context", value=False, key="synth_show_ctx")
     synth_btn = st.button("🧠 Synthesize", type="primary", key="synth_btn")
 
     if not synth_btn or not synth_query.strip():
@@ -816,6 +907,7 @@ def _tab_synthesize(cfg: dict) -> None:
             selected = cfg["selected_names"]
             if selected:
                 pack.snippets = [s for s in pack.snippets if s.kg_name in selected]
+            pack.snippets = pack.snippets[: int(max_context)]
         except Exception as exc:  # pylint: disable=broad-exception-caught
             st.error(f"Context retrieval failed: {exc}")
             return
@@ -853,10 +945,10 @@ def _tab_synthesize(cfg: dict) -> None:
 
     full_prompt = (
         f"Question: {synth_query.strip()}\n\n"
-        f"Relevant excerpts:\n\n" + "\n\n---\n\n".join(context_parts) + "\n\nAnswer:"
+        "Relevant excerpts:\n\n" + "\n\n---\n\n".join(context_parts) + "\n\nAnswer:"
     )
 
-    # ── Stream from Ollama ────────────────────────────────────────────────
+    # ── Stream from inference backend ─────────────────────────────────────
     st.markdown("---")
     st.subheader(f"Answer · `{model}`")
 
@@ -864,7 +956,14 @@ def _tab_synthesize(cfg: dict) -> None:
     full_answer = ""
 
     try:
-        for token in _call_ollama_stream(full_prompt, model=model, base_url=ollama_url):
+        stream = (
+            _stream_ollama(full_prompt, model=model, base_url=server_url)
+            if backend == "ollama"
+            else _stream_openai_compat(
+                full_prompt, model=model, base_url=server_url, api_key=api_key
+            )
+        )
+        for token in stream:
             full_answer += token
             answer_box.markdown(full_answer + "▌")
         answer_box.markdown(full_answer)

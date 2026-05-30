@@ -1,7 +1,8 @@
 """
 cmd_synthesize.py
 
-kgrag synthesize — retrieve KG context and synthesize an answer via Ollama.
+kgrag synthesize — retrieve KG context and synthesize an answer via Ollama or
+any OpenAI-compatible inference server (e.g. omlx, LM Studio, vLLM).
 
 Usage::
 
@@ -10,8 +11,12 @@ Usage::
     kgrag synthesize "Watson's role" --corpus gutenberg-fiction --model llama3.2
     kgrag synthesize "entropy" --ollama-url http://myserver:11434
 
+    # omlx (OpenAI-compatible):
+    kgrag synthesize "entropy" --backend openai --model mlx-community/Qwen3-8B-4bit
+    kgrag synthesize "entropy" --backend openai --openai-url http://myserver:8000/v1
+
     Author: Eric G. Suchanek, PhD
-    Last Revision: 2026-03-31 18:52:16
+    Last Revision: 2026-05-30
 
     License: Elastic 2.0
 """
@@ -34,7 +39,9 @@ from kg_rag.primitives import KGKind
 console = Console()
 
 _DEFAULT_OLLAMA_URL = "http://localhost:11434"
+_DEFAULT_OPENAI_URL = "http://127.0.0.1:8000/v1"
 _DEFAULT_MODEL = "qwen3:8b"
+_DEFAULT_OPENAI_MODEL = "Qwen3-4B-Instruct-2507-MLX-8bit"
 
 _SYSTEM_PROMPT = """\
 You are a knowledgeable literary and research assistant. You are given excerpts \
@@ -108,6 +115,85 @@ def _call_ollama(
         ) from e
 
 
+def _call_openai_compat(
+    prompt: str,
+    model: str,
+    base_url: str,
+    stream: bool,
+    api_key: str | None = None,
+) -> str:
+    """Send a prompt to an OpenAI-compatible endpoint and return the response.
+
+    Works with omlx, LM Studio, vLLM, llama.cpp server, or any server that
+    implements ``POST /chat/completions``.
+
+    :param prompt: Full user prompt (KG context already embedded).
+    :param model: Model identifier as expected by the server.
+    :param base_url: Server base URL including ``/v1`` suffix.
+    :param stream: If True, stream tokens to stdout as they arrive.
+    :param api_key: Bearer token if the server requires one (e.g. omlx).
+    :return: Full response text.
+    """
+    try:
+        import httpx  # pylint: disable=import-outside-toplevel
+    except ImportError as e:
+        raise click.ClickException("httpx is required: pip install httpx") from e
+
+    import json  # pylint: disable=import-outside-toplevel
+
+    url = base_url.rstrip("/") + "/chat/completions"
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": _SYSTEM_PROMPT},
+            {"role": "user", "content": prompt},
+        ],
+        "stream": stream,
+    }
+    headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+    _timeout = httpx.Timeout(connect=10.0, read=600.0, write=60.0, pool=10.0)
+
+    try:
+        if stream:
+            full_text = ""
+            with httpx.stream("POST", url, json=payload, headers=headers, timeout=_timeout) as resp:
+                if resp.status_code != 200:
+                    raise click.ClickException(
+                        f"Server returned HTTP {resp.status_code} from {url}"
+                    )
+                for line in resp.iter_lines():
+                    line = line.strip()
+                    if not line or line == "data: [DONE]":
+                        continue
+                    if line.startswith("data: "):
+                        line = line[6:]
+                    try:
+                        chunk = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    token = (
+                        chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
+                    ) or ""
+                    full_text += token
+                    if token:
+                        console.print(token, end="", highlight=False)
+            console.print()
+            return full_text
+        else:
+            resp = httpx.post(url, json=payload, headers=headers, timeout=_timeout)
+            if resp.status_code != 200:
+                raise click.ClickException(f"Server returned HTTP {resp.status_code} from {url}")
+            data = resp.json()
+            return data.get("choices", [{}])[0].get("message", {}).get("content", "")
+    except httpx.ConnectError as e:
+        raise click.ClickException(
+            f"Cannot connect to OpenAI-compatible server at {base_url}.\n"
+            f"Is omlx (or your server) running?  ({e})"
+        ) from e
+
+
 @cli.command("synthesize")
 @click.argument("query_text")
 @k_option
@@ -119,11 +205,24 @@ def _call_ollama(
     help="Scope retrieval to a named corpus (default: all registered KGs).",
 )
 @click.option(
-    "--model",
-    default=_DEFAULT_MODEL,
+    "--backend",
+    default="ollama",
     show_default=True,
+    type=click.Choice(["ollama", "openai"], case_sensitive=False),
+    help=(
+        "Inference backend. 'ollama' uses the native Ollama API; "
+        "'openai' uses any OpenAI-compatible server (omlx, LM Studio, vLLM, …)."
+    ),
+)
+@click.option(
+    "--model",
+    default=None,
+    show_default=False,
     metavar="MODEL",
-    help="Ollama model to use for synthesis.",
+    help=(
+        f"Model name. Defaults to '{_DEFAULT_MODEL}' for ollama "
+        f"or '{_DEFAULT_OPENAI_MODEL}' for openai backend."
+    ),
 )
 @click.option(
     "--ollama-url",
@@ -132,6 +231,27 @@ def _call_ollama(
     envvar="OLLAMA_URL",
     metavar="URL",
     help="Ollama server base URL. Also read from $OLLAMA_URL.",
+)
+@click.option(
+    "--openai-url",
+    default=_DEFAULT_OPENAI_URL,
+    show_default=True,
+    envvar="OPENAI_BASE_URL",
+    metavar="URL",
+    help=(
+        "Base URL for the OpenAI-compatible server (used with --backend openai). "
+        "Also read from $OPENAI_BASE_URL. Default targets omlx on localhost."
+    ),
+)
+@click.option(
+    "--api-key",
+    default=None,
+    envvar="OPENAI_API_KEY",
+    metavar="KEY",
+    help=(
+        "Bearer API key for the OpenAI-compatible server (used with --backend openai). "
+        "Also read from $OPENAI_API_KEY."
+    ),
 )
 @click.option(
     "--no-stream",
@@ -166,19 +286,23 @@ def synthesize(
     k,
     kind,
     corpus,
+    backend,
     model,
     ollama_url,
+    openai_url,
+    api_key,
     no_stream,
     show_context,
     context_lines,
     max_context,
     registry,
 ):
-    """Retrieve KG context and synthesize an answer via Ollama.
+    """Retrieve KG context and synthesize an answer via Ollama or an OpenAI-compatible server.
 
     Retrieves the top-K most relevant snippets from registered KGs (or a
-    specific corpus), assembles them into a prompt, and calls a local Ollama
-    model to generate a synthesized answer.
+    specific corpus), assembles them into a prompt, and calls a local inference
+    server (Ollama or omlx/LM Studio/vLLM via --backend openai) to generate a
+    synthesized answer.
 
     \b
     QUERY_TEXT  Natural-language question or topic
@@ -190,7 +314,12 @@ def synthesize(
         kgrag synthesize "theme of isolation" --kind doc -k 8
         kgrag synthesize "entropy" --corpus gutenberg-science --model mistral
         kgrag synthesize "Watson's role" --show-context --no-stream
+        kgrag synthesize "entropy" --backend openai --model mlx-community/Qwen3-8B-4bit
+        kgrag synthesize "entropy" --backend openai --openai-url http://myserver:8000/v1
     """
+    # Resolve default model per backend when caller omits --model
+    if model is None:
+        model = _DEFAULT_MODEL if backend == "ollama" else _DEFAULT_OPENAI_MODEL
     kinds = [KGKind.from_str(kind)] if kind else None
     reg_path = Path(registry).resolve() if registry else None
 
@@ -263,15 +392,28 @@ def synthesize(
         console.print(context_block)
         console.print(Rule())
 
-    # ── 3. Call Ollama ───────────────────────────────────────────────────────
-    console.print(Rule(f"Synthesizing with [bold]{model}[/bold] via {ollama_url}"))
-
-    answer = _call_ollama(
-        prompt=full_prompt,
-        model=model,
-        base_url=ollama_url,
-        stream=not no_stream,
-    )
+    # ── 3. Call inference backend ────────────────────────────────────────────
+    if backend == "openai":
+        server_label = openai_url
+        console.print(
+            Rule(f"Synthesizing with [bold]{model}[/bold] via omlx/openai at {server_label}")
+        )
+        answer = _call_openai_compat(
+            prompt=full_prompt,
+            model=model,
+            base_url=openai_url,
+            stream=not no_stream,
+            api_key=api_key,
+        )
+    else:
+        server_label = ollama_url
+        console.print(Rule(f"Synthesizing with [bold]{model}[/bold] via ollama at {server_label}"))
+        answer = _call_ollama(
+            prompt=full_prompt,
+            model=model,
+            base_url=ollama_url,
+            stream=not no_stream,
+        )
 
     if no_stream:
         console.print(Markdown(answer))

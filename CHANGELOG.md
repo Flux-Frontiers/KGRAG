@@ -9,6 +9,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **OpenAI-compatible inference backend for `kgrag synthesize`**
+  (`src/kg_rag/cli/cmd_synthesize.py`) — `--backend openai` routes synthesis
+  through any server that speaks the OpenAI `/v1/chat/completions` wire
+  protocol (omlx, LM Studio, vLLM, llama.cpp, etc.) instead of Ollama's
+  native `/api/generate` endpoint. New options:
+  - `--backend ollama|openai` (default: `ollama`) — selects the inference
+    engine; `openai` is significantly faster when using omlx on Apple Silicon.
+  - `--openai-url URL` (default: `http://127.0.0.1:8000/v1`,
+    env: `$OPENAI_BASE_URL`) — base URL of the OpenAI-compatible server.
+  - `--api-key KEY` (env: `$OPENAI_API_KEY`) — bearer token for servers that
+    require authentication (e.g. omlx with a configured key).
+  - Default model auto-selects per backend: `qwen3:8b` for Ollama,
+    `Qwen3-4B-Instruct-2507-MLX-8bit` for the openai backend; `--model`
+    overrides either.
+  - SSE streaming parser handles `data:` prefix, `[DONE]` sentinel, blank
+    lines, and malformed JSON chunks gracefully.
+- **`tests/test_cmd_synthesize.py`** — 48-test suite covering both backends:
+  `_call_ollama` (stream/non-stream, HTTP errors, ConnectError, URL
+  construction), `_call_openai_compat` (SSE parsing, auth header
+  present/absent, HTTP errors, ConnectError), and `synthesize` CLI
+  (backend routing, model defaults, option pass-through, env vars, no-snippets
+  exit, `--show-context`, `--no-stream`, `--max-context` truncation, invalid
+  backend rejection).
+- **`scripts/install-kgs.sh`** — convenience script to install the full KGRAG
+  fleet as `uv tool --editable` global commands in one shot; supports
+  per-adaptor selection and `REINSTALL=1` for a clean rebuild.
+- **`.claude/skills/kgrag/SKILL.md`** — embedded KGRAG orchestrator skill
+  with complete tool decision tree and CLI reference for the full fleet
+  (PyCodeKG, DocKG, MemoryKG, DiaryKG, FTreeKG, AgentKG, MetaboKG,
+  GutenbergKG, IAKG).
+
+### Changed
+
 - **`kg-git` and `all` extras** (`pyproject.toml`) — `kg-git` bundles the
   four git-sourced KG adapters (`agent-kg`, `diary-kg`, `memory-kg`,
   `metabo-kg`) as a single optional set; `all` rolls up every optional
@@ -40,6 +73,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   CodeKG-analysis sub-step that belonged to the code-kg template, and
   made the tag push explicitly gated on user confirmation per
   `feedback_no_commit_without_permission.md`.
+
+### Changed (continued)
+
+- **Streamlit Synthesize tab** (`src/kg_rag/app.py`) — overhauled to match
+  `cmd_synthesize` as the reference implementation:
+  - Added **backend radio** (`openai` default / `ollama`) mirroring the CLI's
+    `--backend` option; model field resets to the backend-appropriate default
+    on switch (`qwen3:8b` ↔ `Qwen3-4B-Instruct-2507-MLX-8bit`).
+  - Added **OpenAI-compat URL** and **API key** fields; both pre-fill from
+    `$OPENAI_BASE_URL` / `$OPENAI_API_KEY` on fresh page load.
+  - Added **Max snippets to LLM** input (default 20) matching CLI
+    `--max-context`; prevents oversized prompts when hundreds of KGs are
+    registered.
+  - Replaced standalone `_call_ollama_stream` + duplicate constants with
+    `_stream_ollama` / `_stream_openai_compat` generator pair that import
+    `_SYSTEM_PROMPT`, `_DEFAULT_MODEL`, `_DEFAULT_OPENAI_MODEL`,
+    `_DEFAULT_OLLAMA_URL`, `_DEFAULT_OPENAI_URL` directly from
+    `cmd_synthesize` — single source of truth for both surfaces.
+  - Sidebar KG list now filtered to `is_available()` entries only; stubbed
+    adapters (legal, pdb, etc.) no longer crowd the selector.
+- **`scripts/install-skill.sh`** — extended to also install the new
+  `kgrag` orchestrator skill (`~/.claude/skills/kgrag/SKILL.md`) alongside
+  the existing `codekg` skill; copies from local clone when available,
+  falls back to GitHub download.
 
 ### Fixed
 
