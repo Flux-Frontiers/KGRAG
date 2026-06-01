@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Type checker: mypy → ty** (`pyproject.toml`, `.pre-commit-config.yaml`,
+  `.github/workflows/ci.yml`) — replaced `mypy` with Astral's `ty` (`^0.0.41`)
+  across the dev tooling. The `pre-commit` `mypy` hook and the CI *Run mypy*
+  step now invoke `poetry run ty check src/`. Config migrated from
+  `[tool.mypy]` to `[tool.ty.environment]` (`root = ["src"]`,
+  `python-version = "3.12"`) and `[tool.ty.rules]` (`unresolved-import =
+  "ignore"`, mirroring mypy's `ignore_missing_imports`).
+
+### Fixed
+
+- **`_probe_kg` parameter type** (`src/kg_rag/cli/cmd_health.py`) — annotated
+  `entry` as `KGEntry` instead of `object`, removing four
+  `# type: ignore[attr-defined]` suppressions on `kind` / `sqlite_path` /
+  `lancedb_path` / `repo_path` accesses.
+- **Qt label references** (`src/kg_rag/viz_qt.py`) — the *Columns* and
+  *Viewport width* labels are now held directly when created rather than
+  fished back out via `layout.itemAt(...).widget()` (which `ty` flagged as
+  possibly `None`), dropping two `# type: ignore[union-attr]` suppressions.
+- **`ty` false positives on shadowed `list` return types** (`registry.py`,
+  `corpus_registry.py`, `person_registry.py`) — under
+  `from __future__ import annotations`, `ty` resolves the `list[...]` return
+  annotation of methods named `list()` to the method itself; suppressed with
+  `# ty: ignore[invalid-type-form]` (replacing the prior mypy
+  `# type: ignore[valid-type]` comments).
+- **`.secrets.baseline`** — regenerated with a single `detect-secrets scan`,
+  clearing stale entries that caused the pre-commit hook to thrash
+  (non-convergent rewrites) across runs.
+
 ### Added
 
 - **OpenAI-compatible inference backend for `kgrag synthesize`**

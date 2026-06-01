@@ -198,7 +198,7 @@ class CorpusRegistry:
         row = self._conn.execute("SELECT * FROM corpora WHERE name = ?", (name,)).fetchone()
         return self._row_to_entry(row) if row else None
 
-    def list(self) -> list[CorpusEntry]:
+    def list(self) -> list[CorpusEntry]:  # ty: ignore[invalid-type-form]
         """List all corpora ordered by name.
 
         :return: List of CorpusEntry objects.
@@ -226,7 +226,9 @@ class CorpusRegistry:
             registry_path=self._db_path,
         )
 
-    def resolve_kg_entries(self, name_or_id: str, kg_registry: KGRegistry) -> list[KGEntry]:  # type: ignore[valid-type]
+    def resolve_kg_entries(
+        self, name_or_id: str, kg_registry: KGRegistry
+    ) -> list[KGEntry]:  # ty: ignore[invalid-type-form]
         """Resolve corpus KG IDs to actual KGEntry objects.
 
         :param name_or_id: The corpus name or UUID.

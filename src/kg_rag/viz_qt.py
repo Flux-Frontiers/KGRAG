@@ -474,8 +474,8 @@ class KGRAGViz2DWindow(QMainWindow):
         self._sep(vlayout)
 
         # ── Grid columns ──────────────────────────────────────────────
-        vlayout.addWidget(self._label(f"Columns: {self._cols}"))
-        self._cols_lbl = vlayout.itemAt(vlayout.count() - 1).widget()  # type: ignore[union-attr]
+        self._cols_lbl = self._label(f"Columns: {self._cols}")
+        vlayout.addWidget(self._cols_lbl)
 
         cols_slider = QSlider(Qt.Orientation.Horizontal)
         cols_slider.setRange(1, 6)
@@ -486,8 +486,8 @@ class KGRAGViz2DWindow(QMainWindow):
 
         # ── Viewport size ─────────────────────────────────────────────
         self._sep(vlayout)
-        vlayout.addWidget(self._label(f"Viewport width: {self._vp_width}px"))
-        self._vpw_lbl = vlayout.itemAt(vlayout.count() - 1).widget()  # type: ignore[union-attr]
+        self._vpw_lbl = self._label(f"Viewport width: {self._vp_width}px")
+        vlayout.addWidget(self._vpw_lbl)
 
         vpw_slider = QSlider(Qt.Orientation.Horizontal)
         vpw_slider.setRange(200, 700)
@@ -581,13 +581,13 @@ class KGRAGViz2DWindow(QMainWindow):
 
     def _on_cols_changed(self, value: int) -> None:
         self._cols = value
-        self._cols_lbl.setText(f"Columns: {value}")  # type: ignore[union-attr]
+        self._cols_lbl.setText(f"Columns: {value}")
         if self._kgrag is not None:
             QTimer.singleShot(50, self._load_registry)
 
     def _on_vp_width_changed(self, value: int) -> None:
         self._vp_width = value
-        self._vpw_lbl.setText(f"Viewport width: {value}px")  # type: ignore[union-attr]
+        self._vpw_lbl.setText(f"Viewport width: {value}px")
         if self._kgrag is not None:
             QTimer.singleShot(200, self._load_registry)
 

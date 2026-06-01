@@ -217,7 +217,7 @@ class PersonCorpusRegistry:
         row = self._conn.execute("SELECT * FROM person_corpora WHERE name = ?", (name,)).fetchone()
         return self._row_to_entry(row) if row else None
 
-    def list(self) -> list[PersonCorpusEntry]:
+    def list(self) -> list[PersonCorpusEntry]:  # ty: ignore[invalid-type-form]
         """List all person corpus entries ordered by name.
 
         :return: List of PersonCorpusEntry objects.
@@ -245,7 +245,9 @@ class PersonCorpusRegistry:
             registry_path=self._db_path,
         )
 
-    def resolve_kg_entries(self, name_or_id: str, kg_registry: KGRegistry) -> list[KGEntry]:  # type: ignore[valid-type]
+    def resolve_kg_entries(
+        self, name_or_id: str, kg_registry: KGRegistry
+    ) -> list[KGEntry]:  # ty: ignore[invalid-type-form]
         """Resolve a person's KG IDs to actual KGEntry objects.
 
         :param name_or_id: The person entry name or UUID.

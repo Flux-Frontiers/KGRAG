@@ -208,7 +208,7 @@ class KGRegistry:
         row = self._conn.execute("SELECT * FROM kg_entries WHERE name = ?", (name,)).fetchone()
         return self._row_to_entry(row) if row else None
 
-    def find_by_repo(self, repo_path: Path | str) -> list[KGEntry]:
+    def find_by_repo(self, repo_path: Path | str) -> list[KGEntry]:  # ty: ignore[invalid-type-form]
         """Find all entries whose repo_path matches.
 
         :param repo_path: Absolute path to the repository root.
@@ -218,7 +218,9 @@ class KGRegistry:
         rows = self._conn.execute("SELECT * FROM kg_entries WHERE repo_path = ?", (p,)).fetchall()
         return [self._row_to_entry(r) for r in rows]
 
-    def list(self, kind: KGKind | str | None = None) -> list[KGEntry]:
+    def list(
+        self, kind: KGKind | str | None = None
+    ) -> list[KGEntry]:  # ty: ignore[invalid-type-form]
         """List all registered KG entries, optionally filtered by kind.
 
         :param kind: Optional KGKind filter (code, doc, meta).

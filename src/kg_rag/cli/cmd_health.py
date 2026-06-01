@@ -37,6 +37,7 @@ from rich.text import Text
 from kg_rag.cli.group import cli
 from kg_rag.cli.options import registry_option
 from kg_rag.corpus_registry import CorpusRegistry
+from kg_rag.primitives import KGEntry
 from kg_rag.registry import KGRegistry
 
 console = Console()
@@ -95,7 +96,7 @@ _PROBE_CMD_TPL: dict[str, str] = {
 }
 
 
-def _probe_kg(entry: object) -> str | None:
+def _probe_kg(entry: KGEntry) -> str | None:
     """Run the module's own status/query command to verify the index is live.
 
     Uses each module's CLI rather than importing lancedb directly, so the
@@ -111,15 +112,15 @@ def _probe_kg(entry: object) -> str | None:
         ``lancedb_path`` attributes.
     :return: Error description string, or ``None`` if the probe passes.
     """
-    kind = entry.kind.value  # type: ignore[attr-defined]
+    kind = entry.kind.value
     tpl = _PROBE_CMD_TPL.get(kind)
     if tpl is None:
         return None  # no probe available for this kind
 
     cmd = tpl.format(
-        sqlite=entry.sqlite_path or "",  # type: ignore[attr-defined]
-        lancedb=entry.lancedb_path or "",  # type: ignore[attr-defined]
-        repo=entry.repo_path,  # type: ignore[attr-defined]
+        sqlite=entry.sqlite_path or "",
+        lancedb=entry.lancedb_path or "",
+        repo=entry.repo_path,
     )
     try:
         result = subprocess.run(shlex.split(cmd), capture_output=True, timeout=30)

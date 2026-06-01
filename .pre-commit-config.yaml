@@ -40,9 +40,9 @@ repos:
         pass_filenames: false
         always_run: true
         args: ['--rcfile=pyproject.toml']
-      - id: mypy
-        name: mypy
-        entry: poetry run mypy src/
+      - id: ty
+        name: ty
+        entry: poetry run ty check src/
         language: system
         pass_filenames: false
         always_run: true
