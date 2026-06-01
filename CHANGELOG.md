@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `[tool.mypy]` to `[tool.ty.environment]` (`root = ["src"]`,
   `python-version = "3.12"`) and `[tool.ty.rules]` (`unresolved-import =
   "ignore"`, mirroring mypy's `ignore_missing_imports`).
+- **Pre-commit ruff bumped `v0.9.10` → `v0.15.13`** (`.pre-commit-config.yaml`)
+  — aligns the pinned hook with the locally installed ruff, which disagreed on
+  wrapping `def` signatures whose only overflow past the 100-char limit is a
+  trailing `# ty: ignore[...]` pragma (0.9.10 wrapped them, 0.15 keeps them on
+  one line). Also renamed the deprecated `ruff` hook id to `ruff-check`.
 
 ### Fixed
 

@@ -218,9 +218,7 @@ class KGRegistry:
         rows = self._conn.execute("SELECT * FROM kg_entries WHERE repo_path = ?", (p,)).fetchall()
         return [self._row_to_entry(r) for r in rows]
 
-    def list(
-        self, kind: KGKind | str | None = None
-    ) -> list[KGEntry]:  # ty: ignore[invalid-type-form]
+    def list(self, kind: KGKind | str | None = None) -> list[KGEntry]:  # ty: ignore[invalid-type-form]
         """List all registered KG entries, optionally filtered by kind.
 
         :param kind: Optional KGKind filter (code, doc, meta).

@@ -226,9 +226,7 @@ class CorpusRegistry:
             registry_path=self._db_path,
         )
 
-    def resolve_kg_entries(
-        self, name_or_id: str, kg_registry: KGRegistry
-    ) -> list[KGEntry]:  # ty: ignore[invalid-type-form]
+    def resolve_kg_entries(self, name_or_id: str, kg_registry: KGRegistry) -> list[KGEntry]:  # ty: ignore[invalid-type-form]
         """Resolve corpus KG IDs to actual KGEntry objects.
 
         :param name_or_id: The corpus name or UUID.
