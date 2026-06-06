@@ -96,7 +96,7 @@ def corpus_create(name, kg_refs, description, tags, registry):
     console.print(f"[green]Created corpus[/green] [bold]{name}[/bold] ({len(kg_ids)} KG(s))")
     if description:
         console.print(f"  Desc: {description}")
-    for ref, kg_id in zip(kg_refs, kg_ids):
+    for ref, kg_id in zip(kg_refs, kg_ids, strict=False):
         console.print(f"  + {ref} ({kg_id})")
 
 
@@ -323,7 +323,7 @@ def corpus_query(corpus_name, query_text, k, as_json, registry):
             result = orch.query_corpus(corpus_name, query_text, k=k)
         except KeyError as e:
             console.print(f"[red]{e}[/red]")
-            raise SystemExit(1)
+            raise SystemExit(1) from None
 
     if as_json:
         out = {
@@ -416,7 +416,7 @@ def corpus_pack(corpus_name, query_text, k, out_path, semantic_floor, registry):
             result = orch.pack_corpus(corpus_name, query_text, k=k, semantic_floor=semantic_floor)
         except KeyError as e:
             console.print(f"[red]{e}[/red]")
-            raise SystemExit(1)
+            raise SystemExit(1) from None
 
     rendered = result.render()
 
@@ -776,7 +776,7 @@ def person_query(person_name, query_text, k, as_json, registry):
             result = orch.query_person(person_name, query_text, k=k)
         except KeyError as e:
             console.print(f"[red]{e}[/red]")
-            raise SystemExit(1)
+            raise SystemExit(1) from None
 
     if as_json:
         out = {
@@ -869,7 +869,7 @@ def person_pack(person_name, query_text, k, out_path, semantic_floor, registry):
             result = orch.pack_person(person_name, query_text, k=k, semantic_floor=semantic_floor)
         except KeyError as e:
             console.print(f"[red]{e}[/red]")
-            raise SystemExit(1)
+            raise SystemExit(1) from None
 
     rendered = result.render()
 

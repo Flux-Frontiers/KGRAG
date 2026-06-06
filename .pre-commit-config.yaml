@@ -33,13 +33,6 @@ repos:
 
   - repo: local
     hooks:
-      - id: pylint
-        name: pylint
-        entry: poetry run pylint src/
-        language: system
-        pass_filenames: false
-        always_run: true
-        args: ['--rcfile=pyproject.toml']
       - id: ty
         name: ty
         entry: poetry run ty check src/

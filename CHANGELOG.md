@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **PyPI dependency cleanup** (`pyproject.toml`, `poetry.lock`) — removed
+  `agent-kg`, `memory-kg`, and `metabo-kg` git-URL optional dependencies (not
+  on PyPI; install separately via `uv add git+...`); converted `diary-kg` from
+  a git source to a PyPI version specifier (`>=0.92.4`); dropped the `kg-git`
+  extra; added `diary-kg` to the `kg` and `all` extras. This unblocks PyPI
+  publishing, which rejects packages with direct-URL dependencies.
+- **Linter: pylint → ruff** (`pyproject.toml`, `.pre-commit-config.yaml`) —
+  removed `pylint` dev dependency and its pre-commit hook; extended ruff rule
+  set from `["E","F","W","I","UP"]` to add `B` (flake8-bugbear), `BLE`
+  (blind-except), and `PLC` (pylint-convention). `BLE001`, `PLC0415`, and
+  `PLC0414` are globally ignored as intentional patterns (boundary catches,
+  lazy CLI imports, `X as X` re-exports); `B017` suppressed in tests.
+
+### Fixed
+
+- **Exception chaining** (`src/kg_rag/cli/cmd_corpus.py` ×4,
+  `src/kg_rag/primitives.py`) — `raise ... from None` on `SystemExit` and
+  `ValueError` raises inside `except` blocks (B904).
+- **`zip()` missing `strict=`** (`src/kg_rag/cli/cmd_corpus.py`) — added
+  `strict=False` to `zip(kg_refs, kg_ids)` (B905).
+- **Unused loop variable** (`src/kg_rag/cli/cmd_init.py`) — renamed `dirpath`
+  → `_dirpath` in `os.walk` loop (B007).
+
 - **Type checker: mypy → ty** (`pyproject.toml`, `.pre-commit-config.yaml`,
   `.github/workflows/ci.yml`) — replaced `mypy` with Astral's `ty` (`^0.0.41`)
   across the dev tooling. The `pre-commit` `mypy` hook and the CI *Run mypy*

@@ -37,7 +37,9 @@ class KGKind(StrEnum):
         try:
             return cls(s.lower())
         except ValueError:
-            raise ValueError(f"Unknown KG kind: {s!r}. Choose from: {[e.value for e in cls]}")
+            raise ValueError(
+                f"Unknown KG kind: {s!r}. Choose from: {[e.value for e in cls]}"
+            ) from None
 
 
 @dataclass

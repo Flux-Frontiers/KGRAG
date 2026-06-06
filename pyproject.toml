@@ -22,26 +22,29 @@
 # Quick install (poetry) — recommended
 # -------------------------------------
 #   poetry install                               core orchestrator only
-#   poetry install --extras "kg"                 core + PyPI KG adapters (pycode-kg, doc-kg, ftree-kg)
-#   poetry install --extras "kg-git"             core + git-sourced KG adapters (agent-kg, diary-kg, memory-kg, metabo-kg)
+#   poetry install --extras "kg"                 core + PyPI KG adapters (pycode-kg, doc-kg, ftree-kg, diary-kg)
 #   poetry install --extras "viz"                core + 2D visualization (streamlit, pyvis, plotly)
 #   poetry install --extras "viz3d"              core + 3D visualization (pyvista, pyvistaqt, PyQt5)
 #   poetry install --extras "pi"                 core + llama-cpp-python (Raspberry Pi / local LLM)
-#   poetry install --extras "all"                everything: all KG adapters + viz + viz3d + pi
+#   poetry install --extras "all"                everything: all PyPI KG adapters + viz + viz3d + pi
 #   poetry install --extras "all" --with dev     everything + dev tools
+#
+# Git-only adapters (agent-kg, memory-kg, metabo-kg) — install via uv directly:
+#   uv add git+https://github.com/Flux-Frontiers/agent_kg.git
+#   uv add git+https://github.com/Flux-Frontiers/memory_kg.git
+#   uv add git+https://github.com/Flux-Frontiers/metabo_kg.git
 #
 # Quick install (pip)
 # -------------------
 #   pip install -e "."                           core only
 #   pip install -e ".[kg]"                       core + PyPI KG adapters
-#   pip install -e ".[kg,kg-git]"                core + all KG adapters (PyPI + git)
-#   pip install -e ".[all]"                      everything
+#   pip install -e ".[all]"                      everything (PyPI-resolvable)
 #
 # Universal CLI on PATH (uv) — recommended
 # ----------------------------------------
 #   uv tool install --editable ".[all]" --python 3.12
 #                                                install whole stack into isolated venv, kgrag* on PATH
-#   uv tool upgrade kg-rag                       pull in updated git pins (agent-kg, diary-kg, memory-kg, metabo-kg)
+#   uv tool upgrade kg-rag                       pull in latest versions
 #   uv tool uninstall kg-rag                     remove
 #
 # Run tests
@@ -113,15 +116,12 @@ spacy = {version = ">=3.7.0", optional = true}
 llama-cpp-python = { version = ">=0.3.0", optional = true }
 
 
-# our own adaptors
-kgmodule-utils = ">=0.2.0"
+# our own adaptors (PyPI-only; git-only adapters installed separately via uv)
+kgmodule-utils = ">=0.3.1"
 pycode-kg = {version = ">=0.18.1", optional=true}
-doc-kg = {version = ">=0.15.2", optional=true}
+doc-kg = {version = ">=0.15.4", optional=true}
 ftree-kg = {version = ">=0.8.0", optional=true}
-agent-kg  = { git = "https://github.com/Flux-Frontiers/agent_kg.git",  optional = true }
-diary-kg  = { git = "https://github.com/Flux-Frontiers/diary_kg.git",  optional = true }
-memory-kg = { git = "https://github.com/Flux-Frontiers/memory_kg.git", optional = true }
-metabo-kg = { git = "https://github.com/Flux-Frontiers/metabo_kg.git", optional = true }
+diary-kg  = {version = ">=0.92.4", optional = true}
 jupyter-server = ">=2.18.0"
 mistune = ">=3.2.1"
 
@@ -131,12 +131,10 @@ viz = ["streamlit", "pyvis", "plotly"]
 viz2d = ["PyQt5"]
 qt = ["PyQt5"]
 viz3d = ["pyvista", "pyvistaqt", "PyQt5", "param", "markdown", "trame-vtk"]
-kg = ["pycode-kg", "ftree-kg", "doc-kg"]
-kg-git = ["agent-kg", "diary-kg", "memory-kg", "metabo-kg"]
+kg = ["pycode-kg", "ftree-kg", "doc-kg", "diary-kg"]
 pi = ["llama-cpp-python"]
 all = [
-  "pycode-kg", "ftree-kg", "doc-kg",
-  "agent-kg", "diary-kg", "memory-kg", "metabo-kg",
+  "pycode-kg", "ftree-kg", "doc-kg", "diary-kg",
   "streamlit", "pyvis", "plotly",
   "pyvista", "pyvistaqt", "PyQt5", "param", "markdown", "trame-vtk",
   "llama-cpp-python",
@@ -166,7 +164,6 @@ ruff = ">=0.4.0"
 ty = "^0.0.41"
 pre-commit = "^4.5.1"
 detect-secrets = "^1.5.0"
-pylint = "^4.0.5"
 pdoc = ">=14.0.0"
 pip-audit = "^2.10.0"
 
@@ -187,23 +184,21 @@ kgrag-analyze      = "kg_rag.cli.cmd_analyze:analyze"
 kgrag-viz          = "kg_rag.cli.cmd_viz:viz"
 kgrag-viz2d        = "kg_rag.cli.cmd_viz2d:viz2d"
 
-[tool.pylint.messages_control]
-disable = ["all"]
-enable = [
-    "cyclic-import",           # R0401
-    "broad-exception-caught",  # W0718
-    "cell-var-from-loop",      # W0640
-    "undefined-variable",      # E0602
-    "import-outside-toplevel", # C0415
-]
-
 [tool.ruff]
 line-length = 100
 target-version = "py312"
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "UP"]
-ignore = ["E501"]
+select = ["E", "F", "W", "I", "UP", "B", "BLE", "PLC"]
+ignore = [
+  "E501",
+  "BLE001",    # broad Exception catches are intentional at adapter/plugin boundaries
+  "PLC0415",   # lazy imports are intentional throughout (CLI startup, optional deps)
+  "PLC0414",   # X as X re-export idiom is intentional in shim modules
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["B017"]  # pytest.raises(Exception) is acceptable in tests
 
 [tool.ty.environment]
 python-version = "3.12"

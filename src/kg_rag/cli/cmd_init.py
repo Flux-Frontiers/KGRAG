@@ -52,7 +52,7 @@ def _detect_layers(repo: Path) -> list[str]:
     has_python = False
     has_docs = False
 
-    for dirpath, dirnames, filenames in os.walk(repo):
+    for _dirpath, dirnames, filenames in os.walk(repo):
         # Prune hidden dirs and common non-source trees in-place
         dirnames[:] = [d for d in dirnames if not d.startswith(".") and d not in _PRUNE]
         for fname in filenames:
