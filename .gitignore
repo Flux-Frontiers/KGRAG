@@ -201,6 +201,8 @@ commit.txt
 # Local Claude Code settings — personal hooks and permissions; use settings.json.template as template
 .claude/settings.json
 .claude/settings.local.json
+# Auto-memory and per-project conversation state — local only
+.claude/projects/
 
 # Confidential — moved to kgrag_priv
 patents/

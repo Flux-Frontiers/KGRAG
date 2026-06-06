@@ -177,6 +177,28 @@ Tools span three groups: **core KG** (`kgrag_stats`, `kgrag_list`, `kgrag_info`,
 
 Free to use, modify, and distribute. You may not offer the software as a hosted or managed service to third parties. Commercial internal use is permitted.
 
-If you use KGRAG in research, please cite: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20018525.svg)](https://doi.org/10.5281/zenodo.20018525)
-
 *The Knowledge Compiler concept and its execution are the subject of a pending U.S. provisional patent application.*
+
+---
+
+## Citation
+
+If you use KGRAG in your research or project, please cite it:
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20018525.svg)](https://doi.org/10.5281/zenodo.20018525)
+
+> Suchanek, E. G. (2026). *KGRAG: Knowledge Compiler and Federated Retrieval Layer* (Version 0.9.1) [Software]. Flux-Frontiers. https://doi.org/10.5281/zenodo.20018525
+
+```bibtex
+@software{suchanek_kgrag,
+  author    = {Suchanek, Eric G.},
+  title     = {{KGRAG}: Knowledge Compiler and Federated Retrieval Layer},
+  version   = {0.9.1},
+  year      = {2026},
+  publisher = {Flux-Frontiers},
+  url       = {https://github.com/Flux-Frontiers/KGRAG},
+  doi       = {10.5281/zenodo.20018525},
+}
+```
+
+---
