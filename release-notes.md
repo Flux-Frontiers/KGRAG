@@ -1,64 +1,67 @@
-# Release Notes - v0.8.0
+# Release Notes — v0.9.1
 
-> Released: 2026-05-25
+> Released: 2026-06-05
 
-## Added
+### Changed
 
-- **`kgrag export` / `kgrag import` CLI commands**
-  (`src/kg_rag/cli/cmd_corpus_io.py`, registered in
-  `src/kg_rag/cli/main.py`) — make a registered KG portable as a single
-  `.kgrag.tar.gz` archive containing the SQLite graph, LanceDB index, and a
-  manifest (`manifest_version`, `name`, `kind`, `version`, `builder_version`,
-  `tags`, `metadata`, `exported_at`). `kgrag import` peeks at the manifest,
-  unpacks to `~/.kgrag/corpora/<name>/` (or `--dest`), and re-registers the
-  KG with `imported` tagged in `metadata`. Supports `--force`, `--name` for
-  rename-on-import, and `--no-register` for unpack-only. Mirror tests live
-  in `tests/test_cmd_corpus_io.py` (round-trip, manifest-version mismatch,
-  collision handling, archive validation).
-- **`local/` — local development environment for the KGRAG worker** — complete
-  stack for running and testing the worker without a RunPod account:
-  - **`local/handler.py`** — RunPod serverless handler configured for local
-    use; includes `.diarykg/` bootstrap support and `max_tokens: 2048` for
-    synthesis (mirrors the changes made to `runpod/handler.py` this session).
-  - **`local/docker-compose.yml`** — mounts GutenbergKG `corpus/` and MetaboKG
-    directories, exposes the RunPod serverless API on `http://localhost:8000`,
-    and live-reloads `handler.py` from the working tree via a bind mount.
-  - **`local/.env.example`** — template `.env`; documents `GUTENBERG_CORPUS`,
-    `METABO_REPO`, optional `HANDLER_SECRET`, and Ollama synthesis variables.
-  - **`local/chat.py`** — Streamlit chat UI that sends queries to the running
-    `kgrag-worker` container and renders synthesized answers with collapsible
-    source-hit cards (KG-kind badges, score bars, source paths).
-- **`docs/haystacks_to_forests.{md,tex,pdf}`** — public-facing technical
-  article (*"We Have Been Building Haystacks When We Need Forests of
-  Knowledge Trees"*) framing KGRAG as a federated forest of domain-specific
-  knowledge graphs and contrasting it with monolithic-LLM retrieval.
-- **`docs/COMPLETE_TECHNICAL_ARTICLE_internal.md`** — internal long-form
-  write-up of the prose-to-conversational-memory pipeline (Pepys validation,
-  5-phase NLP transformation, direct temporal-DB writes that unblock local
-  4B-model execution).
+- **PyPI dependency cleanup** (`pyproject.toml`, `poetry.lock`) — removed
+  `agent-kg`, `memory-kg`, and `metabo-kg` git-URL optional dependencies (not
+  on PyPI; install separately via `uv add git+...`); converted `diary-kg` from
+  a git source to a PyPI version specifier (`>=0.92.4`); dropped the `kg-git`
+  extra; added `diary-kg` to the `kg` and `all` extras. This unblocks PyPI
+  publishing, which rejects packages with direct-URL dependencies.
+- **Linter: pylint → ruff** (`pyproject.toml`, `.pre-commit-config.yaml`) —
+  removed `pylint` dev dependency and its pre-commit hook; extended ruff rule
+  set from `["E","F","W","I","UP"]` to add `B` (flake8-bugbear), `BLE`
+  (blind-except), and `PLC` (pylint-convention). `BLE001`, `PLC0415`, and
+  `PLC0414` are globally ignored as intentional patterns (boundary catches,
+  lazy CLI imports, `X as X` re-exports); `B017` suppressed in tests.
 
-## Changed
+### Fixed
 
-- **`poetry.lock`** — dev-dependency refresh (notably `ast-serialize`
-  `0.4.0 → 0.5.0`); regenerated after the `0.8.0` version bump in
-  `pyproject.toml` / `src/kg_rag/__init__.py`.
-- **`src/kg_rag/cli/cmd_corpus_io.py`** — narrow `entry.sqlite_path` /
-  `entry.lancedb_path` to non-`None` locals before passing to
-  `TarFile.add()`, eliminating two `mypy` `arg-type` errors on the export
-  path.
+- **Exception chaining** (`src/kg_rag/cli/cmd_corpus.py` ×4,
+  `src/kg_rag/primitives.py`) — `raise ... from None` on `SystemExit` and
+  `ValueError` raises inside `except` blocks (B904).
+- **`zip()` missing `strict=`** (`src/kg_rag/cli/cmd_corpus.py`) — added
+  `strict=False` to `zip(kg_refs, kg_ids)` (B905).
+- **Unused loop variable** (`src/kg_rag/cli/cmd_init.py`) — renamed `dirpath`
+  → `_dirpath` in `os.walk` loop (B007).
+- **Type checker: mypy → ty** (`pyproject.toml`, `.pre-commit-config.yaml`,
+  `.github/workflows/ci.yml`) — replaced `mypy` with Astral's `ty` (`^0.0.41`)
+  across the dev tooling. Config migrated from `[tool.mypy]` to
+  `[tool.ty.environment]` and `[tool.ty.rules]`.
+- **Pre-commit ruff bumped `v0.9.10` → `v0.15.13`** (`.pre-commit-config.yaml`).
+- **`_probe_kg` parameter type** (`src/kg_rag/cli/cmd_health.py`) — annotated
+  `entry` as `KGEntry`, removing four `# type: ignore[attr-defined]` suppressions.
+- **Qt label references** (`src/kg_rag/viz_qt.py`) — labels held directly on
+  creation, dropping two `# type: ignore[union-attr]` suppressions.
+- **`ty` false positives on shadowed `list` return types** (`registry.py`,
+  `corpus_registry.py`, `person_registry.py`) — suppressed with
+  `# ty: ignore[invalid-type-form]`.
+- **`.secrets.baseline`** — regenerated, clearing stale entries that caused
+  non-convergent pre-commit rewrites.
 
-## Fixed
+### Added
 
-- **`.diarykg/` support in `_bootstrap_registry()`** (`runpod/handler.py`) —
-  the bootstrap previously hard-coded `.dockg/graph.sqlite` as the only index
-  location; diary books (Pepys, Evelyn Vol 1 & 2, Boswell) were therefore
-  invisible to the worker at startup.  The loop now tries `.diarykg/` first,
-  then falls back to `.dockg/`, so both diary and standard Gutenberg books are
-  registered correctly.
+- **OpenAI-compatible inference backend for `kgrag synthesize`**
+  (`src/kg_rag/cli/cmd_synthesize.py`) — `--backend openai` routes synthesis
+  through any `/v1/chat/completions`-compatible server (omlx, LM Studio, vLLM,
+  llama.cpp, etc.). New options: `--backend ollama|openai`, `--openai-url`,
+  `--api-key`. SSE streaming with graceful error handling.
+- **`tests/test_cmd_synthesize.py`** — 48-test suite covering both backends,
+  all error paths, and all CLI options.
+- **`scripts/install-kgs.sh`** — one-shot script to install the full KGRAG
+  fleet as `uv tool --editable` global commands.
+- **`.claude/skills/kgrag/SKILL.md`** — KGRAG orchestrator skill with complete
+  tool decision tree and CLI reference for the full fleet.
+- **Streamlit Synthesize tab** (`src/kg_rag/app.py`) — dual-backend radio,
+  OpenAI-compat URL/API-key fields, max-context input, single-source-of-truth
+  streaming generators shared with the CLI.
 
-- **`max_tokens` raised 512 → 2048** (`runpod/handler.py`) — synthesis answers
-  were being cut off mid-sentence; both `runpod/handler.py` and the new
-  `local/handler.py` now pass `"max_tokens": 2048` to the vLLM endpoint.
+### Removed
+
+- **`[tool.poetry.group.kgdeps]`** (`pyproject.toml`) — removed; git-sourced
+  adapters now documented as `uv add git+...` installs.
 
 ---
 
