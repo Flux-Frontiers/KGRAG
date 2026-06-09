@@ -1,68 +1,60 @@
-# Release Notes — v0.9.1
+# Release Notes - v0.10.0
 
-> Released: 2026-06-05
+> Released: 2026-06-09
 
-### Changed
+## Highlights
 
-- **PyPI dependency cleanup** (`pyproject.toml`, `poetry.lock`) — removed
-  `agent-kg`, `memory-kg`, and `metabo-kg` git-URL optional dependencies (not
-  on PyPI; install separately via `uv add git+...`); converted `diary-kg` from
-  a git source to a PyPI version specifier (`>=0.92.4`); dropped the `kg-git`
-  extra; added `diary-kg` to the `kg` and `all` extras. This unblocks PyPI
-  publishing, which rejects packages with direct-URL dependencies.
-- **Linter: pylint → ruff** (`pyproject.toml`, `.pre-commit-config.yaml`) —
-  removed `pylint` dev dependency and its pre-commit hook; extended ruff rule
-  set from `["E","F","W","I","UP"]` to add `B` (flake8-bugbear), `BLE`
-  (blind-except), and `PLC` (pylint-convention). `BLE001`, `PLC0415`, and
-  `PLC0414` are globally ignored as intentional patterns (boundary catches,
-  lazy CLI imports, `X as X` re-exports); `B017` suppressed in tests.
+- Query results can now be scoped directly inside supported KGs, so focused
+  questions (for example, one subdirectory/genre in a large corpus) return more
+  relevant top hits instead of being drowned out by global matches.
+- The orchestrator now threads scope through query and pack operations across
+  global, corpus, and person federation paths.
+- Dependency constraints were aligned to keep Poetry resolution stable with the
+  latest `kgmodule-utils` line.
 
-### Fixed
+## Added
 
-- **Exception chaining** (`src/kg_rag/cli/cmd_corpus.py` ×4,
-  `src/kg_rag/primitives.py`) — `raise ... from None` on `SystemExit` and
-  `ValueError` raises inside `except` blocks (B904).
-- **`zip()` missing `strict=`** (`src/kg_rag/cli/cmd_corpus.py`) — added
-  `strict=False` to `zip(kg_refs, kg_ids)` (B905).
-- **Unused loop variable** (`src/kg_rag/cli/cmd_init.py`) — renamed `dirpath`
-  → `_dirpath` in `os.walk` loop (B007).
-- **Type checker: mypy → ty** (`pyproject.toml`, `.pre-commit-config.yaml`,
-  `.github/workflows/ci.yml`) — replaced `mypy` with Astral's `ty` (`^0.0.41`)
-  across the dev tooling. Config migrated from `[tool.mypy]` to
-  `[tool.ty.environment]` and `[tool.ty.rules]`.
-- **Pre-commit ruff bumped `v0.9.10` → `v0.15.13`** (`.pre-commit-config.yaml`).
-- **`_probe_kg` parameter type** (`src/kg_rag/cli/cmd_health.py`) — annotated
-  `entry` as `KGEntry`, removing four `# type: ignore[attr-defined]` suppressions.
-- **Qt label references** (`src/kg_rag/viz_qt.py`) — labels held directly on
-  creation, dropping two `# type: ignore[union-attr]` suppressions.
-- **`ty` false positives on shadowed `list` return types** (`registry.py`,
-  `corpus_registry.py`, `person_registry.py`) — suppressed with
-  `# ty: ignore[invalid-type-form]`.
-- **`.secrets.baseline`** — regenerated, clearing stale entries that caused
-  non-convergent pre-commit rewrites.
+- **`QueryScope` primitive** (`src/kg_rag/primitives.py`):
+  a frozen, hashable scope object with:
+  - `source_path_prefixes`
+  - `node_kinds`
+  - reserved `metadata_eq`
+  - `matches()` helper for post-filtering
+- **Scope-aware query APIs in orchestrator** (`src/kg_rag/orchestrator.py`):
+  `query`, `pack`, `query_corpus`, and `pack_corpus` now accept optional scope.
+- **Scope support in adapter contract** (`src/kg_rag/adapters/base.py`):
+  adapter `query`/`pack` signatures accept optional scope, plus
+  `supports_scope` capability flag.
+- **Pushdown support in DocKG and Gutenberg adapters**:
+  `DocKGAdapter` and `GutenbergKGAdapter` forward scope filters into backend
+  query/pack operations for in-database filtering.
 
-### Added
+## Changed
 
-- **OpenAI-compatible inference backend for `kgrag synthesize`**
-  (`src/kg_rag/cli/cmd_synthesize.py`) — `--backend openai` routes synthesis
-  through any `/v1/chat/completions`-compatible server (omlx, LM Studio, vLLM,
-  llama.cpp, etc.). New options: `--backend ollama|openai`, `--openai-url`,
-  `--api-key`. SSE streaming with graceful error handling.
-- **`tests/test_cmd_synthesize.py`** — 48-test suite covering both backends,
-  all error paths, and all CLI options.
-- **`scripts/install-kgs.sh`** — one-shot script to install the full KGRAG
-  fleet as `uv tool --editable` global commands.
-- **`.claude/skills/kgrag/SKILL.md`** — KGRAG orchestrator skill with complete
-  tool decision tree and CLI reference for the full fleet.
-- **Streamlit Synthesize tab** (`src/kg_rag/app.py`) — dual-backend radio,
-  OpenAI-compat URL/API-key fields, max-context input, single-source-of-truth
-  streaming generators shared with the CLI.
+- **Federation internals refactored** (`src/kg_rag/orchestrator.py`):
+  shared `_federate_query`, `_federate_pack`, and `_federate_stats` engines now
+  power global/corpus/person execution paths.
+- **DocKG minimum version raised to `>=0.15.7`** (`pyproject.toml`):
+  required for `source_path_prefixes` / `node_kinds` pushdown support.
+- **Version bumped to `0.10.0`** (`pyproject.toml`).
 
-### Removed
+## Fixed
 
-- **`[tool.poetry.group.kgdeps]`** (`pyproject.toml`) — removed; git-sourced
-  adapters now documented as `uv add git+...` installs.
+- **Poetry resolver conflict with `ty`** (`pyproject.toml`, `poetry.lock`):
+  aligned `ty` to `>=0.0.44,<0.0.45` to match `kgmodule-utils >=0.4.0`
+  requirements.
+- **Graceful compatibility fallback for older adapters**:
+  if a backend rejects scoped kwargs, orchestrator retries without scope
+  instead of hard failing.
+
+## Validation
+
+- CI-equivalent checks on merged `main` passed:
+  - `ruff format --check`
+  - `ruff check`
+  - `ty check src/`
+  - `pytest` (430 passed)
 
 ---
 
-_Full changelog: [CHANGELOG.md](CHANGELOG.md)_
+Full changelog: [CHANGELOG.md](CHANGELOG.md)

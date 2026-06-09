@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-06-09
+
 ### Added
 - **`QueryScope` — in-KG query scoping** (`src/kg_rag/primitives.py`): a frozen,
   hashable dataclass with `source_path_prefixes`, `node_kinds`, and (reserved)
