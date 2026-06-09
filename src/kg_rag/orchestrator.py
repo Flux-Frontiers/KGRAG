@@ -28,6 +28,7 @@ from kg_rag.primitives import (
     CrossSnippetPack,
     KGEntry,
     KGKind,
+    QueryScope,
 )
 from kg_rag.registry import KGRegistry
 
@@ -145,6 +146,188 @@ class KGRAG:
         return self._registry.list()
 
     # ------------------------------------------------------------------
+    # Federation primitives — shared by every scoping tier
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _query_adapter(
+        adapter: KGAdapter,
+        q: str,
+        k: int,
+        min_score: float,
+        semantic_floor: float,
+        scope: QueryScope | None,
+    ) -> list[CrossHit]:
+        """Call ``adapter.query``, pushing ``scope`` down when supported.
+
+        Falls back to an unscoped call if the adapter advertises scope support
+        but its installed backend rejects the keyword (older library), letting
+        the caller's post-filter still apply the scope.
+        """
+        if scope and getattr(adapter, "supports_scope", False):
+            try:
+                return adapter.query(
+                    q, k=k, min_score=min_score, semantic_floor=semantic_floor, scope=scope
+                )
+            except TypeError:
+                pass  # backend predates scope pushdown — fall through to post-filter
+        return adapter.query(q, k=k, min_score=min_score, semantic_floor=semantic_floor)
+
+    @staticmethod
+    def _pack_adapter(
+        adapter: KGAdapter,
+        q: str,
+        k: int,
+        context: int,
+        semantic_floor: float,
+        scope: QueryScope | None,
+    ) -> list[CrossSnippet]:
+        """Call ``adapter.pack``, pushing ``scope`` down when supported."""
+        if scope and getattr(adapter, "supports_scope", False):
+            try:
+                return adapter.pack(
+                    q, k=k, context=context, semantic_floor=semantic_floor, scope=scope
+                )
+            except TypeError:
+                pass
+        return adapter.pack(q, k=k, context=context, semantic_floor=semantic_floor)
+
+    def _federate_query(
+        self,
+        entries: Sequence[KGEntry],
+        q: str,
+        k: int,
+        min_score: float,
+        semantic_floor: float,
+        scope: QueryScope | None = None,
+    ) -> CrossQueryResult:
+        """Run ``adapter.query`` across ``entries`` and aggregate the hits.
+
+        Shared engine behind :meth:`query`, :meth:`query_corpus`, and
+        :meth:`query_person`.  Unavailable KGs are skipped; failing KGs are
+        skipped unless ``strict=True``.
+
+        When ``scope`` is given it is pushed into scope-aware adapters and, in
+        all cases, applied as a post-filter on the returned hits — so adapters
+        without pushdown still honour the scope (best-effort).
+
+        :param entries: KGEntry objects to query.
+        :param q: Natural-language query string.
+        :param k: Max hits to return per KG.
+        :param min_score: Minimum relevance score; hits below this are dropped.
+        :param semantic_floor: Per-KG gate: if the best hit from a KG is below
+            this value, that KG's entire result set is discarded.
+        :param scope: Optional :class:`QueryScope` restricting retrieval.
+        :return: Aggregated and globally ranked CrossQueryResult.
+        """
+        all_hits: list[CrossHit] = []
+        by_kg: dict[str, list[CrossHit]] = {}
+        kgs_queried = 0
+
+        for entry in entries:
+            adapter = self._get_adapter(entry)
+            if adapter is None:
+                continue
+            try:
+                hits = self._query_adapter(adapter, q, k, min_score, semantic_floor, scope)
+                if scope:
+                    hits = [
+                        h for h in hits if scope.matches(source_path=h.source_path, kind=h.kind)
+                    ]
+                all_hits.extend(hits)
+                by_kg[entry.name] = hits
+                kgs_queried += 1
+            except Exception:  # pylint: disable=broad-exception-caught
+                if self._strict:
+                    raise
+                # Silently skip failing KGs in permissive mode
+
+        all_hits.sort(key=lambda h: h.score, reverse=True)
+        return CrossQueryResult(
+            query=q,
+            hits=all_hits,
+            by_kg=by_kg,
+            total_hits=len(all_hits),
+            kgs_queried=kgs_queried,
+        )
+
+    def _federate_pack(
+        self,
+        entries: Sequence[KGEntry],
+        q: str,
+        k: int,
+        context: int,
+        semantic_floor: float,
+        scope: QueryScope | None = None,
+    ) -> CrossSnippetPack:
+        """Run ``adapter.pack`` across ``entries`` and aggregate the snippets.
+
+        Shared engine behind :meth:`pack`, :meth:`pack_corpus`, and
+        :meth:`pack_person`.
+
+        ``scope`` is pushed into scope-aware adapters and applied as a
+        post-filter on returned snippets.  Snippets may lack a node ``kind``, so
+        kind-based scoping on packs is only fully reliable via adapter pushdown.
+
+        :param entries: KGEntry objects to pack.
+        :param q: Natural-language query string.
+        :param k: Max snippets per KG.
+        :param context: Lines of context for code snippets.
+        :param semantic_floor: Per-KG gate: if the best snippet from a KG is
+            below this value, that KG's entire result set is discarded.
+        :param scope: Optional :class:`QueryScope` restricting retrieval.
+        :return: CrossSnippetPack with all snippets ranked by score.
+        """
+        all_snippets: list[CrossSnippet] = []
+        kgs_queried = 0
+
+        for entry in entries:
+            adapter = self._get_adapter(entry)
+            if adapter is None:
+                continue
+            try:
+                snippets = self._pack_adapter(adapter, q, k, context, semantic_floor, scope)
+                if scope:
+                    snippets = [s for s in snippets if scope.matches(source_path=s.source_path)]
+                all_snippets.extend(snippets)
+                kgs_queried += 1
+            except Exception:  # pylint: disable=broad-exception-caught
+                if self._strict:
+                    raise
+
+        all_snippets.sort(key=lambda s: s.score, reverse=True)
+        approx_tokens = sum(len(s.content.split()) * 4 // 3 for s in all_snippets)
+        return CrossSnippetPack(
+            query=q,
+            snippets=all_snippets,
+            total_tokens_approx=approx_tokens,
+            kgs_queried=kgs_queried,
+        )
+
+    @staticmethod
+    def _federate_stats(
+        entries: Sequence[KGEntry],
+        get_adapter,
+    ) -> dict:
+        """Collect ``adapter.stats()`` across ``entries`` keyed by KG name.
+
+        :param entries: KGEntry objects to collect stats from.
+        :param get_adapter: Callable resolving a KGEntry to its adapter (or None).
+        :return: Dict mapping KG name to its stats (or availability/error info).
+        """
+        out: dict = {}
+        for entry in entries:
+            adapter = get_adapter(entry)
+            if adapter is None:
+                out[entry.name] = {"available": False, "kind": entry.kind.value}
+                continue
+            try:
+                out[entry.name] = {"available": True, **adapter.stats()}
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                out[entry.name] = {"available": False, "error": str(e)}
+        return out
+
+    # ------------------------------------------------------------------
     # Cross-KG queries
     # ------------------------------------------------------------------
 
@@ -155,6 +338,7 @@ class KGRAG:
         kinds: Sequence[KGKind] | None = None,
         min_score: float = 0.0,
         semantic_floor: float = 0.0,
+        scope: QueryScope | None = None,
     ) -> CrossQueryResult:
         """Federated query across all (or selected) registered KGs.
 
@@ -167,35 +351,18 @@ class KGRAG:
         :param semantic_floor: Per-KG gate: if the best hit from a KG is below
             this value, that KG's entire result set is discarded.  Use to
             silence KGs that return k near-neighbor hits with no real relevance.
+        :param scope: Optional :class:`QueryScope` restricting retrieval to a
+            source-path subtree and/or node kinds *inside* each KG (e.g. one
+            genre of a consolidated corpus), pushed down where supported.
         :return: Aggregated and globally ranked CrossQueryResult.
         """
-        all_hits: list[CrossHit] = []
-        by_kg: dict[str, list[CrossHit]] = {}
-        kgs_queried = 0
-
-        for entry in self._resolve_entries(kinds):
-            adapter = self._get_adapter(entry)
-            if adapter is None:
-                continue
-            try:
-                hits = adapter.query(q, k=k, min_score=min_score, semantic_floor=semantic_floor)
-                all_hits.extend(hits)
-                by_kg[entry.name] = hits
-                kgs_queried += 1
-            except Exception:  # pylint: disable=broad-exception-caught
-                if self._strict:
-                    raise
-                # Silently skip failing KGs in permissive mode
-
-        # Global rank by score descending
-        all_hits.sort(key=lambda h: h.score, reverse=True)
-
-        return CrossQueryResult(
-            query=q,
-            hits=all_hits,
-            by_kg=by_kg,
-            total_hits=len(all_hits),
-            kgs_queried=kgs_queried,
+        return self._federate_query(
+            self._resolve_entries(kinds),
+            q,
+            k=k,
+            min_score=min_score,
+            semantic_floor=semantic_floor,
+            scope=scope,
         )
 
     def pack(
@@ -205,6 +372,7 @@ class KGRAG:
         context: int = 5,
         kinds: Sequence[KGKind] | None = None,
         semantic_floor: float = 0.0,
+        scope: QueryScope | None = None,
     ) -> CrossSnippetPack:
         """Federated snippet pack across all (or selected) registered KGs.
 
@@ -214,31 +382,17 @@ class KGRAG:
         :param kinds: Optional filter: only query KGs of these kinds.
         :param semantic_floor: Per-KG gate: if the best snippet from a KG is
             below this value, that KG's entire result set is discarded.
+        :param scope: Optional :class:`QueryScope` restricting retrieval to a
+            source-path subtree and/or node kinds inside each KG.
         :return: CrossSnippetPack with all snippets ranked by score.
         """
-        all_snippets: list[CrossSnippet] = []
-        kgs_queried = 0
-
-        for entry in self._resolve_entries(kinds):
-            adapter = self._get_adapter(entry)
-            if adapter is None:
-                continue
-            try:
-                snippets = adapter.pack(q, k=k, context=context, semantic_floor=semantic_floor)
-                all_snippets.extend(snippets)
-                kgs_queried += 1
-            except Exception:  # pylint: disable=broad-exception-caught
-                if self._strict:
-                    raise
-
-        all_snippets.sort(key=lambda s: s.score, reverse=True)
-        approx_tokens = sum(len(s.content.split()) * 4 // 3 for s in all_snippets)
-
-        return CrossSnippetPack(
-            query=q,
-            snippets=all_snippets,
-            total_tokens_approx=approx_tokens,
-            kgs_queried=kgs_queried,
+        return self._federate_pack(
+            self._resolve_entries(kinds),
+            q,
+            k=k,
+            context=context,
+            semantic_floor=semantic_floor,
+            scope=scope,
         )
 
     def stats(self, kinds: Sequence[KGKind] | None = None) -> dict:
@@ -247,17 +401,7 @@ class KGRAG:
         :param kinds: Optional filter.
         :return: Dict mapping KG name to stats dict.
         """
-        out = {}
-        for entry in self._resolve_entries(kinds):
-            adapter = self._get_adapter(entry)
-            if adapter is None:
-                out[entry.name] = {"available": False, "kind": entry.kind.value}
-                continue
-            try:
-                out[entry.name] = {"available": True, **adapter.stats()}
-            except Exception as e:  # pylint: disable=broad-exception-caught
-                out[entry.name] = {"available": False, "error": str(e)}
-        return out
+        return self._federate_stats(self._resolve_entries(kinds), self._get_adapter)
 
     def analyze(self, kg_name: str) -> str:
         """Run architectural analysis on a specific KG.
@@ -296,6 +440,7 @@ class KGRAG:
         k: int = 8,
         min_score: float = 0.0,
         semantic_floor: float = 0.0,
+        scope: QueryScope | None = None,
     ) -> CrossQueryResult:
         """Federated query scoped to a named corpus.
 
@@ -305,34 +450,18 @@ class KGRAG:
         :param min_score: Minimum relevance score; hits below this are dropped.
         :param semantic_floor: Per-KG gate: if the best hit from a KG is below
             this value, that KG's entire result set is discarded.
+        :param scope: Optional :class:`QueryScope` restricting retrieval inside
+            each KG of the corpus (e.g. one genre subtree).
         :return: Aggregated and globally ranked CrossQueryResult.
         :raises KeyError: If corpus not found.
         """
-        entries = self._resolve_corpus_entries(corpus_name)
-        all_hits: list[CrossHit] = []
-        by_kg: dict[str, list[CrossHit]] = {}
-        kgs_queried = 0
-
-        for entry in entries:
-            adapter = self._get_adapter(entry)
-            if adapter is None:
-                continue
-            try:
-                hits = adapter.query(q, k=k, min_score=min_score, semantic_floor=semantic_floor)
-                all_hits.extend(hits)
-                by_kg[entry.name] = hits
-                kgs_queried += 1
-            except Exception:  # pylint: disable=broad-exception-caught
-                if self._strict:
-                    raise
-
-        all_hits.sort(key=lambda h: h.score, reverse=True)
-        return CrossQueryResult(
-            query=q,
-            hits=all_hits,
-            by_kg=by_kg,
-            total_hits=len(all_hits),
-            kgs_queried=kgs_queried,
+        return self._federate_query(
+            self._resolve_corpus_entries(corpus_name),
+            q,
+            k=k,
+            min_score=min_score,
+            semantic_floor=semantic_floor,
+            scope=scope,
         )
 
     def pack_corpus(
@@ -342,6 +471,7 @@ class KGRAG:
         k: int = 8,
         context: int = 5,
         semantic_floor: float = 0.0,
+        scope: QueryScope | None = None,
     ) -> CrossSnippetPack:
         """Federated snippet pack scoped to a named corpus.
 
@@ -351,33 +481,18 @@ class KGRAG:
         :param context: Lines of context for code snippets.
         :param semantic_floor: Per-KG gate: if the best snippet from a KG is
             below this value, that KG's entire result set is discarded.
+        :param scope: Optional :class:`QueryScope` restricting retrieval inside
+            each KG of the corpus.
         :return: CrossSnippetPack with all snippets ranked by score.
         :raises KeyError: If corpus not found.
         """
-        entries = self._resolve_corpus_entries(corpus_name)
-        all_snippets: list[CrossSnippet] = []
-        kgs_queried = 0
-
-        for entry in entries:
-            adapter = self._get_adapter(entry)
-            if adapter is None:
-                continue
-            try:
-                snippets = adapter.pack(q, k=k, context=context, semantic_floor=semantic_floor)
-                all_snippets.extend(snippets)
-                kgs_queried += 1
-            except Exception:  # pylint: disable=broad-exception-caught
-                if self._strict:
-                    raise
-
-        all_snippets.sort(key=lambda s: s.score, reverse=True)
-        approx_tokens = sum(len(s.content.split()) * 4 // 3 for s in all_snippets)
-
-        return CrossSnippetPack(
-            query=q,
-            snippets=all_snippets,
-            total_tokens_approx=approx_tokens,
-            kgs_queried=kgs_queried,
+        return self._federate_pack(
+            self._resolve_corpus_entries(corpus_name),
+            q,
+            k=k,
+            context=context,
+            semantic_floor=semantic_floor,
+            scope=scope,
         )
 
     def stats_corpus(self, corpus_name: str) -> dict:
@@ -387,18 +502,7 @@ class KGRAG:
         :return: Dict mapping KG name to stats dict.
         :raises KeyError: If corpus not found.
         """
-        entries = self._resolve_corpus_entries(corpus_name)
-        out: dict = {}
-        for entry in entries:
-            adapter = self._get_adapter(entry)
-            if adapter is None:
-                out[entry.name] = {"available": False, "kind": entry.kind.value}
-                continue
-            try:
-                out[entry.name] = {"available": True, **adapter.stats()}
-            except Exception as e:  # pylint: disable=broad-exception-caught
-                out[entry.name] = {"available": False, "error": str(e)}
-        return out
+        return self._federate_stats(self._resolve_corpus_entries(corpus_name), self._get_adapter)
 
     # ------------------------------------------------------------------
     # Person corpus-scoped operations
@@ -435,31 +539,12 @@ class KGRAG:
         :return: Aggregated and globally ranked CrossQueryResult.
         :raises KeyError: If person corpus not found.
         """
-        entries = self._resolve_person_entries(person_name)
-        all_hits: list[CrossHit] = []
-        by_kg: dict[str, list[CrossHit]] = {}
-        kgs_queried = 0
-
-        for entry in entries:
-            adapter = self._get_adapter(entry)
-            if adapter is None:
-                continue
-            try:
-                hits = adapter.query(q, k=k, min_score=min_score, semantic_floor=semantic_floor)
-                all_hits.extend(hits)
-                by_kg[entry.name] = hits
-                kgs_queried += 1
-            except Exception:  # pylint: disable=broad-exception-caught
-                if self._strict:
-                    raise
-
-        all_hits.sort(key=lambda h: h.score, reverse=True)
-        return CrossQueryResult(
-            query=q,
-            hits=all_hits,
-            by_kg=by_kg,
-            total_hits=len(all_hits),
-            kgs_queried=kgs_queried,
+        return self._federate_query(
+            self._resolve_person_entries(person_name),
+            q,
+            k=k,
+            min_score=min_score,
+            semantic_floor=semantic_floor,
         )
 
     def pack_person(
@@ -481,30 +566,12 @@ class KGRAG:
         :return: CrossSnippetPack with all snippets ranked by score.
         :raises KeyError: If person corpus not found.
         """
-        entries = self._resolve_person_entries(person_name)
-        all_snippets: list[CrossSnippet] = []
-        kgs_queried = 0
-
-        for entry in entries:
-            adapter = self._get_adapter(entry)
-            if adapter is None:
-                continue
-            try:
-                snippets = adapter.pack(q, k=k, context=context, semantic_floor=semantic_floor)
-                all_snippets.extend(snippets)
-                kgs_queried += 1
-            except Exception:  # pylint: disable=broad-exception-caught
-                if self._strict:
-                    raise
-
-        all_snippets.sort(key=lambda s: s.score, reverse=True)
-        approx_tokens = sum(len(s.content.split()) * 4 // 3 for s in all_snippets)
-
-        return CrossSnippetPack(
-            query=q,
-            snippets=all_snippets,
-            total_tokens_approx=approx_tokens,
-            kgs_queried=kgs_queried,
+        return self._federate_pack(
+            self._resolve_person_entries(person_name),
+            q,
+            k=k,
+            context=context,
+            semantic_floor=semantic_floor,
         )
 
     def stats_person(self, person_name: str) -> dict:
@@ -514,15 +581,4 @@ class KGRAG:
         :return: Dict mapping KG name to stats dict.
         :raises KeyError: If person corpus not found.
         """
-        entries = self._resolve_person_entries(person_name)
-        out: dict = {}
-        for entry in entries:
-            adapter = self._get_adapter(entry)
-            if adapter is None:
-                out[entry.name] = {"available": False, "kind": entry.kind.value}
-                continue
-            try:
-                out[entry.name] = {"available": True, **adapter.stats()}
-            except Exception as e:  # pylint: disable=broad-exception-caught
-                out[entry.name] = {"available": False, "error": str(e)}
-        return out
+        return self._federate_stats(self._resolve_person_entries(person_name), self._get_adapter)

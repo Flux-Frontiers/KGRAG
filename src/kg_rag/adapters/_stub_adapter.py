@@ -20,7 +20,7 @@ import json
 from typing import Any
 
 from kg_rag.adapters.base import KGAdapter
-from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry, KGKind
+from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry, KGKind, QueryScope
 
 
 class StubKGAdapter(KGAdapter):
@@ -82,6 +82,7 @@ class StubKGAdapter(KGAdapter):
         k: int = 8,
         min_score: float = 0.0,
         semantic_floor: float = 0.0,
+        scope: QueryScope | None = None,
     ) -> list[CrossHit]:
         """Query the KG; returns empty list if library is unavailable.
 
@@ -129,6 +130,7 @@ class StubKGAdapter(KGAdapter):
         k: int = 8,
         context: int = 5,
         semantic_floor: float = 0.0,
+        scope: QueryScope | None = None,
     ) -> list[CrossSnippet]:
         """Return source snippets; empty list if library is unavailable.
 

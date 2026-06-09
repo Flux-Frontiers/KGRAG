@@ -8,8 +8,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **`QueryScope` — in-KG query scoping** (`src/kg_rag/primitives.py`): a frozen,
+  hashable dataclass with `source_path_prefixes`, `node_kinds`, and (reserved)
+  `metadata_eq`, plus a `matches()` post-filter helper. Lets a federated query
+  restrict retrieval to a subtree (e.g. one genre of a consolidated Gutenberg
+  corpus) and/or node kinds *before* ranking is finalized, instead of querying
+  the whole KG and letting out-of-scope results starve the relevant ones.
+- **Scope threading through the orchestrator** (`src/kg_rag/orchestrator.py`):
+  `KGRAG.query`, `pack`, `query_corpus`, and `pack_corpus` accept an optional
+  `scope`. Scope-aware adapters receive it for true backend pushdown; for all
+  adapters the orchestrator also applies `scope.matches()` as a best-effort
+  post-filter, so scoping degrades gracefully when a backend cannot push down
+  (with an automatic unscoped retry if an older backend rejects the keyword).
+- **Scope-aware adapters** (`src/kg_rag/adapters/`): the `KGAdapter.query`/`pack`
+  contract gains an optional `scope` argument plus a `supports_scope` flag and a
+  shared `_doc_scope_kwargs()` translator on the base; `DocKGAdapter` and
+  `GutenbergKGAdapter` set `supports_scope = True` and forward the scope into
+  `DocKG.query`/`pack` (`source_path_prefixes` / `node_kinds`). All other
+  adapters accept and ignore `scope` (the orchestrator post-filters their hits).
+- Tests: `tests/test_primitives.py::TestQueryScope` and
+  `tests/test_orchestrator.py::TestQueryScope` cover scope matching, pushdown
+  passthrough, the TypeError→unscoped fallback, and path/kind post-filtering.
 
 ### Changed
+- **Federation refactor** (`src/kg_rag/orchestrator.py`): the per-tier
+  query/pack/stats loops (global, corpus, person) — previously three near-identical
+  copies — now route through shared `_federate_query` / `_federate_pack` /
+  `_federate_stats` engines, which also host the new scope handling.
+- **`doc-kg` floor bumped to `>=0.15.7`** (`pyproject.toml`): 0.15.7 adds the
+  `source_path_prefixes` / `node_kinds` pushdown that `DocKGAdapter` and
+  `GutenbergKGAdapter` forward, so `QueryScope` filters in-database rather than
+  via the post-filter fallback. (The fallback still covers any backend that
+  predates pushdown.)
 
 ### Fixed
 

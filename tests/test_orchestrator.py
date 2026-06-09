@@ -321,3 +321,148 @@ class TestKGRAGStats:
                 stats = kgrag.stats()
         assert stats["a"]["available"] is False
         assert "error" in stats["a"]
+
+
+# ---------------------------------------------------------------------------
+# QueryScope threading (pushdown + post-filter)
+# ---------------------------------------------------------------------------
+
+
+def _make_doc_hit(kg_name: str, source_path: str, kind: str, score: float = 0.9) -> CrossHit:
+    return CrossHit(
+        kg_name=kg_name,
+        kg_kind=KGKind.GUTENBERG,
+        node_id=f"{kg_name}:{source_path}",
+        name=source_path,
+        kind=kind,
+        score=score,
+        source_path=source_path,
+    )
+
+
+class TestQueryScope:
+    def _registered(self, tmp_path, adapter, kind=KGKind.GUTENBERG):
+        kgrag = KGRAG(registry_path=tmp_path / "reg.sqlite")
+        entry = _make_entry(tmp_path, "books", kind)
+        kgrag.registry.register(entry)
+        kgrag._adapters[entry.name] = adapter  # inject mock directly
+        return kgrag
+
+    def test_scope_pushed_down_when_supported(self, tmp_path):
+        from kg_rag.primitives import QueryScope
+
+        adapter = _mock_adapter(hits=[_make_doc_hit("books", "science-fiction/Dune.md", "chunk")])
+        adapter.supports_scope = True
+        kgrag = self._registered(tmp_path, adapter)
+        scope = QueryScope(source_path_prefixes=("science-fiction/",))
+
+        kgrag.query("space travel", k=5, scope=scope)
+        # scope forwarded into the adapter call
+        assert adapter.query.call_args.kwargs.get("scope") == scope
+        kgrag.close()
+
+    def test_not_pushed_down_when_unsupported(self, tmp_path):
+        from kg_rag.primitives import QueryScope
+
+        adapter = _mock_adapter(hits=[_make_doc_hit("books", "science-fiction/Dune.md", "chunk")])
+        adapter.supports_scope = False
+        kgrag = self._registered(tmp_path, adapter)
+        scope = QueryScope(source_path_prefixes=("science-fiction/",))
+
+        kgrag.query("space travel", k=5, scope=scope)
+        assert "scope" not in adapter.query.call_args.kwargs
+        kgrag.close()
+
+    def test_typeerror_fallback_to_unscoped(self, tmp_path):
+        from kg_rag.primitives import QueryScope
+
+        adapter = _mock_adapter()
+        adapter.supports_scope = True
+        # First (scoped) call raises TypeError (older backend); retry has no scope.
+        adapter.query.side_effect = [
+            TypeError("unexpected keyword argument 'scope'"),
+            [_make_doc_hit("books", "science-fiction/Dune.md", "chunk")],
+        ]
+        kgrag = self._registered(tmp_path, adapter)
+        scope = QueryScope(source_path_prefixes=("science-fiction/",))
+
+        result = kgrag.query("space travel", k=5, scope=scope)
+        assert adapter.query.call_count == 2
+        assert "scope" not in adapter.query.call_args_list[1].kwargs
+        assert result.total_hits == 1
+        kgrag.close()
+
+    def test_post_filter_drops_out_of_scope_path(self, tmp_path):
+        from kg_rag.primitives import QueryScope
+
+        adapter = _mock_adapter(
+            hits=[
+                _make_doc_hit("books", "science-fiction/Dune.md", "chunk", 0.9),
+                _make_doc_hit("books", "philosophy/Ethics.md", "chunk", 0.8),
+            ]
+        )
+        adapter.supports_scope = False  # no pushdown → post-filter must apply
+        kgrag = self._registered(tmp_path, adapter)
+        scope = QueryScope(source_path_prefixes=("science-fiction/",))
+
+        result = kgrag.query("space travel", k=5, scope=scope)
+        assert [h.source_path for h in result.hits] == ["science-fiction/Dune.md"]
+        kgrag.close()
+
+    def test_post_filter_drops_out_of_scope_kind(self, tmp_path):
+        from kg_rag.primitives import QueryScope
+
+        adapter = _mock_adapter(
+            hits=[
+                _make_doc_hit("books", "science-fiction/Dune.md", "chunk", 0.9),
+                _make_doc_hit("books", "science-fiction/Dune.md", "topic", 0.8),
+            ]
+        )
+        adapter.supports_scope = False
+        kgrag = self._registered(tmp_path, adapter)
+        scope = QueryScope(node_kinds=("chunk",))
+
+        result = kgrag.query("space travel", k=5, scope=scope)
+        assert all(h.kind == "chunk" for h in result.hits)
+        assert result.total_hits == 1
+        kgrag.close()
+
+    def test_no_scope_is_unchanged(self, tmp_path):
+        adapter = _mock_adapter(hits=[_make_doc_hit("books", "philosophy/Ethics.md", "topic", 0.8)])
+        adapter.supports_scope = True
+        kgrag = self._registered(tmp_path, adapter)
+
+        result = kgrag.query("ethics", k=5)
+        assert "scope" not in adapter.query.call_args.kwargs
+        assert result.total_hits == 1
+        kgrag.close()
+
+    def test_pack_scope_post_filter(self, tmp_path):
+        from kg_rag.primitives import QueryScope
+
+        snips = [
+            CrossSnippet(
+                kg_name="books",
+                kg_kind=KGKind.GUTENBERG,
+                node_id="1",
+                source_path="science-fiction/Dune.md",
+                content="The spice must flow across the desert planet of Arrakis.",
+                score=0.9,
+            ),
+            CrossSnippet(
+                kg_name="books",
+                kg_kind=KGKind.GUTENBERG,
+                node_id="2",
+                source_path="philosophy/Ethics.md",
+                content="Virtue is a disposition concerned with choice and the mean.",
+                score=0.8,
+            ),
+        ]
+        adapter = _mock_adapter(snippets=snips)
+        adapter.supports_scope = False
+        kgrag = self._registered(tmp_path, adapter)
+        scope = QueryScope(source_path_prefixes=("science-fiction/",))
+
+        pack = kgrag.pack("desert", k=5, scope=scope)
+        assert [s.source_path for s in pack.snippets] == ["science-fiction/Dune.md"]
+        kgrag.close()

@@ -181,6 +181,72 @@ class PersonCorpusStats:
     registry_path: Path
 
 
+@dataclass(frozen=True)
+class QueryScope:
+    """Query-time scoping filter applied *inside* a KG before ranking is final.
+
+    Lets a federated query restrict retrieval to a subtree and/or node kinds —
+    e.g. one genre of a consolidated Gutenberg corpus — instead of querying the
+    whole KG and post-filtering, which lets out-of-scope results starve the
+    relevant ones.
+
+    Adapters that support pushdown (``KGAdapter.supports_scope``) forward the
+    constraints into their backend retrieval (vector prefilter + lexical SQL).
+    For adapters that cannot, the orchestrator applies :meth:`matches` to the
+    returned hits/snippets as a best-effort post-filter, so scoping degrades
+    gracefully rather than being silently ignored.
+
+    :param source_path_prefixes: Keep only results whose ``source_path`` starts
+        with one of these prefixes (e.g. ``("science-fiction/",)``).  ``None``
+        or empty imposes no path constraint.
+    :param node_kinds: Keep only results whose node ``kind`` is in this set
+        (e.g. ``("chunk", "section")`` to drop structural/topic nodes).  Note
+        that snippet packs may not carry a ``kind``; kind filtering on snippets
+        is therefore only reliable via adapter pushdown.
+    :param metadata_eq: Reserved for future metadata-equality scoping.  Accepted
+        for API stability but not yet enforced.
+    """
+
+    source_path_prefixes: tuple[str, ...] | None = None
+    node_kinds: tuple[str, ...] | None = None
+    metadata_eq: dict[str, str] | None = None
+
+    def __post_init__(self) -> None:
+        # Normalise list inputs to tuples so the dataclass stays hashable/frozen.
+        if self.source_path_prefixes is not None:
+            object.__setattr__(self, "source_path_prefixes", tuple(self.source_path_prefixes))
+        if self.node_kinds is not None:
+            object.__setattr__(self, "node_kinds", tuple(self.node_kinds))
+
+    @property
+    def is_empty(self) -> bool:
+        """True if this scope imposes no constraints (a no-op filter)."""
+        return not (self.source_path_prefixes or self.node_kinds or self.metadata_eq)
+
+    def __bool__(self) -> bool:
+        return not self.is_empty
+
+    def matches(self, *, source_path: str = "", kind: str | None = None) -> bool:
+        """Return True if a result with these attributes is in scope.
+
+        Applied as a post-filter for adapters without pushdown.  A ``None``
+        ``kind`` is treated as "unknown" and is **not** rejected by a
+        ``node_kinds`` constraint, so kind filtering never silently drops
+        snippets that simply lack a kind field.
+
+        :param source_path: The result's source/document path.
+        :param kind: The result's node kind, or None if unknown.
+        :return: True if the result satisfies all enforced constraints.
+        """
+        if self.source_path_prefixes:
+            sp = source_path or ""
+            if not any(sp.startswith(p) for p in self.source_path_prefixes):
+                return False
+        if self.node_kinds and kind is not None and kind not in self.node_kinds:
+            return False
+        return True
+
+
 @dataclass
 class CrossHit:
     """A single result hit from a cross-KG query.

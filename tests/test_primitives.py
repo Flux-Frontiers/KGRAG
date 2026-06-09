@@ -18,6 +18,7 @@ from kg_rag.primitives import (
     CrossSnippetPack,
     KGEntry,
     KGKind,
+    QueryScope,
     RegistryStats,
 )
 
@@ -360,3 +361,66 @@ class TestCrossSnippetPackRender:
         assert "beta feature" in rendered
         assert "code:a" in rendered
         assert "doc:b" in rendered
+
+
+# ---------------------------------------------------------------------------
+# QueryScope
+# ---------------------------------------------------------------------------
+
+
+class TestQueryScope:
+    def test_empty_scope_is_falsy(self):
+        scope = QueryScope()
+        assert scope.is_empty is True
+        assert bool(scope) is False
+
+    def test_non_empty_scope_is_truthy(self):
+        assert bool(QueryScope(source_path_prefixes=("sci-fi/",))) is True
+        assert bool(QueryScope(node_kinds=("chunk",))) is True
+        assert bool(QueryScope(metadata_eq={"book": "Moby Dick"})) is True
+
+    def test_list_inputs_normalised_to_tuples(self):
+        scope = QueryScope(source_path_prefixes=["a/", "b/"], node_kinds=["chunk"])
+        assert scope.source_path_prefixes == ("a/", "b/")
+        assert scope.node_kinds == ("chunk",)
+
+    def test_is_hashable(self):
+        # frozen + tuple-normalised → usable as dict key / in a set
+        scope = QueryScope(source_path_prefixes=["a/"], node_kinds=["chunk"])
+        assert len({scope, scope}) == 1
+
+    def test_matches_prefix_in_scope(self):
+        scope = QueryScope(source_path_prefixes=("science-fiction/",))
+        assert scope.matches(source_path="science-fiction/Dune.md") is True
+
+    def test_matches_prefix_out_of_scope(self):
+        scope = QueryScope(source_path_prefixes=("science-fiction/",))
+        assert scope.matches(source_path="philosophy/Ethics.md") is False
+
+    def test_matches_any_of_multiple_prefixes(self):
+        scope = QueryScope(source_path_prefixes=("a/", "b/"))
+        assert scope.matches(source_path="b/x.md") is True
+
+    def test_matches_kind_in_scope(self):
+        scope = QueryScope(node_kinds=("chunk", "section"))
+        assert scope.matches(source_path="x", kind="section") is True
+
+    def test_matches_kind_out_of_scope(self):
+        scope = QueryScope(node_kinds=("chunk",))
+        assert scope.matches(source_path="x", kind="topic") is False
+
+    def test_unknown_kind_not_rejected(self):
+        # A None kind (e.g. a snippet with no kind field) must not be dropped
+        # by a node_kinds constraint.
+        scope = QueryScope(node_kinds=("chunk",))
+        assert scope.matches(source_path="x", kind=None) is True
+
+    def test_matches_requires_all_constraints(self):
+        scope = QueryScope(source_path_prefixes=("a/",), node_kinds=("chunk",))
+        assert scope.matches(source_path="a/x.md", kind="chunk") is True
+        assert scope.matches(source_path="a/x.md", kind="topic") is False
+        assert scope.matches(source_path="b/x.md", kind="chunk") is False
+
+    def test_empty_scope_matches_everything(self):
+        scope = QueryScope()
+        assert scope.matches(source_path="anything", kind="whatever") is True

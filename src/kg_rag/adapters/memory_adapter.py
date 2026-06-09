@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from kg_rag.adapters.base import KGAdapter
-from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry, KGKind
+from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry, KGKind, QueryScope
 
 
 class MemoryKGAdapter(KGAdapter):
@@ -60,6 +60,7 @@ class MemoryKGAdapter(KGAdapter):
         k: int = 8,
         min_score: float = 0.0,
         semantic_floor: float = 0.0,
+        scope: QueryScope | None = None,
     ) -> list[CrossHit]:
         """Semantic + structural query over the episodic memory corpus.
 
@@ -104,6 +105,7 @@ class MemoryKGAdapter(KGAdapter):
         k: int = 8,
         context: int = 5,
         semantic_floor: float = 0.0,
+        scope: QueryScope | None = None,
     ) -> list[CrossSnippet]:
         """Return episodic memory snippets for LLM ingestion.
 

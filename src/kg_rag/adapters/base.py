@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from datetime import UTC, datetime
 from typing import Any
 
-from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry
+from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry, QueryScope
 from kg_rag.viz import DisplayMode, Viewport
 
 
@@ -30,6 +30,13 @@ class KGAdapter(ABC):
         library uses its own built-in default.
     """
 
+    #: Whether this adapter can push a :class:`~kg_rag.primitives.QueryScope`
+    #: down into its backend retrieval.  When False, the orchestrator applies
+    #: the scope as a best-effort post-filter on returned hits/snippets instead.
+    #: Subclasses that accept a ``scope`` argument on :meth:`query`/:meth:`pack`
+    #: and forward it to their backend should override this to True.
+    supports_scope: bool = False
+
     def __init__(self, entry: KGEntry, embedder=None) -> None:
         self.entry = entry
         self._embedder = embedder
@@ -48,6 +55,7 @@ class KGAdapter(ABC):
         k: int = 8,
         min_score: float = 0.0,
         semantic_floor: float = 0.0,
+        scope: QueryScope | None = None,
     ) -> list[CrossHit]:
         """Query the KG and return ranked hits.
 
@@ -59,6 +67,10 @@ class KGAdapter(ABC):
             rather than returning k noisy near-neighbor hits.  Set to e.g.
             ``0.5`` to silence KGs that have no domain-relevant content for
             the query.
+        :param scope: Optional :class:`~kg_rag.primitives.QueryScope`
+            restricting retrieval to a source-path subtree and/or node kinds.
+            Adapters with :attr:`supports_scope` push it into their backend;
+            others may ignore it (the orchestrator post-filters on the result).
         :return: List of CrossHit objects ranked by score.
         """
 
@@ -69,6 +81,7 @@ class KGAdapter(ABC):
         k: int = 8,
         context: int = 5,
         semantic_floor: float = 0.0,
+        scope: QueryScope | None = None,
     ) -> list[CrossSnippet]:
         """Query the KG and return source snippets.
 
@@ -79,8 +92,31 @@ class KGAdapter(ABC):
             the top result is below this value the entire result set is
             discarded.  Mirrors the behaviour of the same parameter on
             :meth:`query`.
+        :param scope: Optional :class:`~kg_rag.primitives.QueryScope`
+            restricting retrieval; see :meth:`query`.
         :return: List of CrossSnippet objects.
         """
+
+    @staticmethod
+    def _doc_scope_kwargs(scope: QueryScope | None) -> dict[str, Any]:
+        """Translate a :class:`QueryScope` into doc_kg pushdown keyword args.
+
+        Returns the ``source_path_prefixes`` / ``node_kinds`` keywords accepted
+        by ``DocKG.query``/``DocKG.pack`` (doc-backed adapters), omitting any
+        constraint that is unset.  Returns an empty dict for a ``None`` or empty
+        scope so callers can ``**``-splat it unconditionally.
+
+        :param scope: The scope to translate, or None.
+        :return: Keyword arguments suitable for the underlying DocKG call.
+        """
+        if not scope:
+            return {}
+        kwargs: dict[str, Any] = {}
+        if scope.source_path_prefixes:
+            kwargs["source_path_prefixes"] = scope.source_path_prefixes
+        if scope.node_kinds:
+            kwargs["node_kinds"] = scope.node_kinds
+        return kwargs
 
     @abstractmethod
     def stats(self) -> dict[str, Any]:

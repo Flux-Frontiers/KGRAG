@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any
 
 from kg_rag.adapters.base import KGAdapter
-from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry, KGKind
+from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry, KGKind, QueryScope
 
 
 class GutenbergKGAdapter(KGAdapter):
@@ -33,6 +33,8 @@ class GutenbergKGAdapter(KGAdapter):
 
     :param entry: A KGEntry instance with ``kind=KGKind.GUTENBERG``.
     """
+
+    supports_scope = True
 
     def __init__(self, entry: KGEntry, embedder=None) -> None:
         super().__init__(entry, embedder=embedder)
@@ -73,6 +75,7 @@ class GutenbergKGAdapter(KGAdapter):
         k: int = 8,
         min_score: float = 0.0,
         semantic_floor: float = 0.0,
+        scope: QueryScope | None = None,
     ) -> list[CrossHit]:
         """Query the Gutenberg corpus and return ranked hits.
 
@@ -81,12 +84,15 @@ class GutenbergKGAdapter(KGAdapter):
         :param min_score: Minimum relevance score; hits below this are dropped.
         :param semantic_floor: If the best hit's score is below this value the
             entire result set is discarded.
+        :param scope: Optional :class:`QueryScope` pushed down into the
+            underlying DocKG retrieval — e.g. restrict to one genre subtree via
+            ``source_path_prefixes`` on a consolidated Gutenberg corpus.
         :return: List of CrossHit objects ranked by score.
         """
         if not self.is_available():
             return []
         self._load()
-        result = self._kg.query(q, k=k)
+        result = self._kg.query(q, k=k, **self._doc_scope_kwargs(scope))
         nodes = result.nodes[:k]
         if semantic_floor > 0.0 and nodes:
             if nodes[0].get("relevance", {}).get("score", 0.0) < semantic_floor:
@@ -116,6 +122,7 @@ class GutenbergKGAdapter(KGAdapter):
         k: int = 8,
         context: int = 5,
         semantic_floor: float = 0.0,
+        scope: QueryScope | None = None,
     ) -> list[CrossSnippet]:
         """Return Gutenberg text snippets for LLM ingestion.
 
@@ -124,12 +131,14 @@ class GutenbergKGAdapter(KGAdapter):
         :param context: Lines of context (unused for doc-backed KGs).
         :param semantic_floor: If the best snippet's score is below this value
             the entire result set is discarded.
+        :param scope: Optional :class:`QueryScope` pushed down into the
+            underlying DocKG retrieval.
         :return: List of CrossSnippet objects.
         """
         if not self.is_available():
             return []
         self._load()
-        pack = self._kg.pack(q, k=k)
+        pack = self._kg.pack(q, k=k, **self._doc_scope_kwargs(scope))
         nodes = pack.nodes
         if semantic_floor > 0.0 and nodes:
             if (nodes[0].get("relevance") or {}).get("score", 0.0) < semantic_floor:

@@ -117,9 +117,9 @@ llama-cpp-python = { version = ">=0.3.0", optional = true }
 
 
 # our own adaptors (PyPI-only; git-only adapters installed separately via uv)
-kgmodule-utils = ">=0.3.1"
+kgmodule-utils = ">=0.4.0"
 pycode-kg = {version = ">=0.18.1", optional=true}
-doc-kg = {version = ">=0.15.4", optional=true}
+doc-kg = {version = ">=0.15.7", optional=true}
 ftree-kg = {version = ">=0.8.0", optional=true}
 diary-kg  = {version = ">=0.92.4", optional = true}
 jupyter-server = ">=2.18.0"
