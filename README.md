@@ -165,9 +165,9 @@ Tools span three groups: **core KG** (`kgrag_stats`, `kgrag_list`, `kgrag_info`,
 | [DiaryKG](https://github.com/Flux-Frontiers/diary_kg) | Diary and personal journal corpus knowledge graph |
 | [AgentKG](https://github.com/Flux-Frontiers/agent_kg) | Conversational memory knowledge graph |
 | [FTreeKG](https://github.com/Flux-Frontiers/ftree_kg) | File system tree knowledge graph |
-| [MemoryKG](https://github.com/Flux-Frontiers/memory_kg) | Episodic memory knowledge graph for conversation and event corpora |
 | [GutenbergKG](https://github.com/Flux-Frontiers/gutenberg_kg) | Project Gutenberg book corpus knowledge graph |
-| [IABookKG](https://github.com/Flux-Frontiers/ia_kg) | Internet Archive book corpus knowledge graph *(under development)* |
+| MemoryKG *(coming soon)* | Episodic memory knowledge graph for conversation and event corpora |
+| IABookKG *(coming soon)* | Internet Archive book corpus knowledge graph |
 
 ---
 

@@ -1,6 +1,6 @@
 # MemoryKG — Stack Reference
 **Domain:** Document corpora + conversational memory
-**Package:** `memory-kg` | `Flux-Frontiers/memory_kg`
+**Package:** `memory-kg` *(not yet public)*
 **CLI binary:** `memorykg`
 **MCP server:** `memorykg-mcp --repo <path>`
 **Index location:** `<repo>/.memorykg/`

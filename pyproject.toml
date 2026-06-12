@@ -29,9 +29,8 @@
 #   poetry install --extras "all"                everything: all PyPI KG adapters + viz + viz3d + pi
 #   poetry install --extras "all" --with dev     everything + dev tools
 #
-# Git-only adapters (agent-kg, memory-kg, metabo-kg) — install via uv directly:
+# Git-only adapters (agent-kg, metabo-kg) — install via uv directly:
 #   uv add git+https://github.com/Flux-Frontiers/agent_kg.git
-#   uv add git+https://github.com/Flux-Frontiers/memory_kg.git
 #   uv add git+https://github.com/Flux-Frontiers/metabo_kg.git
 #
 # Quick install (pip)

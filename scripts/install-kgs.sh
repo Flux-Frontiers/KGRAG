@@ -1,72 +1,50 @@
 #!/usr/bin/env bash
-# install-kgs.sh — install/refresh the KGRAG fleet as editable uv tools.
+# install-kgs.sh — install the public KGRAG fleet as uv tools.
 #
-# One source of truth for the whole knowledge-graph toolchain. Each adaptor is
-# installed with `uv tool install --editable`, so the global command (e.g.
-# `gutenkg`, `dockg`, `metabokg`) tracks the live repo source — no `poetry run`,
-# no cwd dance, commands available from anywhere.
+# Designed for clean machines with no local checkouts required.
+# PyPI packages install directly; git-only packages install from GitHub.
+# All CLI commands land on PATH automatically via uv.
 #
 # Usage:
-#   ./install-kgs.sh             # install/refresh every adaptor + the kgrag orchestrator
-#   ./install-kgs.sh gutenberg_kg metabo_kg   # only the named repos
-#   REINSTALL=1 ./install-kgs.sh  # force --reinstall (rebuild venvs from scratch)
+#   ./install-kgs.sh             # install full public fleet
+#   REINSTALL=1 ./install-kgs.sh # force --reinstall (rebuild tool venvs from scratch)
 #
-# Toolchain: uv only. (pipx is reserved for non-KG tools like fabric / poethepoet.)
+# Requires: uv  (https://docs.astral.sh/uv/)
+#   curl -LsSf https://astral.sh/uv/install.sh | sh
 
 set -euo pipefail
 
-REPOS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# The orchestrator carries the [all] extra so it can import every adaptor for
-# federation. Adaptors install with their default extras.
-KGRAG_REPO="kgrag"
-KGRAG_EXTRAS="all"
-
-# Adaptor repos, in dependency-friendly order (doc/pycode first — others lean on
-# the same DocKG/embedding stack).
-ADAPTORS=(
-  doc_kg          # dockg
-  pycode_kg       # pycodekg
-  gutenberg_kg    # gutenkg
-  metabo_kg       # metabokg
-  ftree_kg        # ftreekg
-  diary_kg        # diarykg, diary-transformer, diary-embedder
-  memory_kg       # memorykg
-  agent_kg        # agent-kg
-  ia_kg           # iakg
-)
+GH="https://github.com/Flux-Frontiers"
 
 REINSTALL_FLAG=""
 [ "${REINSTALL:-0}" = "1" ] && REINSTALL_FLAG="--reinstall"
 
-install_one() {
-  local repo="$1" extras="${2:-}"
-  local path="$REPOS/$repo"
-  if [ ! -f "$path/pyproject.toml" ]; then
-    echo "  ⚠️  skip $repo — no pyproject.toml at $path"
-    return
-  fi
-  local spec="$path"
-  [ -n "$extras" ] && spec="${path}[${extras}]"
-  echo "→ uv tool install --editable $spec"
-  uv tool install --editable $REINSTALL_FLAG "$spec"
+install_pypi() {
+  local spec="$1"
+  echo "→ uv tool install $spec"
+  uv tool install $REINSTALL_FLAG "$spec"
 }
 
-# If repo args were given, install only those; otherwise the full fleet + kgrag.
-if [ "$#" -gt 0 ]; then
-  for repo in "$@"; do
-    if [ "$repo" = "$KGRAG_REPO" ]; then
-      install_one "$KGRAG_REPO" "$KGRAG_EXTRAS"
-    else
-      install_one "$repo"
-    fi
-  done
-else
-  for repo in "${ADAPTORS[@]}"; do
-    install_one "$repo"
-  done
-  install_one "$KGRAG_REPO" "$KGRAG_EXTRAS"
-fi
+install_git() {
+  local repo="$1"
+  local spec="git+${GH}/${repo}.git"
+  echo "→ uv tool install $spec"
+  uv tool install $REINSTALL_FLAG "$spec"
+}
+
+# PyPI adaptors
+install_pypi "pycode-kg"
+install_pypi "doc-kg"
+install_pypi "ftree-kg"
+install_pypi "diary-kg"
+
+# Git-only adaptors (not yet on PyPI)
+install_git "gutenberg_kg"
+install_git "metabo_kg"
+install_git "agent_kg"
+
+# Orchestrator — installs last so all adaptor packages are resolvable
+install_pypi "kg-rag[all]"
 
 echo
 echo "✅ Done. Installed uv tools:"

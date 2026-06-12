@@ -1,4 +1,4 @@
-name: Publish
+name: Release
 
 on:
   push:
@@ -8,7 +8,7 @@ permissions:
   contents: write  # needed to create GitHub Releases and upload assets
 
 jobs:
-  publish:
+  release:
     name: Build & Release
     runs-on: ubuntu-latest
 
@@ -27,10 +27,7 @@ jobs:
           virtualenvs-in-project: true
 
       - name: Install dependencies
-        run: poetry install --no-interaction
-
-      - name: Run tests
-        run: poetry run pytest --tb=short -q
+        run: poetry install --only main --no-interaction
 
       - name: Build wheel and sdist
         run: poetry build

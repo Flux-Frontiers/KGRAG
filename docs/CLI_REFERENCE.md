@@ -16,7 +16,6 @@ instead of running `--help`.
 |---|---|---|
 | `codekg` | `pycode-kg` | Build, query, serve Python code KG |
 | `dockg` | `doc-kg` | Build, query, serve unstructured document KG |
-| `memorykg` | `memory-kg` | Build, query, serve memory/document KG |
 | `diarykg` | `diary-kg` | Build, query, serve diary/journal KG |
 | `metabokg` | `metabo-kg` | Build, query, serve metabolic pathway KG |
 | `kgrag` | `kg-rag` | Federated registry, cross-KG query, orchestration |
@@ -127,80 +126,6 @@ dockg snapshot diff <key_a> <key_b> --repo .
 
 ---
 
-## memorykg
-
-**Build** (reads `[tool.memorykg]` from `pyproject.toml`):
-```bash
-memorykg build --repo .
-memorykg-build --repo . --exclude-dir src --exclude-dir tests
-# Key options:
-#   --repo DIRECTORY     corpus root [default: .]
-#   --sqlite PATH        [default: <repo>/.memorykg/graph.sqlite]
-#   --lancedb PATH       [default: <repo>/.memorykg/lancedb]
-#   --model TEXT         [default: BAAI/bge-small-en-v1.5]
-#   --chunk-size INTEGER [default: 512]
-#   --chunk-overlap INTEGER [default: 64]
-#   --ext TEXT           (repeatable) [default: .md, .txt]
-#   --exclude-dir DIR    (repeatable)
-#   --update             incremental update
-#   --no-similar         skip SIMILAR_TO edge discovery
-#   --workers INTEGER    parallel embedding workers [default: 8]
-#   --batch INTEGER      embedding batch size [default: 256]
-```
-
-**MCP server:**
-```bash
-memorykg-mcp --repo . --transport stdio
-memorykg mcp --repo .
-# Key options:
-#   --repo REPO
-#   --db DB              [default: .memorykg/graph.sqlite]
-#   --lancedb LANCEDB    [default: .memorykg/lancedb]
-#   --model MODEL        [default: BAAI/bge-small-en-v1.5]
-#   --transport {stdio,sse}
-```
-
-**Query / Pack:**
-```bash
-memorykg-query "knowledge graph architecture" --repo . --k 8 --hop 1
-memorykg-pack "Claude_T identity" --repo . --fmt md --max-chars 2000
-# memorykg-query options:
-#   --k INTEGER          top-k semantic hits [default: 8]
-#   --hop INTEGER        graph expansion hops [default: 1]
-#   --rels TEXT          edge types to expand
-#   --max-nodes INTEGER  [default: 25]
-# memorykg-pack options:
-#   --max-chars INTEGER  per-excerpt limit [default: 2000]
-#   --max-nodes INTEGER  total nodes returned
-#   --out PATH           output file [default: stdout]
-#   --fmt [md|json]      [default: md]
-```
-
-**Analyze / Snapshot:**
-```bash
-memorykg-analyze --repo . -o analysis/memorykg_analysis.md
-memorykg-snapshot save --repo .
-memorykg-snapshot list --repo .
-memorykg-snapshot show <key> --repo .
-memorykg-snapshot diff <key_a> <key_b> --repo .
-memorykg-snapshot prune --repo .
-```
-
-**Install hooks:**
-```bash
-memorykg install-hooks --repo .
-```
-
-**MCP tools exposed (4):**
-`graph_stats`, `query_docs`, `pack_docs`, `get_node`
-
-**Active corpus (kgrag repo):**
-- Index: `/Users/egs/repos/kgrag/.memorykg/`
-- Registered as: `claude_t_self` (kind: `memory`)
-- 47 docs, 11,152 nodes, 72,578 edges
-
----
-
 ## diarykg
 
 **Build:**
@@ -300,10 +225,10 @@ kgrag unregister <name>
 kgrag scan <directory>                  # auto-discover KG databases
 
 # kgrag-register shorthand:
-kgrag-register claude_t_self memory /Users/egs/repos/kgrag \
-  --sqlite .memorykg/graph.sqlite \
-  --lancedb .memorykg/lancedb \
-  --tag identity
+kgrag-register my_docs doc /path/to/repo \
+  --sqlite .dockg/graph.sqlite \
+  --lancedb .dockg/lancedb \
+  --tag docs
 ```
 
 **Federated query:**
@@ -383,7 +308,6 @@ agent-kg-mcp
 |---|---|---|
 | codekg | `<repo>/.codekg/graph.sqlite` | `<repo>/.codekg/lancedb` |
 | dockg | `<repo>/.dockg/graph.sqlite` | `<repo>/.dockg/lancedb` |
-| memorykg | `<repo>/.memorykg/graph.sqlite` | `<repo>/.memorykg/lancedb` |
 | diarykg | `<repo>/.diarykg/graph.sqlite` | `<repo>/.diarykg/lancedb` |
 | metabokg | `<repo>/.metabokg/meta.sqlite` | `<repo>/.metabokg/lancedb` |
 | agentkg | `<repo>/.agentkg/` | (internal) |
@@ -402,19 +326,7 @@ codekg build --repo .
 # 2. Rebuild doc KG
 dockg build --repo .
 
-# 3. Rebuild memory KG (claude_t_self corpus)
-memorykg-build --repo . \
-  --exclude-dir articles --exclude-dir books --exclude-dir pepys \
-  --exclude-dir patents --exclude-dir src --exclude-dir tests \
-  --exclude-dir dist --exclude-dir .venv --exclude-dir scripts \
-  --exclude-dir bundles
-
-# 4. Re-register if paths changed
-kgrag-register claude_t_self memory /Users/egs/repos/kgrag \
-  --sqlite .memorykg/graph.sqlite \
-  --lancedb .memorykg/lancedb
-
-# 5. Restart MCP servers (new conversation in Claude Code)
+# 3. Restart MCP servers (new conversation in Claude Code)
 ```
 
 ---
@@ -425,7 +337,6 @@ kgrag-register claude_t_self memory /Users/egs/repos/kgrag \
 |---|---|---|
 | codekg | `BAAI/bge-small-en-v1.5` | Fast, code-optimised |
 | dockg | `all-mpnet-base-v2` | Semantic quality |
-| memorykg | `BAAI/bge-small-en-v1.5` | Fast |
 | diarykg | `all-mpnet-base-v2` | Semantic quality |
 | metabokg | `all-MiniLM-L6-v2` | Lightweight |
 
@@ -433,5 +344,4 @@ Pre-download for offline use:
 ```bash
 codekg download-model
 dockg download-model
-memorykg download-model
 ```

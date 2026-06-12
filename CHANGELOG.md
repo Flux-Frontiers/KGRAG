@@ -43,9 +43,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   via the post-filter fallback. (The fallback still covers any backend that
   predates pushdown.)
 
+### Changed (continued)
+
+- **GitHub release workflow** (`.github/workflows/release.yml`) — renamed from
+  `publish.yml`; release job renamed to `release`; `Run tests` step removed from
+  the publish pipeline (`--only main` install instead of full `poetry install`),
+  keeping CI tests separate from PyPI publishing.
+- **`docs/INSTALLATION.md`** — complete rewrite: `uv tool install` replaces the
+  pipx-inject recipe as the recommended installation method; adds uv
+  prerequisites, per-tool and full-fleet install sections, `REINSTALL=1` flag,
+  upgrade/uninstall instructions, and a concise troubleshooting table. Removes
+  the old multi-step `pipx inject` walkthroughs.
+- **`scripts/install-kgs.sh`** — redesigned for clean-machine installs from
+  PyPI and GitHub; no local checkout required. PyPI adaptors (`pycode-kg`,
+  `doc-kg`, `ftree-kg`, `diary-kg`) install via `uv tool install`; git-only
+  adaptors (`gutenberg_kg`, `metabo_kg`, `agent_kg`) install from GitHub.
+  `memory_kg` and `ia_kg` removed (not yet public).
+- **`README.md`** — MemoryKG and IABookKG rows updated to `*(coming soon)*`;
+  GitHub links removed until packages are published.
+- **`docs/stack/memory_kg.md`** — package line updated to `*(not yet public)*`.
+- **`pyproject.toml`** — `memory-kg` removed from the git-only adapters install
+  comment block.
+
 ### Fixed
 
 ### Removed
+
+- **`docs/CLI_REFERENCE.md`** — `memorykg` CLI section removed (package not yet
+  public); `kgrag-register` example simplified to a generic doc-KG pattern.
 
 ## [0.9.1] - 2026-06-05
 
