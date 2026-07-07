@@ -72,8 +72,8 @@ description = "Orchestration layer for the KGRAG(tm) components."
 authors = ["Eric G. Suchanek, PhD <suchanek@flux-frontiers.com>"]
 license = "Elastic-2.0"
 readme = "README.md"
-homepage = "https://github.com/Flux-Frontiers/kgrag"
-repository = "https://github.com/Flux-Frontiers/kgrag"
+homepage = "https://github.com/Flux-Frontiers/KGRAG"
+repository = "https://github.com/Flux-Frontiers/KGRAG"
 keywords = ["knowledge-graph", "code-analysis", "ast", "lancedb", "sqlite", "semantic-search", "kgrag"]
 classifiers = [
     "Development Status :: 4 - Beta",
