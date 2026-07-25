@@ -116,7 +116,7 @@ llama-cpp-python = { version = ">=0.3.0", optional = true }
 
 
 # our own adaptors (PyPI-only; git-only adapters installed separately via uv)
-kgmodule-utils = ">=0.4.4"
+kgmodule-utils = ">=0.6.2"
 pycode-kg = {version = ">=0.19.3", optional=true}
 doc-kg = {version = ">=0.16.0", optional=true}
 ftree-kg = {version = ">=0.8.0", optional=true}

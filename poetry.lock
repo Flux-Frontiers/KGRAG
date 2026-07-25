@@ -2595,26 +2595,27 @@ markers = {main = "extra == \"viz3d\" or extra == \"all\""}
 
 [[package]]
 name = "kgmodule-utils"
-version = "0.4.4"
+version = "0.6.2"
 description = "Shared types, graph store, semantic index, and pipeline base for the KGModule SDK"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main"]
 files = [
-    {file = "kgmodule_utils-0.4.4-py3-none-any.whl", hash = "sha256:3c3eacbbc0b97ff2cfaccf7c9b6b8edeee03b2a2ccf9bca105a4edd368aec5c4"},
-    {file = "kgmodule_utils-0.4.4.tar.gz", hash = "sha256:02338f23fb151e7e20f801ab363bd1f25d82f6dbbdd8746dd7b7325a5df3efbd"},
+    {file = "kgmodule_utils-0.6.2-py3-none-any.whl", hash = "sha256:c0c1ee8eb49cf3e0026332a54ce8fa997e37ebc39c034fc330bfe3ebe241a14b"},
+    {file = "kgmodule_utils-0.6.2.tar.gz", hash = "sha256:10889bf394c5164b06b149d739456fbe3bb14bf5554d76acc575a4181511d301"},
 ]
 
 [package.dependencies]
 lancedb = {version = ">=0.19.0", optional = true, markers = "extra == \"semantic\""}
 numpy = {version = ">=1.24.0", optional = true, markers = "extra == \"semantic\""}
+rich = {version = ">=13.0.0", optional = true, markers = "extra == \"semantic\""}
 sentence-transformers = {version = ">=5.4.1", optional = true, markers = "extra == \"semantic\""}
 torch = {version = ">=2.5.1", optional = true, markers = "extra == \"semantic\""}
 transformers = {version = ">=4.40.0,<4.57", optional = true, markers = "extra == \"semantic\""}
-ty = ">=0.0.44,<0.0.45"
 
 [package.extras]
-semantic = ["lancedb (>=0.19.0)", "numpy (>=1.24.0)", "sentence-transformers (>=5.4.1)", "torch (>=2.5.1)", "transformers (>=4.40.0,<4.57)"]
+semantic = ["lancedb (>=0.19.0)", "numpy (>=1.24.0)", "rich (>=13.0.0)", "sentence-transformers (>=5.4.1)", "torch (>=2.5.1)", "transformers (>=4.40.0,<4.57)"]
+sqlite-vec = ["sqlite-vec (==0.1.9)"]
 synthesis = ["httpx (>=0.27.0)", "openai (>=1.30.0)", "pillow (>=10.0.0)"]
 synthesis-mflux = ["httpx (>=0.27.0)", "mflux (>=0.9.0)", "openai (>=1.30.0)", "pillow (>=10.0.0)"]
 
@@ -7547,7 +7548,7 @@ version = "0.0.44"
 description = "An extremely fast Python type checker, written in Rust."
 optional = false
 python-versions = ">=3.8"
-groups = ["main", "dev"]
+groups = ["dev"]
 files = [
     {file = "ty-0.0.44-py3-none-linux_armv6l.whl", hash = "sha256:272d31e7ad49b1dc5e8465a9fe700354e14c755b40d9c75f08f031d786903df3"},
     {file = "ty-0.0.44-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:b92c4ddd7a3daf2049715edec9dc70cf6fd31a5a318ee647258f90dd75495eed"},
@@ -8225,4 +8226,4 @@ viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "9e99bbd7ab2a6517bb839060d114a02e0262b01bc7f826f58f362274455b23a2"
+content-hash = "0315c4994d03237e8c71e63d34f0b77fcf0bce4d3cf124a7c0f639e2aea36bdc"
