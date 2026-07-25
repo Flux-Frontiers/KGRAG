@@ -2,7 +2,10 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    # Feature branches run CI on push so work in progress gets signal without
+    # needing a pull request.  Branch pushes previously matched nothing here,
+    # so a branch could accumulate commits with CI never having run once.
+    branches: [main, 'claude/**']
   pull_request:
     branches: [main]
   workflow_dispatch:
