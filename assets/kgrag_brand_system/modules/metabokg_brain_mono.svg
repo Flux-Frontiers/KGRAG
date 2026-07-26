@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+
+<svg width="300" height="220" viewBox="0 0 300 220" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="MetaboKG">
+  <path d="M56 72 C 50 52 70 40 86 48 C 94 34 116 34 124 46 C 132 34 154 32 164 44 C 174 34 194 38 200 52 C 222 48 246 62 252 84 C 266 100 264 122 248 132 C 240 138 232 138 226 134 C 234 148 236 166 224 176 C 214 184 200 182 196 172 C 200 188 194 202 182 204 C 172 206 166 198 168 186 C 154 188 146 186 138 184 C 118 190 96 190 82 178 C 70 174 60 168 56 156 C 38 150 28 134 34 114 C 26 96 36 76 56 72 Z" fill="none" stroke="currentColor" stroke-width="4.5" stroke-linejoin="round"></path>
+  <path d="M58 150 C 92 156 128 150 158 128" stroke="currentColor" stroke-width="3.4" fill="none" stroke-linecap="round" opacity=".55"></path>
+  <g stroke="currentColor" stroke-width="4" stroke-linecap="round"><line x1="140" y1="104" x2="98" y2="72"></line><line x1="140" y1="104" x2="146" y2="56"></line><line x1="140" y1="104" x2="204" y2="78"></line><line x1="140" y1="104" x2="86" y2="146"></line><line x1="140" y1="104" x2="150" y2="164"></line><line x1="140" y1="104" x2="212" y2="120"></line></g>
+  <g fill="currentColor"><circle cx="98" cy="72" r="9"></circle><circle cx="146" cy="56" r="9"></circle><circle cx="204" cy="78" r="9"></circle><circle cx="86" cy="146" r="9"></circle><circle cx="150" cy="164" r="9"></circle><circle cx="212" cy="120" r="9"></circle></g>
+  <circle cx="140" cy="104" r="27" fill="currentColor"></circle>
+  <g transform="translate(125.00 89.00) scale(1.2500)" fill="none" stroke="#f3f2f2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"></path><path d="M6.453 15h11.094"></path><path d="M8.5 2h7"></path></g>
+</svg>
