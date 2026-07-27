@@ -146,8 +146,7 @@ __marimo__/
 # MUST include .pycodekg/snapshots!
 .pycodekg/lancedb/
 .pycodekg/lancedb-*
-.pycodekg/graph.sqlite
-.pycodekg/graph.sqlite*
+.pycodekg/*.sqlite
 .pycodekg/models
 
 # DocKG generated artifacts — same pattern as CodeKG; snapshots will be tracked once added
@@ -229,3 +228,6 @@ docs/graph_reasoner_spec/
 PUBLIC_READINESS_AUDIT.md
 assets/brands.md
 commit.txt
+
+.agents/
+.codex/

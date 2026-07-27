@@ -6,6 +6,7 @@ Adapter wrapping the pycode_kg.PyCodeKG class.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from kg_rag.adapters.base import KGAdapter
@@ -33,11 +34,17 @@ class CodeKGAdapter(KGAdapter):
             ) from e
         entry = self.entry
         sqlite = str(entry.sqlite_path) if entry.sqlite_path else None
-        lancedb = str(entry.lancedb_path) if entry.lancedb_path else None
+        # pycode-kg >=0.20.0 is sqlite-vec only: the store is a vectors.sqlite
+        # file next to the old lancedb dir (registry entries still record the
+        # lancedb path, so derive the sibling until the registry schema catches up).
+        if entry.lancedb_path:
+            vectors = str(Path(entry.lancedb_path).parent / "vectors.sqlite")
+        else:
+            vectors = str(entry.repo_path / ".pycodekg" / "vectors.sqlite")
         self._kg = PyCodeKG(
             repo_root=str(entry.repo_path),
             db_path=sqlite or str(entry.repo_path / ".pycodekg" / "graph.sqlite"),
-            lancedb_dir=lancedb or str(entry.repo_path / ".pycodekg" / "lancedb"),
+            vectors_path=vectors,
         )
         if self._embedder is not None:
             # Inject before KGModule.index is first accessed so the lazy-init

@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-07-26
+
+### Added
+
+- **`AGENTS.md`** — Codex/OpenAI agent instructions mirroring `CLAUDE.md`: KG-first
+  tool priority and pointer to `TODO.md` for open modelling debt.
+- **`TODO.md`** — structured debt tracker; initial entry documents the
+  `KGEntry.lancedb_path` registry schema mismatch introduced by `pycode-kg 0.20.0`
+  (sqlite-vec replaces LanceDB for code KGs), including the stopgap in place, all
+  five downstream callsites that need updating, and a suggested migration shape.
+
+### Changed
+
+- **`pyproject.toml` version** — bumped `0.10.0` → `0.10.1`.
+- **Dependency floors tightened** (`pyproject.toml`, `poetry.lock`):
+  - `kgmodule-utils` `>=0.4.9` → `>=0.8.0` (adds `sqlite-vec` extra and `viz` extra)
+  - `pycode-kg` `>=0.19.3` → `>=0.20.0` (sqlite-vec replaces LanceDB as vector backend)
+  - `doc-kg` `>=0.17.0` → `>=0.18.1`
+- **`all` extra** (`pyproject.toml`) — `llama-cpp-python` removed; requires a compiler
+  toolchain on platforms without a prebuilt wheel, making `--extras all` unexpectedly
+  hard. Install with `--extras pi` explicitly. Explanatory comment added.
+- **`CLAUDE.md`** — added "Open Work" section pointing to `TODO.md`.
+- **`.gitignore`** — consolidated `.pycodekg/*.sqlite` glob (was two separate lines);
+  added `.agents/` and `.codex/` ignore entries.
+
+### Fixed
+
+- **`CodeKGAdapter._load`** (`src/kg_rag/adapters/pycodekg_adaptor.py`) — `pycode-kg
+  0.20.0` replaced `lancedb_dir=` with `vectors_path=` (sqlite-vec file). The adapter
+  now derives `vectors.sqlite` as a sibling of the recorded `lancedb_path`, falling
+  back to `<repo>/.pycodekg/vectors.sqlite`, until the registry schema gains a proper
+  `vectors_path` column. Documented in `TODO.md` as modelling debt.
+
 ## [0.10.0] - 2026-06-09
 
 ### Added

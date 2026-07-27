@@ -26,7 +26,7 @@
 #   poetry install --extras "viz"                core + 2D visualization (streamlit, pyvis, plotly)
 #   poetry install --extras "viz3d"              core + 3D visualization (pyvista, pyvistaqt, PyQt5)
 #   poetry install --extras "pi"                 core + llama-cpp-python (Raspberry Pi / local LLM)
-#   poetry install --extras "all"                everything: all PyPI KG adapters + viz + viz3d + pi
+#   poetry install --extras "all"                everything except "pi" (needs a compiler)
 #   poetry install --extras "all" --with dev     everything + dev tools
 #
 # Git-only adapters (agent-kg, metabo-kg) — install via uv directly:
@@ -67,7 +67,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "kg-rag"
-version = "0.10.0"
+version = "0.10.1"
 description = "Orchestration layer for the KGRAG(tm) components."
 authors = ["Eric G. Suchanek, PhD <suchanek@flux-frontiers.com>"]
 license = "Elastic-2.0"
@@ -116,9 +116,9 @@ llama-cpp-python = { version = ">=0.3.0", optional = true }
 
 
 # our own adaptors (PyPI-only; git-only adapters installed separately via uv)
-kgmodule-utils = ">=0.6.2"
-pycode-kg = {version = ">=0.19.3", optional=true}
-doc-kg = {version = ">=0.16.0", optional=true}
+kgmodule-utils = ">=0.8.0"
+pycode-kg = {version = ">=0.20.0", optional=true}
+doc-kg = {version = ">=0.18.1", optional=true}
 ftree-kg = {version = ">=0.8.0", optional=true}
 diary-kg  = {version = ">=0.93.2", optional = true}
 jupyter-server = ">=2.18.0"
@@ -132,11 +132,13 @@ qt = ["PyQt5"]
 viz3d = ["pyvista", "pyvistaqt", "PyQt5", "param", "markdown", "trame-vtk"]
 kg = ["pycode-kg", "ftree-kg", "doc-kg", "diary-kg"]
 pi = ["llama-cpp-python"]
+# Deliberately excludes "pi": llama-cpp-python has no wheel for every platform
+# and falls back to a source build, so folding it in here would make `--all-extras`
+# require a compiler toolchain.  Install it explicitly with --extras "pi".
 all = [
   "pycode-kg", "ftree-kg", "doc-kg", "diary-kg",
   "streamlit", "pyvis", "plotly",
   "pyvista", "pyvistaqt", "PyQt5", "param", "markdown", "trame-vtk",
-  "llama-cpp-python",
 ]
 
 [tool.poetry.group.qt]

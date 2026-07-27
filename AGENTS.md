@@ -1,4 +1,4 @@
-# KGRAG Project — Claude Code Instructions
+# KGRAG Project — Codex Instructions
 
 ## KG-First Code & Docs Search (MANDATORY)
 
