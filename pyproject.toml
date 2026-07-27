@@ -87,7 +87,12 @@ packages = [
 
 [tool.poetry.dependencies]
 python = ">=3.12,<3.14"
-lancedb = ">=0.29.0"
+# No lancedb here: KGRAG never imports it. Vector stores belong to the KG
+# modules, which declare their own; KGRAG only passes paths through and, in
+# `kgrag audit-lancedb`, looks for leftover directories on disk. Health checks
+# shell out to each module's CLI for the same reason (see cmd_health).
+# doc-kg still hard-requires lancedb, so `kgrag[kg]` installs it transitively —
+# but a core KGRAG install no longer drags in a native store it never calls.
 numpy = ">=1.24.0"
 # personal agent
 
@@ -171,7 +176,7 @@ pip-audit = "^2.10.0"
 # test: an adapter's whole job is constructing a real DocKG/PyCodeKG with the
 # right arguments, and a mocked-out import cannot show that it does. Installed
 # here so the suite exercises the real classes. The marginal cost is small —
-# torch, transformers, sentence-transformers and lancedb are already core deps.
+# sentence-transformers already pulls the torch/transformers stack.
 pycode-kg = ">=0.20.0"
 doc-kg = ">=0.18.2"
 

@@ -1405,6 +1405,7 @@ files = [
     {file = "deprecation-2.1.0-py2.py3-none-any.whl", hash = "sha256:a10811591210e1fb0e768a8c25517cabeabcba6f0bf96564f8ff45189f90b14a"},
     {file = "deprecation-2.1.0.tar.gz", hash = "sha256:72b3bde64e5d778694b0cf68178aed03d15e15477116add3fb773e581f9518ff"},
 ]
+markers = {main = "extra == \"kg\" or extra == \"all\""}
 
 [package.dependencies]
 packaging = "*"
@@ -2763,6 +2764,7 @@ files = [
     {file = "lance_namespace-0.8.2-py3-none-any.whl", hash = "sha256:6531a4d8b95f201835b954a949f890d03cbc3124aca5f1dd21d999157a08935f"},
     {file = "lance_namespace-0.8.2.tar.gz", hash = "sha256:78cd6ad2f2764bccded1d8b64474419cc5571956b68a23ad2770977ddaeb03a1"},
 ]
+markers = {main = "extra == \"kg\" or extra == \"all\""}
 
 [package.dependencies]
 lance-namespace-urllib3-client = "0.8.2"
@@ -2778,6 +2780,7 @@ files = [
     {file = "lance_namespace_urllib3_client-0.8.2-py3-none-any.whl", hash = "sha256:cb8dc098fcd42f848eb5206fb49ebc3b5f162ee32b5c4155a5048ffd30a7cd37"},
     {file = "lance_namespace_urllib3_client-0.8.2.tar.gz", hash = "sha256:82f0a5c9b6b7fde67326d6038b89ed807e8d14692e461246f1a7df5c36b804d6"},
 ]
+markers = {main = "extra == \"kg\" or extra == \"all\""}
 
 [package.dependencies]
 pydantic = ">=2"
@@ -2800,6 +2803,7 @@ files = [
     {file = "lancedb-0.33.0-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:21b712825f0a00225e8974a41352c4ea84b0899ef8c23b17f672fadc38bd8346"},
     {file = "lancedb-0.33.0-cp39-abi3-win_amd64.whl", hash = "sha256:4ba78c6202b0f6c2ce8edc7aa470e550d2da56271c7cbdd10428613f1f7126f9"},
 ]
+markers = {main = "extra == \"kg\" or extra == \"all\""}
 
 [package.dependencies]
 deprecation = ">=2.1.0"
@@ -4922,6 +4926,7 @@ files = [
     {file = "pyarrow-24.0.0-cp314-cp314t-win_amd64.whl", hash = "sha256:c91d00057f23b8d353039520dc3a6c09d8608164c692e9f59a175a42b2ae0c19"},
     {file = "pyarrow-24.0.0.tar.gz", hash = "sha256:85fe721a14dd823aca09127acbb06c3ca723efbd436c004f16bca601b04dcc83"},
 ]
+markers = {main = "extra == \"viz\" or extra == \"all\" or extra == \"kg\""}
 
 [[package]]
 name = "pycode-kg"
@@ -8247,4 +8252,4 @@ viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "0dc934935dbe90415fd5e0f17bcff54a8deb220618127be7436cab3267317054"
+content-hash = "021d4977b279728ee88a88b473b11feea798e9c5c95cc2d6214c1f0594685efe"
