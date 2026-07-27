@@ -85,6 +85,18 @@ packages = [
   { include = "kg_rag", from = "src" },
 ]
 
+# CPU-only torch: this container (and CI) has no GPU, but the default PyPI
+# linux wheel bundles the full CUDA runtime (~2.7G of nvidia-* packages plus
+# ~700M of triton) regardless. This source is "explicit" — it applies only to
+# packages that name it, so nothing else is redirected off PyPI. It only
+# changes how *this* pyproject/poetry.lock resolves torch for local/CI
+# installs; it is not part of published wheel metadata, so `pip install
+# pycode-kg` (or kg-rag) for a GPU user is unaffected.
+[[tool.poetry.source]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "explicit"
+
 [tool.poetry.dependencies]
 python = ">=3.12,<3.14"
 # No lancedb here: KGRAG never imports it. Vector stores belong to the KG
@@ -101,7 +113,7 @@ transformers = ">=4.40.0,<4.57"
 sentence-transformers = "^5.2.0"
 safetensors = ">=0.5.0"
 
-torch = ">=2.5.1"
+torch = {version = ">=2.5.1", source = "pytorch-cpu"}
 streamlit = { version = ">=1.35.0", optional = true }
 pyvis = { version = ">=0.3.2", optional = true }
 pandas = ">=2.0.0"
