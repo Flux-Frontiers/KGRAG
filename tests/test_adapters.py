@@ -3,12 +3,28 @@ test_adapters.py
 
 Unit tests for kg_rag.adapters — make_adapter factory and
 is_available / query / pack / stats on each adapter type.
-External KG libraries (code_kg, doc_kg, metakg) are mocked so these
-tests run without any heavyweight dependencies installed.
+
+Query, pack and stats are driven against a mocked ``_kg``: those tests are
+about how the adapter reshapes results into CrossHit/CrossSnippet, and a real
+KG would mean building a real graph to get results worth reshaping.
+
+The ``_load`` tests are the exception and use the **real** doc-kg and pycode-kg
+classes. A MagicMock accepts any call, so it validates the adapter's kwargs only
+against the test's own expectations, never against the actual constructor
+signature. Confirmed by mutation: adding a stale ``lancedb_uri=`` argument to
+DocKGAdapter._load leaves the mocked version green while the real class raises
+``TypeError: unexpected keyword argument``. Since upstream signature drift is
+precisely what breaks these adapters in production, the real class is the only
+thing worth asserting against.
+
+Both packages are optional at runtime (the ``kg`` extra) but are dev
+dependencies so the suite always has them. Constructing either is cheap — no
+model load, no graph build.
 """
 
 from __future__ import annotations
 
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -98,6 +114,51 @@ class TestCodeKGAdapterIsAvailable:
         with patch.dict("sys.modules", {"pycode_kg": mock_pycode_kg}):
             adapter = CodeKGAdapter(entry)
             assert adapter.is_available() is True
+
+
+class TestCodeKGAdapterLoad:
+    """_load must hand PyCodeKG the recorded sqlite-vec store, not a guess.
+
+    These build a **real** PyCodeKG rather than patching the constructor.
+    Construction is cheap — no model load, no graph build — and the adapter's
+    entire job is producing a correctly configured KG object, which is a claim
+    only the real class can settle. Asserting on a mock's call kwargs proves
+    just that we passed some strings to something.
+    """
+
+    def _loaded_kg(self, entry):
+        """Run CodeKGAdapter._load and return the PyCodeKG it built.
+
+        :param entry: Registry entry to load from.
+        :return: The constructed PyCodeKG instance.
+        """
+        adapter = CodeKGAdapter(entry)
+        adapter._load()
+        return adapter._kg
+
+    def test_uses_registered_vectors_path(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.CODE, with_sqlite=True)
+        entry.vectors_path = tmp_path / "elsewhere" / "custom-vectors.sqlite"
+
+        kg = self._loaded_kg(entry)
+        assert Path(kg.vectors_path) == tmp_path / "elsewhere" / "custom-vectors.sqlite"
+
+    def test_falls_back_to_default_layout(self, tmp_path):
+        """With no vectors_path recorded, fall back to the default .pycodekg layout."""
+        entry = _entry(tmp_path, KGKind.CODE, with_sqlite=True)
+        assert entry.vectors_path is None
+
+        kg = self._loaded_kg(entry)
+        assert Path(kg.vectors_path) == entry.repo_path / ".pycodekg" / "vectors.sqlite"
+
+    def test_lancedb_path_does_not_influence_vectors(self, tmp_path):
+        """A legacy lancedb_path must no longer be used to derive the store."""
+        entry = _entry(tmp_path, KGKind.CODE, with_sqlite=True)
+        entry.lancedb_path = tmp_path / "stale" / "lancedb"
+
+        kg = self._loaded_kg(entry)
+        assert "stale" not in str(kg.vectors_path)
+        assert Path(kg.vectors_path) == entry.repo_path / ".pycodekg" / "vectors.sqlite"
 
 
 class TestCodeKGAdapterQuery:
@@ -250,6 +311,44 @@ class TestCodeKGAdapterStats:
 # ---------------------------------------------------------------------------
 # DocKGAdapter
 # ---------------------------------------------------------------------------
+
+
+class TestDocKGAdapterLoad:
+    """The registry's vectors_path must reach DocKG (doc-kg >=0.18.2).
+
+    As with the code adapter, these build a real DocKG rather than patching
+    its constructor — see :class:`TestCodeKGAdapterLoad`.
+    """
+
+    def _loaded_kg(self, adapter):
+        """Run an adapter's _load and return the DocKG it built.
+
+        :param adapter: A DocKG-backed adapter.
+        :return: The constructed DocKG instance.
+        """
+        adapter._load()
+        return adapter._kg
+
+    def test_forwards_registered_vectors_path(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.DOC, with_sqlite=True)
+        entry.vectors_path = tmp_path / "offsite" / "vectors.sqlite"
+
+        kg = self._loaded_kg(DocKGAdapter(entry))
+        assert Path(kg.vectors_path) == tmp_path / "offsite" / "vectors.sqlite"
+
+    def test_passes_none_when_unset(self, tmp_path):
+        """None keeps doc-kg's derived-sidecar behaviour for default layouts."""
+        entry = _entry(tmp_path, KGKind.DOC, with_sqlite=True)
+        assert entry.vectors_path is None
+
+        assert self._loaded_kg(DocKGAdapter(entry)).vectors_path is None
+
+    def test_gutenberg_adapter_forwards_vectors_path(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.GUTENBERG, with_sqlite=True)
+        entry.vectors_path = tmp_path / "books" / "vectors.sqlite"
+
+        kg = self._loaded_kg(GutenbergKGAdapter(entry))
+        assert Path(kg.vectors_path) == tmp_path / "books" / "vectors.sqlite"
 
 
 class TestDocKGAdapterIsAvailable:

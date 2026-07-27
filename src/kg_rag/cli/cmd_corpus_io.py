@@ -3,17 +3,22 @@ cmd_corpus_io.py
 
 Corpus export / import — make a registered KG portable as a single archive.
 
-A KGRAG corpus is the pair (SQLite graph, LanceDB index). These commands
+A KGRAG corpus is the pair (SQLite graph, vector index). These commands
 bundle that pair plus a manifest into a ``.kgrag.tar.gz`` archive that can
 be copied to another machine, mirrored, or shipped to long-term storage,
 and re-registered with a single command.
+
+The vector index is a single ``vectors.sqlite`` file for sqlite-vec builders,
+or a ``lancedb/`` directory for the kinds that still ship LanceDB.  Both are
+carried so archives round-trip either backend.
 
 Archive layout::
 
     <archive>.kgrag.tar.gz
         manifest.json          # KG metadata (name, kind, versions, tags)
         graph.sqlite           # structural KG (if present)
-        lancedb/               # semantic vector index (if present)
+        vectors.sqlite         # sqlite-vec vector store (if present)
+        lancedb/               # LanceDB vector index (if present)
 """
 
 from __future__ import annotations
@@ -56,6 +61,7 @@ def _build_manifest(entry: KGEntry) -> dict:
         "tags": list(entry.tags),
         "metadata": dict(entry.metadata),
         "has_sqlite": entry.sqlite_path is not None and entry.sqlite_path.exists(),
+        "has_vectors": entry.vectors_path is not None and entry.vectors_path.exists(),
         "has_lancedb": entry.lancedb_path is not None and entry.lancedb_path.exists(),
     }
 
@@ -97,7 +103,8 @@ def export_corpus(name_or_id: str, output_path: str | None, force: bool, registr
 
     if not entry.is_built:
         console.print(
-            f"[red]Cannot export[/red] [bold]{entry.name}[/bold]: no SQLite or LanceDB on disk."
+            f"[red]Cannot export[/red] [bold]{entry.name}[/bold]: "
+            "no SQLite or vector index on disk."
         )
         raise SystemExit(1)
 
@@ -129,6 +136,11 @@ def export_corpus(name_or_id: str, output_path: str | None, force: bool, registr
         if manifest["has_sqlite"] and sqlite_path is not None:
             console.print(f"  + graph.sqlite   ({sqlite_path})")
             tar.add(sqlite_path, arcname="graph.sqlite")
+
+        vectors_path = entry.vectors_path
+        if manifest["has_vectors"] and vectors_path is not None:
+            console.print(f"  + vectors.sqlite ({vectors_path})")
+            tar.add(vectors_path, arcname="vectors.sqlite")
 
         lancedb_path = entry.lancedb_path
         if manifest["has_lancedb"] and lancedb_path is not None:
@@ -239,11 +251,15 @@ def import_corpus(
 
     # Resolve unpacked artifact paths
     sqlite_path = (dest / "graph.sqlite") if manifest.get("has_sqlite") else None
+    vectors_path = (dest / "vectors.sqlite") if manifest.get("has_vectors") else None
     lancedb_path = (dest / "lancedb") if manifest.get("has_lancedb") else None
 
     if sqlite_path and not sqlite_path.exists():
         console.print("[yellow]Warning[/yellow]: manifest claimed SQLite but file is missing.")
         sqlite_path = None
+    if vectors_path and not vectors_path.exists():
+        console.print("[yellow]Warning[/yellow]: manifest claimed vectors but file is missing.")
+        vectors_path = None
     if lancedb_path and not lancedb_path.exists():
         console.print("[yellow]Warning[/yellow]: manifest claimed LanceDB but dir is missing.")
         lancedb_path = None
@@ -251,6 +267,8 @@ def import_corpus(
     console.print(f"  ✓ unpacked to {dest}")
     if sqlite_path:
         console.print(f"  ✓ graph.sqlite   ({sqlite_path.stat().st_size / 1024 / 1024:.1f} MB)")
+    if vectors_path:
+        console.print(f"  ✓ vectors.sqlite ({vectors_path.stat().st_size / 1024 / 1024:.1f} MB)")
     if lancedb_path:
         console.print("  ✓ lancedb/")
 
@@ -266,6 +284,7 @@ def import_corpus(
         venv_path=dest / ".venv",  # may not exist; that's fine
         sqlite_path=sqlite_path,
         lancedb_path=lancedb_path,
+        vectors_path=vectors_path,
         version=manifest.get("version", "unknown"),
         builder_version=manifest.get("builder_version", "unknown"),
         tags=list(manifest.get("tags", [])) + ["imported"],

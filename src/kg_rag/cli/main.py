@@ -12,6 +12,7 @@ Usage::
 from __future__ import annotations
 
 import kg_rag.cli.cmd_analyze  # noqa: F401 — registers commands
+import kg_rag.cli.cmd_audit  # noqa: F401 — audit-lancedb
 import kg_rag.cli.cmd_corpus  # noqa: F401
 import kg_rag.cli.cmd_corpus_io  # noqa: F401 — export / import
 import kg_rag.cli.cmd_health  # noqa: F401

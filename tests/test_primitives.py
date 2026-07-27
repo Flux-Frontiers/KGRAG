@@ -106,6 +106,21 @@ class TestKGEntry:
         )
         assert isinstance(entry.lancedb_path, Path)
 
+    def test_vectors_path_normalization(self, tmp_path):
+        entry = KGEntry(
+            name="n",
+            kind=KGKind.CODE,
+            repo_path=tmp_path,
+            venv_path=tmp_path,
+            vectors_path=str(tmp_path / "vectors.sqlite"),
+        )
+        assert isinstance(entry.vectors_path, Path)
+        assert entry.vectors_path.is_absolute()
+
+    def test_vectors_path_defaults_to_none(self, tmp_path):
+        entry = KGEntry(name="n", kind=KGKind.CODE, repo_path=tmp_path, venv_path=tmp_path)
+        assert entry.vectors_path is None
+
     def test_kind_coercion_from_string(self, tmp_path):
         entry = KGEntry(name="n", kind="doc", repo_path=tmp_path, venv_path=tmp_path)
         assert entry.kind == KGKind.DOC
@@ -147,6 +162,29 @@ class TestKGEntry:
             lancedb_path=ldb,
         )
         assert entry.is_built is True
+
+    def test_is_built_true_vectors_exists(self, tmp_path):
+        """A sqlite-vec store alone is evidence of a built KG."""
+        vec = tmp_path / "vectors.sqlite"
+        vec.touch()
+        entry = KGEntry(
+            name="n",
+            kind=KGKind.CODE,
+            repo_path=tmp_path,
+            venv_path=tmp_path,
+            vectors_path=vec,
+        )
+        assert entry.is_built is True
+
+    def test_is_built_false_vectors_missing(self, tmp_path):
+        entry = KGEntry(
+            name="n",
+            kind=KGKind.CODE,
+            repo_path=tmp_path,
+            venv_path=tmp_path,
+            vectors_path=tmp_path / "nonexistent-vectors.sqlite",
+        )
+        assert entry.is_built is False
 
     def test_label(self, tmp_path):
         entry = KGEntry(name="mykg", kind=KGKind.META, repo_path=tmp_path, venv_path=tmp_path)

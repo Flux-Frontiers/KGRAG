@@ -1,75 +1,66 @@
 # KGRAG TODO
 
-## Registry schema: `KGEntry.lancedb_path` models a retired store
+## Registry schema: `KGEntry.lancedb_path` models a retired store — RESOLVED
 
-**Filed 2026-07-26 from `pycode_kg` (driver repo for the sqlite-vec migration).**
-Not blocking — kgrag works today. This is a naming/modelling debt to pay in a
-future kgrag release.
+**Filed 2026-07-26 from `pycode_kg`. Resolved 2026-07-26 (see CHANGELOG
+`[Unreleased]`).**
 
-### What happened
+`KGEntry` now carries a first-class `vectors_path` (plus a `vectors_path TEXT`
+column and an in-place `_migrate()` step). All five suggested steps landed:
 
-pycode-kg 0.20.0 retired LanceDB entirely; sqlite-vec is the only vector
-backend. `PyCodeKG.__init__` now takes `vectors_path` (a `.pycodekg/vectors.sqlite`
-file), not `lancedb_dir` (a directory). Passing `lancedb_dir=` raises TypeError,
-which is what broke `CodeKGAdapter` against 0.20.0.
+1. `vectors_path` added to `KGEntry` and the registry schema, migrated in place.
+2. `lancedb_path` stays readable for kinds that still ship LanceDB, but is no
+   longer written for code KGs; `--lancedb` deprecated in favour of `--vectors`.
+3. Auto-detection probes `<db_dir>/vectors.sqlite`, falling back to
+   `<db_dir>/lancedb` only for kinds that still use it.
+4. The sibling-derivation guess is gone from `CodeKGAdapter._load` — it reads
+   `entry.vectors_path` directly (defaulting to the standard `.pycodekg/` layout
+   when the registry has no recorded path, so pre-existing entries keep working).
+5. `kgrag export`/`import` bundle the file-shaped vector store; code-KG corpus
+   bundles no longer ship without their vectors.
 
-### The stopgap now in the tree
+## LanceDB retirement — fleet is still ~96% un-migrated
 
-[pycodekg_adaptor.py:37-43](src/kg_rag/adapters/pycodekg_adaptor.py#L37-L43) derives
-the sqlite-vec store as a *sibling* of the recorded lancedb path:
+`kgrag audit-lancedb` (added alongside the above) measured the real registry on
+2026-07-26: **242 of 253 KGs still have LanceDB as their live vector index**,
+holding **~2.0 GB** on disk. It is not gone — the schema work above only stopped
+kgrag *recording* it for new code KGs.
 
-```python
-if entry.lancedb_path:
-    vectors = str(Path(entry.lancedb_path).parent / "vectors.sqlite")
-else:
-    vectors = str(entry.repo_path / ".pycodekg" / "vectors.sqlite")
+| Status | KGs | Note |
+|---|---|---|
+| `unmigrated` | 242 | 237 gutenberg, 3 doc, 2 code |
+| `stale-row` | 9 | registry references a dir already deleted |
+| `residue` | 1 | migrated but `lancedb/` still on disk |
+| `no-index` | 1 | nothing built |
+
+Migration path, verified end to end on a scratch copy of the Moby Dick corpus
+(10,910 vectors converted, validated, still queryable through `DocKGAdapter`):
+
+```
+kgrag audit-lancedb --commands   # review, then pipe to a shell
 ```
 
-That is a path-shape guess, not a recorded fact. It holds only while every code
-KG uses the default `.pycodekg/` layout.
+- doc/gutenberg/ia KGs convert in place via `dockg convert-index` — reads vectors
+  straight out of LanceDB, so there is **no re-embedding**.
+- code KGs have no converter; they need a `pycodekg build`.
 
-### Why it should be fixed properly
+### Known gap — CLOSED 2026-07-26
 
-- `KGEntry.lancedb_path` ([primitives.py:77](src/kg_rag/primitives.py#L77)) and the
-  `lancedb_path TEXT` column ([registry.py:54](src/kg_rag/registry.py#L54)) name a
-  store that no longer exists for code KGs. Anyone reading the registry is
-  misled about what is on disk.
-- Auto-detection in [cmd_registry.py:112-114](src/kg_rag/cli/cmd_registry.py#L112-L114)
-  and [cmd_init.py:160](src/kg_rag/cli/cmd_init.py#L160) probes for a `lancedb`
-  *directory*. On a freshly built pycode-kg ≥0.20 repo that directory is gone, so
-  `lancedb_path` registers as `None` and the adapter lands on the `repo_path`
-  fallback branch. Correct by luck for the default layout; wrong for any repo
-  whose vectors live elsewhere (`--vectors` accepts an arbitrary path).
-- `KGEntry.is_built` ([primitives.py:101](src/kg_rag/primitives.py#L101)) counts a
-  LanceDB dir as evidence of a built KG. For code KGs that check is now dead;
-  only the `sqlite_path` branch fires.
-- Vector-store presence is invisible in the UI/API surface: `kgrag registry show`,
-  the Streamlit app, and the MCP `list_kgs`/`get_kg` payloads all label the field
-  "LanceDB".
-- `kgrag corpus export/import` ([cmd_corpus_io.py:133-136](src/kg_rag/cli/cmd_corpus_io.py#L133-L136))
-  tars a `lancedb/` *directory*. A sqlite-vec store is a single file — code-KG
-  corpus bundles silently ship without their vectors today.
+`DocKGAdapter`/`GutenbergKGAdapter` could not pass a non-default vector-store
+location, so `KGEntry.vectors_path` was informational only for doc-family KGs.
+Fixed upstream in **doc-kg 0.18.2** (`DocKG(vectors_path=...)`, plus a
+`--vectors-path` option on the 8 vector-touching CLI commands) and wired through
+here; the kgrag floor is now `doc-kg>=0.18.2`. `vectors_path` is authoritative
+for every KG kind.
 
-### Suggested shape (not prescriptive)
+### Remaining coordination
 
-1. Add `vectors_path: Path | None` to `KGEntry` plus a `vectors_path TEXT`
-   column. There is already a migration precedent to copy —
-   [registry.py:75-82](src/kg_rag/registry.py#L75-L82) does
-   `ALTER TABLE kg_entries ADD COLUMN builder_version …` in `_migrate()`.
-2. Keep `lancedb_path` readable for one release (doc_kg still ships LanceDB by
-   design as a fallback for un-migrated corpora, so the field is not dead
-   fleet-wide) but stop writing it for code KGs, and deprecate the
-   `--lancedb` option in favour of `--vectors`.
-3. Teach auto-detection to probe for `<db_dir>/vectors.sqlite` first, falling
-   back to `<db_dir>/lancedb` for kinds that still use it.
-4. Then delete the sibling-derivation branch in `CodeKGAdapter._load` and read
-   `entry.vectors_path` directly.
-5. Fix the corpus export/import path so a file-shaped vector store is bundled.
-
-### Coordination
-
-- `kgrag_priv` carries the identical adapter stopgap; land both together.
-- Adapter fix + floors (`pycode-kg>=0.20.0`, `doc-kg>=0.18.1`) are already in the
-  working tree here and in `kgrag_priv`; 430 / 363 tests pass respectively.
-- Related fleet follow-up: KG_utils 0.7.0 plans to split `lancedb` out of the
-  `[semantic]` extra so the package stops installing transitively.
+- **`kgrag_priv` still carries the 0.10.1 adapter stopgap** — port this change
+  there so both repos read `vectors_path` rather than deriving it.
+- **Backfilling the existing fleet**: entries registered before this release have
+  `vectors_path = NULL` and fall back to the default layout, so nothing breaks.
+  Re-run `kgrag register <name> code <repo>` (or `kgrag scan --auto-register`) to
+  record the real path — required for any repo whose vectors live outside
+  `.pycodekg/`.
+- **KG_utils 0.7.0** plans to split `lancedb` out of the `[semantic]` extra so the
+  package stops installing transitively.

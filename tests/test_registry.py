@@ -134,6 +134,152 @@ class TestKGRegistryRegister:
         assert fetched.metadata == {"key": "val"}
         assert fetched.version == "1.2.3"
 
+    def test_vectors_path_round_trips(self, tmp_path, tmp_registry):
+        """A sqlite-vec store path must survive a register/get round trip."""
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        vectors = tmp_path / ".pycodekg" / "vectors.sqlite"
+        vectors.parent.mkdir()
+        vectors.touch()
+
+        tmp_registry.register(
+            KGEntry(
+                name="vec-entry",
+                kind=KGKind.CODE,
+                repo_path=repo,
+                venv_path=repo / ".venv",
+                vectors_path=vectors,
+            )
+        )
+        fetched = tmp_registry.get("vec-entry")
+        assert fetched.vectors_path == vectors.resolve()
+        assert fetched.lancedb_path is None
+        assert fetched.is_built is True
+
+    def test_vectors_path_survives_name_collision_replace(self, tmp_path, tmp_registry):
+        """register() rebuilds the entry on a name collision — vectors_path must
+        not be dropped by that rebuild."""
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        vectors = tmp_path / "vectors.sqlite"
+        vectors.touch()
+
+        tmp_registry.register(
+            KGEntry(name="dup", kind=KGKind.CODE, repo_path=repo, venv_path=repo / ".venv")
+        )
+        tmp_registry.register(
+            KGEntry(
+                name="dup",
+                kind=KGKind.CODE,
+                repo_path=repo,
+                venv_path=repo / ".venv",
+                vectors_path=vectors,
+            )
+        )
+        assert tmp_registry.get("dup").vectors_path == vectors.resolve()
+
+    def test_update_vectors_path(self, tmp_path, tmp_registry):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        vectors = tmp_path / "vectors.sqlite"
+        vectors.touch()
+        tmp_registry.register(
+            KGEntry(name="upd", kind=KGKind.CODE, repo_path=repo, venv_path=repo / ".venv")
+        )
+        tmp_registry.update("upd", vectors_path=vectors)
+        assert tmp_registry.get("upd").vectors_path == vectors.resolve()
+
+
+# ---------------------------------------------------------------------------
+# schema migration
+# ---------------------------------------------------------------------------
+
+
+class TestVectorsPathMigration:
+    """A registry created before the vectors_path column must migrate in place."""
+
+    _LEGACY_SCHEMA = """
+    CREATE TABLE kg_entries (
+        id          TEXT PRIMARY KEY,
+        name        TEXT NOT NULL UNIQUE,
+        kind        TEXT NOT NULL,
+        repo_path   TEXT NOT NULL,
+        venv_path   TEXT NOT NULL,
+        sqlite_path TEXT,
+        lancedb_path TEXT,
+        version     TEXT NOT NULL DEFAULT 'unknown',
+        builder_version TEXT NOT NULL DEFAULT 'unknown',
+        tags        TEXT NOT NULL DEFAULT '[]',
+        metadata    TEXT NOT NULL DEFAULT '{}',
+        created_at  TEXT NOT NULL,
+        updated_at  TEXT NOT NULL
+    );
+    """
+
+    def _legacy_db(self, tmp_path: Path) -> Path:
+        """Write a pre-migration registry holding one row."""
+        import sqlite3
+        from datetime import UTC, datetime
+
+        db = tmp_path / "legacy.sqlite"
+        conn = sqlite3.connect(str(db))
+        conn.executescript(self._LEGACY_SCHEMA)
+        now = datetime.now(UTC).isoformat()
+        conn.execute(
+            "INSERT INTO kg_entries (id, name, kind, repo_path, venv_path, sqlite_path,"
+            " lancedb_path, version, builder_version, tags, metadata, created_at, updated_at)"
+            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                "legacy-id",
+                "legacy-kg",
+                "code",
+                str(tmp_path),
+                str(tmp_path / ".venv"),
+                str(tmp_path / "graph.sqlite"),
+                str(tmp_path / "lancedb"),
+                "1.0",
+                "0.19.0",
+                "[]",
+                "{}",
+                now,
+                now,
+            ),
+        )
+        conn.commit()
+        conn.close()
+        return db
+
+    def test_column_added_to_legacy_db(self, tmp_path):
+        db = self._legacy_db(tmp_path)
+        with KGRegistry(db_path=db) as reg:
+            cols = {
+                r["name"] for r in reg._conn.execute("PRAGMA table_info(kg_entries)").fetchall()
+            }
+            assert "vectors_path" in cols
+
+    def test_legacy_row_readable_with_null_vectors(self, tmp_path):
+        db = self._legacy_db(tmp_path)
+        with KGRegistry(db_path=db) as reg:
+            entry = reg.get("legacy-kg")
+            assert entry is not None
+            assert entry.vectors_path is None
+            assert entry.lancedb_path is not None
+
+    def test_legacy_row_can_be_updated_with_vectors(self, tmp_path):
+        db = self._legacy_db(tmp_path)
+        vectors = tmp_path / "vectors.sqlite"
+        vectors.touch()
+        with KGRegistry(db_path=db) as reg:
+            reg.update("legacy-kg", vectors_path=vectors)
+            assert reg.get("legacy-kg").vectors_path == vectors.resolve()
+
+    def test_migration_is_idempotent(self, tmp_path):
+        db = self._legacy_db(tmp_path)
+        with KGRegistry(db_path=db):
+            pass
+        with KGRegistry(db_path=db) as reg:  # second open must not re-ALTER
+            assert reg.get("legacy-kg") is not None
+
 
 # ---------------------------------------------------------------------------
 # unregister

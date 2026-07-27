@@ -50,10 +50,13 @@ class GutenbergKGAdapter(KGAdapter):
         entry = self.entry
         sqlite = str(entry.sqlite_path) if entry.sqlite_path else None
         lancedb = str(entry.lancedb_path) if entry.lancedb_path else None
+        # None lets doc-kg derive the sidecar next to the graph. Needs doc-kg >=0.18.2.
+        vectors = str(entry.vectors_path) if entry.vectors_path else None
         self._kg = DocKG(
             corpus_root=str(entry.repo_path),
             db_path=sqlite or str(entry.repo_path / ".gutenbergkg" / "graph.sqlite"),
             lancedb_dir=lancedb or str(entry.repo_path / ".gutenbergkg" / "lancedb"),
+            vectors_path=vectors,
             embedder=self._embedder,
         )
 

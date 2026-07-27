@@ -53,7 +53,8 @@ def _find_kg_dirs(root: Path) -> list[dict]:
     descend into ``.git``, ``.venv``, or a neighbour repo's own KG dirs.
 
     :param root: Directory to walk.
-    :return: List of dicts with keys ``kind``, ``repo``, ``sqlite``, ``lancedb``.
+    :return: List of dicts with keys ``kind``, ``repo``, ``sqlite``, ``vectors``,
+        ``lancedb``.
     """
     found: list[dict] = []
     for dirpath, dirnames, _ in os.walk(root):
@@ -62,12 +63,14 @@ def _find_kg_dirs(root: Path) -> list[dict]:
             kg_dir = current / marker
             if kg_dir.is_dir():
                 sqlite = kg_dir / "graph.sqlite"
+                vectors = kg_dir / "vectors.sqlite"
                 lancedb_dir = kg_dir / "lancedb"
                 found.append(
                     {
                         "kind": kind,
                         "repo": current,
                         "sqlite": sqlite if sqlite.exists() else None,
+                        "vectors": vectors if vectors.exists() else None,
                         "lancedb": lancedb_dir if lancedb_dir.exists() else None,
                     }
                 )
@@ -82,11 +85,33 @@ def _find_kg_dirs(root: Path) -> list[dict]:
 @click.argument("repo_path", type=click.Path(exists=True, file_okay=False, resolve_path=True))
 @click.option("--venv", "venv_path", default=None, help="Path to .venv (default: REPO/.venv)")
 @click.option("--sqlite", "sqlite_path", default=None, help="Path to SQLite DB file.")
-@click.option("--lancedb", "lancedb_path", default=None, help="Path to LanceDB directory.")
+@click.option(
+    "--vectors",
+    "vectors_path",
+    default=None,
+    help="Path to the sqlite-vec vector store file (e.g. .pycodekg/vectors.sqlite).",
+)
+@click.option(
+    "--lancedb",
+    "lancedb_path",
+    default=None,
+    help="Path to LanceDB directory (deprecated — use --vectors).",
+)
 @click.option("--version", "version", default="unknown", help="Version string.")
 @click.option("--tag", "tags", multiple=True, help="Tags (repeatable: --tag foo --tag bar).")
 @registry_option
-def register(name, kind, repo_path, venv_path, sqlite_path, lancedb_path, version, tags, registry):
+def register(
+    name,
+    kind,
+    repo_path,
+    venv_path,
+    sqlite_path,
+    vectors_path,
+    lancedb_path,
+    version,
+    tags,
+    registry,
+):
     """Register a KG instance in the KGRAG registry.
 
     \b
@@ -109,9 +134,20 @@ def register(name, kind, repo_path, venv_path, sqlite_path, lancedb_path, versio
         candidate = repo / db_dir / "graph.sqlite"
         sqlite_path = str(candidate) if candidate.exists() else None
 
-    if lancedb_path is None:
+    if vectors_path is None:
+        candidate = repo / db_dir / "vectors.sqlite"
+        vectors_path = str(candidate) if candidate.exists() else None
+
+    # Only kinds still shipping a LanceDB index auto-detect one; code KGs are
+    # sqlite-vec only from pycode-kg 0.20.0 onward.
+    if lancedb_path is None and kind != "code":
         candidate = repo / db_dir / "lancedb"
         lancedb_path = str(candidate) if candidate.exists() else None
+    elif lancedb_path is not None:
+        console.print(
+            "[yellow]--lancedb is deprecated[/yellow]; "
+            "prefer [bold]--vectors[/bold] for sqlite-vec stores."
+        )
 
     # Auto-read version from pyproject.toml when not explicitly supplied
     if version == "unknown":
@@ -127,6 +163,7 @@ def register(name, kind, repo_path, venv_path, sqlite_path, lancedb_path, versio
         venv_path=venv,
         sqlite_path=Path(sqlite_path) if sqlite_path else None,
         lancedb_path=Path(lancedb_path) if lancedb_path else None,
+        vectors_path=Path(vectors_path) if vectors_path else None,
         version=version,
         builder_version=read_builder_version(sqlite_path),
         tags=resolved_tags,
@@ -138,6 +175,8 @@ def register(name, kind, repo_path, venv_path, sqlite_path, lancedb_path, versio
     console.print(f"[green]Registered[/green] [bold]{name}[/bold] ({kind}) -> {repo}")
     if entry.sqlite_path:
         console.print(f"  SQLite  : {entry.sqlite_path}")
+    if entry.vectors_path:
+        console.print(f"  Vectors : {entry.vectors_path}")
     if entry.lancedb_path:
         console.print(f"  LanceDB : {entry.lancedb_path}")
     console.print(f"  venv    : {entry.venv_path}")
@@ -232,6 +271,7 @@ def info(name_or_id, registry):
         f"[bold]Repo[/bold]     : {entry.repo_path}",
         f"[bold]Venv[/bold]     : {entry.venv_path}",
         f"[bold]SQLite[/bold]   : {entry.sqlite_path or '(not set)'}",
+        f"[bold]Vectors[/bold]  : {entry.vectors_path or '(not set)'}",
         f"[bold]LanceDB[/bold]  : {entry.lancedb_path or '(not set)'}",
         f"[bold]Tags[/bold]     : {', '.join(entry.tags) or '(none)'}",
         f"[bold]Created[/bold]  : {entry.created_at.strftime('%Y-%m-%d %H:%M UTC')}",
@@ -501,6 +541,7 @@ def scan(root_path, auto_register, registry):
     table.add_column("Kind", style="magenta")
     table.add_column("Repo")
     table.add_column("SQLite", justify="center")
+    table.add_column("Vectors", justify="center")
     table.add_column("LanceDB", justify="center")
 
     for i, f in enumerate(found, 1):
@@ -509,6 +550,7 @@ def scan(root_path, auto_register, registry):
             f["kind"],
             str(f["repo"]),
             "[green]yes[/green]" if f["sqlite"] else "-",
+            "[green]yes[/green]" if f["vectors"] else "-",
             "[green]yes[/green]" if f["lancedb"] else "-",
         )
     console.print(table)
@@ -524,7 +566,8 @@ def scan(root_path, auto_register, registry):
                     repo_path=repo_dir,
                     venv_path=repo_dir / ".venv",
                     sqlite_path=f["sqlite"],
-                    lancedb_path=f["lancedb"],
+                    lancedb_path=None if f["kind"] == "code" else f["lancedb"],
+                    vectors_path=f["vectors"],
                     version=read_pyproject_version(repo_dir),
                     builder_version=read_builder_version(f["sqlite"]),
                     tags=[date.today().isoformat()],
