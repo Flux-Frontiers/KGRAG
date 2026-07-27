@@ -287,6 +287,37 @@ class TestCodeKGAdapterStats:
 # ---------------------------------------------------------------------------
 
 
+class TestDocKGAdapterLoad:
+    """The registry's vectors_path must reach DocKG (doc-kg >=0.18.2)."""
+
+    def _load_kwargs(self, adapter) -> dict:
+        mock_cls = MagicMock()
+        with patch("doc_kg.kg.DocKG", mock_cls):
+            adapter._load()
+        return mock_cls.call_args.kwargs
+
+    def test_forwards_registered_vectors_path(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.DOC, with_sqlite=True)
+        entry.vectors_path = tmp_path / "offsite" / "vectors.sqlite"
+
+        kwargs = self._load_kwargs(DocKGAdapter(entry))
+        assert kwargs["vectors_path"] == str(tmp_path / "offsite" / "vectors.sqlite")
+
+    def test_passes_none_when_unset(self, tmp_path):
+        """None keeps doc-kg's derived-sidecar behaviour for default layouts."""
+        entry = _entry(tmp_path, KGKind.DOC, with_sqlite=True)
+        assert entry.vectors_path is None
+
+        assert self._load_kwargs(DocKGAdapter(entry))["vectors_path"] is None
+
+    def test_gutenberg_adapter_forwards_vectors_path(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.GUTENBERG, with_sqlite=True)
+        entry.vectors_path = tmp_path / "books" / "vectors.sqlite"
+
+        kwargs = self._load_kwargs(GutenbergKGAdapter(entry))
+        assert kwargs["vectors_path"] == str(tmp_path / "books" / "vectors.sqlite")
+
+
 class TestDocKGAdapterIsAvailable:
     def test_unavailable_when_import_fails(self, tmp_path):
         entry = _entry(tmp_path, KGKind.DOC)

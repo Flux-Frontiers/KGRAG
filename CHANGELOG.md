@@ -7,7 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-07-26
+
 ### Added
+
+- **`kgrag audit-lancedb`** (`src/kg_rag/cli/cmd_audit.py`) — LanceDB retirement
+  audit. Classifies every KG as `unmigrated` (LanceDB is still the live index),
+  `residue` (migrated, but the `lancedb/` dir still costs disk), `stale-row`
+  (registry references a LanceDB dir that is already gone), `clean`, or
+  `no-index`, and emits the exact remediation command for each. Scope with a KG
+  name, `--corpus NAME`, or default to the whole registry; `--commands` emits
+  pipeable fix commands, `--json` is machine-readable, `--no-sizes` skips disk
+  measurement. Reports only — it never deletes or rebuilds. It also finds
+  `lancedb/` directories left on disk with no registry reference at all.
 
 - **`KGEntry.vectors_path`** (`src/kg_rag/primitives.py`) — first-class field recording
   the sqlite-vec vector store *file* (e.g. `.pycodekg/vectors.sqlite`), superseding
@@ -23,6 +35,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Dependency floor raised**: `doc-kg` `>=0.18.1` → `>=0.18.2`, which adds
+  `DocKG(vectors_path=...)` and the matching `--vectors-path` CLI option.
+  Required by the adapter fix below.
+
 - **`KGEntry.is_built`** — an existing `vectors_path` now counts as evidence of a
   built KG. Previously only `sqlite_path`/`lancedb_path` did, so a sqlite-vec-only
   corpus read as unbuilt.
@@ -36,6 +52,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `vectors_path` instead of labelling everything "LanceDB".
 
 ### Fixed
+
+- **`DocKGAdapter` / `GutenbergKGAdapter` now honour `KGEntry.vectors_path`**
+  (`src/kg_rag/adapters/dockg_adapter.py`, `gutenberg_adapter.py`) — doc-family
+  KGs previously ignored the registered vector store entirely, because doc-kg
+  had no way to accept one and derived `vectors.sqlite` from the graph's
+  directory. A corpus whose vectors lived anywhere else was unreachable: the
+  adapter opened the (absent or empty) sidecar and failed with
+  `no such table: vec_nodes`. Fixed upstream in doc-kg 0.18.2
+  (`DocKG(vectors_path=...)`) and wired through here. Passing `None` keeps the
+  derived-sidecar behaviour, so default layouts are unaffected. This closes the
+  gap noted in `TODO.md` — `vectors_path` is now authoritative for every KG
+  kind, not just code.
 
 - **`kgrag export` silently shipped code-KG bundles without their vectors**
   (`src/kg_rag/cli/cmd_corpus_io.py`) — export tarred a `lancedb/` *directory*, so a
