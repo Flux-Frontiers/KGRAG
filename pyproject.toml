@@ -120,12 +120,18 @@ spacy = {version = ">=3.7.0", optional = true}
 llama-cpp-python = { version = ">=0.3.0", optional = true }
 
 
-# our own adaptors (PyPI-only; git-only adapters installed separately via uv)
+# our own adaptors (PyPI-only; git-only adapters installed separately via uv).
+# metabokg is not published and is not planned to be, so the metakg adapter has
+# no entry here by design — install it from git. Every adapter guards its import
+# behind is_available(), so an absent module reports unavailable rather than
+# failing; the point of listing one is that `kgrag[kg]` can actually supply it.
 kgmodule-utils = ">=0.8.0"
 pycode-kg = {version = ">=0.20.0", optional=true}
 doc-kg = {version = ">=0.18.2", optional=true}
 ftree-kg = {version = ">=0.8.0", optional=true}
 diary-kg  = {version = ">=0.93.2", optional = true}
+agent-kg = {version = ">=0.7.0", optional = true}
+memory-kg = {version = ">=0.6.0", optional = true}
 jupyter-server = ">=2.18.0"
 mistune = ">=3.2.1"
 
@@ -135,13 +141,13 @@ viz = ["streamlit", "pyvis", "plotly"]
 viz2d = ["PyQt5"]
 qt = ["PyQt5"]
 viz3d = ["pyvista", "pyvistaqt", "PyQt5", "param", "markdown", "trame-vtk"]
-kg = ["pycode-kg", "ftree-kg", "doc-kg", "diary-kg"]
+kg = ["pycode-kg", "ftree-kg", "doc-kg", "diary-kg", "agent-kg", "memory-kg"]
 pi = ["llama-cpp-python"]
 # Deliberately excludes "pi": llama-cpp-python has no wheel for every platform
 # and falls back to a source build, so folding it in here would make `--all-extras`
 # require a compiler toolchain.  Install it explicitly with --extras "pi".
 all = [
-  "pycode-kg", "ftree-kg", "doc-kg", "diary-kg",
+  "pycode-kg", "ftree-kg", "doc-kg", "diary-kg", "agent-kg", "memory-kg",
   "streamlit", "pyvis", "plotly",
   "pyvista", "pyvistaqt", "PyQt5", "param", "markdown", "trame-vtk",
 ]
