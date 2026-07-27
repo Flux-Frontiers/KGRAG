@@ -167,6 +167,13 @@ pre-commit = "^4.5.1"
 detect-secrets = "^1.5.0"
 pdoc = ">=14.0.0"
 pip-audit = "^2.10.0"
+# The adapters are optional at runtime (the `kg` extra) but not optional to
+# test: an adapter's whole job is constructing a real DocKG/PyCodeKG with the
+# right arguments, and a mocked-out import cannot show that it does. Installed
+# here so the suite exercises the real classes. The marginal cost is small —
+# torch, transformers, sentence-transformers and lancedb are already core deps.
+pycode-kg = ">=0.20.0"
+doc-kg = ">=0.18.2"
 
 
 [tool.poetry.scripts]
