@@ -157,6 +157,7 @@ def init(repo_path, wipe, name_prefix, layers, corpus_name, registry):
         # pass them explicitly to the build tool — prevents CWD-relative placement.
         kg_dir = repo / marker
         sqlite_path = kg_dir / "graph.sqlite"
+        vectors_path = kg_dir / "vectors.sqlite"
         lancedb_path = kg_dir / "lancedb"
 
         # Build
@@ -184,7 +185,8 @@ def init(repo_path, wipe, name_prefix, layers, corpus_name, registry):
             repo_path=repo,
             venv_path=repo / ".venv",
             sqlite_path=sqlite_path if sqlite_path.exists() else None,
-            lancedb_path=lancedb_path if lancedb_path.exists() else None,
+            vectors_path=vectors_path if vectors_path.exists() else None,
+            lancedb_path=(lancedb_path if kind != "code" and lancedb_path.exists() else None),
             version=version,
             tags=[date.today().isoformat()],
         )
@@ -202,7 +204,7 @@ def init(repo_path, wipe, name_prefix, layers, corpus_name, registry):
     table.add_column("Name", style="bold cyan")
     table.add_column("Status", justify="center")
     table.add_column("SQLite", justify="center")
-    table.add_column("LanceDB", justify="center")
+    table.add_column("Vectors", justify="center")
 
     _STATUS_FMT = {
         "ok": "[green]registered[/green]",
@@ -234,7 +236,7 @@ def init(repo_path, wipe, name_prefix, layers, corpus_name, registry):
             r["name"],
             _STATUS_FMT.get(r["status"], r["status"]),
             _fmt_size(e.sqlite_path if e else None),
-            _fmt_size(e.lancedb_path if e else None),
+            _fmt_size((e.vectors_path or e.lancedb_path) if e else None),
         )
 
     console.print(table)

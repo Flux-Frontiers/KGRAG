@@ -41,10 +41,12 @@ def _make_built_kg(
     *,
     with_sqlite: bool = True,
     with_lancedb: bool = False,
+    with_vectors: bool = False,
     sqlite_bytes: bytes = b"FAKE-SQLITE-CONTENT\n",
+    vectors_bytes: bytes = b"FAKE-SQLITE-VEC-CONTENT\n",
     lancedb_files: dict[str, bytes] | None = None,
 ) -> KGEntry:
-    """Create a repo layout with optional sqlite/lancedb artifacts and
+    """Create a repo layout with optional sqlite/vectors/lancedb artifacts and
     return a corresponding KGEntry."""
     repo = tmp_path / name
     repo.mkdir(parents=True, exist_ok=True)
@@ -57,6 +59,13 @@ def _make_built_kg(
         kg_dir.mkdir(exist_ok=True)
         sqlite_path = kg_dir / "graph.sqlite"
         sqlite_path.write_bytes(sqlite_bytes)
+
+    vectors_path = None
+    if with_vectors:
+        kg_dir = repo / ".pycodekg"
+        kg_dir.mkdir(exist_ok=True)
+        vectors_path = kg_dir / "vectors.sqlite"
+        vectors_path.write_bytes(vectors_bytes)
 
     lancedb_path = None
     if with_lancedb:
@@ -75,6 +84,7 @@ def _make_built_kg(
         venv_path=venv,
         sqlite_path=sqlite_path,
         lancedb_path=lancedb_path,
+        vectors_path=vectors_path,
         version="1.2.3",
         builder_version="9.9.9",
         tags=["alpha", "beta"],
@@ -191,6 +201,51 @@ class TestCLIExport:
         assert any(n == "lancedb" or n.startswith("lancedb/") for n in names)
         assert "lancedb/a.lance" in names
         assert "lancedb/b.lance" in names
+
+    def test_export_includes_vectors(self, tmp_path):
+        """A sqlite-vec store is a single file — it must be bundled, not skipped."""
+        entry = _make_built_kg(tmp_path, "exp-vectors", with_sqlite=True, with_vectors=True)
+        _register(tmp_path, entry)
+
+        out = tmp_path / "exp-vectors.kgrag.tar.gz"
+        result = CliRunner().invoke(
+            cli, ["export", "exp-vectors", "-o", str(out)] + _reg_opt(tmp_path)
+        )
+        assert result.exit_code == 0, result.output
+
+        with tarfile.open(out, "r:gz") as tar:
+            names = set(tar.getnames())
+            vec = tar.extractfile("vectors.sqlite")
+            assert vec is not None
+            assert vec.read() == b"FAKE-SQLITE-VEC-CONTENT\n"
+        assert "graph.sqlite" in names
+        assert "vectors.sqlite" in names
+
+    def test_export_vectors_only_kg(self, tmp_path):
+        """A KG whose only artifact is a vector store still exports."""
+        entry = _make_built_kg(tmp_path, "vec-only", with_sqlite=False, with_vectors=True)
+        _register(tmp_path, entry)
+
+        out = tmp_path / "vec-only.kgrag.tar.gz"
+        result = CliRunner().invoke(
+            cli, ["export", "vec-only", "-o", str(out)] + _reg_opt(tmp_path)
+        )
+        assert result.exit_code == 0, result.output
+        with tarfile.open(out, "r:gz") as tar:
+            names = set(tar.getnames())
+        assert "vectors.sqlite" in names
+        assert "graph.sqlite" not in names
+
+    def test_export_omits_vectors_when_absent(self, tmp_path):
+        entry = _make_built_kg(tmp_path, "no-vec", with_sqlite=True, with_vectors=False)
+        _register(tmp_path, entry)
+
+        out = tmp_path / "no-vec.kgrag.tar.gz"
+        result = CliRunner().invoke(cli, ["export", "no-vec", "-o", str(out)] + _reg_opt(tmp_path))
+        assert result.exit_code == 0, result.output
+        with tarfile.open(out, "r:gz") as tar:
+            names = set(tar.getnames())
+        assert "vectors.sqlite" not in names
 
     def test_export_manifest_content(self, tmp_path):
         entry = _make_built_kg(tmp_path, "manifest-kg", with_sqlite=True, with_lancedb=True)
@@ -322,6 +377,48 @@ class TestCLIImport:
         assert "imported" in entry.tags
         assert "imported_from" in entry.metadata
         assert "imported_at" in entry.metadata
+
+    def test_import_restores_vectors_path(self, tmp_path):
+        """Round trip: a code KG's sqlite-vec store survives export → import and
+        is re-registered under vectors_path (not lancedb_path)."""
+        archive = _export_to(tmp_path, "vec-kg", with_sqlite=True, with_vectors=True)
+
+        dest_root = tmp_path / "vec-imported"
+        reg2 = tmp_path / "registry2.sqlite"
+        result = CliRunner().invoke(
+            cli,
+            ["import", str(archive), "--dest", str(dest_root), "--registry", str(reg2)],
+        )
+        assert result.exit_code == 0, result.output
+
+        unpacked = dest_root / "vectors.sqlite"
+        assert unpacked.is_file()
+        assert unpacked.read_bytes() == b"FAKE-SQLITE-VEC-CONTENT\n"
+
+        with KGRegistry(db_path=reg2) as reg:
+            entry = reg.get("vec-kg")
+        assert entry is not None
+        assert entry.vectors_path == unpacked.resolve()
+        assert entry.lancedb_path is None
+        assert entry.is_built is True
+
+    def test_import_vectors_only_archive_is_built(self, tmp_path):
+        archive = _export_to(tmp_path, "vo-kg", with_sqlite=False, with_vectors=True)
+
+        dest_root = tmp_path / "vo-imported"
+        reg2 = tmp_path / "registry2.sqlite"
+        result = CliRunner().invoke(
+            cli,
+            ["import", str(archive), "--dest", str(dest_root), "--registry", str(reg2)],
+        )
+        assert result.exit_code == 0, result.output
+
+        with KGRegistry(db_path=reg2) as reg:
+            entry = reg.get("vo-kg")
+        assert entry is not None
+        assert entry.sqlite_path is None
+        assert entry.vectors_path == (dest_root / "vectors.sqlite").resolve()
+        assert entry.is_built is True
 
     def test_import_with_rename(self, tmp_path):
         archive = _export_to(tmp_path, "orig", with_sqlite=True)

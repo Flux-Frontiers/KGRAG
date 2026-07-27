@@ -100,6 +100,41 @@ class TestCodeKGAdapterIsAvailable:
             assert adapter.is_available() is True
 
 
+class TestCodeKGAdapterLoad:
+    """_load must hand PyCodeKG the recorded sqlite-vec store, not a guess."""
+
+    def _load_with_mock(self, entry) -> dict:
+        """Run CodeKGAdapter._load against a mocked PyCodeKG; return its kwargs."""
+        mock_cls = MagicMock()
+        with patch("pycode_kg.kg.PyCodeKG", mock_cls):
+            CodeKGAdapter(entry)._load()
+        return mock_cls.call_args.kwargs
+
+    def test_uses_registered_vectors_path(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.CODE, with_sqlite=True)
+        entry.vectors_path = tmp_path / "elsewhere" / "custom-vectors.sqlite"
+
+        kwargs = self._load_with_mock(entry)
+        assert kwargs["vectors_path"] == str(tmp_path / "elsewhere" / "custom-vectors.sqlite")
+
+    def test_falls_back_to_default_layout(self, tmp_path):
+        """With no vectors_path recorded, fall back to the default .pycodekg layout."""
+        entry = _entry(tmp_path, KGKind.CODE, with_sqlite=True)
+        assert entry.vectors_path is None
+
+        kwargs = self._load_with_mock(entry)
+        assert kwargs["vectors_path"] == str(entry.repo_path / ".pycodekg" / "vectors.sqlite")
+
+    def test_lancedb_path_does_not_influence_vectors(self, tmp_path):
+        """A legacy lancedb_path must no longer be used to derive the store."""
+        entry = _entry(tmp_path, KGKind.CODE, with_sqlite=True)
+        entry.lancedb_path = tmp_path / "stale" / "lancedb"
+
+        kwargs = self._load_with_mock(entry)
+        assert "stale" not in kwargs["vectors_path"]
+        assert kwargs["vectors_path"] == str(entry.repo_path / ".pycodekg" / "vectors.sqlite")
+
+
 class TestCodeKGAdapterQuery:
     def _make_node(self, name="foo", score=0.9, docstring="doc", module="src/f.py"):
         return {

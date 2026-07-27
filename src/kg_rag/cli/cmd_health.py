@@ -265,6 +265,19 @@ def _check_kgs(entries: list, issues: list[HealthIssue]) -> None:
                 )
             )
 
+        # --- sqlite-vec store registered but file missing ---
+        if e.vectors_path and not Path(e.vectors_path).exists():
+            issues.append(
+                HealthIssue(
+                    severity="warning",
+                    check="stale_vectors",
+                    target=e.name,
+                    message=f"Vector store registered but file missing: {e.vectors_path}",
+                    fix_cmd=_build_cmd(e.kind.value, e.repo_path),
+                    auto_fixable=False,
+                )
+            )
+
         # --- LanceDB registered but directory missing ---
         if e.lancedb_path and not Path(e.lancedb_path).exists():
             issues.append(
@@ -455,7 +468,7 @@ def health(do_fix: bool, output_json: bool, registry: str | None) -> None:
     \b
       • unbuilt indices
       • repo paths that no longer exist on disk
-      • SQLite / LanceDB paths registered but files missing
+      • SQLite / vector-store paths registered but files missing
       • broken corpus member references (KG removed from registry but
         still referenced in a corpus)
       • corpus members that haven't been built yet

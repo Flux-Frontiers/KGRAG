@@ -456,6 +456,7 @@ def _make_server(registry_path: Path | None = None) -> Server:
                     "venv_path": str(e.venv_path),
                     "sqlite_path": str(e.sqlite_path) if e.sqlite_path else None,
                     "lancedb_path": str(e.lancedb_path) if e.lancedb_path else None,
+                    "vectors_path": str(e.vectors_path) if e.vectors_path else None,
                     "tags": e.tags,
                 }
                 for e in entries
@@ -480,6 +481,7 @@ def _make_server(registry_path: Path | None = None) -> Server:
                 "venv_path": str(entry.venv_path),
                 "sqlite_path": str(entry.sqlite_path) if entry.sqlite_path else None,
                 "lancedb_path": str(entry.lancedb_path) if entry.lancedb_path else None,
+                "vectors_path": str(entry.vectors_path) if entry.vectors_path else None,
                 "tags": entry.tags,
                 "metadata": entry.metadata,
                 "created_at": entry.created_at.isoformat(),

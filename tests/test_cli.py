@@ -13,6 +13,7 @@ from pathlib import Path
 from click.testing import CliRunner
 
 from kg_rag.cli.main import cli
+from kg_rag.registry import KGRegistry
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -123,6 +124,76 @@ class TestCLIRegister:
             + _reg_opt(tmp_path),
         )
         assert result.exit_code == 0
+
+    def test_register_autodetects_vectors_store(self, tmp_path):
+        """A default-layout vectors.sqlite is discovered without --vectors."""
+        repo = tmp_path / "repo"
+        (repo / ".pycodekg").mkdir(parents=True)
+        vectors = repo / ".pycodekg" / "vectors.sqlite"
+        vectors.touch()
+
+        result = _runner().invoke(
+            cli, ["register", "veckg", "code", str(repo)] + _reg_opt(tmp_path)
+        )
+        assert result.exit_code == 0, result.output
+
+        with KGRegistry(db_path=tmp_path / "registry.sqlite") as reg:
+            entry = reg.get("veckg")
+        assert entry.vectors_path == vectors.resolve()
+
+    def test_register_explicit_vectors_option(self, tmp_path):
+        """--vectors accepts a store outside the default layout."""
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        vectors = tmp_path / "shared" / "vectors.sqlite"
+        vectors.parent.mkdir()
+        vectors.touch()
+
+        result = _runner().invoke(
+            cli,
+            ["register", "custom-vec", "code", str(repo), "--vectors", str(vectors)]
+            + _reg_opt(tmp_path),
+        )
+        assert result.exit_code == 0, result.output
+
+        with KGRegistry(db_path=tmp_path / "registry.sqlite") as reg:
+            entry = reg.get("custom-vec")
+        assert entry.vectors_path == vectors.resolve()
+
+    def test_register_code_kind_ignores_stale_lancedb_dir(self, tmp_path):
+        """Code KGs are sqlite-vec only; a leftover lancedb/ must not be recorded."""
+        repo = tmp_path / "repo"
+        kg_dir = repo / ".pycodekg"
+        kg_dir.mkdir(parents=True)
+        (kg_dir / "lancedb").mkdir()
+        (kg_dir / "vectors.sqlite").touch()
+
+        result = _runner().invoke(
+            cli, ["register", "codekg", "code", str(repo)] + _reg_opt(tmp_path)
+        )
+        assert result.exit_code == 0, result.output
+
+        with KGRegistry(db_path=tmp_path / "registry.sqlite") as reg:
+            entry = reg.get("codekg")
+        assert entry.lancedb_path is None
+        assert entry.vectors_path is not None
+
+    def test_register_doc_kind_still_detects_lancedb(self, tmp_path):
+        """Doc corpora still ship LanceDB, so detection must remain for them."""
+        repo = tmp_path / "docrepo"
+        kg_dir = repo / ".dockg"
+        kg_dir.mkdir(parents=True)
+        lancedb = kg_dir / "lancedb"
+        lancedb.mkdir()
+
+        result = _runner().invoke(
+            cli, ["register", "docskg", "doc", str(repo)] + _reg_opt(tmp_path)
+        )
+        assert result.exit_code == 0, result.output
+
+        with KGRegistry(db_path=tmp_path / "registry.sqlite") as reg:
+            entry = reg.get("docskg")
+        assert entry.lancedb_path == lancedb.resolve()
 
     def test_register_nonexistent_repo_fails(self, tmp_path):
         result = _runner().invoke(
@@ -243,6 +314,20 @@ class TestCLIScan:
         result = _runner().invoke(cli, ["scan", str(tmp_path)] + _reg_opt(tmp_path))
         assert result.exit_code == 0
         assert "code" in result.output
+
+    def test_scan_auto_register_records_vectors(self, tmp_path):
+        repo = tmp_path / "vecrepo"
+        codekg_dir = repo / ".pycodekg"
+        codekg_dir.mkdir(parents=True)
+        (codekg_dir / "graph.sqlite").touch()
+        (codekg_dir / "vectors.sqlite").touch()
+
+        _runner().invoke(cli, ["scan", str(tmp_path), "--auto-register"] + _reg_opt(tmp_path))
+
+        with KGRegistry(db_path=tmp_path / "registry.sqlite") as reg:
+            entry = reg.get("vecrepo-code")
+        assert entry is not None
+        assert entry.vectors_path == (codekg_dir / "vectors.sqlite").resolve()
 
     def test_scan_auto_register(self, tmp_path):
         repo = tmp_path / "myrepo"
