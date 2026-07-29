@@ -82,10 +82,8 @@ target/
 profile_default/
 ipython_config.py
 
-
 # PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
 __pypackages__/
-
 
 # Environments
 .env
@@ -97,12 +95,10 @@ ENV/
 env.bak/
 venv.bak/
 
-
 # mypy
 .mypy_cache/
 .dmypy.json
 dmypy.json
-
 
 # Visual Studio Code
 #  Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore
@@ -142,60 +138,18 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
-# PyCodeKG generated artifacts — databases are transient/reproducible, snapshots are tracked
-# MUST include .pycodekg/snapshots!
-.pycodekg/lancedb/
-.pycodekg/lancedb-*
-.pycodekg/*.sqlite
-.pycodekg/models
-
-# DocKG generated artifacts — same pattern as CodeKG; snapshots will be tracked once added
-.dockg/lancedb/
-.dockg/lancedb-*
-.dockg/graph.sqlite
-.dockg/graph.sqlite*
-.dockg/models
-
-# DiaryKG
-# DocKG generated artifacts — same pattern as CodeKG; snapshots will be tracked once added
-.diarykg/lancedb/
-.diarykg/lancedb-*
-.diarykg/graph.sqlite
-.diarykg/graph.sqlite*
-.diarykg/models
-
 # KGRAG
-# KGRAG generated artifacts — same pattern as CodeKG; snapshots will be tracked once added
 .kgrag/lancedb/
 .kgrag/lancedb-*
 .kgrag/graph.sqlite
 .kgrag/graph.sqlite*
 .kgrag/models
 
-# FileTreeKG
-.filetreekg/lancedb/
-.filetreekg/lancedb-*
-.filetreekg/graph.sqlite
-.filetreekg/graph.sqlite*
-
-# AgentKG — conversation graph is private, never commit
-.agentkg/
-
-# MemoryKG — claude_t_self corpus index (built artifact, not source)
-.memorykg/lancedb/
-.memorykg/lancedb-*
-.memorykg/graph.sqlite
-.memorykg/graph.sqlite*
-.memorykg/models
-
-
 # MacOS
 .DS_Store
 commit.txt
 
 # Local MCP config — contains user-specific absolute paths; use Claude.mcp.json as template
-.mcp.json
-.mcp.json.sav
 
 # Local Claude Code settings — personal hooks and permissions; use settings.json.template as template
 .claude/settings.json
@@ -229,5 +183,63 @@ PUBLIC_READINESS_AUDIT.md
 assets/brands.md
 commit.txt
 
+# === KG generated artifacts (normalized across the fleet) ===
+# Databases, vector indexes and model caches are transient and
+# reproducible. snapshots/ is TRACKED and must never be ignored --
+# never use a bare `**/.<ns>/` pattern here, it swallows snapshots too.
+
+**/.pycodekg/lancedb/
+**/.pycodekg/lancedb-*
+**/.pycodekg/*.sqlite
+**/.pycodekg/*.sqlite-shm
+**/.pycodekg/*.sqlite-wal
+**/.pycodekg/*.db
+**/.pycodekg/models
+
+**/.dockg/lancedb/
+**/.dockg/lancedb-*
+**/.dockg/*.sqlite
+**/.dockg/*.sqlite-shm
+**/.dockg/*.sqlite-wal
+**/.dockg/*.db
+**/.dockg/models
+**/.dockg/embeddings.json
+
+# AgentKG local store -- nothing under it is ever tracked
+**/.agentkg/
+
+**/.filetreekg/lancedb/
+**/.filetreekg/lancedb-*
+**/.filetreekg/*.sqlite
+**/.filetreekg/*.sqlite-shm
+**/.filetreekg/*.sqlite-wal
+**/.filetreekg/*.db
+**/.filetreekg/models
+
+**/.diarykg/lancedb/
+**/.diarykg/lancedb-*
+**/.diarykg/*.sqlite
+**/.diarykg/*.sqlite-shm
+**/.diarykg/*.sqlite-wal
+**/.diarykg/*.db
+**/.diarykg/models
+**/.diarykg/corpus
+
+**/.memorykg/lancedb/
+**/.memorykg/lancedb-*
+**/.memorykg/*.sqlite
+**/.memorykg/*.sqlite-shm
+**/.memorykg/*.sqlite-wal
+**/.memorykg/*.db
+**/.memorykg/models
+**/.memorykg/cache
+**/.memorykg/pipeline
+
+# Agent scratch dirs (Claude Code / Codex)
 .agents/
 .codex/
+
+# MCP server config -- machine-specific, contains absolute paths
+.mcp.json
+.mcp.json.sav
+# === end KG generated artifacts ===
