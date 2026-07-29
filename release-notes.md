@@ -22,9 +22,12 @@ field removable.
 **Adapters stopped ignoring the registered vector store.** The doc-family
 adapters derived `vectors.sqlite` from the graph's directory and disregarded
 whatever the registry said, so a corpus whose vectors lived anywhere else was
-simply unreachable. They now honour `vectors_path`. `kgrag export` had a related
-gap: it shipped code-KG bundles without their vectors, producing archives that
-looked complete and were not.
+simply unreachable. They now honour `vectors_path`. The FileTree adapter had a
+harder break: ftree-kg 0.9.0 renamed `FileTreeKG`'s `lancedb_path` parameter to
+`vectors_path`, so every FileTree query raised `TypeError` — invisible while our
+floor still allowed 0.8.0. `kgrag export` had a related gap of its own: it
+shipped code-KG bundles without their vectors, producing archives that looked
+complete and were not.
 
 **`kgrag audit-lancedb` reports the migration's real state.** It classifies each
 KG as unmigrated, residue, stale-row, clean, or no-index, emits the exact
@@ -41,6 +44,13 @@ miss: a pinned lock file keeps every developer working, and only a fresh install
 from PyPI sees it. New tests build the server for real rather than merely
 importing it, because an import-only check would have passed while `kgrag-mcp`
 stayed broken.
+
+**Dependency constraints caught up with the fleet.** `transformers` was still
+capped at `<4.57`, which is unsatisfiable against pycode-kg 0.21.1's
+`transformers>=5.5.0,<6` — so `poetry update` quietly resolved pycode-kg back to
+0.20.0 instead of reporting a conflict. Raising the ceiling to `>=5.5.0,<6` and
+the `ftree-kg` floor to `>=0.9.0` lets the lock resolve what this release
+actually targets: pycode-kg 0.21.1, doc-kg 0.19.1, ftree-kg 0.9.0, mcp 1.27.2.
 
 ## Upgrading
 

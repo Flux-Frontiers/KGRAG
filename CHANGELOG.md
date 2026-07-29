@@ -32,12 +32,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and registers a discovered store.
 - **`stale_vectors` health check** (`src/kg_rag/cli/cmd_health.py`) — flags a
   registered vector store whose file has gone missing.
+- **`tests/test_mcp_server.py`** — MCP server regression tests. KGRAG builds its
+  server inside `_make_server()` rather than at module scope, so the import-only
+  check used elsewhere in the fleet would pass while `kgrag-mcp` stayed broken.
+  These build the server for real and assert the handlers register, plus a
+  standalone assertion that the `Server` decorator API still exists, so a future
+  break names the missing API instead of surfacing as an opaque `AttributeError`
+  from inside `_make_server()`.
 
 ### Changed
 
 - **Dependency floor raised**: `doc-kg` `>=0.18.1` → `>=0.18.2`, which adds
   `DocKG(vectors_path=...)` and the matching `--vectors-path` CLI option.
   Required by the adapter fix below.
+- **Dependency constraints updated** (`pyproject.toml`): `mcp` `>=1.0.0` →
+  `>=1.0.0,<2` (see Fixed), `transformers` `>=4.40.0,<4.57` → `>=5.5.0,<6`, and
+  `ftree-kg` `>=0.8.0` → `>=0.9.0`. The stale `transformers` ceiling was
+  unsatisfiable against `pycode-kg` 0.21.1's `transformers>=5.5.0,<6`, so
+  `poetry update` silently resolved pycode-kg back to 0.20.0. The lock now
+  resolves pycode-kg 0.21.1, doc-kg 0.19.1, ftree-kg 0.9.0 and mcp 1.27.2.
 
 - **`KGEntry.is_built`** — an existing `vectors_path` now counts as evidence of a
   built KG. Previously only `sqlite_path`/`lancedb_path` did, so a sqlite-vec-only
@@ -52,6 +65,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `vectors_path` instead of labelling everything "LanceDB".
 
 ### Fixed
+
+- **`kgrag-mcp` could not start on a clean install** (`pyproject.toml`) — mcp 2.0
+  removed the low-level `Server` decorator API (`@server.list_tools()` /
+  `@server.call_tool()`) that `src/kg_rag/mcp_server.py` is built on. The
+  `Server` class still *imports* under 2.0, so nothing fails until
+  `_make_server()` runs, at which point it raises `AttributeError` and no handler
+  is ever registered. The unbounded `mcp>=1.0.0` meant a fresh install resolved
+  2.0; developers never saw it because a pinned lock file keeps working. Now
+  pinned `<2` — lift it only alongside a port to the 2.x handler API.
+
+- **`FTreeKGAdapter` passed a parameter that no longer exists**
+  (`src/kg_rag/adapters/ftree_adapter.py`) — ftree-kg 0.9.0 migrated to
+  sqlite-vec and renamed `FileTreeKG`'s `lancedb_path` (a directory) to
+  `vectors_path` (a file), so every FileTree query raised `TypeError`. The
+  adapter now reads `entry.vectors_path`, falling back to `None` so `FileTreeKG`
+  derives its own default rather than being handed a stale `lancedb/` directory.
+  Masked until now by the `ftree-kg >=0.8.0` floor.
 
 - **`DocKGAdapter` / `GutenbergKGAdapter` now honour `KGEntry.vectors_path`**
   (`src/kg_rag/adapters/dockg_adapter.py`, `gutenberg_adapter.py`) — doc-family
