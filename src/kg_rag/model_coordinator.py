@@ -403,10 +403,13 @@ class ModelCoordinator:
             ) from e
 
         local_path.mkdir(parents=True, exist_ok=True)
+        # `local_dir_use_symlinks` was dropped in huggingface_hub 1.x — passing it
+        # only raises a deprecation warning and is otherwise ignored (downloads to
+        # a local dir no longer symlink into the cache), so it is removed rather
+        # than carried. Behaviour is unchanged.
         snapshot_download(
             repo_id=repo_id,
             local_dir=str(local_path),
-            local_dir_use_symlinks=False,
             ignore_patterns=[
                 "onnx/*",
                 "onnx_quantized/*",
