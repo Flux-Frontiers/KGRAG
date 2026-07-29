@@ -16,7 +16,7 @@ authors:
     email: suchanek@flux-frontiers.com
     affiliation: "Flux-Frontiers"
 version: "0.11.0"
-date-released: "2026-07-26"
+date-released: "2026-07-29"
 license-url: "https://www.elastic.co/licensing/elastic-license"
 repository-code: "https://github.com/Flux-Frontiers/KGRAG"
 url: "https://github.com/Flux-Frontiers/KGRAG"

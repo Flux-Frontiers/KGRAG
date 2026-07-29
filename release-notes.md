@@ -1,60 +1,60 @@
-# Release Notes - v0.10.0
+# Release Notes — v0.11.0
 
-> Released: 2026-06-09
+> Released: 2026-07-29
 
-## Highlights
+KGRAG now tracks sqlite-vec vector stores as first-class registry data. As the
+fleet migrates off LanceDB, a registered KG can point at a `vectors.sqlite` file
+instead of a `lancedb/` directory, and the registry, adapters, health checks and
+export path all understand the difference. This release also pins `mcp` below
+2.0 — without it, a clean install produced a `kgrag-mcp` that could not start.
 
-- Query results can now be scoped directly inside supported KGs, so focused
-  questions (for example, one subdirectory/genre in a large corpus) return more
-  relevant top hits instead of being drowned out by global matches.
-- The orchestrator now threads scope through query and pack operations across
-  global, corpus, and person federation paths.
-- Dependency constraints were aligned to keep Poetry resolution stable with the
-  latest `kgmodule-utils` line.
+## What changed
 
-## Added
+**`vectors_path` is a real field, not an overload of `lancedb_path`.**
+`KGEntry` gains a `vectors_path` column recording the sqlite-vec store *file*,
+added to existing registries by an in-place migration on next open, so nothing
+needs re-registering to keep working. `kgrag register --vectors PATH` sets it
+directly. `lancedb_path` remains for corpora built by pre-migration builders and
+is no longer written for code KGs at all — the two coexist deliberately while
+the fleet is mid-transition, and only the last repo to migrate will make the old
+field removable.
 
-- **`QueryScope` primitive** (`src/kg_rag/primitives.py`):
-  a frozen, hashable scope object with:
-  - `source_path_prefixes`
-  - `node_kinds`
-  - reserved `metadata_eq`
-  - `matches()` helper for post-filtering
-- **Scope-aware query APIs in orchestrator** (`src/kg_rag/orchestrator.py`):
-  `query`, `pack`, `query_corpus`, and `pack_corpus` now accept optional scope.
-- **Scope support in adapter contract** (`src/kg_rag/adapters/base.py`):
-  adapter `query`/`pack` signatures accept optional scope, plus
-  `supports_scope` capability flag.
-- **Pushdown support in DocKG and Gutenberg adapters**:
-  `DocKGAdapter` and `GutenbergKGAdapter` forward scope filters into backend
-  query/pack operations for in-database filtering.
+**Adapters stopped ignoring the registered vector store.** The doc-family
+adapters derived `vectors.sqlite` from the graph's directory and disregarded
+whatever the registry said, so a corpus whose vectors lived anywhere else was
+simply unreachable. They now honour `vectors_path`. `kgrag export` had a related
+gap: it shipped code-KG bundles without their vectors, producing archives that
+looked complete and were not.
 
-## Changed
+**`kgrag audit-lancedb` reports the migration's real state.** It classifies each
+KG as unmigrated, residue, stale-row, clean, or no-index, emits the exact
+remediation command for each, and finds `lancedb/` directories on disk that no
+registry entry references. It reports only — it never deletes or rebuilds. A
+`stale_vectors` health check covers the inverse case, where a registered vector
+store has gone missing.
 
-- **Federation internals refactored** (`src/kg_rag/orchestrator.py`):
-  shared `_federate_query`, `_federate_pack`, and `_federate_stats` engines now
-  power global/corpus/person execution paths.
-- **DocKG minimum version raised to `>=0.15.7`** (`pyproject.toml`):
-  required for `source_path_prefixes` / `node_kinds` pushdown support.
-- **Version bumped to `0.10.0`** (`pyproject.toml`).
+**`mcp` is pinned below 2.0.** mcp 2.0 removed the low-level `Server` decorator
+API — `@server.list_tools()` and `@server.call_tool()` — that this package is
+built on. The class still *imports* under 2.0, so nothing fails until the server
+is constructed, at which point no handler registers at all. That made it easy to
+miss: a pinned lock file keeps every developer working, and only a fresh install
+from PyPI sees it. New tests build the server for real rather than merely
+importing it, because an import-only check would have passed while `kgrag-mcp`
+stayed broken.
 
-## Fixed
+## Upgrading
 
-- **Poetry resolver conflict with `ty`** (`pyproject.toml`, `poetry.lock`):
-  aligned `ty` to `>=0.0.44,<0.0.45` to match `kgmodule-utils >=0.4.0`
-  requirements.
-- **Graceful compatibility fallback for older adapters**:
-  if a backend rejects scoped kwargs, orchestrator retries without scope
-  instead of hard failing.
+`pip install --upgrade kg-rag`. Existing registries migrate themselves on first
+open — no re-registration, no rebuild, and `lancedb_path` entries keep working
+untouched.
 
-## Validation
+If you have migrated any KG to sqlite-vec, re-register it (or pass `--vectors`)
+so the registry records the new path; until then the entry still points at the
+old store. `kgrag audit-lancedb` will tell you where each KG actually stands.
 
-- CI-equivalent checks on merged `main` passed:
-  - `ruff format --check`
-  - `ruff check`
-  - `ty check src/`
-  - `pytest` (430 passed)
+Note that PyPI goes straight from 0.10.0 to 0.11.0 — 0.10.1 appears in the
+changelog but was never published, and its changes ship here.
 
 ---
 
-Full changelog: [CHANGELOG.md](CHANGELOG.md)
+_Full changelog: [CHANGELOG.md](CHANGELOG.md)_

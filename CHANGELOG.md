@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.11.0] - 2026-07-26
+## [0.11.0] - 2026-07-29
 
 ### Added
 
@@ -77,7 +77,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   back to `<repo>/.pycodekg/vectors.sqlite` when the registry has no recorded path,
   so entries registered before this release keep working.
 
-## [0.10.1] - 2026-07-26
+## [0.10.1] - 2026-07-26 — *never released*
+
+> This version was never tagged or published; PyPI goes straight from 0.10.0 to
+> 0.11.0. The changes below are real and shipped — they simply reached users as
+> part of 0.11.0. Retained as a record of when the work landed.
 
 ### Added
 
