@@ -97,7 +97,7 @@ numpy = ">=1.24.0"
 # personal agent
 
 # from personal_agent
-transformers = ">=4.40.0,<4.57"
+transformers = ">=5.5.0,<6"
 sentence-transformers = "^5.2.0"
 safetensors = ">=0.5.0"
 
@@ -107,7 +107,12 @@ pyvis = { version = ">=0.3.2", optional = true }
 pandas = ">=2.0.0"
 rich = "^14.3.3"
 click = ">=8.1.0"
-mcp = ">=1.0.0"
+# Upper-bounded: mcp 2.0 removed the low-level Server decorator API
+# (`@server.list_tools()` / `@server.call_tool()`) that kg_rag.mcp_server uses.
+# The Server class itself still imports under 2.0, so the failure surfaces as an
+# AttributeError when _make_server() runs — not at import — which makes it easy
+# to miss. Lift this only alongside a port to the 2.x handler API.
+mcp = ">=1.0.0,<2"
 plotly = { version = ">=5.14.0", optional = true }
 pyvista = { version = ">=0.44.0", extras = ["jupyter"], optional = true }
 pyvistaqt = { version = ">=0.11.0", optional = true }
@@ -124,7 +129,7 @@ llama-cpp-python = { version = ">=0.3.0", optional = true }
 kgmodule-utils = ">=0.8.0"
 pycode-kg = {version = ">=0.20.0", optional=true}
 doc-kg = {version = ">=0.18.2", optional=true}
-ftree-kg = {version = ">=0.8.0", optional=true}
+ftree-kg = {version = ">=0.9.0", optional=true}
 diary-kg  = {version = ">=0.93.2", optional = true}
 jupyter-server = ">=2.18.0"
 mistune = ">=3.2.1"

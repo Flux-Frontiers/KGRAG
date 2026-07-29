@@ -36,10 +36,14 @@ class FTreeKGAdapter(KGAdapter):
                 "ftree-kg is not installed. Install it with: pip install ftree-kg"
             ) from exc
         entry = self.entry
+        # ftree-kg 0.9.0 migrated to sqlite-vec: `lancedb_path` (a directory)
+        # became `vectors_path` (a file). Prefer the registry's vectors_path;
+        # fall back to None so FileTreeKG derives its own default, rather than
+        # handing it a stale lancedb/ directory that no longer exists.
         self._kg = FileTreeKG(
             repo_root=str(entry.repo_path),
             db_path=str(entry.sqlite_path) if entry.sqlite_path else None,
-            lancedb_path=str(entry.lancedb_path) if entry.lancedb_path else None,
+            vectors_path=str(entry.vectors_path) if entry.vectors_path else None,
         )
 
     def is_available(self) -> bool:
