@@ -97,7 +97,7 @@ numpy = ">=1.24.0"
 # personal agent
 
 # from personal_agent
-transformers = ">=4.40.0,<4.57"
+transformers = ">=5.5.0,<6"
 sentence-transformers = "^5.2.0"
 safetensors = ">=0.5.0"
 
