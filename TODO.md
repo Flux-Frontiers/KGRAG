@@ -26,6 +26,9 @@ column and an in-place `_migrate()` step). All five suggested steps landed:
 holding **~2.0 GB** on disk. It is not gone — the schema work above only stopped
 kgrag *recording* it for new code KGs.
 
+> **Stale as of 2026-07-30** — the gutenberg corpora have since been migrated
+> (see Remaining coordination). Re-run the audit for real numbers.
+
 | Status | KGs | Note |
 |---|---|---|
 | `unmigrated` | 242 | 237 gutenberg, 3 doc, 2 code |
@@ -62,13 +65,30 @@ for every KG kind.
   Re-run `kgrag register <name> code <repo>` (or `kgrag scan --auto-register`) to
   record the real path — required for any repo whose vectors live outside
   `.pycodekg/`.
-- **KG_utils 0.7.0** plans to split `lancedb` out of the `[semantic]` extra so the
-  package stops installing transitively.
+- **kgmodule-utils has *not* split `lancedb` out of `[semantic]` yet** — corrected
+  2026-07-30. The old note here said "KG_utils 0.7.0 plans to…"; 0.7.0 shipped
+  long ago and **0.9.0 is the current release**, where `lancedb>=0.19.0` is still
+  an `[semantic]` requirement (alongside `sqlite-vec==0.1.9`, which 0.9.0 added
+  to both `[semantic]` and a standalone `[sqlite-vec]` extra). So `[semantic]`
+  still drags lancedb in; only installs that *avoid* `[semantic]` escape it.
+  kgrag itself is safe on this axis — it depends on bare `kgmodule-utils>=0.8.0`
+  with no extras — as is corpus_pepys, which installs
+  `[synthesis,sqlite-vec]`. The work item is unchanged, just not done: drop
+  `lancedb` from `[semantic]` in a future kgmodule-utils release.
 - **doc-kg / diary-kg still hard-require `lancedb>=0.29.0`** (checked 2026-07-30
-  at doc-kg 0.19.1 / diary-kg 0.93.4, filed from `corpus_pepys`). The
-  kgmodule-utils side is done — 0.9.0 gates lancedb behind `[semantic]` — and
-  corpus_pepys no longer imports lancedb anywhere (worker is sqlite-vec only,
-  LanceDB fallback removed), but the package still lands in every worker image
-  transitively. Full retirement needs doc-kg/diary-kg releases that demote
-  lancedb to an optional extra; also cosmetic: `diarykg build` still prints a
-  "LanceDB :" path label while writing `vectors.sqlite`.
+  at doc-kg 0.19.1 / diary-kg 0.93.4, filed from `corpus_pepys`). This is the
+  binding constraint: unlike the kgmodule-utils case above, it is an
+  unconditional dependency, so lancedb lands in every worker image no matter
+  which extras are selected. corpus_pepys no longer *imports* lancedb anywhere
+  (worker is sqlite-vec only, LanceDB fallback removed, merged as
+  corpus_pepys#1), but the package is still installed. Full retirement needs
+  doc-kg/diary-kg releases that demote lancedb to an optional extra; also
+  cosmetic: `diarykg build` still prints a "LanceDB :" path label while writing
+  `vectors.sqlite`.
+- **`gutenberg_kg` is migrated** — reported by the maintainer 2026-07-30 (done
+  outside this repo, so unverified here). Its pins are already
+  `kgmodule-utils[synthesis,sqlite-vec]>=0.8.0` / `doc-kg>=0.18.1` on `main`.
+  This invalidates the largest row of the audit table above (237 gutenberg
+  corpora counted as `unmigrated` on 2026-07-26) — **re-run `kgrag
+  audit-lancedb` for current numbers before treating that table as fleet
+  state.**
