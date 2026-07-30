@@ -51,6 +51,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ago and 0.9.0 is current, where `lancedb>=0.19.0` is *still* in `[semantic]`.
   Also records that `gutenberg_kg` is migrated, which invalidates the
   237-gutenberg row of the 2026-07-26 audit table (now flagged stale).
+- **`TODO.md` fleet audit reconciled against `pycode_kg`'s
+  `MIGRATION-sqlite-vec.md`** — that document is the plan of record (phases,
+  per-repo effort, reference-implementation checklist) and `TODO.md` now defers
+  to it. It independently found the same `cmd_health.py` probe bug fixed above.
+  One of our findings was **wrong and is corrected**: diary-kg was called a
+  "dead dependency" droppable in a one-line release, on the basis that its
+  published wheel has zero `import lancedb`. It delegates to `dockg build` but
+  still passes `--lancedb` paths to that subprocess and plumbs
+  `self._lancedb_dir` throughout; the plan counts 30 source refs and sizes it as
+  a real Phase-1 port. A wheel-level grep cannot see CLI strings, prose, tests
+  or docs — the plan's repo-level counts supersede ours.
 
 ## [0.11.0] - 2026-07-29
 
