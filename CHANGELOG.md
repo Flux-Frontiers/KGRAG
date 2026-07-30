@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`kgrag health` probed every code/doc/memory KG with a broken command**
+  (`src/kg_rag/cli/cmd_health.py`) — three independent defects, all of which
+  made `_probe_kg` report a false failure (`stale_lancedb_probe`) on healthy
+  KGs. Verified against the installed CLIs (pycode-kg 0.21.2, doc-kg 0.19.1):
+  - **`-k 1` is not a valid option.** These CLIs declare only the long `--k`,
+    so every probe died on `Error: No such option '-k'` before touching an
+    index. This affected code, doc *and* memory probes regardless of migration
+    state.
+  - **`codekg` is not a binary.** pycode-kg ships `pycodekg` (renamed at 0.14);
+    the code probe and the code build-fix command both invoked `codekg`, so
+    they failed with "command not found". `cmd_audit.py` already used the
+    correct name — `cmd_health.py` was missed in the rename.
+  - **`--lancedb` with an empty value swallowed the next token.** The template
+    interpolated `entry.lancedb_path or ""`, and an empty value collapses under
+    `shlex.split`, leaving `--lancedb` to consume `-k`. Migrated KGs (which
+    record `vectors_path`, not `lancedb_path`) hit this every time; pycode-kg
+    ≥0.20 has no `--lancedb` option at all.
+
+  The probe now selects the flag from what the registry actually records —
+  `--vectors` for code, `--vectors-path`/`--lancedb` for the doc family — omits
+  it entirely when no store is recorded (each CLI has its own default layout,
+  and doc-kg's `--vector-backend auto` self-detects), shell-quotes paths, and
+  skips KGs with no graph. New tests in `tests/test_cmd_health.py` assert the
+  constructed argv: the existing probe tests all patched `_probe_kg`, so none
+  of them ever exercised a template, which is how this went unnoticed. One
+  pre-existing test asserted the `codekg` name and was corrected.
+
+- **`release.yml` titled GitHub releases "CodeKG"** — `gh release create
+  --title "CodeKG $TAG"` was a copy-paste from the code-kg repo, so every
+  published KGRAG release carried the wrong product name (v0.11.0 is titled
+  "CodeKG v0.11.0" on GitHub and needs a manual retitle).
+
+### Changed
+
+- **`TODO.md` corrections** — the kgmodule-utils note cited 0.7.0 as the
+  version "planning" to split `lancedb` out of `[semantic]`; 0.7.0 shipped long
+  ago and 0.9.0 is current, where `lancedb>=0.19.0` is *still* in `[semantic]`.
+  Also records that `gutenberg_kg` is migrated, which invalidates the
+  237-gutenberg row of the 2026-07-26 audit table (now flagged stale).
+
 ## [0.11.0] - 2026-07-29
 
 ### Added
