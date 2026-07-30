@@ -64,3 +64,11 @@ for every KG kind.
   `.pycodekg/`.
 - **KG_utils 0.7.0** plans to split `lancedb` out of the `[semantic]` extra so the
   package stops installing transitively.
+- **doc-kg / diary-kg still hard-require `lancedb>=0.29.0`** (checked 2026-07-30
+  at doc-kg 0.19.1 / diary-kg 0.93.4, filed from `corpus_pepys`). The
+  kgmodule-utils side is done — 0.9.0 gates lancedb behind `[semantic]` — and
+  corpus_pepys no longer imports lancedb anywhere (worker is sqlite-vec only,
+  LanceDB fallback removed), but the package still lands in every worker image
+  transitively. Full retirement needs doc-kg/diary-kg releases that demote
+  lancedb to an optional extra; also cosmetic: `diarykg build` still prints a
+  "LanceDB :" path label while writing `vectors.sqlite`.
