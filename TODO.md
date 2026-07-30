@@ -56,6 +56,45 @@ Fixed upstream in **doc-kg 0.18.2** (`DocKG(vectors_path=...)`, plus a
 here; the kgrag floor is now `doc-kg>=0.18.2`. `vectors_path` is authoritative
 for every KG kind.
 
+### Fleet code-migration audit — 2026-07-30
+
+Measured against the **published packages** (installed from PyPI and grepped for
+real code paths, not just declared deps). This is about *code*, not on-disk
+vector artifacts — artifacts are regenerable, stale code is not.
+
+| Package | Version | `lancedb` dep | imports `lancedb` | sqlite-vec aware | Verdict |
+|---|---|---|---|---|---|
+| `pycode-kg` | 0.21.2 | none | 0 files | yes | ✅ migrated |
+| `ftree-kg` | 0.9.0 | none | 0 files | yes | ✅ migrated |
+| `agent-kg` | 0.8.2 | none | 0 files | yes | ✅ migrated |
+| `tscode-kg` | 0.2.0 | none | 0 files | yes | ✅ migrated |
+| `kgmodule-utils` | 0.9.0 | `[semantic]` extra | backend seam | yes | ✅ both backends |
+| `doc-kg` | 0.19.1 | **hard** | `index.py` | yes (8 files) | ⚠ justified — it *is* the converter |
+| `diary-kg` | 0.93.4 | **hard** | **0 files** | 0 files | ⚠ **dead dependency** |
+| `memory-kg` | 0.6.2 | **hard** | `index.py` | **0 files** | ✖ **un-migrated** |
+
+Three actions fall out, in ascending cost:
+
+1. **`diary-kg` declares `lancedb>=0.29.0` and never imports it** — it delegates
+   all vector work to doc-kg. Dropping the dep is a one-line release with no code
+   change, and it removes lancedb from every diary worker image (this is what
+   corpus_pepys hit; see below).
+2. **`doc-kg`'s hard dep is legitimate for now** — `index.py` needs lancedb to
+   *read* LanceDB in `dockg convert-index`. It should become an extra
+   (`[lancedb]`) once the fleet has finished converting, so fresh installs stop
+   pulling it.
+3. **`memory-kg` 0.6.2 is genuinely un-migrated** — LanceDB-only `index.py`, and
+   its CLI has no `--vectors-path` / `--vector-backend` at all. **Do not convert
+   a memory KG's vectors**: memory-kg cannot read a `vectors.sqlite` store, so
+   converting one silently strands it. Porting `memory_kg/index.py` onto the
+   `kg_utils.vector_backend` seam (as pycode-kg/ftree-kg/agent-kg already are) is
+   the real work item.
+
+`kgrag` itself is clean: no `import lancedb` anywhere in `src/`. The one live
+defect found in this repo was `cmd_health.py`'s probe templates (stale `codekg`
+binary, `-k` vs `--k`, and an empty `--lancedb` value swallowing the next
+token) — fixed in `[Unreleased]`.
+
 ### Remaining coordination
 
 - **`kgrag_priv` still carries the 0.10.1 adapter stopgap** — port this change

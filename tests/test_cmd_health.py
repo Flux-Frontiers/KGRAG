@@ -720,6 +720,20 @@ class TestProbeCommandConstruction:
         assert "--lancedb" in argv
         assert str(lancedb_dir.resolve()) in argv
 
+    def test_memory_probe_never_passes_vectors_path(self, tmp_path):
+        """memory-kg 0.6.2 is LanceDB-only — it has no --vectors-path option.
+
+        Passing one aborts the probe on "No such option". A migrated memory KG
+        gets no vector flag at all; the ensuing failure is real signal, because
+        memory-kg genuinely cannot read a sqlite-vec store.
+        """
+        repo = tmp_path / "memory-repo"
+        repo.mkdir(exist_ok=True)
+        entry = self._entry(tmp_path, KGKind.MEMORY, vectors_path=repo / "vectors.sqlite")
+        argv = self._argv(entry)
+        assert "--vectors-path" not in argv
+        assert "--vectors" not in argv
+
     # ── the empty-value bug ─────────────────────────────────────────────────
 
     def test_no_flag_emitted_without_a_recorded_store(self, tmp_path):

@@ -95,14 +95,20 @@ _PROBE_CMD_TPL: dict[str, str] = {
     "diary": "diarykg status {repo}",
 }
 
-# Vector-store flag per kind — each module's CLI names it differently.
-# pycode-kg dropped ``--lancedb`` entirely at 0.20 (sqlite-vec only); the doc
-# family accepts either and resolves with ``--vector-backend auto``.
+# Vector-store flag per kind — each module's CLI names it differently, and not
+# every module has migrated:
+#   * pycode-kg >=0.20 is sqlite-vec only — ``--lancedb`` no longer exists.
+#   * doc-kg >=0.18.2 accepts either and resolves with ``--vector-backend auto``.
+#   * memory-kg 0.6.2 (current) is LanceDB *only* — no ``--vectors-path``, no
+#     ``--vector-backend``, and it hard-requires ``lancedb>=0.29.0``. A memory KG
+#     whose vectors were converted to sqlite-vec cannot be read by its own CLI,
+#     so the probe passes no vector flag and the resulting failure is real
+#     signal, not a malformed command. Revisit when memory-kg gains sqlite-vec.
 _VEC_FLAGS: dict[str, tuple[str | None, str | None]] = {
     # kind: (flag for vectors_path, flag for lancedb_path)
     "code": ("--vectors", None),
     "doc": ("--vectors-path", "--lancedb"),
-    "memory": ("--vectors-path", "--lancedb"),
+    "memory": (None, "--lancedb"),
 }
 
 

@@ -28,7 +28,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     ≥0.20 has no `--lancedb` option at all.
 
   The probe now selects the flag from what the registry actually records —
-  `--vectors` for code, `--vectors-path`/`--lancedb` for the doc family — omits
+  `--vectors` for code, `--vectors-path`/`--lancedb` for the doc family, and
+  `--lancedb` only for memory (memory-kg 0.6.2 has no sqlite-vec support at all,
+  so a converted memory KG cannot be probed — the failure there is real signal
+  rather than a malformed command) — omits
   it entirely when no store is recorded (each CLI has its own default layout,
   and doc-kg's `--vector-backend auto` self-detects), shell-quotes paths, and
   skips KGs with no graph. New tests in `tests/test_cmd_health.py` assert the
