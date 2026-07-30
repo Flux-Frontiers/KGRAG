@@ -59,7 +59,7 @@ _SEVERITY_ICON: dict[str, str] = {"critical": "✖", "warning": "⚠", "info": "
 # ---------------------------------------------------------------------------
 
 _BUILD_CMD_TPL: dict[str, str] = {
-    "code": "codekg build --repo {repo}",
+    "code": "pycodekg build --repo {repo}",
     "doc": "dockg build --repo {repo}",
     "memory": "memorykg-build --repo {repo}",
     "diary": "diarykg build --repo {repo}",
@@ -89,11 +89,48 @@ def _build_cmd(kind: str, repo: Path) -> str:
 # ---------------------------------------------------------------------------
 
 _PROBE_CMD_TPL: dict[str, str] = {
-    "code": "codekg query --sqlite {sqlite} --lancedb {lancedb} -k 1 health",
-    "doc": "dockg query --sqlite {sqlite} --lancedb {lancedb} -k 1 health",
-    "memory": "memorykg query --sqlite {sqlite} --lancedb {lancedb} -k 1 health",
+    "code": "pycodekg query --sqlite {sqlite} {vec} --k 1 health",
+    "doc": "dockg query --sqlite {sqlite} {vec} --k 1 health",
+    "memory": "memorykg query --sqlite {sqlite} {vec} --k 1 health",
     "diary": "diarykg status {repo}",
 }
+
+# Vector-store flag per kind — each module's CLI names it differently, and not
+# every module has migrated:
+#   * pycode-kg >=0.20 is sqlite-vec only — ``--lancedb`` no longer exists.
+#   * doc-kg >=0.18.2 accepts either and resolves with ``--vector-backend auto``.
+#   * memory-kg 0.6.2 (current) is LanceDB *only* — no ``--vectors-path``, no
+#     ``--vector-backend``, and it hard-requires ``lancedb>=0.29.0``. A memory KG
+#     whose vectors were converted to sqlite-vec cannot be read by its own CLI,
+#     so the probe passes no vector flag and the resulting failure is real
+#     signal, not a malformed command. Revisit when memory-kg gains sqlite-vec.
+_VEC_FLAGS: dict[str, tuple[str | None, str | None]] = {
+    # kind: (flag for vectors_path, flag for lancedb_path)
+    "code": ("--vectors", None),
+    "doc": ("--vectors-path", "--lancedb"),
+    "memory": (None, "--lancedb"),
+}
+
+
+def _vec_arg(kind: str, entry: KGEntry) -> str:
+    """Return the vector-store CLI argument for *entry*, or ``""`` if unrecorded.
+
+    Never returns a bare flag.  An empty value collapses under
+    :func:`shlex.split`, which makes the flag swallow the *next* token — the
+    old ``--lancedb {lancedb} -k 1`` template consumed ``-k`` exactly that way
+    for every migrated KG.  Omitting the flag instead lets each CLI apply its
+    own default layout.
+
+    :param kind: KG kind string (e.g. ``"code"``).
+    :param entry: Registry entry supplying the recorded store paths.
+    :return: Shell-quoted ``"--flag /path"``, or an empty string.
+    """
+    vec_flag, lance_flag = _VEC_FLAGS.get(kind, (None, None))
+    if vec_flag and entry.vectors_path:
+        return f"{vec_flag} {shlex.quote(str(entry.vectors_path))}"
+    if lance_flag and entry.lancedb_path:
+        return f"{lance_flag} {shlex.quote(str(entry.lancedb_path))}"
+    return ""
 
 
 def _probe_kg(entry: KGEntry) -> str | None:
@@ -109,18 +146,20 @@ def _probe_kg(entry: KGEntry) -> str | None:
     fail, only the MCP server restart is needed.
 
     :param entry: KGEntry with ``kind``, ``repo_path``, ``sqlite_path``, and
-        ``lancedb_path`` attributes.
+        ``vectors_path`` / ``lancedb_path`` attributes.
     :return: Error description string, or ``None`` if the probe passes.
     """
     kind = entry.kind.value
     tpl = _PROBE_CMD_TPL.get(kind)
     if tpl is None:
         return None  # no probe available for this kind
+    if "{sqlite}" in tpl and not entry.sqlite_path:
+        return None  # no graph recorded — nothing to probe against
 
     cmd = tpl.format(
-        sqlite=entry.sqlite_path or "",
-        lancedb=entry.lancedb_path or "",
-        repo=entry.repo_path,
+        sqlite=shlex.quote(str(entry.sqlite_path)) if entry.sqlite_path else "",
+        vec=_vec_arg(kind, entry),
+        repo=shlex.quote(str(entry.repo_path)),
     )
     try:
         result = subprocess.run(shlex.split(cmd), capture_output=True, timeout=30)

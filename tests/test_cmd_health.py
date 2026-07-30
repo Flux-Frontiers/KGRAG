@@ -15,6 +15,7 @@ from unittest.mock import MagicMock, patch
 
 from click.testing import CliRunner
 
+from kg_rag.cli.cmd_health import _build_cmd, _probe_kg
 from kg_rag.cli.main import cli
 from kg_rag.corpus_registry import CorpusRegistry
 from kg_rag.primitives import CorpusEntry, KGEntry, KGKind
@@ -119,7 +120,7 @@ class TestHealthUnbuilt:
             reg.register(entry)
 
         result = _runner().invoke(cli, ["health"] + _reg_args(db))
-        assert "codekg build" in result.output
+        assert "pycodekg build" in result.output
 
     def test_doc_kg_suggests_dockg_build(self, tmp_path):
         db = _reg_db(tmp_path)
@@ -400,7 +401,7 @@ class TestHealthFixSubprocess:
         assert result.exit_code == 0
         mock_popen.assert_called_once()
         called_cmd = mock_popen.call_args[0][0]
-        assert called_cmd[0] == "codekg"
+        assert called_cmd[0] == "pycodekg"  # renamed binary; no `codekg` since 0.14
         assert "build" in called_cmd
 
     def test_fix_shows_streaming_output(self, tmp_path):
@@ -462,7 +463,7 @@ class TestHealthFixSubprocess:
         repo.mkdir()
         # SQLite path registered but missing → stale_sqlite
         # LanceDB path registered but missing → stale_lancedb
-        # Both map to the same "codekg build --repo ..." command.
+        # Both map to the same "pycodekg build --repo ..." command.
         db_dir = repo / ".pycodekg"
         db_dir.mkdir()
         sqlite = db_dir / "graph.sqlite"
@@ -599,7 +600,7 @@ class TestHealthLanceDBProbe:
 
         data = json.loads(result.output)
         issue = next(i for i in data["issues"] if i["check"] == "stale_lancedb_probe")
-        assert "codekg build" in (issue["fix_cmd"] or "")
+        assert "pycodekg build" in (issue["fix_cmd"] or "")
 
     def test_probe_command_not_found_surfaces_issue(self, tmp_path):
         """If the module binary is not on PATH, probe surfaces a critical issue."""
@@ -630,3 +631,133 @@ class TestHealthLanceDBProbe:
         issue = next(i for i in data["issues"] if i["check"] == "stale_lancedb_probe")
         msg = issue["message"].lower()
         assert "mcp" in msg or "restart" in msg
+
+
+# ---------------------------------------------------------------------------
+# Probe command construction
+#
+# The tests above all patch _probe_kg, so none of them ever exercised the
+# command templates themselves — which is how a stale binary name (`codekg`),
+# a nonexistent flag (`--lancedb` on pycode-kg >=0.20), and a wrong short
+# option (`-k`, rejected by every module's Click CLI) survived unnoticed.
+# These assert the argv the probe would actually run.
+# ---------------------------------------------------------------------------
+
+
+class TestProbeCommandConstruction:
+    def _argv(self, entry: KGEntry) -> list[str]:
+        """Return the argv _probe_kg would execute for *entry*."""
+        with patch("subprocess.run") as run:
+            run.return_value = MagicMock(returncode=0, stderr=b"")
+            _probe_kg(entry)
+            assert run.called, "probe did not run a command"
+            return run.call_args[0][0]
+
+    def _entry(self, tmp_path: Path, kind: KGKind, **paths) -> KGEntry:
+        repo = tmp_path / f"{kind.value}-repo"
+        repo.mkdir(exist_ok=True)
+        sqlite = repo / "graph.sqlite"
+        sqlite.touch()
+        return KGEntry(
+            name=f"{kind.value}-kg",
+            kind=kind,
+            repo_path=repo,
+            venv_path=repo / ".venv",
+            sqlite_path=sqlite,
+            **paths,
+        )
+
+    # ── binary names ────────────────────────────────────────────────────────
+
+    def test_code_probe_uses_pycodekg_binary(self, tmp_path):
+        """pycode-kg ships `pycodekg`; there has been no `codekg` binary since 0.14."""
+        entry = self._entry(tmp_path, KGKind.CODE)
+        assert self._argv(entry)[0] == "pycodekg"
+
+    def test_code_build_cmd_uses_pycodekg_binary(self, tmp_path):
+        assert _build_cmd("code", tmp_path).startswith("pycodekg build")
+
+    # ── option spelling ─────────────────────────────────────────────────────
+
+    def test_no_probe_uses_short_k_option(self, tmp_path):
+        """`-k` is rejected by these Click CLIs — the long `--k` is required."""
+        for kind in (KGKind.CODE, KGKind.DOC, KGKind.MEMORY):
+            argv = self._argv(self._entry(tmp_path, kind))
+            assert "-k" not in argv, f"{kind.value}: bare -k is not a valid option"
+            assert "--k" in argv, f"{kind.value}: expected --k"
+
+    def test_code_probe_never_passes_lancedb_flag(self, tmp_path):
+        """pycode-kg >=0.20 has no --lancedb; passing it aborts the probe."""
+        entry = self._entry(tmp_path, KGKind.CODE, lancedb_path=tmp_path / "code-repo" / "lancedb")
+        assert "--lancedb" not in self._argv(entry)
+
+    # ── vector store selection ──────────────────────────────────────────────
+
+    def test_code_probe_passes_vectors_path(self, tmp_path):
+        vectors = tmp_path / "code-repo" / "vectors.sqlite"
+        entry = self._entry(tmp_path, KGKind.CODE, vectors_path=vectors)
+        argv = self._argv(entry)
+        assert "--vectors" in argv
+        assert str(vectors.resolve()) in argv
+
+    def test_doc_probe_prefers_vectors_path_over_lancedb(self, tmp_path):
+        repo = tmp_path / "doc-repo"
+        repo.mkdir(exist_ok=True)
+        vectors = repo / "vectors.sqlite"
+        entry = self._entry(
+            tmp_path, KGKind.DOC, vectors_path=vectors, lancedb_path=repo / "lancedb"
+        )
+        argv = self._argv(entry)
+        assert "--vectors-path" in argv
+        assert "--lancedb" not in argv
+
+    def test_doc_probe_falls_back_to_lancedb_when_unmigrated(self, tmp_path):
+        repo = tmp_path / "doc-repo"
+        repo.mkdir(exist_ok=True)
+        lancedb_dir = repo / "lancedb"
+        entry = self._entry(tmp_path, KGKind.DOC, lancedb_path=lancedb_dir)
+        argv = self._argv(entry)
+        assert "--lancedb" in argv
+        assert str(lancedb_dir.resolve()) in argv
+
+    def test_memory_probe_never_passes_vectors_path(self, tmp_path):
+        """memory-kg 0.6.2 is LanceDB-only — it has no --vectors-path option.
+
+        Passing one aborts the probe on "No such option". A migrated memory KG
+        gets no vector flag at all; the ensuing failure is real signal, because
+        memory-kg genuinely cannot read a sqlite-vec store.
+        """
+        repo = tmp_path / "memory-repo"
+        repo.mkdir(exist_ok=True)
+        entry = self._entry(tmp_path, KGKind.MEMORY, vectors_path=repo / "vectors.sqlite")
+        argv = self._argv(entry)
+        assert "--vectors-path" not in argv
+        assert "--vectors" not in argv
+
+    # ── the empty-value bug ─────────────────────────────────────────────────
+
+    def test_no_flag_emitted_without_a_recorded_store(self, tmp_path):
+        """A bare flag would swallow the following token under shlex.split."""
+        argv = self._argv(self._entry(tmp_path, KGKind.DOC))
+        assert "--lancedb" not in argv
+        assert "--vectors-path" not in argv
+
+    def test_every_flag_has_a_value(self, tmp_path):
+        """No flag may be followed by another flag or sit at the end of argv."""
+        for kind in (KGKind.CODE, KGKind.DOC, KGKind.MEMORY):
+            argv = self._argv(self._entry(tmp_path, kind))
+            for i, tok in enumerate(argv):
+                if tok.startswith("--") and tok != "--include-symbols":
+                    assert i + 1 < len(argv), f"{kind.value}: {tok} has no value"
+                    assert not argv[i + 1].startswith("-"), (
+                        f"{kind.value}: {tok} swallowed {argv[i + 1]}"
+                    )
+
+    def test_probe_skipped_without_sqlite_path(self, tmp_path):
+        """Nothing to probe against — must not build a command with an empty path."""
+        repo = tmp_path / "no-graph"
+        repo.mkdir(exist_ok=True)
+        entry = KGEntry(name="no-graph", kind=KGKind.DOC, repo_path=repo, venv_path=repo / ".venv")
+        with patch("subprocess.run") as run:
+            assert _probe_kg(entry) is None
+            assert not run.called
