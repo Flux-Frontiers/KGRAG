@@ -80,9 +80,43 @@ see the diary-kg correction below.
 | `tscode-kg` | 0.2.0 | none | 0 files | yes | ✅ migrated |
 | `kgmodule-utils` | 0.9.0 | `[semantic]` extra | backend seam | yes | ✅ both backends |
 | `doc-kg` | 0.19.1 | **hard** | `index.py` | yes (8 files) | 🔴 plan Phase 4 — both backends wired |
-| `diary-kg` | 0.93.4 | **hard** | 0 files | 0 files | 🟢 plan Phase 1 — see correction |
+| `diary-kg` | 0.93.4 | **hard** | 0 files | 0 files | ✅ ported on branch — **not yet published**, see below |
 | `memory-kg` | 0.6.2 | **hard** | `index.py` | **0 files** | 🟠 plan Phase 3 |
 | `Metabo_kg` | — | — | — | — | 🟡 plan Phase 2 — **not on PyPI**, unaudited here |
+
+**Phase 1 (`diary_kg`) is ported — 2026-07-30, `diary-kg` 0.94.0 on branch
+`claude/diarykg-setup-gf80dz`, not yet released to PyPI.** The row above stays at
+0.93.4 because that is still the published version; re-audit after the release.
+What landed, and what did *not*:
+
+- Vector artifact moved from the `.diarykg/lancedb/` directory to a single
+  `.diarykg/vectors.sqlite` file. DocKG's backend is **pinned** to `sqlite-vec`
+  at all three construction sites rather than left on `"auto"`, and
+  `vectors_path` is passed explicitly so the reported path is the written path.
+  A leftover `lancedb/` dir is now inert and no longer satisfies `is_built()`.
+- `diary_kg.primitives.KGEntry` gained `vectors_path` (mirroring
+  `kg_rag.primitives.KGEntry` field order); `lancedb_path` retained as
+  deprecated. `diary-transformer build` registers `vectors_path` now.
+- Direct `lancedb` dependency dropped; `doc-kg` floor lifted to `>=0.18.2` and
+  installed as `doc-kg[sqlite-vec]` — that extra is **required, not optional**,
+  since doc-kg ships the `sqlite_vec` runtime opt-in and the pinned backend
+  fails at index-open without it.
+- **The plan's Learning #2/#3 traps do not apply here, verified rather than
+  assumed.** No score recalibration was needed: both backends in this stack
+  already use cosine (`kg_utils` `LanceDBBackend` queries with
+  `.metric("cosine")`; `SqliteVecBackend` declares `distance_metric=cosine`), so
+  there is no squared-L2 → cosine factor as in `ftree_kg`. And DocKG's
+  `_META_COLUMNS` carries `kind`, the only vector-store field DiaryKG reads —
+  every other displayed field comes from the enriched SQLite `nodes` table — so
+  the blanked-output trap cannot bite.
+- **Not done, and blocking a "verified" claim:** plan step 6 (capture a same-day
+  LanceDB control, rebuild, `diff`) was **not** run — the checkout has no diary
+  corpus and no installed deps, so there was nothing to build or compare. Plan
+  step 8 (re-register with kgrag) is likewise outstanding. The suite was not
+  executed either; verification was `ruff check`/`format` clean, all files
+  compiled, and the migration invariants exercised directly with the vector
+  wiring stubbed. **Someone with the Pepys corpus must run the parity check and
+  re-register before this is trusted as done.**
 
 **Correction — `diary-kg` is not just a dead dependency.** An earlier revision of
 this section claimed dropping `lancedb` from diary-kg was "a one-line release
@@ -159,9 +193,13 @@ Two notes where the fix goes beyond the plan's prescription:
   with no extras — as is corpus_pepys, which installs
   `[synthesis,sqlite-vec]`. The work item is unchanged, just not done: drop
   `lancedb` from `[semantic]` in a future kgmodule-utils release.
-- **doc-kg / diary-kg still hard-require `lancedb>=0.29.0`** (checked 2026-07-30
-  at doc-kg 0.19.1 / diary-kg 0.93.4, filed from `corpus_pepys`). This is the
-  binding constraint for *installs*: unlike the kgmodule-utils case above, it is
+- **doc-kg still hard-requires `lancedb>=0.29.0`** (checked 2026-07-30 at doc-kg
+  0.19.1, filed from `corpus_pepys`). **diary-kg's direct pin is gone** as of
+  0.94.0 on branch — but that does not change the install picture yet, because
+  doc-kg is a hard dependency of diary-kg and still drags lancedb in
+  transitively, exactly as the plan's Learning #5 predicts. `doc_kg` Phase 4 is
+  now the sole remaining blocker on this axis.
+  This is the binding constraint for *installs*: unlike the kgmodule-utils case above, it is
   an unconditional dependency, so lancedb lands in every worker image no matter
   which extras are selected. corpus_pepys no longer *imports* lancedb anywhere
   (worker is sqlite-vec only, LanceDB fallback removed, merged as
@@ -176,8 +214,10 @@ Two notes where the fix goes beyond the plan's prescription:
   `MIGRATION-sqlite-vec.md`; the `pyproject.toml` edit is step 6 of 8 in its
   checklist, not the whole job.
 
-  Also cosmetic, and unblocked by any of the above: `diarykg build` still
-  prints a "LanceDB :" path label while writing `vectors.sqlite`.
+  ~~Also cosmetic: `diarykg build` still prints a "LanceDB :" path label while
+  writing `vectors.sqlite`.~~ **Fixed in diary-kg 0.94.0** — `build`, `reindex`
+  and `status` now print `Vectors :`, and the `diarykg-mcp` banner reports
+  `vectors`.
 - **`gutenberg_kg`'s own store is migrated** — maintainer-reported 2026-07-30 and
   corroborated by `MIGRATION-sqlite-vec.md` ("✅ own store done",
   `vector_backend="sqlite-vec"`). Its pins on `main` are
@@ -189,3 +229,16 @@ Two notes where the fix goes beyond the plan's prescription:
   state.** Note the plan's ordering dependency: gutenberg_kg's remaining lancedb
   references are it *orchestrating* other KGs' stores, so **re-audit it once
   `diary_kg` and `doc_kg` land**.
+
+  **Half of that trigger has now fired.** `diary_kg` 0.94.0 writes
+  `.diarykg/vectors.sqlite`, so gutenberg_kg's `_register_diary`
+  (`ingest.py:293-301`) is stale. Note what it actually does — it *registers*,
+  it does not build: it probes `.diarykg/lancedb` and passes
+  `lancedb_path=lancedb if lancedb.exists() else None`, with no `vectors_path`
+  at all. Against a 0.94.0 diary the probe simply misses, so every
+  gutenberg-orchestrated diary registers with **both** vector columns empty and
+  the registry loses the vector-store pointer entirely — silently, since `None`
+  is a legal value. Fix is a one-liner per the doc-family pattern: probe
+  `.diarykg/vectors.sqlite` and pass `vectors_path=`. Worth doing now rather
+  than waiting on doc_kg; `ingest.py:243-250` (`.dockg/lancedb`, same shape)
+  stays correct until `doc_kg` Phase 4.
