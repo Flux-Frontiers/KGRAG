@@ -1,33 +1,35 @@
 # KGRAG TODO
 
-## Registry schema: `KGEntry.lancedb_path` models a retired store — RESOLVED
+## Landed — no action required
 
-**Filed 2026-07-26 from `pycode_kg`. Resolved 2026-07-26 (see CHANGELOG
-`[Unreleased]`).**
+- **`KGEntry.vectors_path` is a first-class registry field** (filed 2026-07-26
+  from `pycode_kg`, resolved same day, **shipped in 0.11.0** — see CHANGELOG
+  `[0.11.0]`). Added to `KGEntry` and the schema with an in-place `_migrate()`;
+  `lancedb_path` stays readable for kinds that still ship LanceDB but is no
+  longer written for code KGs; auto-detection probes `<db_dir>/vectors.sqlite`
+  first; `CodeKGAdapter._load` reads `entry.vectors_path` directly instead of
+  guessing a sibling of `lancedb_path`; `kgrag export`/`import` bundle the
+  file-shaped store so code-KG bundles no longer ship without their vectors.
+- **Doc-family adapters can pass a non-default vector-store location**
+  (closed 2026-07-26, **shipped in 0.11.0**). `DocKGAdapter`/
+  `GutenbergKGAdapter` previously made `vectors_path` informational only for
+  doc KGs. Fixed upstream in **doc-kg 0.18.2** (`DocKG(vectors_path=...)` plus
+  `--vectors-path` on the 8 vector-touching CLI commands) and wired through
+  here; the kgrag floor is `doc-kg>=0.18.2`. `vectors_path` is now
+  authoritative for every KG kind.
 
-`KGEntry` now carries a first-class `vectors_path` (plus a `vectors_path TEXT`
-column and an in-place `_migrate()` step). All five suggested steps landed:
+## LanceDB retirement — fleet state needs re-measuring
 
-1. `vectors_path` added to `KGEntry` and the registry schema, migrated in place.
-2. `lancedb_path` stays readable for kinds that still ship LanceDB, but is no
-   longer written for code KGs; `--lancedb` deprecated in favour of `--vectors`.
-3. Auto-detection probes `<db_dir>/vectors.sqlite`, falling back to
-   `<db_dir>/lancedb` only for kinds that still use it.
-4. The sibling-derivation guess is gone from `CodeKGAdapter._load` — it reads
-   `entry.vectors_path` directly (defaulting to the standard `.pycodekg/` layout
-   when the registry has no recorded path, so pre-existing entries keep working).
-5. `kgrag export`/`import` bundle the file-shaped vector store; code-KG corpus
-   bundles no longer ship without their vectors.
+> **The figures below are from 2026-07-26 and are known stale** — the gutenberg
+> corpora have since migrated (see Remaining coordination), which invalidates
+> the largest row. **Re-run `kgrag audit-lancedb` before quoting any of it.**
+> For the *code* migration — which repo ships which backend, in what order —
+> the plan of record is `pycode_kg/MIGRATION-sqlite-vec.md`; see the audit
+> section below.
 
-## LanceDB retirement — fleet is still ~96% un-migrated
-
-`kgrag audit-lancedb` (added alongside the above) measured the real registry on
-2026-07-26: **242 of 253 KGs still have LanceDB as their live vector index**,
-holding **~2.0 GB** on disk. It is not gone — the schema work above only stopped
-kgrag *recording* it for new code KGs.
-
-> **Stale as of 2026-07-30** — the gutenberg corpora have since been migrated
-> (see Remaining coordination). Re-run the audit for real numbers.
+`kgrag audit-lancedb` measured the real registry on 2026-07-26: **242 of 253
+KGs still had LanceDB as their live vector index**, holding ~2.0 GB on disk.
+The schema work above only stopped kgrag *recording* it for new code KGs.
 
 | Status | KGs | Note |
 |---|---|---|
@@ -47,14 +49,14 @@ kgrag audit-lancedb --commands   # review, then pipe to a shell
   straight out of LanceDB, so there is **no re-embedding**.
 - code KGs have no converter; they need a `pycodekg build`.
 
-### Known gap — CLOSED 2026-07-26
-
-`DocKGAdapter`/`GutenbergKGAdapter` could not pass a non-default vector-store
-location, so `KGEntry.vectors_path` was informational only for doc-family KGs.
-Fixed upstream in **doc-kg 0.18.2** (`DocKG(vectors_path=...)`, plus a
-`--vectors-path` option on the 8 vector-touching CLI commands) and wired through
-here; the kgrag floor is now `doc-kg>=0.18.2`. `vectors_path` is authoritative
-for every KG kind.
+> **The plan of record takes the opposite line on conversion**, and it is the
+> one to follow: vector stores are derived artifacts, so
+> `MIGRATION-sqlite-vec.md` says **delete and rebuild** rather than convert.
+> Two guards it insists on first, because they are what caught `agent_kg` out:
+> capture query results *before* deleting (you cannot compare against a store
+> you removed), and reconcile `SELECT COUNT(*) FROM nodes` against
+> `backend.count()` — every `.agentkg` index had drifted 15–100%, so parity
+> looked *better* after migrating purely because the control was incomplete.
 
 ### Fleet code-migration audit — 2026-07-30
 
@@ -159,14 +161,23 @@ Two notes where the fix goes beyond the plan's prescription:
   `lancedb` from `[semantic]` in a future kgmodule-utils release.
 - **doc-kg / diary-kg still hard-require `lancedb>=0.29.0`** (checked 2026-07-30
   at doc-kg 0.19.1 / diary-kg 0.93.4, filed from `corpus_pepys`). This is the
-  binding constraint: unlike the kgmodule-utils case above, it is an
-  unconditional dependency, so lancedb lands in every worker image no matter
+  binding constraint for *installs*: unlike the kgmodule-utils case above, it is
+  an unconditional dependency, so lancedb lands in every worker image no matter
   which extras are selected. corpus_pepys no longer *imports* lancedb anywhere
   (worker is sqlite-vec only, LanceDB fallback removed, merged as
-  corpus_pepys#1), but the package is still installed. Full retirement needs
-  doc-kg/diary-kg releases that demote lancedb to an optional extra; also
-  cosmetic: `diarykg build` still prints a "LanceDB :" path label while writing
-  `vectors.sqlite`.
+  corpus_pepys#1), but the package is still installed.
+
+  **The dependency drop is an *outcome* of each repo's migration, not a
+  shortcut past it** — see the audit section above. It is tempting to read this
+  bullet as "two releases demote an extra and we are done"; that was the
+  diary-kg mistake corrected there. Per the plan, diary-kg is a real Phase-1
+  port (30 lancedb source refs, 2 `--lancedb` CLI refs, no `KGModule` seam to
+  flip) and doc-kg is Phase 4. Sequence the work from
+  `MIGRATION-sqlite-vec.md`; the `pyproject.toml` edit is step 6 of 8 in its
+  checklist, not the whole job.
+
+  Also cosmetic, and unblocked by any of the above: `diarykg build` still
+  prints a "LanceDB :" path label while writing `vectors.sqlite`.
 - **`gutenberg_kg`'s own store is migrated** — maintainer-reported 2026-07-30 and
   corroborated by `MIGRATION-sqlite-vec.md` ("✅ own store done",
   `vector_backend="sqlite-vec"`). Its pins on `main` are

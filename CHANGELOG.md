@@ -51,6 +51,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ago and 0.9.0 is current, where `lancedb>=0.19.0` is *still* in `[semantic]`.
   Also records that `gutenberg_kg` is migrated, which invalidates the
   237-gutenberg row of the 2026-07-26 audit table (now flagged stale).
+- **`TODO.md` staleness pass** — three defects that misdirected readers:
+  both "see CHANGELOG `[Unreleased]`" pointers referred to work that shipped in
+  `[0.11.0]`, so they now landed on unrelated content (the health fixes above);
+  the LanceDB-retirement heading asserted "~96% un-migrated" directly above the
+  note retracting that figure; and the doc-kg/diary-kg coordination bullet still
+  implied the migration was two dependency demotions, contradicting the
+  diary-kg correction 80 lines earlier. Finished work is now collapsed into a
+  "Landed — no action required" section instead of occupying the first third of
+  the file, and the in-place `dockg convert-index` advice carries the plan's
+  delete-and-rebuild counterpoint plus its two pre-flight guards (capture
+  queries before deleting; reconcile node count against index count).
 - **`TODO.md` fleet audit reconciled against `pycode_kg`'s
   `MIGRATION-sqlite-vec.md`** — that document is the plan of record (phases,
   per-repo effort, reference-implementation checklist) and `TODO.md` now defers
