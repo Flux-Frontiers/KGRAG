@@ -79,7 +79,7 @@ see the diary-kg correction below.
 | `agent-kg` | 0.8.2 | none | 0 files | yes | ✅ migrated — PR #9 |
 | `tscode-kg` | 0.2.0 | none | 0 files | yes | ✅ migrated |
 | `kgmodule-utils` | 0.9.0 | `[semantic]` extra | backend seam | yes | ✅ both backends |
-| `doc-kg` | 0.19.1 | **hard** | `index.py` | yes (8 files) | 🔴 plan Phase 4 — both backends wired |
+| `doc-kg` | 0.19.1 | **hard** | `index.py` | yes (8 files) | ✅ Phase 4 done on branch (0.20.0) — **not yet published** |
 | `diary-kg` | 0.93.4 | **hard** | 0 files | 0 files | ✅ ported on branch — **not yet published**, see below |
 | `memory-kg` | 0.6.2 | **hard** | `index.py` | **0 files** | 🟠 plan Phase 3 |
 | `Metabo_kg` | — | — | — | — | 🟡 plan Phase 2 — **not on PyPI**, unaudited here |
@@ -193,17 +193,37 @@ Two notes where the fix goes beyond the plan's prescription:
   with no extras — as is corpus_pepys, which installs
   `[synthesis,sqlite-vec]`. The work item is unchanged, just not done: drop
   `lancedb` from `[semantic]` in a future kgmodule-utils release.
-- **doc-kg still hard-requires `lancedb>=0.29.0`** (checked 2026-07-30 at doc-kg
-  0.19.1, filed from `corpus_pepys`). **diary-kg's direct pin is gone** as of
-  0.94.0 on branch — but that does not change the install picture yet, because
-  doc-kg is a hard dependency of diary-kg and still drags lancedb in
-  transitively, exactly as the plan's Learning #5 predicts. `doc_kg` Phase 4 is
-  now the sole remaining blocker on this axis.
-  This is the binding constraint for *installs*: unlike the kgmodule-utils case above, it is
-  an unconditional dependency, so lancedb lands in every worker image no matter
-  which extras are selected. corpus_pepys no longer *imports* lancedb anywhere
-  (worker is sqlite-vec only, LanceDB fallback removed, merged as
-  corpus_pepys#1), but the package is still installed.
+- ~~**doc-kg still hard-requires `lancedb>=0.29.0`**~~ — **RESOLVED on branch,
+  doc-kg 0.20.0 (Phase 4), not yet published.** This was the binding constraint
+  for *installs*: an unconditional dependency, so lancedb landed in every worker
+  image regardless of extras, and every sibling depending on doc-kg (diary-kg,
+  gutenberg-kg, corpus_pepys) inherited it no matter what it declared itself.
+
+  0.20.0 drops it to an optional `[lancedb]` extra needed **only** to read a
+  pre-0.20.0 store via `dockg convert-index` — nothing is stranded, and the
+  converter still reads vectors straight out of LanceDB with no re-embedding.
+  `vector_backend` now defaults to `"sqlite-vec"` instead of `"auto"`, and
+  `SemanticIndex`'s implicit backend is sqlite-vec rather than LanceDB.
+
+  Verified in the regenerated lock rather than asserted: `lancedb` is
+  `optional = true` with `markers = extra == "lancedb"`, `sqlite-vec` is
+  `optional = false`, and `[extras]` reads `lancedb = ["lancedb"]` /
+  `sqlite-vec = []` with `all` free of lancedb.
+
+  Two things to carry forward:
+
+  * **The `[sqlite-vec]` extra is retained as an empty no-op alias**, because
+    diary-kg >=0.94.0 pins `doc-kg[sqlite-vec]`. Deleting it would fail every
+    diary-kg install on an unknown extra. Do not "clean it up".
+  * **kgmodule-utils is now the only remaining source.** `[semantic]` still
+    carries `lancedb>=0.19.0` (see the bullet above). doc-kg depends on bare
+    `kgmodule-utils>=0.9.0` with no extras, so nothing here reintroduces it —
+    but anything installing `kgmodule-utils[semantic]` still gets it. That work
+    item is unchanged and is now the last one on this axis.
+
+  corpus_pepys no longer *imports* lancedb anywhere (worker is sqlite-vec only,
+  LanceDB fallback removed, merged as corpus_pepys#1); after doc-kg 0.20.0 is
+  published it should stop being *installed* there too.
 
   **The dependency drop is an *outcome* of each repo's migration, not a
   shortcut past it** — see the audit section above. It is tempting to read this
@@ -239,6 +259,24 @@ Two notes where the fix goes beyond the plan's prescription:
   gutenberg-orchestrated diary registers with **both** vector columns empty and
   the registry loses the vector-store pointer entirely — silently, since `None`
   is a legal value. Fix is a one-liner per the doc-family pattern: probe
-  `.diarykg/vectors.sqlite` and pass `vectors_path=`. Worth doing now rather
-  than waiting on doc_kg; `ingest.py:243-250` (`.dockg/lancedb`, same shape)
-  stays correct until `doc_kg` Phase 4.
+  `.diarykg/vectors.sqlite` and pass `vectors_path=`.
+
+  **Correction — the book path was broken too, and had been for longer.** An
+  earlier revision of this bullet said `ingest.py:243-250` (`register_book`,
+  `.dockg/lancedb`, same shape) "stays correct until `doc_kg` Phase 4." That was
+  wrong, and waiting on doc_kg would have left the larger half of the bug in
+  place. `build_dockg` constructs `DocKG(book_dir, embedder=...)` with **no
+  `vector_backend`**, leaving it on `"auto"` — which already resolved to
+  sqlite-vec for a fresh corpus. So every freshly built book was already writing
+  `.dockg/vectors.sqlite` and registering nothing, entirely independent of
+  diary_kg. The lesson generalises: `auto` had *silently migrated* call sites
+  well before any repo declared itself migrated, so "this reference is still
+  correct" cannot be inferred from a repo's stated migration status — check what
+  the builder actually writes.
+
+  **Both are fixed**, along with two more sites of the same defect in
+  `serve/handler.py`'s bootstrap (the DocKG bundle entry passed its LanceDB dir
+  *unconditionally*, recording a directory that need not exist). All four now
+  share `gutenberg_kg.vector_store.resolve_vector_paths()`, whose precedence
+  deliberately matches `handler._open_vector_source` — the defect was the read
+  path and the register path disagreeing.
