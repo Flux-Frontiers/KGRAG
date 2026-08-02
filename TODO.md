@@ -81,8 +81,8 @@ see the diary-kg correction below.
 | `kgmodule-utils` | 0.9.0 | `[semantic]` extra | backend seam | yes | ✅ both backends |
 | `doc-kg` | 0.19.1 | **hard** | `index.py` | yes (8 files) | ✅ Phase 4 done on branch (0.20.0) — **not yet published** |
 | `diary-kg` | 0.93.4 | **hard** | 0 files | 0 files | ✅ ported on branch — **not yet published**, see below |
-| `memory-kg` | 0.6.2 | **hard** | `index.py` | **0 files** | 🟠 plan Phase 3 |
-| `Metabo_kg` | — | — | — | — | 🟡 plan Phase 2 — **not on PyPI**, unaudited here |
+| `memory-kg` | 0.6.2 | **hard** | `index.py` | **0 files** | ✅ Phase 3 done on branch (0.7.0) — **not yet published** |
+| `metabo-kg` | — | — | — | — | ✅ Phase 2 **merged to main** (0.10.0) — not on PyPI, unaudited here |
 
 **Phase 1 (`diary_kg`) is ported — 2026-07-30, `diary-kg` 0.94.0 on branch
 `claude/diarykg-setup-gf80dz`, not yet released to PyPI.** The row above stays at
@@ -118,6 +118,65 @@ What landed, and what did *not*:
   wiring stubbed. **Someone with the Pepys corpus must run the parity check and
   re-register before this is trusted as done.**
 
+**Phase 2 (`Metabo_kg`) is merged to main — 2026-08-02, v0.10.0.** The vector
+artifact moved to `.metabokg/vectors.sqlite`; `MetaKG(lancedb_dir=)` became
+`MetaKG(vectors_path=)` and the LanceDB-only `table` parameter is gone;
+`--lancedb` → `--vectors` on 8 commands; `METABOKG_LANCEDB` → `METABOKG_VECTORS`.
+Distances went squared-L2 → cosine (the table was created without an explicit
+metric), so raw `_distance` roughly halves; nothing in `src/` derived a score
+from it. **Two bugs the port introduced, both now covered:** a cached backend
+made any `build` after a `build --wipe` fail with `UNIQUE constraint failed:
+vec_meta.id`, and `stats()` on an unbuilt index *created* a zero-row store that
+then read as "built" to every `.exists()` probe. Five further pre-existing bugs
+were found by the same sweep and fixed — see the repo CHANGELOG `[0.10.0]`.
+**Still outstanding: the parity control (plan step 6) and kgrag re-registration
+(step 8)** — the CI checkout has no corpora and no embedding model, so there was
+nothing to compare.
+
+**Phase 3 (`memory_kg`) is ported — 2026-08-02, `memory-kg` 0.7.0 on branch
+`claude/diarykg-setup-gf80dz`, not yet released to PyPI.** The 738-line
+`index.py` fork was ported in place rather than collapsed to a re-export shim:
+it is not a thin wrapper over `kg_utils.SemanticIndex` but carries streaming
+page-wise embedding, a pre-allocated chunk-vector matrix, and the SIMILAR_TO
+discovery pass — all domain logic the plan's Learning #1 says to keep. What the
+port had to get right, and what it found:
+
+- **`_META_COLUMNS` must carry `title` and `file_path`.** `search()` reads both
+  off every hit *and* prefilters on `file_path` (the `haystack_files` argument
+  that makes LongMemEval retrieval apples-to-apples). The backend's default
+  column set has neither, so a default-configured port returns blank titles and
+  filters on a column that does not exist. This is Learning #2, and it bites
+  harder here than anywhere else in the fleet.
+- **Squared L2 → cosine**, same as `ftree_kg`: the table was created with no
+  explicit metric. No score formula consumes the distance, so nothing to
+  recalibrate — raw `_distance` values just halve.
+- **The `--table` flag and `table` parameter are gone**, being LanceDB-only.
+  Removing them left a dangling `{table}` in a `build-index` banner — ruff's
+  F821 caught it, which is exactly the latent-`NameError` the plan's Learning
+  #11 warns a bulk rename produces.
+- **`scripts/install-skill.sh` probed the store with `-d` and `ls -A`** —
+  correct for a directory, wrong for a file. After the rename it would report
+  every existing store as missing and every successful build as failed.
+- **The Streamlit app read `DOCKG_LANCEDB`**, a copy-paste from doc_kg, so
+  MemoryKG's own env var never applied. Now `MEMORYKG_VECTORS`.
+
+**A hypothesis worth recording because it turned out false.** memory_kg's
+`search()` calls `.where(...)` without `prefilter=True`, while `kg_utils`'s
+`LanceDBBackend` passes it explicitly — which looked like a post-filter bug that
+the port would silently fix (and would have explained any "results improved"
+observation). Checked against the actual wheel: `prefilter` has defaulted to
+**True** in lancedb for many versions, so both paths already prefiltered.
+memory_kg also builds **no ANN index**, so its LanceDB search was already an
+exact flat scan. **There is therefore no known retrieval-quality reason for
+results to change** — which means if a benchmark *does* move after this port,
+the plan's Learning #8 applies: treat it as evidence of index drift in the
+control, not as a win. Reconcile `SELECT COUNT(*) FROM nodes` against
+`backend.count()` before believing it.
+
+**Not done, same two gaps as every other phase:** no parity control (step 6) and
+no kgrag re-registration (step 8). 298 tests pass, 29 of them new and
+mutation-tested, but the checkout has no memory corpus to build.
+
 **Correction — `diary-kg` is not just a dead dependency.** An earlier revision of
 this section claimed dropping `lancedb` from diary-kg was "a one-line release
 with no code change", on the basis that the published wheel contains zero
@@ -133,13 +192,18 @@ docs — prefer the plan's repo-level counts.**
 
 What the package audit does add, being 2 days newer than the plan:
 
-1. **`memory-kg` 0.6.2's CLI has no sqlite-vec surface at all** — no
-   `--vectors-path`, no `--vector-backend`, and it hard-requires
-   `lancedb>=0.29.0`. So until plan Phase 3 lands, **do not convert a memory
-   KG's vectors**: memory-kg cannot read the result. (The plan adds a caveat
-   worth heeding first — memory_kg resolves `kgmodule-utils` via a **path
-   dependency**, so confirm which checkout it uses before assuming it even has
-   the 0.8.0 backend seam.)
+1. **`memory-kg` 0.6.2's CLI had no sqlite-vec surface at all** — no
+   `--vectors-path`, no `--vector-backend`, and it hard-required
+   `lancedb>=0.29.0`. **Superseded: Phase 3 is ported on branch (0.7.0).**
+   Until that is *published*, the 0.6.2 wheel still cannot read a converted
+   store, so the "do not convert a memory KG's vectors" advice holds for
+   anyone on PyPI. **Two corrections to the caveats that were attached here:**
+   the path dependency is **commented out** in `pyproject.toml` (line 43-44) —
+   memory_kg resolves `kgmodule-utils>=0.9.0` from PyPI like everything else,
+   so there was nothing to confirm; and the plan's *"`SemanticIndex`
+   constructed in two places (`index.py:193`, `kg.py:439`)"* over-counts — the
+   `index.py` hit is a **docstring example**, so there is exactly one real
+   construction site.
 2. **`doc-kg` 0.19.1 already ships `--vectors-path` and `--vector-backend auto`**
    on its vector-touching CLI commands. The plan (Phase 4) notes doc_kg is the
    one repo where *keeping* LanceDB is defensible, since `index.py` needs it to
@@ -169,6 +233,9 @@ Two notes where the fix goes beyond the plan's prescription:
   `--vectors-path` — the flag is chosen from whichever path the registry
   records, so it is correct both before and after doc_kg's Phase 4. **`memory`
   deliberately still passes `--lancedb`**, per plan Phase 3 being outstanding.
+  **This now needs updating**: memory_kg 0.7.0 renames the flag to `--vectors`,
+  so `cmd_health.py`'s `memory` template should follow it once 0.7.0 is
+  published — the same treatment `doc` already received.
 - Two further defects in those templates were unrelated to backends and hit
   every kind regardless of migration state: `-k` is not a valid option on any of
   these Click CLIs (only `--k`), and interpolating an empty `--lancedb` value
