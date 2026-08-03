@@ -62,9 +62,9 @@ requirements, and Dockerfile ARGs. These must agree within a repo.
 | `diary-kg` | pyproject core | `>=0.96.0` |
 | `diary-kg` | runpod/requirements.txt | `>=0.96.0` |
 | `diary-kg` | docker/Dockerfile ARG | `==0.96.0` |
-| `doc-kg` | pyproject core | `>=0.20.0` |
-| `doc-kg` | runpod/requirements.txt | `>=0.20.0` |
-| `doc-kg` | docker/Dockerfile ARG | `==0.20.0` |
+| `doc-kg` | pyproject core | `>=0.21.1` |
+| `doc-kg` | runpod/requirements.txt | `>=0.21.1` |
+| `doc-kg` | docker/Dockerfile ARG | `==0.21.1` |
 | `kg-rag` | pyproject [kgdeps] | `>=0.11.0` |
 | `kg-rag` | pyproject [full] | `>=0.11.0` |
 | `kg-rag` | pyproject [all] | `>=0.11.0` |
@@ -141,4 +141,6 @@ requirements, and Dockerfile ARGs. These must agree within a repo.
 
 ## Drift
 
+- ❌ gutenberg_kg: pyproject core requires doc-kg>=0.21.1 but PyPI has 0.21.0
+- ❌ gutenberg_kg: runpod/requirements.txt requires doc-kg>=0.21.1 but PyPI has 0.21.0
 - ❌ corpus_pepys: pins kgmodule-utils==0.4.3 but its own pyproject requires >=0.6.2
