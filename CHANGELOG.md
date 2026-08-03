@@ -46,6 +46,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`runpod/requirements.txt` now declares `kgmodule-utils>=0.10.0`.** It was
+  only ever pulled in transitively by doc-kg, and an undeclared transitive is
+  exactly how the published `egsuchanek/kgrag-worker:latest` ended up shipping
+  **0.2.4** while the fleet sat at 0.10.0 — alongside `doc-kg 0.14.0` and
+  `kg-rag 0.7.0`. That stale `kg-rag` predates `KGEntry.vectors_path` and
+  crash-looped the corpus_pepys worker at registry bootstrap, since it derives
+  from this base. `scripts/fleet_versions.py` did not catch it: it compares
+  declared constraints across pyproject/requirements/Dockerfile ARGs, so a
+  package named in *no* manifest is invisible to it, and the check passed clean
+  the whole time. The `[semantic]` extra still arrives via doc-kg; nothing in
+  the worker needs the others.
+- `runpod/requirements.txt`: recorded **why `lancedb` stays**. doc-kg ≥0.18.2
+  moved its own vectors to sqlite-vec, which makes the dependency look
+  vestigial, but `runpod/handler.py` registers the Gutenberg and MetaboKG
+  entries with `lancedb_path=` and neither package declares `lancedb` itself —
+  this line is the only thing installing it. The volume-mounted Gutenberg and
+  Metabo indices remain LanceDB-backed.
+- `FLEET_VERSIONS.md` regenerated (`--write`): picks up the new constraint row,
+  and `metabo-kg` 0.10.0 → 0.11.0 from that repo's release earlier today.
 - **`TODO.md` corrections** — the kgmodule-utils note cited 0.7.0 as the
   version "planning" to split `lancedb` out of `[semantic]`; 0.7.0 shipped long
   ago and 0.9.0 is current, where `lancedb>=0.19.0` is *still* in `[semantic]`.
