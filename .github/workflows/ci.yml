@@ -98,3 +98,62 @@ jobs:
 
       - name: Run tests
         run: poetry run pytest
+
+  wheel:
+    name: Installed CLI
+    runs-on: ubuntu-latest
+    # Guards the one thing the other jobs structurally cannot see. lint,
+    # type-check and test all run against the source tree with
+    # pythonpath = ["src"], so they pass even when the built wheel is missing
+    # modules the CLI imports, or when a dependency is declared in a form PyPI
+    # strips from wheel metadata. ia-kg 0.1.0 shipped exactly that way: green
+    # CI, and every console script dead on `pip install`.
+    #
+    # This builds the artifact users actually receive, installs it somewhere
+    # with no source tree in sight, and loads every console-script entry point.
+    # entry_point.load() imports the module and resolves the attribute without
+    # calling it -- so an MCP server entry point is verified, not started.
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+
+      - name: Build wheel
+        run: poetry build
+
+      - name: Install the wheel into a clean venv
+        run: |
+          python -m venv /tmp/smoke
+          /tmp/smoke/bin/pip install --quiet dist/*.whl
+
+      - name: Load every console-script entry point
+        run: |
+          cd /tmp
+          /tmp/smoke/bin/python - <<'PY'
+          import importlib.metadata as md
+          import sys
+
+          eps = [e for e in md.distribution("kg-rag").entry_points
+                 if e.group == "console_scripts"]
+          if not eps:
+              sys.exit("no console scripts found in the installed distribution")
+
+          failed = []
+          for e in sorted(eps, key=lambda e: e.name):
+              try:
+                  e.load()
+                  print(f"  ok    {e.name} -> {e.value}")
+              except Exception as exc:
+                  failed.append(e.name)
+                  print(f"  FAIL  {e.name} -> {e.value}\n        {type(exc).__name__}: {exc}")
+          if failed:
+              sys.exit(f"\n{len(failed)} console script(s) unusable when installed: "
+                       + ", ".join(failed))
+          print(f"\nall {len(eps)} console scripts load from a clean install")
+          PY
