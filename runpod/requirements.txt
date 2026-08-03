@@ -3,7 +3,7 @@
 # from local wheels by build_image.sh before docker build runs.
 
 runpod>=1.7.0
-doc-kg>=0.15.2
+doc-kg>=0.21.0
 sentence-transformers>=5.4.1
 lancedb>=0.29.0
 numpy>=1.24.0
