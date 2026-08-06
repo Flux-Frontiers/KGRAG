@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`docs/MCP_MIGRATION.md`** — fleet migration plan for the MCP `2026-07-28`
+  specification and the `mcp` 2.0.0 Python SDK, both published 2026-07-28. Records
+  the verdict (**hold on `mcp` 1.x**; every repo already pins `mcp>=1.0.0,<2`, and
+  the v1 line remains maintained at 1.29.0), the inventory of all 17 repos grouped
+  by what they import, a phased plan, and the triggers that would pull the work
+  forward — none of which have fired. The spec's stateless rewrite is a non-event
+  for this fleet: every KG server is a plain stdio tool server and none uses
+  Sampling, Roots, Logging notifications, elicitation or resource subscriptions,
+  which is the whole set of newly-deprecated features. The work is the SDK rename
+  (`mcp.server.fastmcp` deleted; `FastMCP` → `MCPServer`), a two-line diff for six
+  repos and a handler-registration rewrite for KGRAG and `agent_kg`. SDK claims are
+  verified against the published wheels rather than release notes; the method is
+  recorded in the doc. Summarised in `TODO.md`, which also carries the one
+  time-sensitive item: `--transport sse` is now formally deprecated and should be
+  replaced by `streamable-http`, which needs no v2.
+
 ### Fixed
 
 - **`kgrag health` probed every code/doc/memory KG with a broken command**

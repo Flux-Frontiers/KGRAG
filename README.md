@@ -150,6 +150,7 @@ Tools span three groups: **core KG** (`kgrag_stats`, `kgrag_list`, `kgrag_info`,
 | [Usage Guide](docs/USAGE.md) | Workflows, patterns, and examples |
 | [CLI Reference](docs/CLI_REFERENCE.md) | Complete command reference |
 | [MCP Reference](docs/MCP.md) | Tool reference and agent configuration |
+| [MCP Migration Plan](docs/MCP_MIGRATION.md) | Fleet plan for the 2026-07-28 spec and `mcp` SDK 2.0 |
 | [Adapter Spec](docs/ADAPTER_SPEC.md) | Five-method protocol for new backends |
 | [Troubleshooting](docs/TROUBLESHOOTING.md) | Common issues and fixes |
 

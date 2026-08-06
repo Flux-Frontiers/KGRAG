@@ -18,6 +18,56 @@
   here; the kgrag floor is `doc-kg>=0.18.2`. `vectors_path` is now
   authoritative for every KG kind.
 
+## MCP 2026-07-28 / SDK v2 — hold on `mcp` 1.x, one item to do now
+
+> Filed 2026-08-06. **Plan of record: `docs/MCP_MIGRATION.md`.** Read it before
+> touching any `mcp` pin or MCP server in the fleet.
+
+Two things landed on 2026-07-28: the `2026-07-28` specification (MCP is now
+stateless — no `initialize` handshake, no `Mcp-Session-Id`) and the `mcp` 2.0.0
+Python SDK, which **deleted `mcp.server.fastmcp`** (`FastMCP` → `MCPServer` at
+`mcp.server.mcpserver`) and replaced the low-level `@server.list_tools()` /
+`@server.call_tool()` decorators with `on_list_tools=` / `on_call_tool=`
+constructor handlers taking `(ctx, params)`.
+
+**Nothing in the fleet is broken and nothing needs to move.** Every repo already
+pins `mcp>=1.0.0,<2`, so installs resolve to the still-maintained v1 line
+(1.29.0, published the same day as 2.0.0). Every KG server we ship is a plain
+stdio tool server, and none uses Sampling, Roots, Logging notifications,
+elicitation, resource subscriptions or `Context` injection — which is the entire
+set of newly-deprecated features. **The spec rewrite is a non-event here; the
+SDK rename is the work**, and for Group A it is a two-line diff.
+
+- **Do now — retire `--transport sse`.** `doc_kg`, `memory_kg`, `diary_kg`,
+  `pycode_kg` and `tscode_kg` all declare `choices=["stdio", "sse"]`. HTTP+SSE
+  is now formally Deprecated under the new 12-month lifecycle policy, and
+  `streamable-http` already works on `mcp` 1.x — this needs no v2 and is the
+  only time-sensitive item in the plan. Keep `sse` as a hidden warning alias.
+- **Do now — canary CI.** A non-blocking job per MCP-bearing repo that installs
+  `mcp==2.0.*` and runs `tests/test_mcp_server.py`. It fails today by design;
+  it is the tripwire telling us when the rename is all that is left.
+- **Do not bump the `<2` bounds.** They are working as designed. The floor may
+  go to `mcp>=1.29,<2`, but only after reading 1.29.0's release notes.
+- **KGRAG is Group B**, the only real engineering alongside `agent_kg`.
+  `src/kg_rag/mcp_server.py` uses the low-level `Server` with decorator
+  registration, so the port is a signature change plus wrapping returns in
+  `CallToolResult` — the 22 tool bodies do not move. `tests/test_mcp_server.py`
+  asserts on that same shape and goes with it. Sketch in the plan doc, §Phase 3.
+- **`gutenberg_kg` waits on FastMCP 4** going stable (4.0.0b1 shipped
+  2026-07-28; the `>=3,<4` pin currently resolves to 3.4.6).
+
+The real risk when we do move is dependency resolution, not code: `mcp` 2.0
+brings `httpx2`, `pydantic>=2.12`, `opentelemetry-api` and `jsonschema`, against
+`httpx<1.0` on the v1 line. Pilot on a 4-tool repo (`doc_kg` or `memory_kg`) and
+resolve the lockfile there before touching the 19-tool servers.
+
+**Triggers that would pull this forward** — none fired as of 2026-08-06: `mcp`
+1.x losing security support; a Claude client requiring the 2026-07-28 era (the
+rollout is announced but undated, and clients must fall back for earlier-era
+stdio servers); wanting Tasks / MRTR / MCP Apps; or serving a KG over
+horizontally-scaled Streamable HTTP, which is the actual payoff of statelessness
+and irrelevant while everything is stdio.
+
 ## LanceDB retirement — fleet state needs re-measuring
 
 > **The figures below are from 2026-07-26 and are known stale** — the gutenberg
