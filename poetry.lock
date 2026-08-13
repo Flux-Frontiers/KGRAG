@@ -1471,14 +1471,14 @@ files = [
 
 [[package]]
 name = "doc-kg"
-version = "0.21.0"
+version = "0.21.1"
 description = "A tool to build a semantically searchable knowledge graph from markdown and text documents"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "doc_kg-0.21.0-py3-none-any.whl", hash = "sha256:5198a82a4005e7bdaa424f82c0c79a96d94747acd11b9ac72ebe7feeec0b3e20"},
-    {file = "doc_kg-0.21.0.tar.gz", hash = "sha256:231fd5939dbc75f69241e5659f1796e12b0945e619bf41931274b0960aa21611"},
+    {file = "doc_kg-0.21.1-py3-none-any.whl", hash = "sha256:1853b2b0a896c0997a60743566209f8065ba8f9c9c8ac8de2a5af3be235a1fc2"},
+    {file = "doc_kg-0.21.1.tar.gz", hash = "sha256:e806852c723bc278dbe648c14bc2b40a3f3240c879818bc4a3b521edeabb6614"},
 ]
 markers = {main = "extra == \"kg\" or extra == \"all\""}
 
@@ -1840,27 +1840,27 @@ tqdm = ["tqdm"]
 
 [[package]]
 name = "ftree-kg"
-version = "0.9.0"
+version = "0.11.0"
 description = "KGModule for file tree knowledge graphs"
 optional = true
 python-versions = "<3.14,>=3.12"
 groups = ["main"]
 markers = "extra == \"kg\" or extra == \"all\""
 files = [
-    {file = "ftree_kg-0.9.0-py3-none-any.whl", hash = "sha256:2dd428daf3a36947eb1f816f8fa421b26c53e99aab9cf742c1a3097e224fb56a"},
-    {file = "ftree_kg-0.9.0.tar.gz", hash = "sha256:8a937d761991df96a9e9f7dfca6e05c14e86d9323caa536d7b795348ce1a8a19"},
+    {file = "ftree_kg-0.11.0-py3-none-any.whl", hash = "sha256:78bd468df4fd7dac038dda4677ad9d00316f5f9bef25cee6ffbd3316b072fda3"},
+    {file = "ftree_kg-0.11.0.tar.gz", hash = "sha256:d79ea79f79e72c46040c238dc95dd5b12afa9acccf49ec49fe43904be6dde4fd"},
 ]
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = {version = ">=0.8.0", extras = ["semantic", "sqlite-vec"]}
+kgmodule-utils = {version = ">=0.9.0", extras = ["semantic", "sqlite-vec"]}
 pillow = ">=10.0.0"
-rich = ">=13.0.0"
+rich = ">=13.0.0,<15.0.0"
 
 [package.extras]
-all = ["detect-secrets (>=1.5.0)", "doc-kg (>=0.18.1)", "pre-commit (>=4.5.1)", "pycode-kg (>=0.20.0)", "pylint (>=4.0.5)", "pytest (>=8.0.0)", "pytest-cov (>=5.0.0)", "ruff (>=0.4.0)", "ty (>=0.0.41)"]
+adapter = ["kg-rag (>=0.11.0)"]
+all = ["detect-secrets (>=1.5.0)", "pre-commit (>=4.5.1)", "pylint (>=4.0.5)", "pytest (>=8.0.0)", "pytest-cov (>=5.0.0)", "ruff (>=0.4.0)", "ty (>=0.0.41)"]
 dev = ["detect-secrets (>=1.5.0)", "pre-commit (>=4.5.1)", "pylint (>=4.0.5)", "pytest (>=8.0.0)", "pytest-cov (>=5.0.0)", "ruff (>=0.4.0)", "ty (>=0.0.41)"]
-kgdeps = ["doc-kg (>=0.18.1)", "pycode-kg (>=0.20.0)"]
 
 [[package]]
 name = "gitdb"
@@ -2558,18 +2558,18 @@ markers = {main = "extra == \"viz3d\" or extra == \"all\""}
 
 [[package]]
 name = "kgmodule-utils"
-version = "0.10.0"
+version = "0.12.0"
 description = "Shared types, graph store, semantic index, and pipeline base for the KGModule SDK"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "kgmodule_utils-0.10.0-py3-none-any.whl", hash = "sha256:765279f44cf754cf9256ddeab0eee4bb462f1028af3417eb321f7ef3ad1aa8a0"},
-    {file = "kgmodule_utils-0.10.0.tar.gz", hash = "sha256:b06a36c4674d2c308a776c6246f0519d99804fbd32e1901cd02fa240449baf24"},
+    {file = "kgmodule_utils-0.12.0-py3-none-any.whl", hash = "sha256:87cc05115de8b41469c0c05b09f2a07667f10cb332e6f35548c15076d1cd771d"},
+    {file = "kgmodule_utils-0.12.0.tar.gz", hash = "sha256:c366e725f4c49f5640433379f1f314a9c093c59a02e2a8e105cd1c640347556f"},
 ]
 
 [package.dependencies]
-numpy = {version = ">=1.24.0", optional = true, markers = "extra == \"semantic\""}
+numpy = {version = ">=1.24.0", optional = true, markers = "extra == \"semantic\" or extra == \"viz3d\""}
 rich = {version = ">=13.0.0,<15.0.0", optional = true, markers = "extra == \"semantic\""}
 sentence-transformers = {version = ">=5.4.1", optional = true, markers = "extra == \"semantic\""}
 sqlite-vec = {version = "0.1.9", optional = true, markers = "extra == \"semantic\" or extra == \"sqlite-vec\""}
@@ -2583,6 +2583,7 @@ sqlite-vec = ["sqlite-vec (==0.1.9)"]
 synthesis = ["httpx (>=0.27.0)", "openai (>=1.30.0)", "pillow (>=10.0.0)"]
 synthesis-mflux = ["httpx (>=0.27.0)", "mflux (>=0.9.0)", "openai (>=1.30.0)", "pillow (>=10.0.0)"]
 viz = ["pyvis (>=0.3.2)"]
+viz3d = ["numpy (>=1.24.0)"]
 
 [[package]]
 name = "kiwisolver"
@@ -4818,20 +4819,20 @@ files = [
 
 [[package]]
 name = "pycode-kg"
-version = "0.21.4"
+version = "0.22.0"
 description = "A tool to build a searchable knowledge graph from Python repositories"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "pycode_kg-0.21.4-py3-none-any.whl", hash = "sha256:bcca9ed8e4c276d513af8da7b0726e8ba2cd36e8f18632a4f1940ad710a9e0f0"},
-    {file = "pycode_kg-0.21.4.tar.gz", hash = "sha256:2a94e9dd62d1c745f27ea371c03a8e69275992ebf7e6dcd1faf29cd042f73150"},
+    {file = "pycode_kg-0.22.0-py3-none-any.whl", hash = "sha256:c164193b20116ab845fb9467e65e32b92fcc77922cab037b3afae2f2c5efbe0e"},
+    {file = "pycode_kg-0.22.0.tar.gz", hash = "sha256:631ad04fc9b5a750f09b7a2189b0be2855d1fcdcb8b4ab6c665e3d64f64af96f"},
 ]
 markers = {main = "extra == \"kg\" or extra == \"all\""}
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = {version = ">=0.10.0", extras = ["semantic"]}
+kgmodule-utils = {version = ">=0.11.0", extras = ["semantic", "viz3d"]}
 mcp = ">=1.0.0,<2"
 networkx = ">=3.0"
 numpy = ">=1.24.0"
@@ -8118,4 +8119,4 @@ viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "9684355abba63834e4ef1df7ba88d25289ec917fad8d1ebdd656ee98e78d153c"
+content-hash = "823a634dd9e19d7992c904e2833567ea2a68e4d16c8f29f1b662170aeedfa8a9"

@@ -128,10 +128,10 @@ llama-cpp-python = { version = ">=0.3.0", optional = true }
 
 
 # our own adaptors (PyPI-only; git-only adapters installed separately via uv)
-kgmodule-utils = ">=0.10.0"
-pycode-kg = {version = ">=0.21.4", optional=true}
-doc-kg = {version = ">=0.21.0", optional=true}
-ftree-kg = {version = ">=0.9.0", optional=true}
+kgmodule-utils = ">=0.12.0"
+pycode-kg = {version = ">=0.22.0", optional=true}
+doc-kg = {version = ">=0.21.1", optional=true}
+ftree-kg = {version = ">=0.11.0", optional=true}
 diary-kg  = {version = ">=0.96.0", optional = true}
 jupyter-server = ">=2.18.0"
 mistune = ">=3.2.1"
@@ -184,8 +184,8 @@ pip-audit = "^2.10.0"
 # right arguments, and a mocked-out import cannot show that it does. Installed
 # here so the suite exercises the real classes. The marginal cost is small —
 # sentence-transformers already pulls the torch/transformers stack.
-pycode-kg = ">=0.21.4"
-doc-kg = ">=0.21.0"
+pycode-kg = ">=0.22.0"
+doc-kg = ">=0.21.1"
 
 
 [tool.poetry.scripts]
