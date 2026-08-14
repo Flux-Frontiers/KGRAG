@@ -17,6 +17,7 @@ authors:
     affiliation: "Flux-Frontiers"
 version: "0.12.0"
 date-released: "2026-08-14"
+doi: "10.5281/zenodo.20018524"
 license-url: "https://www.elastic.co/licensing/elastic-license"
 repository-code: "https://github.com/Flux-Frontiers/KGRAG"
 url: "https://github.com/Flux-Frontiers/KGRAG"
