@@ -7,7 +7,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **The Jupyter notebook stack is no longer installed — by anything**
+  (`pyproject.toml`). `jupyter-server >=2.18.0` and `mistune >=3.2.1` were
+  declared as *non-optional* dependencies with no comment, so every install —
+  including a headless CLI one with no extras — pulled a notebook server.
+  Confirmed in a no-extras venv, where both reported `Required-by: kg-rag`
+  while PyVista itself was absent.
+
+  Neither is imported anywhere in `src/`. They were floor pins on packages that
+  arrive transitively through `pyvista[jupyter]`
+  (`jupyter-server-proxy` → `jupyter-server`, `nbconvert` → `mistune`) — the
+  shape of a security bump on a transitive dependency, though nothing in the
+  repo records that intent.
+
+  The `jupyter` extra is dropped from PyVista in both the optional dependency
+  and the `viz3d` group, and the two pins are deleted rather than relocated:
+  no module calls `pv.set_jupyter_backend()`, `trame` appears nowhere in
+  `src/`, and 3D rendering is Qt-based via `pyvistaqt.QtInteractor`
+  (`viz.py:57`). Re-add the extra alongside code that actually drives PyVista
+  from a notebook.
+
+  **56 packages leave the lock, none are added** (262 → 206): the whole
+  jupyter/ipywidgets/nbconvert tree plus `trame`, `trame-server` and
+  `trame-vuetify`. Core runtime dependencies drop from 12 to 10. `trame-vtk`
+  and `pyvista` stay in `viz3d`, and all seven extras are unchanged. Verified
+  against the built wheel — metadata carries no jupyter/mistune requirement,
+  and all 14 console scripts still load from a clean venv install of it, where
+  `jupyter_server`, `mistune` and `nbconvert` are absent. Suite unchanged at
+  497 passed.
+
+- **`pip` is no longer a runtime dependency** (`pyproject.toml`). `pip = "^26.0.1"`
+  was declared alongside the real dependencies, so every `pip install kg-rag`
+  carried a version constraint on the installer itself — a needless resolution
+  constraint on consumer environments, and one that could conflict with
+  whatever pip the target environment already has. Nothing imports it: the only
+  `pip` occurrences in `src/` are error-message strings telling users what to
+  install. It remains a `dev` dependency (pip-audit needs it), so the lock diff
+  is a single line moving it from `groups = ["main", "dev"]` to
+  `groups = ["dev"]`.
+
+  Verified: the built wheel's metadata drops `Requires-Dist: pip` (26 entries
+  remain, extras unchanged), and all 14 console scripts still load from a clean
+  venv install of that wheel.
+
 ### Fixed
+
+- **`ruff format --check .` failed on `main`, and pre-commit could not see it**
+  (`pyproject.toml`). The dev floor was an unbounded `ruff = ">=0.4.0"`, so the
+  lock resolved **0.16.3**, which formats Python *inside Markdown code blocks*
+  — rewriting hand-aligned examples in 11 files (`docs/ADAPTER_SPEC.md`,
+  `docs/MCP.md`, `articles/kgrag_medium.md` and others). Verified on
+  `origin/main` itself, not just on a branch: 11 files would be reformatted
+  there too, so any PR inherited a red lint job it did not cause.
+
+  The divergence was invisible locally because `.pre-commit-config.yaml`
+  already pins `ruff-pre-commit` at **v0.15.13** — below 0.16 — while CI runs
+  `poetry run ruff` from the unbounded lock. The two were running different
+  formatters against the same tree.
+
+  Capped at `>=0.4.0,<0.16`, matching `kgmodule-utils`, which took the same
+  cap for the same reason. Ruff resolves to 0.15.22, consistent with the
+  pre-commit pin; the lock diff is that one version plus the content hash.
+  Lift the cap deliberately, together with the reformatting it implies.
 
 - **`kgrag health` probed every code/doc/memory KG with a broken command**
   (`src/kg_rag/cli/cmd_health.py`) — three independent defects, all of which
