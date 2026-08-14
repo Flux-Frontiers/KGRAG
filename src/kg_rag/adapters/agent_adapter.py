@@ -16,7 +16,7 @@ Storage layout (auto-created on first use)::
         userprofile.sqlite # global UserProfile (Preference, Expertise, etc.)
 
 Author: Eric G. Suchanek, PhD
-Last Revision: 2026-04-22 19:27:45
+Last Revision: 2026-06-09 11:50:02
 License: Elastic 2.0
 """
 

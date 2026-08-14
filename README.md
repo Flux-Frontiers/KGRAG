@@ -1,6 +1,6 @@
 [![Python](https://img.shields.io/badge/python-3.12%20%7C%203.13-blue.svg)](https://www.python.org/)
 [![License: Elastic-2.0](https://img.shields.io/badge/License-Elastic%202.0-blue.svg)](https://www.elastic.co/licensing/elastic-license)
-[![Version](https://img.shields.io/badge/version-0.11.0-blue.svg)](https://github.com/Flux-Frontiers/KGRAG/releases)
+[![Version](https://img.shields.io/badge/version-0.12.0-blue.svg)](https://github.com/Flux-Frontiers/KGRAG/releases)
 [![CI](https://github.com/Flux-Frontiers/KGRAG/actions/workflows/ci.yml/badge.svg)](https://github.com/Flux-Frontiers/KGRAG/actions/workflows/ci.yml)
 [![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20018525.svg)](https://doi.org/10.5281/zenodo.20018525)
@@ -188,13 +188,13 @@ If you use KGRAG in your research or project, please cite it:
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20018525.svg)](https://doi.org/10.5281/zenodo.20018525)
 
-> Suchanek, E. G. (2026). *KGRAG: Knowledge Compiler and Federated Retrieval Layer* (Version 0.11.0) [Software]. Flux-Frontiers. https://doi.org/10.5281/zenodo.20018525
+> Suchanek, E. G. (2026). *KGRAG: Knowledge Compiler and Federated Retrieval Layer* (Version 0.12.0) [Software]. Flux-Frontiers. https://doi.org/10.5281/zenodo.20018525
 
 ```bibtex
 @software{suchanek_kgrag,
   author    = {Suchanek, Eric G.},
   title     = {{KGRAG}: Knowledge Compiler and Federated Retrieval Layer},
-  version   = {0.11.0},
+  version   = {0.12.0},
   year      = {2026},
   publisher = {Flux-Frontiers},
   url       = {https://github.com/Flux-Frontiers/KGRAG},

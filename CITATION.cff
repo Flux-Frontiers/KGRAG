@@ -15,8 +15,8 @@ authors:
     orcid: "https://orcid.org/0009-0009-0891-1507"
     email: suchanek@flux-frontiers.com
     affiliation: "Flux-Frontiers"
-version: "0.11.0"
-date-released: "2026-07-29"
+version: "0.12.0"
+date-released: "2026-08-14"
 license-url: "https://www.elastic.co/licensing/elastic-license"
 repository-code: "https://github.com/Flux-Frontiers/KGRAG"
 url: "https://github.com/Flux-Frontiers/KGRAG"
@@ -27,6 +27,6 @@ keywords:
   - semantic-search
   - retrieval-augmented-generation
   - python
-  - lancedb
+  - sqlite-vec
   - mcp
   - kgrag

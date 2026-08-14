@@ -26,7 +26,7 @@ Or via environment variable:
     KGRAG_LLAMA_MODEL=~/.kgrag/bge-small-en-v1.5-Q8_0.gguf kgrag query "..."
 
 Author: Eric G. Suchanek, PhD
-Last Revision: 2026-04-25
+Last Revision: 2026-04-26
 License: Elastic 2.0
 """
 

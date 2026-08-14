@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+### Changed
+
+### Removed
+
+### Fixed
+
+## [0.12.0] - 2026-08-14
+
+### Changed
+
+- **Deployment infrastructure and fleet coordination moved out of the public
+  repo** (commit `681c5e8`). `runpod/` and `.runpod/` (the RunPod worker and
+  Hub config) now live in the private fleet repo; `TODO.md` is retired, its
+  LanceDB-retirement state folded into the private fleet sweep plan (the
+  fleet migration is complete — re-verified 2026-08-14, all published
+  packages ship sqlite-vec); `FLEET_VERSIONS.md` moved to `docs/` with
+  `scripts/fleet_versions.py` repointed and a README link added; the README
+  feature list now credits sqlite-vec rather than LanceDB for semantic
+  seeding. `scripts/test_llama_{build,embed}.py` removed (unreferenced
+  April experiments). None of this changes the published package contents.
+
 ### Removed
 
 - **The Jupyter notebook stack is no longer installed — by anything**
