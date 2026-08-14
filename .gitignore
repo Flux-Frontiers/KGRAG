@@ -154,11 +154,16 @@ commit.txt
 # Local Claude Code settings — personal hooks and permissions; use settings.json.template as template
 .claude/settings.json
 .claude/settings.local.json
+# Local-only Claude instructions — private fleet routing, never push
+CLAUDE.local.md
+.claude/CLAUDE.local.md
 # Auto-memory and per-project conversation state — local only
 .claude/projects/
 
 # Confidential — moved to kgrag_priv
 patents/
+runpod/
+.runpod/
 CLAUDE_T_IDENTITY.md
 PORTABLE_KNOWLEDGE_VISION.md
 docs/PITCH_DECK.md

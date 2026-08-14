@@ -6,7 +6,7 @@ Streamlit chat UI that sends queries to the running kgrag-worker container
 collapsible source hit cards.
 
 Run with:
-    cd runpod/
+    cd local/
     streamlit run chat.py
 
 The worker must be running first:

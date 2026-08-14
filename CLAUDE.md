@@ -18,5 +18,5 @@ Always use KG tools **before** Grep/Glob/Read:
 
 ## Open Work
 
-Read `TODO.md` before starting work — it carries known modelling debt and
-cross-repo coordination notes filed from sister KG repos.
+This repo carries no `TODO.md` — kgrag-specific landed work is recorded in
+`CHANGELOG.md`.

@@ -73,7 +73,7 @@ RAG embeds text chunks and retrieves by approximate similarity — no structure,
 - **Unified registry** — Persistent SQLite-backed storage of KG locations, metadata, corpora, and person records
 - **Corpus abstraction** — Group KGs into named corpora for scoped federated queries
 - **Person corpus** — Model individuals with personal metadata and their associated KG collections
-- **Hybrid querying** — Semantic seeding via LanceDB + structural BFS traversal
+- **Hybrid querying** — Semantic seeding via sqlite-vec (legacy LanceDB stores still readable) + structural BFS traversal
 - **Context packing** — Extract source-grounded snippets with line numbers for direct LLM ingestion
 - **MCP server** — 22 tools exposing registry, corpus, and person operations to any MCP-compatible agent
 - **CLI tooling** — Full CRUD for KGs, corpora, and person corpora; query, pack, analyze, synthesize
@@ -152,6 +152,7 @@ Tools span three groups: **core KG** (`kgrag_stats`, `kgrag_list`, `kgrag_info`,
 | [MCP Reference](docs/MCP.md) | Tool reference and agent configuration |
 | [Adapter Spec](docs/ADAPTER_SPEC.md) | Five-method protocol for new backends |
 | [Troubleshooting](docs/TROUBLESHOOTING.md) | Common issues and fixes |
+| [Fleet Versions](docs/FLEET_VERSIONS.md) | Generated version & constraint state across the KG fleet |
 
 ---
 

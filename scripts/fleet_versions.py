@@ -244,7 +244,7 @@ def main() -> int:
     text = render(rows, details, problems)
 
     if a.write:
-        (ROOT / "kgrag" / "FLEET_VERSIONS.md").write_text(text)
+        (ROOT / "kgrag" / "docs" / "FLEET_VERSIONS.md").write_text(text)
         print(f"wrote FLEET_VERSIONS.md ({len(rows)} repos, {len(problems)} problems)")
     else:
         print(text)
