@@ -116,7 +116,12 @@ click = ">=8.1.0"
 # to miss. Lift this only alongside a port to the 2.x handler API.
 mcp = ">=1.0.0,<2"
 plotly = { version = ">=5.14.0", optional = true }
-pyvista = { version = ">=0.44.0", extras = ["jupyter"], optional = true }
+# No `extras = ["jupyter"]`: that pulled the whole notebook stack
+# (jupyter-server-proxy -> jupyter-server, nbconvert -> mistune) for a renderer
+# nothing here drives from a notebook — viz3d is Qt-based via
+# `pyvistaqt.QtInteractor`, and no module sets a Jupyter backend. Re-add it only
+# alongside code that actually calls `pv.set_jupyter_backend()`.
+pyvista = { version = ">=0.44.0", optional = true }
 pyvistaqt = { version = ">=0.11.0", optional = true }
 PyQt5 = { version = ">=5.15.0", optional = true }
 param = { version = ">=2.0.0", optional = true }
@@ -132,8 +137,6 @@ pycode-kg = {version = ">=0.22.0", optional=true}
 doc-kg = {version = ">=0.21.1", optional=true}
 ftree-kg = {version = ">=0.11.0", optional=true}
 diary-kg  = {version = ">=0.96.0", optional = true}
-jupyter-server = ">=2.18.0"
-mistune = ">=3.2.1"
 
 
 [tool.poetry.extras]
@@ -162,7 +165,7 @@ PyQt5 = ">=5.15.0"
 optional = true
 
 [tool.poetry.group.viz3d.dependencies]
-pyvista = { version = ">=0.44.0", extras = ["jupyter"] }
+pyvista = { version = ">=0.44.0" }
 pyvistaqt = ">=0.11.0"
 PyQt5 = ">=5.15.0"
 param = ">=2.0.0"
