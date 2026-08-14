@@ -175,7 +175,16 @@ trame-vtk = ">=2.0.0"
 [tool.poetry.group.dev.dependencies]
 pytest = ">=9.0.3"
 pytest-cov = ">=5.0.0"
-ruff = ">=0.4.0"
+# Capped below 0.16 deliberately, matching `kgmodule-utils`. 0.16 began
+# formatting Python inside Markdown code blocks, which rewrites hand-aligned
+# examples in 11 files here — `docs/ADAPTER_SPEC.md`, `docs/MCP.md`,
+# `articles/kgrag_medium.md` and the rest — and expanded the default rule set.
+# The floor was unbounded, so the lock had already resolved 0.16.3 and
+# `ruff format --check .` fails on `main` today, independent of any branch.
+# Both are upgrades to adopt on purpose, not side effects a lock regeneration
+# should smuggle in. Lift the cap in its own change, together with the
+# reformatting it implies.
+ruff = ">=0.4.0,<0.16"
 ty = ">=0.0.44,<0.0.45"
 pre-commit = "^4.5.1"
 detect-secrets = "^1.5.0"

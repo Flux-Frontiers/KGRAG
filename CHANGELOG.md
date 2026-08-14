@@ -54,6 +54,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`ruff format --check .` failed on `main`, and pre-commit could not see it**
+  (`pyproject.toml`). The dev floor was an unbounded `ruff = ">=0.4.0"`, so the
+  lock resolved **0.16.3**, which formats Python *inside Markdown code blocks*
+  — rewriting hand-aligned examples in 11 files (`docs/ADAPTER_SPEC.md`,
+  `docs/MCP.md`, `articles/kgrag_medium.md` and others). Verified on
+  `origin/main` itself, not just on a branch: 11 files would be reformatted
+  there too, so any PR inherited a red lint job it did not cause.
+
+  The divergence was invisible locally because `.pre-commit-config.yaml`
+  already pins `ruff-pre-commit` at **v0.15.13** — below 0.16 — while CI runs
+  `poetry run ruff` from the unbounded lock. The two were running different
+  formatters against the same tree.
+
+  Capped at `>=0.4.0,<0.16`, matching `kgmodule-utils`, which took the same
+  cap for the same reason. Ruff resolves to 0.15.22, consistent with the
+  pre-commit pin; the lock diff is that one version plus the content hash.
+  Lift the cap deliberately, together with the reformatting it implies.
+
 - **`kgrag health` probed every code/doc/memory KG with a broken command**
   (`src/kg_rag/cli/cmd_health.py`) — three independent defects, all of which
   made `_probe_kg` report a false failure (`stale_lancedb_probe`) on healthy
