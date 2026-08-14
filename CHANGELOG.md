@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **`pip` is no longer a runtime dependency** (`pyproject.toml`). `pip = "^26.0.1"`
+  was declared alongside the real dependencies, so every `pip install kg-rag`
+  carried a version constraint on the installer itself — a needless resolution
+  constraint on consumer environments, and one that could conflict with
+  whatever pip the target environment already has. Nothing imports it: the only
+  `pip` occurrences in `src/` are error-message strings telling users what to
+  install. It remains a `dev` dependency (pip-audit needs it), so the lock diff
+  is a single line moving it from `groups = ["main", "dev"]` to
+  `groups = ["dev"]`.
+
+  Verified: the built wheel's metadata drops `Requires-Dist: pip` (26 entries
+  remain, extras unchanged), and all 14 console scripts still load from a clean
+  venv install of that wheel.
+
 ### Fixed
 
 - **`kgrag health` probed every code/doc/memory KG with a broken command**

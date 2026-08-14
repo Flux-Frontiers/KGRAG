@@ -4275,7 +4275,7 @@ version = "26.2.1"
 description = "The PyPA recommended tool for installing Python packages."
 optional = false
 python-versions = ">=3.10"
-groups = ["main", "dev"]
+groups = ["dev"]
 files = [
     {file = "pip-26.2.1-py3-none-any.whl", hash = "sha256:71138adf1f4ca900cdb7d289c21b7494329f2332b6d85f0e1c42108c0384ed3e"},
     {file = "pip-26.2.1.tar.gz", hash = "sha256:f6ad667e89a1fe78046c8f13232b247200f5258d7828f3f7883d660878e0813f"},
@@ -8133,4 +8133,4 @@ viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "923f3754058cc4886ddc12ab2cadcc6a032f0ed4512eafb9b4fa73979fdd70e6"
+content-hash = "b1c3371537c2c7a4ddbc2199cfbd292415b2060a665ab08818b63fedbc1488ee"
