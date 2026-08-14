@@ -197,7 +197,25 @@ real today and the seam is required for any future GPU decision — but do
 not move bulk ingest to TEI-CPU, and treat GPU throughput + interactive
 reranking as one combined follow-up benchmark on real GPU hardware.
 
-### Phase 1 — `TEIEmbedder` in KG_utils
+### Phase 1 — `TEIEmbedder` in KG_utils ✅ landed
+
+Shipped in kgmodule-utils `[Unreleased]`, purely additive. What the
+implementation learned from Phase 0 that the plan below did not anticipate:
+
+- **`/info` does not report the embedding dimension** — only
+  `max_client_batch_size`, `max_input_length` and model metadata. The
+  dimension is measured by embedding one short string at construction.
+  `dim=` still skips all network I/O entirely.
+- **The server's batch ceiling is the real trap, not memory.** A stock TEI
+  rejects anything above `max_client_batch_size` (default **32**) with HTTP
+  422 — below the fleet's 128 convention, and hit twice by hand during
+  Phase 0. `TEIEmbedder` reads the limit and re-chunks every call, so
+  callers keep passing 128.
+- **429 is a normal operating condition**, not an anomaly: TEI sheds load
+  rather than queueing (observed at 8 concurrent clients). Retried with
+  backoff, alongside 502/503/504 and transport errors; 4xx raises at once.
+
+### Phase 1 (original plan)
 
 - Add `TEIEmbedder(Embedder)` to `kg_utils/src/kg_utils/embedder.py`
   alongside `SentenceTransformerEmbedder`, so every KG module inherits it.
@@ -214,14 +232,23 @@ reranking as one combined follow-up benchmark on real GPU hardware.
   timeout/retry behavior (bounded retries, fail loud — no silent fallback
   to a different model, which would poison a 384-dim store).
 
-### Phase 2 — Factory & config in KGRAG
+### Phase 2 — Factory & config in KGRAG ✅ landed
 
-- `make_embedder()` (`kg_rag/embed.py`): add `embed_backend = "tei"`
-  branch reading endpoint/model/dim from `[tool.kgrag]`; update the
-  exhaustiveness `ValueError`.
-- Document in `docs/USAGE.md` + `settings.json.template`; note in
-  `TODO.md`'s coordination section that `kgrag_priv` picks this up via
-  its own `[tool.kgrag]` (no code change expected there).
+`embed_backend = "tei"` is wired in `make_embedder()`, config keys are
+documented in `pyproject.toml`, and `tests/test_embed_factory.py` covers
+the dispatch. Verified end to end against a live TEI: factory → embedder →
+384-dim normalized vectors satisfying the `kg_utils.embed.Embedder`
+protocol.
+
+Two carry-forwards:
+
+- **The `kgmodule-utils` floor is not raised yet.** `TEIEmbedder` is in an
+  unreleased kgmodule-utils, so the import is lazy and errors with the
+  install hint. Lift `kgmodule-utils = ">=0.12.1"` to the release that
+  ships it.
+- **`kgrag_priv` needs no code change** — it configures the same
+  `[tool.kgrag]` mechanism, so it inherits the backend once its config
+  selects it.
 
 ### Phase 3 — Bulk-ingest path (gated on Phase 0)
 
@@ -239,14 +266,15 @@ reranking as one combined follow-up benchmark on real GPU hardware.
   `/rerank` (`bge-reranker-base`) over the top-k candidates, blended or
   pure. Off by default; measure on existing eval queries before promoting.
 
-### Phase 5 — Deployment
+### Phase 5 — Deployment (design only — nothing here is deployed)
 
-- `runpod/docker-compose.yml`: optional TEI sidecar service; handler swap
-  is one call site (`runpod/handler.py:174-182` `_make_embedder()`),
-  selected by `EMBED_BACKEND` env. Keep in-process as the default until
-  Phase 0 numbers justify flipping it for GPU pods.
-- Local dev on Apple Silicon: document `cargo install` with Metal, or
-  TEI-CPU via Docker; never required.
+The `runpod/` tree is design-stage, not a live deployment, so this phase
+is recorded as intent rather than queued work. If and when it is stood up:
+optional TEI sidecar in `runpod/docker-compose.yml`, handler swap at the
+one call site (`runpod/handler.py:174-182` `_make_embedder()`) selected by
+an env var, in-process remaining the default until GPU numbers justify
+otherwise. Local dev on Apple Silicon can use `cargo install` with Metal
+or TEI-CPU via Docker; never required.
 
 ## 5. Out of scope
 

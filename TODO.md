@@ -176,6 +176,17 @@ Two notes where the fix goes beyond the plan's prescription:
 
 ### Remaining coordination
 
+- **Lift the `kgmodule-utils` floor once `TEIEmbedder` is published.** The new
+  `embed_backend = "tei"` branch in `src/kg_rag/embed.py` imports
+  `kg_utils.embedder.TEIEmbedder`, which lives in kgmodule-utils
+  `[Unreleased]` — 0.12.1 (the current pin, and the newest on PyPI) does not
+  have it. The import is deliberately lazy and raises a
+  `pip install -U kgmodule-utils` hint, so nothing breaks today: an install
+  with an older kgmodule-utils only fails if it actually *selects* the tei
+  backend. Raise `kgmodule-utils = ">=0.13.0"` (or whatever ships it) when
+  that release lands. **No `kgrag_priv` change is needed** — it configures the
+  same `[tool.kgrag]` mechanism and inherits the backend by configuration.
+  Background and benchmarks: `docs/TEI_EVALUATION.md`.
 - **`kgrag_priv` still carries the 0.10.1 adapter stopgap** — port this change
   there so both repos read `vectors_path` rather than deriving it.
 - **Backfilling the existing fleet**: entries registered before this release have

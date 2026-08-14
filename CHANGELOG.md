@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`embed_backend = "tei"` — route embedding to a Text Embeddings Inference
+  server** (`src/kg_rag/embed.py`). Selects `kg_utils.embedder.TEIEmbedder`, so
+  no model, no torch and no sentence-transformers load in this process. Reads
+  `tei_endpoint` (or `KG_EMBED_ENDPOINT`) plus optional `tei_dim`, `tei_model`,
+  `tei_api_key`, `tei_timeout`, `tei_max_retries`, `tei_max_batch` from
+  `[tool.kgrag]`; all keys are documented, commented out, in `pyproject.toml`.
+  Everything downstream — orchestrator, adapters, `SemanticIndex` — is already
+  injection-based and needed no change.
+
+  **Not the default, deliberately.** Benchmarked at roughly half the throughput
+  of in-process torch on CPU (19 vs 41 items/s); it earns its place by keeping
+  torch out of the client (176 MiB vs 1.5 GiB RSS to serve the same model), not
+  by being faster. Vectors are interchangeable with the sentence-transformers
+  backend (cosine ≥ 0.999997), so switching does not require re-embedding. See
+  `docs/TEI_EVALUATION.md` for the full Phase 0 evaluation and the deferred
+  GPU-benchmark decisions.
+
+  The import is lazy and reports `pip install -U kgmodule-utils` if the
+  installed kgmodule-utils predates `TEIEmbedder` — the dependency floor is
+  **not** raised here, since the class ships in an as-yet-unreleased
+  kgmodule-utils. Lift `kgmodule-utils = ">=0.12.1"` once that release is on
+  PyPI.
+
+- **Backend dispatch is now tested** (`tests/test_embed_factory.py`, 8 tests):
+  the `tei` branch end to end with a stubbed HTTP layer, plus the previously
+  untested no-backend, unknown-backend and missing-llama-path paths.
+
 ### Removed
 
 - **The Jupyter notebook stack is no longer installed — by anything**
@@ -71,6 +100,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   cap for the same reason. Ruff resolves to 0.15.22, consistent with the
   pre-commit pin; the lock diff is that one version plus the content hash.
   Lift the cap deliberately, together with the reformatting it implies.
+
+- **`make_embedder`'s unknown-backend error listed only `'llama'`**
+  (`src/kg_rag/embed.py`) — it has accepted `sentence_transformers` for some
+  time, which is also the value this repo's own `[tool.kgrag]` sets, so the
+  message pointed users away from the working configuration. Now lists all
+  three supported backends.
 
 - **`kgrag health` probed every code/doc/memory KG with a broken command**
   (`src/kg_rag/cli/cmd_health.py`) — three independent defects, all of which
