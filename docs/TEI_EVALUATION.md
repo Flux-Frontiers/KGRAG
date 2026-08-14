@@ -130,6 +130,73 @@ follow-on. Do **not** make TEI a dependency of the default path.
   throughput or eliminates a stability class we care about; Phases 1–2 are
   cheap enough to land on operational grounds alone.
 
+#### Phase 0 results (run 2026-08-14, CPU-only)
+
+Environment: 4 vCPU / 15 GB RAM Linux container (no GPU available), TEI
+1.9.3 `cpu-latest` image, sentence-transformers 5.x with CPU torch, both
+given the same 4 cores (never benchmarked concurrently). Corpus: Moby
+Dick chunked to 2,370 passages (~90 words each), tiled to 10,910 items to
+match the reference corpus size. Fleet contract kept: 128-item batches,
+normalized vectors. TEI served the model from a local mount (no network
+at boot; boot-to-ready ≈ 2 s).
+
+**Parity — PASSED, vectors are interchangeable:**
+
+| Metric | Value |
+|---|---|
+| cosine(ST, TEI) min / mean over 2,370 chunks | 0.999997 / 0.999999 |
+| top-10 retrieval agreement (50 queries) | 99.8% mean, 90% worst |
+
+TEI's warning about GeLU-tanh approximation vs exact GeLU is real but
+negligible at these magnitudes. Vectors from either backend can share a
+`SqliteVecBackend` store.
+
+**Throughput — TEI-CPU FAILED the ≥2× gate (it is ~0.5×):**
+
+| Backend | items/s | wall (10,910 items) |
+|---|---|---|
+| in-process ST, CPU, batch 128 | **41.0** | 266 s |
+| TEI-CPU, 1 client thread | 18.8 | 582 s |
+| TEI-CPU, 2 client threads | 19.3 | 566 s |
+| TEI-CPU, 4 client threads | 19.4 | 563 s |
+| TEI-CPU, 8 client threads | HTTP 429 | — |
+
+Torch's MKL/oneDNN kernels beat TEI's candle backend on x86 CPU, and
+client concurrency cannot help a server that is already core-saturated
+(flat 19 items/s from 1→4 threads; at 8 the queue overflows and TEI
+sheds load with an explicit 429 rather than stalling — good behavior,
+but not more throughput). **Conclusion: on CPU, keep bulk ingest
+in-process.** The Phase 3 bulk-path work is deferred until a GPU
+benchmark (RunPod 3080-class) can be run; TEI's published numbers are
+GPU numbers, and the gate decision for GPU ingest remains open.
+
+**Memory — TEI wins decisively on the serving path:**
+
+| | RSS |
+|---|---|
+| in-process torch + ST serving bge-small (130 MB weights) | 1,500 MiB |
+| TEI container serving the same model | **176 MiB** |
+
+8.5× smaller. For the RunPod worker (embeds one query at a time) this —
+not throughput — is the argument for a TEI sidecar: it would remove
+torch + sentence-transformers from the worker image entirely.
+
+**Reranking demo (`BAAI/bge-reranker-base`, TEI `/rerank`):** works as
+designed — on "how do sailors boil blubber into oil" the cross-encoder
+promoted the whale-oil lamps passage from dense rank 10 to 1; on the
+doubloon query it correctly signaled (all scores ≤0.12) that no retrieved
+passage actually explains the meaning. Cost on shared 4-CPU: **~10–12 s
+to rerank 50 candidates** (~220 ms/pair; the 278M-param XLM-R
+cross-encoder is ~8× bge-small). CPU reranking is viable only for small
+K (top-10 ≈ 2.4 s) or batch/offline use; interactive reranking wants the
+GPU pod. Container RSS: 1.7 GiB.
+
+**Net Phase 0 verdict:** parity is a non-issue; adopt Phases 1–2 (the
+`TEIEmbedder` seam) on operational grounds — the serving-memory win is
+real today and the seam is required for any future GPU decision — but do
+not move bulk ingest to TEI-CPU, and treat GPU throughput + interactive
+reranking as one combined follow-up benchmark on real GPU hardware.
+
 ### Phase 1 — `TEIEmbedder` in KG_utils
 
 - Add `TEIEmbedder(Embedder)` to `kg_utils/src/kg_utils/embedder.py`
