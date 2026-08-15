@@ -15,15 +15,28 @@ pycode_kg.index.Embedder) and provides two concrete implementations:
                        Not used by default; present so callers can construct one
                        explicitly when torch IS available and preferred.
 
+  TEIEmbedder       — remote HuggingFace Text Embeddings Inference server,
+                       supplied by kg_utils.embedder.  Stdlib HTTP only: no
+                       torch and no model in this process.  See
+                       docs/TEI_EVALUATION.md for when this is the right choice
+                       (short version: it is not faster than in-process torch on
+                       CPU, but it keeps the model out of the client).
+
 Usage via config ([tool.kgrag] in pyproject.toml):
 
     [tool.kgrag]
     embed_backend    = "llama"
     llama_model_path = "~/.kgrag/bge-small-en-v1.5-Q8_0.gguf"
 
+    # …or point at a running TEI server:
+    embed_backend = "tei"
+    tei_endpoint  = "http://localhost:8080"
+    # tei_dim     = 384   # set to skip the startup probe entirely
+
 Or via environment variable:
 
     KGRAG_LLAMA_MODEL=~/.kgrag/bge-small-en-v1.5-Q8_0.gguf kgrag query "..."
+    KG_EMBED_ENDPOINT=http://localhost:8080 kgrag query "..."   # with embed_backend = "tei"
 
 Author: Eric G. Suchanek, PhD
 Last Revision: 2026-04-26
@@ -47,8 +60,14 @@ def make_embedder(config: dict) -> Embedder | None:
 
     Supported backends:
 
+    * ``"sentence_transformers"`` — :class:`SentenceTransformerEmbedder`, with
+      the model resolved through :class:`~kg_rag.model_coordinator.ModelCoordinator`.
     * ``"llama"`` — :class:`LlamaCppEmbedder`. Requires ``llama_model_path``
       in config or ``KGRAG_LLAMA_MODEL`` env var.
+    * ``"tei"`` — ``kg_utils.embedder.TEIEmbedder`` against a running Text
+      Embeddings Inference server. Reads ``tei_endpoint`` (or
+      ``KG_EMBED_ENDPOINT``), and optionally ``tei_dim``, ``tei_model``,
+      ``tei_api_key``, ``tei_timeout``, ``tei_max_retries``, ``tei_max_batch``.
 
     :param config: Dict from :func:`kg_rag.config.load_kgrag_config`.
     :return: Embedder instance, or None to use each KG's built-in default.
@@ -85,4 +104,24 @@ def make_embedder(config: dict) -> Embedder | None:
             verbose=bool(config.get("llama_verbose", False)),
         )
 
-    raise ValueError(f"Unknown embed_backend: {backend!r}. Supported values: 'llama'.")
+    if backend == "tei":
+        from kg_utils.embedder import (  # pylint: disable=import-outside-toplevel
+            TEIEmbedder,
+        )
+
+        dim = config.get("tei_dim")
+        max_batch = config.get("tei_max_batch")
+        return TEIEmbedder(
+            config.get("tei_endpoint") or os.environ.get("KG_EMBED_ENDPOINT"),
+            dim=int(dim) if dim is not None else None,
+            api_key=config.get("tei_api_key"),
+            model_name=str(config.get("tei_model", "")),
+            timeout=float(config.get("tei_timeout", 120.0)),
+            max_retries=int(config.get("tei_max_retries", 3)),
+            max_batch=int(max_batch) if max_batch is not None else None,
+        )
+
+    raise ValueError(
+        f"Unknown embed_backend: {backend!r}. "
+        "Supported values: 'sentence_transformers', 'llama', 'tei'."
+    )

@@ -21,11 +21,18 @@ from typing import Any, Protocol, runtime_checkable
 class Embedder(Protocol):
     """Minimal embedding protocol — compatible with pycode_kg.index.Embedder.
 
-    Any object with an ``embed_query(text) -> list[float]`` method satisfies
+    Any object with an ``embed_query(str) -> list[float]`` method satisfies
     this protocol and can be injected into a KGModule-based KG backend.
+
+    The argument is **positional-only**, so the parameter *name* is not part of
+    the contract. That is deliberate: this package's own embedders call it
+    ``text`` while every ``kg_utils.embedder`` implementation calls it
+    ``query``, and a protocol with a named parameter rejects the latter on the
+    name alone. Nothing anywhere calls this by keyword, so position is the
+    whole contract and declaring it that way is what makes the statement true.
     """
 
-    def embed_query(self, text: str) -> list[float]:
+    def embed_query(self, text: str, /) -> list[float]:
         """Embed a single query string into a float vector.
 
         :param text: The query string to embed.

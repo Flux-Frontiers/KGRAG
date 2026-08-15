@@ -9,6 +9,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`embed_backend = "tei"` — route embedding to a Text Embeddings Inference
+  server** (`src/kg_rag/embed.py`). Selects `kg_utils.embedder.TEIEmbedder`, so
+  no model, no torch and no sentence-transformers load in this process. Reads
+  `tei_endpoint` (or `KG_EMBED_ENDPOINT`) plus optional `tei_dim`, `tei_model`,
+  `tei_api_key`, `tei_timeout`, `tei_max_retries`, `tei_max_batch` from
+  `[tool.kgrag]`; all keys are documented, commented out, in `pyproject.toml`.
+  Everything downstream — orchestrator, adapters, `SemanticIndex` — is already
+  injection-based and needed no change.
+
+  **Not the default, deliberately.** Benchmarked at roughly half the throughput
+  of in-process torch on CPU (19 vs 41 items/s); it earns its place by keeping
+  torch out of the client (176 MiB vs 1.5 GiB RSS to serve the same model), not
+  by being faster. Vectors are interchangeable with the sentence-transformers
+  backend (cosine ≥ 0.999997), so switching does not require re-embedding. See
+  `docs/TEI_EVALUATION.md` for the full Phase 0 evaluation and the deferred
+  GPU-benchmark decisions.
+
+- **`kgmodule-utils` floor raised to `>=0.13.0`** (`pyproject.toml`), which is
+  the release that ships `TEIEmbedder`. While the class was unreleased this
+  package imported it inside a `try/except ImportError` that reported
+  `pip install -U kgmodule-utils`, deliberately declaring no floor it could
+  not satisfy. 0.13.0 is on PyPI, so the floor states the requirement and the
+  shim — plus the module-level `importorskip` its test needed — is gone.
+  Selecting `embed_backend = "tei"` against a resolution that satisfies the
+  manifest can no longer produce an upgrade message instead of an embedder.
+
+- **Backend dispatch is now tested** (`tests/test_embed_factory.py`, 7 tests):
+  the `tei` branch end to end with a stubbed HTTP layer, plus the previously
+  untested no-backend, unknown-backend and missing-llama-path paths.
 ### Changed
 
 ### Removed
@@ -94,6 +123,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   cap for the same reason. Ruff resolves to 0.15.22, consistent with the
   pre-commit pin; the lock diff is that one version plus the content hash.
   Lift the cap deliberately, together with the reformatting it implies.
+
+- **`make_embedder`'s unknown-backend error listed only `'llama'`**
+  (`src/kg_rag/embed.py`) — it has accepted `sentence_transformers` for some
+  time, which is also the value this repo's own `[tool.kgrag]` sets, so the
+  message pointed users away from the working configuration. Now lists all
+  three supported backends.
 
 - **`kgrag health` probed every code/doc/memory KG with a broken command**
   (`src/kg_rag/cli/cmd_health.py`) — three independent defects, all of which

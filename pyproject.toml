@@ -132,7 +132,9 @@ llama-cpp-python = { version = ">=0.3.0", optional = true }
 
 
 # our own adaptors (PyPI-only; git-only adapters installed separately via uv)
-kgmodule-utils = ">=0.12.1"
+# 0.13.0 is the floor because it ships TEIEmbedder, which `embed_backend =
+# "tei"` in src/kg_rag/embed.py imports directly.
+kgmodule-utils = ">=0.13.0"
 pycode-kg = {version = ">=0.22.0", optional=true}
 doc-kg = {version = ">=0.21.1", optional=true}
 ftree-kg = {version = ">=0.11.0", optional=true}
@@ -285,3 +287,17 @@ cmd = "python scripts/generate_wiki.py --dry-run"
 [tool.kgrag]
 embed_backend = "sentence_transformers"
 # st_model = "default"  # resolves to BAAI/bge-small-en-v1.5; override with any alias or HF repo id
+
+# embed_backend = "tei" routes embedding to a running Text Embeddings Inference
+# server instead of loading a model in-process. Deliberately not the default:
+# benchmarked at roughly half the throughput of in-process torch on CPU, so it
+# earns its place by keeping torch out of the client (176 MiB vs 1.5 GiB RSS),
+# not by being faster. See docs/TEI_EVALUATION.md.
+#
+# tei_endpoint    = "http://localhost:8080"  # or the KG_EMBED_ENDPOINT env var
+# tei_dim         = 384    # skips the one-off startup probe; must match the served model
+# tei_model       = ""     # informational label only — the server chooses the model
+# tei_api_key     = ""     # or the KG_EMBED_API_KEY env var; stock TEI needs none
+# tei_timeout     = 120.0
+# tei_max_retries = 3      # retries 429/502/503/504 and transport errors
+# tei_max_batch   = 32     # defaults to the server's reported max_client_batch_size
