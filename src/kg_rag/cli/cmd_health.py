@@ -15,7 +15,7 @@ Usage::
     kgrag health --json        # machine-readable JSON output
 
 Author: Eric G. Suchanek, PhD
-Last Revision: 2026-04-16 00:18:34
+Last Revision: 2026-07-30 02:54:06
 License: Elastic 2.0
 """
 

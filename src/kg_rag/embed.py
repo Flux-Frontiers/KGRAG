@@ -39,7 +39,7 @@ Or via environment variable:
     KG_EMBED_ENDPOINT=http://localhost:8080 kgrag query "..."   # with embed_backend = "tei"
 
 Author: Eric G. Suchanek, PhD
-Last Revision: 2026-04-25
+Last Revision: 2026-04-26
 License: Elastic 2.0
 """
 

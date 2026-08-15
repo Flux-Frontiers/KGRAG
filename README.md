@@ -1,9 +1,9 @@
 [![Python](https://img.shields.io/badge/python-3.12%20%7C%203.13-blue.svg)](https://www.python.org/)
 [![License: Elastic-2.0](https://img.shields.io/badge/License-Elastic%202.0-blue.svg)](https://www.elastic.co/licensing/elastic-license)
-[![Version](https://img.shields.io/badge/version-0.11.0-blue.svg)](https://github.com/Flux-Frontiers/KGRAG/releases)
+[![Version](https://img.shields.io/badge/version-0.12.0-blue.svg)](https://github.com/Flux-Frontiers/KGRAG/releases)
 [![CI](https://github.com/Flux-Frontiers/KGRAG/actions/workflows/ci.yml/badge.svg)](https://github.com/Flux-Frontiers/KGRAG/actions/workflows/ci.yml)
 [![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20018525.svg)](https://doi.org/10.5281/zenodo.20018525)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20018524.svg)](https://doi.org/10.5281/zenodo.20018524)
 
 <p align="center">
   <img src="assets/logos/logo_256.png" alt="KGRAG logo" width="256"/>
@@ -73,7 +73,7 @@ RAG embeds text chunks and retrieves by approximate similarity — no structure,
 - **Unified registry** — Persistent SQLite-backed storage of KG locations, metadata, corpora, and person records
 - **Corpus abstraction** — Group KGs into named corpora for scoped federated queries
 - **Person corpus** — Model individuals with personal metadata and their associated KG collections
-- **Hybrid querying** — Semantic seeding via LanceDB + structural BFS traversal
+- **Hybrid querying** — Semantic seeding via sqlite-vec (legacy LanceDB stores still readable) + structural BFS traversal
 - **Context packing** — Extract source-grounded snippets with line numbers for direct LLM ingestion
 - **MCP server** — 22 tools exposing registry, corpus, and person operations to any MCP-compatible agent
 - **CLI tooling** — Full CRUD for KGs, corpora, and person corpora; query, pack, analyze, synthesize
@@ -152,6 +152,7 @@ Tools span three groups: **core KG** (`kgrag_stats`, `kgrag_list`, `kgrag_info`,
 | [MCP Reference](docs/MCP.md) | Tool reference and agent configuration |
 | [Adapter Spec](docs/ADAPTER_SPEC.md) | Five-method protocol for new backends |
 | [Troubleshooting](docs/TROUBLESHOOTING.md) | Common issues and fixes |
+| [Fleet Versions](docs/FLEET_VERSIONS.md) | Generated version & constraint state across the KG fleet |
 
 ---
 
@@ -185,19 +186,19 @@ Free to use, modify, and distribute. You may not offer the software as a hosted 
 
 If you use KGRAG in your research or project, please cite it:
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20018525.svg)](https://doi.org/10.5281/zenodo.20018525)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20018524.svg)](https://doi.org/10.5281/zenodo.20018524)
 
-> Suchanek, E. G. (2026). *KGRAG: Knowledge Compiler and Federated Retrieval Layer* (Version 0.11.0) [Software]. Flux-Frontiers. https://doi.org/10.5281/zenodo.20018525
+> Suchanek, E. G. (2026). *KGRAG: Knowledge Compiler and Federated Retrieval Layer* (Version 0.12.0) [Software]. Flux-Frontiers. https://doi.org/10.5281/zenodo.20018524
 
 ```bibtex
 @software{suchanek_kgrag,
   author    = {Suchanek, Eric G.},
   title     = {{KGRAG}: Knowledge Compiler and Federated Retrieval Layer},
-  version   = {0.11.0},
+  version   = {0.12.0},
   year      = {2026},
   publisher = {Flux-Frontiers},
   url       = {https://github.com/Flux-Frontiers/KGRAG},
-  doi       = {10.5281/zenodo.20018525},
+  doi       = {10.5281/zenodo.20018524},
 }
 ```
 
