@@ -132,7 +132,9 @@ llama-cpp-python = { version = ">=0.3.0", optional = true }
 
 
 # our own adaptors (PyPI-only; git-only adapters installed separately via uv)
-kgmodule-utils = ">=0.12.1"
+# 0.13.0 is the floor because it ships TEIEmbedder, which `embed_backend =
+# "tei"` in src/kg_rag/embed.py imports directly.
+kgmodule-utils = ">=0.13.0"
 pycode-kg = {version = ">=0.22.0", optional=true}
 doc-kg = {version = ">=0.21.1", optional=true}
 ftree-kg = {version = ">=0.11.0", optional=true}

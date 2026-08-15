@@ -10,18 +10,15 @@ from __future__ import annotations
 
 import io
 import json
-import sys
 from typing import Any
 from unittest.mock import patch
 
+# Imported plainly rather than via importorskip: kgmodule-utils >=0.13.0 is a
+# hard dependency and ships TEIEmbedder, so its absence is a real failure.
+import kg_utils.embedder as kg_utils_embedder
 import pytest
 
 from kg_rag.embed import make_embedder
-
-kg_utils_embedder = pytest.importorskip("kg_utils.embedder", reason="kgmodule-utils not installed")
-
-if not hasattr(kg_utils_embedder, "TEIEmbedder"):  # pragma: no cover
-    pytest.skip("installed kgmodule-utils predates TEIEmbedder", allow_module_level=True)
 
 
 def _urlopen_stub(*payloads: Any):
@@ -110,10 +107,3 @@ def test_tei_passes_through_tuning_options() -> None:
 
     assert (emb.api_key, emb.model_name) == ("dummy-token", "BAAI/bge-base-en-v1.5")
     assert (emb.timeout, emb.max_retries, emb.max_batch) == (30.0, 5, 16)
-
-
-def test_tei_reports_missing_dependency_clearly() -> None:
-    """A too-old kgmodule-utils must name the fix, not surface a bare ImportError."""
-    with patch.dict(sys.modules, {"kg_utils.embedder": None}):
-        with pytest.raises(ImportError, match="pip install -U kgmodule-utils"):
-            make_embedder({"embed_backend": "tei", "tei_endpoint": "http://tei:8080"})

@@ -73,8 +73,6 @@ def make_embedder(config: dict) -> Embedder | None:
     :return: Embedder instance, or None to use each KG's built-in default.
     :raises ValueError: If backend name is unknown or required config is missing.
     :raises FileNotFoundError: If the GGUF model file cannot be found.
-    :raises ImportError: If ``"tei"`` is selected but the installed
-        kgmodule-utils predates :class:`TEIEmbedder`.
     """
     backend = config.get("embed_backend")
     if backend is None:
@@ -107,15 +105,9 @@ def make_embedder(config: dict) -> Embedder | None:
         )
 
     if backend == "tei":
-        try:
-            from kg_utils.embedder import (  # pylint: disable=import-outside-toplevel
-                TEIEmbedder,
-            )
-        except ImportError as exc:
-            raise ImportError(
-                "embed_backend = 'tei' requires a kgmodule-utils that ships "
-                "TEIEmbedder. Upgrade with: pip install -U kgmodule-utils"
-            ) from exc
+        from kg_utils.embedder import (  # pylint: disable=import-outside-toplevel
+            TEIEmbedder,
+        )
 
         dim = config.get("tei_dim")
         max_batch = config.get("tei_max_batch")

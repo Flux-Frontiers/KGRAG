@@ -26,13 +26,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/TEI_EVALUATION.md` for the full Phase 0 evaluation and the deferred
   GPU-benchmark decisions.
 
-  The import is lazy and reports `pip install -U kgmodule-utils` if the
-  installed kgmodule-utils predates `TEIEmbedder` — the dependency floor is
-  **not** raised here, since the class ships in an as-yet-unreleased
-  kgmodule-utils. Lift `kgmodule-utils = ">=0.12.1"` once that release is on
-  PyPI.
+- **`kgmodule-utils` floor raised to `>=0.13.0`** (`pyproject.toml`), which is
+  the release that ships `TEIEmbedder`. While the class was unreleased this
+  package imported it inside a `try/except ImportError` that reported
+  `pip install -U kgmodule-utils`, deliberately declaring no floor it could
+  not satisfy. 0.13.0 is on PyPI, so the floor states the requirement and the
+  shim — plus the module-level `importorskip` its test needed — is gone.
+  Selecting `embed_backend = "tei"` against a resolution that satisfies the
+  manifest can no longer produce an upgrade message instead of an embedder.
 
-- **Backend dispatch is now tested** (`tests/test_embed_factory.py`, 8 tests):
+- **Backend dispatch is now tested** (`tests/test_embed_factory.py`, 7 tests):
   the `tei` branch end to end with a stubbed HTTP layer, plus the previously
   untested no-backend, unknown-backend and missing-llama-path paths.
 
