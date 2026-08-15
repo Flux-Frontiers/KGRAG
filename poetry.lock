@@ -1411,27 +1411,26 @@ tqdm = ["tqdm"]
 
 [[package]]
 name = "ftree-kg"
-version = "0.11.0"
+version = "0.13.0"
 description = "KGModule for file tree knowledge graphs"
 optional = true
 python-versions = "<3.14,>=3.12"
 groups = ["main"]
 markers = "extra == \"kg\" or extra == \"all\""
 files = [
-    {file = "ftree_kg-0.11.0-py3-none-any.whl", hash = "sha256:78bd468df4fd7dac038dda4677ad9d00316f5f9bef25cee6ffbd3316b072fda3"},
-    {file = "ftree_kg-0.11.0.tar.gz", hash = "sha256:d79ea79f79e72c46040c238dc95dd5b12afa9acccf49ec49fe43904be6dde4fd"},
+    {file = "ftree_kg-0.13.0-py3-none-any.whl", hash = "sha256:d523376dec945ab10da07fee8bb3251a6c6dc65add17679b91109df4abe4a897"},
+    {file = "ftree_kg-0.13.0.tar.gz", hash = "sha256:141e80f18b99f2effce315f5845d17c27c9544ccaaebc613aff2dfe96910dfe6"},
 ]
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = {version = ">=0.9.0", extras = ["semantic", "sqlite-vec"]}
+kgmodule-utils = {version = ">=0.13.2", extras = ["semantic", "sqlite-vec"]}
+mcp = ">=1.0.0,<2"
 pillow = ">=10.0.0"
 rich = ">=13.0.0,<15.0.0"
 
 [package.extras]
-adapter = ["kg-rag (>=0.11.0)"]
-all = ["detect-secrets (>=1.5.0)", "pre-commit (>=4.5.1)", "pylint (>=4.0.5)", "pytest (>=8.0.0)", "pytest-cov (>=5.0.0)", "ruff (>=0.4.0)", "ty (>=0.0.41)"]
-dev = ["detect-secrets (>=1.5.0)", "pre-commit (>=4.5.1)", "pylint (>=4.0.5)", "pytest (>=8.0.0)", "pytest-cov (>=5.0.0)", "ruff (>=0.4.0)", "ty (>=0.0.41)"]
+adapter = ["kg-rag (>=0.12.0)"]
 
 [[package]]
 name = "h11"
@@ -6385,4 +6384,4 @@ viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "c98497ff6246e7cbb537b15c7f6295b2c3d8a709eb6fd16fb77c253fcdbc2eb5"
+content-hash = "559b168bddc6b2ecd5bd7575e48c3c24179866e9d1029725d52272181dee101b"
