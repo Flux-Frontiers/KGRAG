@@ -7,7 +7,6 @@ Loads adapters from the registry and executes federated queries across
 multiple KG instances (PyCodeKG, DocKG, MetaKG) simultaneously.
 
 Author: Eric G. Suchanek, PhD
-Last Revision: 2026-06-09 11:50:02
 License: Elastic 2.0
 """
 

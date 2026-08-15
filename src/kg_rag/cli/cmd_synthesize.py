@@ -16,7 +16,6 @@ Usage::
     kgrag synthesize "entropy" --backend openai --openai-url http://myserver:8000/v1
 
     Author: Eric G. Suchanek, PhD
-    Last Revision: 2026-05-30
 
     License: Elastic 2.0
 """
