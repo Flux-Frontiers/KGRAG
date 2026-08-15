@@ -67,7 +67,6 @@ CLI
 
 Author: Eric G. Suchanek, PhD
 License: Elastic 2.0
-Last Revision: 2026-04-26 02:25:38
 """
 
 from __future__ import annotations

@@ -10,7 +10,6 @@ that delegate to ``gutenberg_kg.corpus``, covering the full genre collection
 rather than a single registered KG entry.
 
 Author: Eric G. Suchanek, PhD
-Last Revision: 2026-07-26
 License: Elastic 2.0
 """
 

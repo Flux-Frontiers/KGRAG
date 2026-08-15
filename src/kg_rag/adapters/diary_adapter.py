@@ -1,7 +1,6 @@
 """diary_adapter.py — KGAdapter for DiaryKG.
 
 Author: Eric G. Suchanek, PhD
-Last Revision: 2026-06-09 11:50:02
 License: Elastic 2.0
 """
 

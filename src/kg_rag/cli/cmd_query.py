@@ -4,7 +4,6 @@ cmd_query.py
 Cross-KG query and pack commands.
 
 Author: Eric G. Suchanek, PhD
-Last Revision: 2026-04-22 21:05:53
 License: Elastic 2.0
 """
 

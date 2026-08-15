@@ -12,7 +12,6 @@ Usage:
     python scripts/generate_wiki.py --repo Flux-Frontiers/code_kg
 
 Author: Eric G. Suchanek, PhD
-Last Revision: 2026-03-02 14:03:04
 """
 
 import argparse

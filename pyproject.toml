@@ -17,11 +17,11 @@
 # perform code analysis, or build AI-powered development tools.
 #
 # Author: Eric G. Suchanek, PhD
-# Last Revision: 2026-07-29 16:45:00
 #
 # Quick install (poetry) — recommended
 # -------------------------------------
 #   poetry install                               core orchestrator only
+#   poetry install --with dev                    core + dev tools (the group is optional)
 #   poetry install --extras "kg"                 core + PyPI KG adapters (pycode-kg, doc-kg, ftree-kg, diary-kg)
 #   poetry install --extras "viz"                core + 2D visualization (streamlit, pyvis, plotly)
 #   poetry install --extras "viz3d"              core + 3D visualization (pyvista, pyvistaqt, PyQt5)
@@ -132,13 +132,16 @@ llama-cpp-python = { version = ">=0.3.0", optional = true }
 
 
 # our own adaptors (PyPI-only; git-only adapters installed separately via uv)
-# 0.13.0 is the floor because it ships TEIEmbedder, which `embed_backend =
-# "tei"` in src/kg_rag/embed.py imports directly.
-kgmodule-utils = ">=0.13.0"
-pycode-kg = {version = ">=0.22.0", optional=true}
-doc-kg = {version = ">=0.21.1", optional=true}
+# 0.13.0 was the original floor because it ships TEIEmbedder, which
+# `embed_backend = "tei"` in src/kg_rag/embed.py imports directly. 0.13.2 is
+# the floor now: 0.13.1 made SnapshotManager's `repo_root` a read-only property
+# and broke every subclass that assigns it, so nothing in the fleet declares a
+# floor that can resolve to it.
+kgmodule-utils = ">=0.13.2"
+pycode-kg = {version = ">=0.23.1", optional=true}
+doc-kg = {version = ">=0.21.2", optional=true}
 ftree-kg = {version = ">=0.11.0", optional=true}
-diary-kg  = {version = ">=0.96.0", optional = true}
+diary-kg  = {version = ">=0.97.0", optional = true}
 
 
 [tool.poetry.extras]
@@ -174,6 +177,9 @@ param = ">=2.0.0"
 markdown = ">=3.6"
 trame-vtk = ">=2.0.0"
 
+[tool.poetry.group.dev]
+optional = true
+
 [tool.poetry.group.dev.dependencies]
 pytest = ">=9.0.3"
 pytest-cov = ">=5.0.0"
@@ -197,8 +203,8 @@ pip-audit = "^2.10.0"
 # right arguments, and a mocked-out import cannot show that it does. Installed
 # here so the suite exercises the real classes. The marginal cost is small —
 # sentence-transformers already pulls the torch/transformers stack.
-pycode-kg = ">=0.22.0"
-doc-kg = ">=0.21.1"
+pycode-kg = ">=0.23.1"
+doc-kg = ">=0.21.2"
 
 
 [tool.poetry.scripts]

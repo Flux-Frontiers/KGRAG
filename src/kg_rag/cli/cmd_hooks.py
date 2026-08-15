@@ -9,7 +9,6 @@ The KGRAG hook orchestrates snapshots for all registered KGs (PyCodeKG, DocKG,
 etc.) that live in the workspace, then runs quality checks.
 
   Author: Eric G. Suchanek, PhD
-  Last Revision: 2026-04-26
 """
 
 from __future__ import annotations
