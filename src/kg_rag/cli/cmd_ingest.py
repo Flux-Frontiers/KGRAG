@@ -69,9 +69,9 @@ _DOCKG_DIR = ".dockg"
     help="Name to register the KG under (default: <staging-dir>-doc).",
 )
 @click.option(
-    "--recreate",
+    "--wipe",
     is_flag=True,
-    help="Wipe the staging corpus before ingesting.",
+    help="Delete the staging corpus and rebuild it from nothing.",
 )
 @click.option(
     "--reingest",
@@ -104,7 +104,7 @@ def ingest(  # noqa: PLR0913 — one option per pipeline stage; a config object 
     sources,
     staging_root,
     kg_name,
-    recreate,
+    wipe,
     reingest,
     build,
     do_register,
@@ -155,7 +155,7 @@ def ingest(  # noqa: PLR0913 — one option per pipeline stage; a config object 
     pipeline = IngestPipeline(staging_root=staging)
     stats = pipeline.run(
         list(sources),
-        recreate=recreate,
+        wipe=wipe,
         skip_existing=not reingest,
     )
 
