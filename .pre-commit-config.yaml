@@ -35,13 +35,13 @@ repos:
     hooks:
       - id: ty
         name: ty
-        entry: poetry run ty check src/
+        entry: .venv/bin/ty check src/ --python .venv
         language: system
         pass_filenames: false
         always_run: true
       - id: pytest
         name: pytest
-        entry: poetry run pytest --tb=short -q
+        entry: .venv/bin/pytest --tb=short -q
         language: system
         pass_filenames: false
         always_run: true
