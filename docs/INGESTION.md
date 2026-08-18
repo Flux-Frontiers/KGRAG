@@ -204,7 +204,7 @@ interrupted run cannot leave a half-written ledger.
 | `status` | `ingested` · `skipped` · `failed` |
 | `staged_path` | Staging-root-relative path of the written file; empty unless ingested |
 | `converter` | `passthrough` or `anydoc` |
-| `converter_version` | Version of the converting library, for reproducibility |
+| `converter_version` | Version of the converting library — recorded on failures too, so "which version rejected this" stays answerable. Blank only when no converter was resolved |
 | `reason` | Why a file was skipped or failed; empty when ingested |
 | `ingested_at` | ISO 8601 UTC timestamp |
 | `metadata` | Converter extras, e.g. `{"source_format": "pdf"}` |
@@ -247,7 +247,7 @@ interrupted run cannot leave a half-written ledger.
       "status": "failed",
       "staged_path": "",
       "converter": "anydoc",
-      "converter_version": "",
+      "converter_version": "0.1.9",
       "reason": "MalformedError: malformed document: not a PDF: file appears to be plain text",
       "ingested_at": "2026-08-18T03:21:08+00:00",
       "metadata": {}
@@ -453,10 +453,6 @@ the manifest's `source_path` rather than in the layout.
 
 **Disk cost.**  Materializing means roughly a second copy of the corpus as
 text, on top of the graph and vector index.
-
-**`converter_version` is not recorded on failed records.**  Successful records
-carry it; a failure notes the converter but not its version, so "which version
-rejected this file" is not answerable from the manifest alone.
 
 ---
 
