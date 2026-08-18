@@ -45,13 +45,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   not linger as a phantom, and a converter upgrade needs no special flag.
   Sources are deduplicated by content digest in both modes.
 
-- **`kgmodule-utils` floor left at `>=0.16.0`** (`pyproject.toml`) even though
-  `kgrag ingest` needs `kg_utils.ingest`, which lands in 0.17.0. That release is
-  not on PyPI yet, and declaring a floor no resolution can satisfy breaks
-  `poetry lock` and the installed-CLI smoke test outright. So the import is
-  guarded and reports `pip install -U 'kgmodule-utils[ingest]'` instead —
-  exactly the approach this package used while `TEIEmbedder` was unreleased.
-  **Raise the floor to `>=0.17.0` once 0.17.0 ships.**
+- **`kgmodule-utils` floor raised to `>=0.17.0`** (`pyproject.toml`):
+  `kgrag ingest` needs `kg_utils.ingest`, which shipped to PyPI in 0.17.0 on
+  2026-08-18. While this branch was open the floor sat at `>=0.16.0` with the
+  ingest import guarded — declaring a floor no resolution could satisfy would
+  have broken `poetry lock` outright — and the guard itself stays, since it is
+  what reports `pip install -U 'kgmodule-utils[ingest]'` when the extra is
+  absent.
 
 - **`firecrawl-anydoc` added as a new optional `ingest` extra**
   (`pyproject.toml`), folded into `all` but not `kg`. Imported lazily by
