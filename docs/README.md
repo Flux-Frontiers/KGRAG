@@ -45,6 +45,7 @@ This directory contains comprehensive documentation for KGRAG users and develope
 | [INSTALLATION.md](INSTALLATION.md) | Setup, configuration, and verification | 10 min |
 | [USAGE.md](USAGE.md) | Commands, workflows, examples, best practices | 20 min |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Common issues and solutions | Reference |
+| [INGESTION.md](INGESTION.md) | Document ingestion — converting PDF/Word/EPUB/spreadsheets into a staged corpus, and the provenance manifest | 10 min |
 | [SEMANTIC_CHUNKING.md](SEMANTIC_CHUNKING.md) | Chunking strategies, parameters, and storage layout | 5 min |
 
 ### For AI Agents
