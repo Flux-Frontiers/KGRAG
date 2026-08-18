@@ -6,7 +6,6 @@ on:
 
 permissions:
   contents: write  # needed to create GitHub Releases and upload assets
-  id-token: write  # needed for PyPI Trusted Publishing (OIDC, no stored token)
 
 jobs:
   release:
@@ -33,6 +32,14 @@ jobs:
       - name: Build wheel and sdist
         run: poetry build
 
+      # Hand the built files to the publish job rather than letting it rebuild,
+      # so PyPI and the GitHub Release carry byte-identical artifacts.
+      - name: Stash dist for the publish job
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -47,8 +54,23 @@ jobs:
               --notes-file release-notes.md
           fi
 
+  publish:
+    name: Publish to PyPI
+    needs: release
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/kg-rag
+    # Replaces the workflow-level `contents: write` for this job: publishing
+    # needs to mint an OIDC token and nothing else.
+    permissions:
+      id-token: write
+    steps:
+      - name: Fetch the artifacts the release job built
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages-dir: dist/
-          skip-existing: true
