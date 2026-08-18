@@ -39,14 +39,57 @@ _PRE_COMMIT_HOOK = """\
 # tagged their snapshots with this repo's tree hash and branch name — so a
 # pycode_kg snapshot would claim to describe pycode_kg at a kgrag commit. It
 # also raced pre-commit's own git plumbing and aborted commits outright.
+#
+# Snapshots are opt-in and OFF by default (2026-08-18):
+#
+#   KGRAG_SNAPSHOT=1 git commit ...        opt in to per-commit snapshots
+#   KGRAG_SKIP_SNAPSHOT=1 git commit ...   force snapshots off (wins)
+#
+# KGRAG_SKIP_SNAPSHOT no longer skips the quality checks. It used to
+# short-circuit the whole hook, so a variable named "skip snapshot" also
+# silently skipped ruff, ty and pytest. It now gates only what it names.
+#
+# A per-commit snapshot records `git write-tree` and is then staged into that
+# same commit, so the recorded hash can never equal the tree it names — an
+# audit of 605 fleet snapshots found only 63 (10.4%) keyed to a real commit
+# tree. The fix is to snapshot at release, keyed on the tag; until that lands
+# this hook runs quality checks only.
+# See kgrag_priv/docs/SNAPSHOT_STRATEGY.md.
 set -euo pipefail
-
-[ "${KGRAG_SKIP_SNAPSHOT:-0}" = "1" ] && exit 0
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
-# Capture the tree hash of the staged index NOW — before any tool modifies files.
+# ---------------------------------------------------------------------------
+# Quality checks FIRST. This used to run last, after the snapshots were built
+# and staged, which meant `pre-commit run`'s stash/restore window contained
+# freshly-rewritten snapshot files, and a rejected commit had already paid for
+# three index rebuilds.
+# ---------------------------------------------------------------------------
+# The config gate is load-bearing: `pre-commit run` exits non-zero with
+# "InvalidConfigError: .pre-commit-config.yaml is not a file" when there is no
+# config, so without it this hook blocks every commit in any repo that
+# installed it without also adopting pre-commit. Metabo_kg fixed the same
+# defect in its own hook.
+if [ -f "$REPO_ROOT/.pre-commit-config.yaml" ]; then
+    PRECOMMIT="$REPO_ROOT/.venv/bin/pre-commit"
+    if [ -x "$PRECOMMIT" ]; then
+        "$PRECOMMIT" run || exit 1
+    elif command -v pre-commit &>/dev/null; then
+        pre-commit run || exit 1
+    fi
+fi
+
+# ---------------------------------------------------------------------------
+# Opt-in index rebuilds + snapshots. Everything below is skipped unless
+# KGRAG_SNAPSHOT=1 is set, and is skipped regardless if KGRAG_SKIP_SNAPSHOT=1.
+# ---------------------------------------------------------------------------
+[ "${KGRAG_SNAPSHOT:-0}" = "1" ] || exit 0
+[ "${KGRAG_SKIP_SNAPSHOT:-0}" = "1" ] && exit 0
+
+# Captured after the checks so nothing further modifies the working tree. Note
+# the caveat above: this still cannot match the committed tree, because the
+# `git add` calls below change the index after this point.
 TREE_HASH=$(git write-tree)
 BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "HEAD")
 
@@ -81,22 +124,7 @@ _kg_refresh pycodekg .pycodekg .pycodekg/snapshots/
 _kg_refresh dockg    .dockg    .dockg/snapshots/
 _kg_refresh ftreekg  .filetreekg .filetreekg/snapshots/
 
-# ---------------------------------------------------------------------------
-# Run pre-commit framework checks AFTER all snapshots are captured and staged.
-# ---------------------------------------------------------------------------
-# The config gate is load-bearing: `pre-commit run` exits non-zero with
-# "InvalidConfigError: .pre-commit-config.yaml is not a file" when there is no
-# config, so without it this hook blocks every commit in any repo that
-# installed it without also adopting pre-commit. Metabo_kg fixed the same
-# defect in its own hook.
-if [ -f "$REPO_ROOT/.pre-commit-config.yaml" ]; then
-    PRECOMMIT="$REPO_ROOT/.venv/bin/pre-commit"
-    if [ -x "$PRECOMMIT" ]; then
-        "$PRECOMMIT" run || exit 1
-    elif command -v pre-commit &>/dev/null; then
-        pre-commit run || exit 1
-    fi
-fi
+# Quality checks already ran, before any of the above.
 
 exit 0
 """
