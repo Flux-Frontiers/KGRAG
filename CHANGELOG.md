@@ -7,8 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`memory-kg` is now a declared dependency** (the `kg` and `all` extras).
+  It was in no extra at all, so a registered `kind=memory` KG could never be
+  queried through KGRAG on a stock install -- `kgrag query --kind memory`
+  reported "No available KGs to query" no matter how the KG was built. It is
+  on PyPI and is floored at `>=0.7.0`.
+
+### Fixed
+
+- **`MemoryKGAdapter` no longer raises on load.** It passed `lancedb_dir=` to
+  `MemoryKG.__init__`, a parameter memory-kg dropped in 0.7.0 when it moved to
+  sqlite-vec, so every construction died with `TypeError: unexpected keyword
+  argument 'lancedb_dir'`. It now passes `vectors_path=` instead, and leaves it
+  `None` for the default layout so memory-kg derives the sidecar next to the
+  graph -- the same idiom `DocKGAdapter` already used.
+
 ### Changed
 
+- **`pyproject.toml` converted to PEP 621.** Metadata, extras, URLs and console
+  scripts moved from `[tool.poetry]` to the standard `[project]`,
+  `[project.optional-dependencies]`, `[project.urls]` and `[project.scripts]`
+  tables, matching `gutenberg_kg`. `[tool.poetry]` now carries only `packages`,
+  plus the `torch` source enrichment PEP 621 cannot express and the optional
+  dependency groups. Resolution is unchanged: the regenerated lock installs the
+  identical package set at identical versions.
+- **`diary-kg` and `ftree-kg` moved out of the `kg` extra** into their own
+  `diary` and `filetree` extras. They back KG kinds most registries never hold,
+  and `diary-kg` pulls spacy (~21M) for a backend that then sits unused. `kg`
+  now carries the three that a typical registry leans on -- `pycode-kg`
+  (`code`), `doc-kg` (`doc`, and every `gutenberg` KG, which queries through
+  `DocKG`) and `memory-kg` (`memory`). `all` is unchanged and still installs
+  every one of them. **Breaking** for anyone who relied on `kg-rag[kg]` to
+  supply diary or filetree support; install `kg-rag[kg,diary,filetree]`.
+- **`[tool.memorykg]` rewritten to the keys memory-kg actually reads.** The
+  block declared `source`, `extra`, `output` and `corpus_name` -- none of which
+  anything reads -- and its comment documented `memorykg build --source ...
+  --extra ...`, flags the CLI no longer has. `exclude` is the only key
+  `memory_kg.config.load_exclude_dirs` looks for, so the ten exclusions had to
+  be repeated by hand as `--exclude-dir` on every rebuild. Rebuilding the
+  `claude_t_self` corpus is now just `memorykg build --repo .`.
+- **Dropped the orphaned `spacy` dependency.** It was marked `optional = true`
+  but listed in no extra, so no install could ever select it, and nothing in
+  `src/` or `tests/` imports it. It still arrives transitively via `diary-kg`.
 - **`torch` routes to the CPU-only wheel index on Linux** (`pyproject.toml`).
   The default PyPI Linux wheel bundles the full CUDA runtime (~2.7G of
   `nvidia-*` packages, ~700M of `triton`) regardless of whether a GPU is

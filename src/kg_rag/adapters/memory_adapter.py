@@ -34,11 +34,15 @@ class MemoryKGAdapter(KGAdapter):
             ) from exc
         entry = self.entry
         sqlite = str(entry.sqlite_path) if entry.sqlite_path else None
-        lancedb = str(entry.lancedb_path) if entry.lancedb_path else None
+        # No lancedb_dir: memory-kg 0.7.0 dropped the parameter when it moved to
+        # sqlite-vec, so passing it raises TypeError. None lets memory-kg derive
+        # the sidecar next to the graph, which is right for the default layout;
+        # an explicit path is required only when the store lives elsewhere.
+        vectors = str(entry.vectors_path) if entry.vectors_path else None
         self._kg = MemoryKG(
             corpus_root=str(entry.repo_path),
             db_path=sqlite or str(entry.repo_path / ".memorykg" / "graph.sqlite"),
-            lancedb_dir=lancedb or str(entry.repo_path / ".memorykg" / "lancedb"),
+            vectors_path=vectors,
             embedder=self._embedder,
         )
 
