@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-08-18
+
 ### Added
 
 - **`kgrag ingest` — one command from loose documents to a registered,
@@ -88,11 +90,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Backend dispatch is now tested** (`tests/test_embed_factory.py`, 7 tests):
   the `tei` branch end to end with a stubbed HTTP layer, plus the previously
   untested no-backend, unknown-backend and missing-llama-path paths.
-### Changed
-
-### Removed
-
-### Fixed
 
 ## [0.12.0] - 2026-08-14
 

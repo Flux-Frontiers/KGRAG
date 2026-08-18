@@ -236,5 +236,4 @@ with KGRAG() as kg:
 
 ---
 
-**Last updated:** 2026-03-18
 **KGRAG Version:** 0.3.0

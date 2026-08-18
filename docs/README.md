@@ -320,6 +320,5 @@ Planned visual rendering: each KG as a fractal tree whose size, colour, and bran
 
 ---
 
-**Last updated:** 2026-03-14
 **KGRAG Version:** Latest
 **Status:** Actively maintained
