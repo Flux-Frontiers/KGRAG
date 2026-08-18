@@ -9,6 +9,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`kgrag ingest` — one command from loose documents to a registered,
+  queryable KG.** KGRAG could previously only read corpora that already existed
+  as Markdown or plain text on disk. This supplies the missing front end: point
+  it at PDFs, Word documents, EPUBs, spreadsheets, slide decks or a directory
+  of mixed formats and it normalizes them to Markdown, builds a DocKG over the
+  result, and registers that KG.
+
+  ```
+  kgrag ingest ~/Documents/specs --into ~/corpora/specs
+  kgrag ingest report.pdf notes.docx --into ~/corpora/mixed --corpus research
+  ```
+
+  Three stages — stage, build, register — each independently skippable via
+  `--no-build` / `--no-register`, so the command is usable as a pure converter
+  when that is all you want. `--corpus NAME` folds the result into an existing
+  corpus in the same run, mirroring `kgrag init`.
+
+  Conversion comes from `kg_utils.ingest` (kgmodule-utils 0.17.0) rather than
+  from a converter vendored here, so `dockg build` and every other KGModule
+  builder gains the same multi-format front end instead of KGRAG holding a
+  private copy of it.
+
+- **Documents that cannot be ingested are reported, not dropped.** The run
+  prints a "Not ingested" table naming each skipped or failed document with its
+  reason — unsupported format, malformed file, or converted-to-empty, which is
+  what a scanned PDF looks like to a converter that does no OCR — and points at
+  the staging manifest for the full record. Re-running is idempotent by content
+  digest, so pointing it at a growing folder only ingests what is new;
+  `--reingest` re-converts everything after a converter upgrade.
+
+- **`kgmodule-utils` floor raised to `>=0.17.0`** (`pyproject.toml`), the
+  release that ships `kg_utils.ingest`. The converter itself is a new optional
+  `ingest` extra (`firecrawl-anydoc`) and is imported lazily: staging
+  `.md`/`.txt`/`.rst` needs nothing extra, and `kgrag ingest` reports the exact
+  install command rather than traceback if a user reaches for a format the
+  extra covers without having installed it.
+
 - **`embed_backend = "tei"` — route embedding to a Text Embeddings Inference
   server** (`src/kg_rag/embed.py`). Selects `kg_utils.embedder.TEIEmbedder`, so
   no model, no torch and no sentence-transformers load in this process. Reads

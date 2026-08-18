@@ -68,6 +68,7 @@ RAG embeds text chunks and retrieves by approximate similarity — no structure,
 
 ## Features
 
+- **Document ingestion** — `kgrag ingest` turns loose PDFs, Word documents, EPUBs, spreadsheets, slide decks and Markdown into a staged corpus, builds a KG over it, and registers the result in one command
 - **Multi-domain federation** — Query code, docs, metabolic pathways, diary entries, and conversation history simultaneously
 - **Five-method adapter protocol** — `is_available`, `query`, `pack`, `stats`, `analyze`; add a new domain by implementing five methods
 - **Unified registry** — Persistent SQLite-backed storage of KG locations, metadata, corpora, and person records
@@ -93,11 +94,17 @@ pip install 'kg-rag[viz]'
 # With PyCodeKG / DocKG / FTreeKG adapters
 pip install 'kg-rag[kg]'
 
+# With multi-format document ingestion (PDF, Word, PowerPoint, Excel, EPUB, …)
+pip install 'kg-rag[ingest]'
+
 # With git-sourced adapters (AgentKG, DiaryKG, MetaboKG, MemoryKG) — Poetry only
 poetry install --with kgdeps
 ```
 
 ```bash
+# Ingest a folder of mixed-format documents: convert → build → register
+kgrag ingest ~/Documents/specs --into ~/corpora/specs
+
 # Register a Python codebase
 kgrag register my-code code /path/to/my-repo
 
