@@ -69,14 +69,10 @@ _DOCKG_DIR = ".dockg"
     help="Name to register the KG under (default: <staging-dir>-doc).",
 )
 @click.option(
-    "--wipe",
+    "--update",
     is_flag=True,
-    help="Delete the staging corpus and rebuild it from nothing.",
-)
-@click.option(
-    "--reingest",
-    is_flag=True,
-    help="Re-convert sources already staged (use after a converter upgrade).",
+    default=False,
+    help="Incremental update — keep existing staged documents instead of rebuilding.",
 )
 @click.option("--build/--no-build", default=True, show_default=True, help="Run dockg build.")
 @click.option(
@@ -104,8 +100,7 @@ def ingest(  # noqa: PLR0913 — one option per pipeline stage; a config object 
     sources,
     staging_root,
     kg_name,
-    wipe,
-    reingest,
+    update,
     build,
     do_register,
     corpus_name,
@@ -118,8 +113,11 @@ def ingest(  # noqa: PLR0913 — one option per pipeline stage; a config object 
     Word, PowerPoint, Excel, OpenDocument, RTF, EPUB, CSV and text-based PDF
     via anydoc.  Directories are walked recursively.
 
-    Re-running is idempotent: sources already staged are skipped by content
-    digest, so pointing this at a growing folder only ingests what is new.
+    A run rebuilds the staged corpus from nothing, matching ``dockg build`` and
+    ``pycodekg build``: the corpus reflects exactly the sources given, so a
+    document removed upstream does not linger, and a converter upgrade needs no
+    special flag. Pass ``--update`` for the incremental path, which keeps what
+    is already staged and converts only what is new.
 
     \b
     SOURCES  One or more files and/or directories to ingest.
@@ -131,7 +129,7 @@ def ingest(  # noqa: PLR0913 — one option per pipeline stage; a config object 
         kgrag ingest report.pdf notes.docx --into ~/corpora/mixed --name mixed-docs
         kgrag ingest ~/Downloads --into ~/corpora/inbox --no-build
         kgrag ingest ~/papers --into ~/corpora/papers --corpus research
-        kgrag ingest ~/papers --into ~/corpora/papers --reingest
+        kgrag ingest ~/papers --into ~/corpora/papers --update
     """
     try:
         from kg_utils.ingest import IngestPipeline
@@ -153,11 +151,7 @@ def ingest(  # noqa: PLR0913 — one option per pipeline stage; a config object 
     console.print(f"  staging: [bold]{staging}[/bold]")
 
     pipeline = IngestPipeline(staging_root=staging)
-    stats = pipeline.run(
-        list(sources),
-        wipe=wipe,
-        skip_existing=not reingest,
-    )
+    stats = pipeline.run(list(sources), update=update)
 
     console.print(
         f"\n  [green]{stats.ingested} staged[/green] · "

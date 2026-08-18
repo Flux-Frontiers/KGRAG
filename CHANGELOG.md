@@ -35,9 +35,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   prints a "Not ingested" table naming each skipped or failed document with its
   reason — unsupported format, malformed file, or converted-to-empty, which is
   what a scanned PDF looks like to a converter that does no OCR — and points at
-  the staging manifest for the full record. Re-running is idempotent by content
-  digest, so pointing it at a growing folder only ingests what is new;
-  `--reingest` re-converts everything after a converter upgrade.
+  the staging manifest for the full record.
+
+- **A run rebuilds the staged corpus from nothing; `--update` is incremental.**
+  Matches what the fleet's builders already settled on — `dockg build` /
+  `dockg build --update` and `pycodekg build` / `pycodekg update` — where the
+  wipe is implicit and the incremental path is the named opt-in. The corpus
+  therefore reflects exactly the sources given: a document removed upstream does
+  not linger as a phantom, and a converter upgrade needs no special flag.
+  Sources are deduplicated by content digest in both modes.
 
 - **`kgmodule-utils` floor raised to `>=0.17.0`** (`pyproject.toml`), the
   release that ships `kg_utils.ingest`. The converter itself is a new optional

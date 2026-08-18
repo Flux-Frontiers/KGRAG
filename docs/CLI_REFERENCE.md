@@ -275,8 +275,8 @@ kgrag ingest ~/Downloads --into ~/corpora/inbox --no-build
 # add the result to an existing corpus in the same run
 kgrag ingest ~/papers --into ~/corpora/papers --corpus research
 
-# re-convert everything after upgrading the converter
-kgrag ingest ~/papers --into ~/corpora/papers --reingest
+# incremental: keep what is staged, convert only what is new
+kgrag ingest ~/papers --into ~/corpora/papers --update
 ```
 
 Accepts `.md`, `.txt` and `.rst` directly. Converts Word (`.doc`, `.docx`,
@@ -288,8 +288,12 @@ Accepts `.md`, `.txt` and `.rst` directly. Converts Word (`.doc`, `.docx`,
 pip install 'kg-rag[ingest]'      # or: pip install 'kgmodule-utils[ingest]'
 ```
 
-Re-runs are idempotent — sources are deduplicated by content digest, so
-pointing this at a growing folder only ingests what is new. There is **no OCR**:
+A run rebuilds the staged corpus from nothing, matching `dockg build` and
+`pycodekg build`, so the corpus reflects exactly the sources given — a document
+removed upstream does not linger, and a converter upgrade needs no special flag.
+`--update` selects the incremental path (`dockg build --update`,
+`pycodekg update`), keeping what is staged and converting only what is new.
+Sources are deduplicated by content digest either way. There is **no OCR**:
 scanned, image-only PDFs are recorded as skipped with a reason rather than
 silently omitted. Every file examined is accounted for in the staging manifest:
 
