@@ -131,13 +131,16 @@ def ingest(  # noqa: PLR0913 — one option per pipeline stage; a config object 
         kgrag ingest ~/papers --into ~/corpora/papers --corpus research
         kgrag ingest ~/papers --into ~/corpora/papers --update
     """
+    # kg_utils.ingest imports anydoc lazily, so failing here means the installed
+    # kgmodule-utils predates the module — not that the converter is missing.
+    # A missing converter surfaces per-document, with its own install hint.
     try:
         from kg_utils.ingest import IngestPipeline
     except ImportError:
         console.print(
             "[red]Document ingestion is unavailable.[/red] "
-            "Install the ingest extra:\n\n"
-            "    pip install 'kgmodule-utils[ingest]'\n"
+            "It needs kgmodule-utils >= 0.17.0:\n\n"
+            "    pip install -U 'kgmodule-utils[ingest]'\n"
         )
         raise SystemExit(1) from None
 

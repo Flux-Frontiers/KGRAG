@@ -141,7 +141,11 @@ firecrawl-anydoc = { version = ">=0.1.9", optional = true }
 # the floor now: 0.13.1 made SnapshotManager's `repo_root` a read-only property
 # and broke every subclass that assigns it, so nothing in the fleet declares a
 # floor that can resolve to it.
-kgmodule-utils = ">=0.17.0"
+# Floor stays at the highest release on PyPI. `kgrag ingest` needs
+# kg_utils.ingest, which lands in 0.17.0 and is not published yet, so the
+# import is guarded and reports the upgrade — the same approach this package
+# used while TEIEmbedder was unreleased. Raise to >=0.17.0 once it ships.
+kgmodule-utils = ">=0.16.0"
 pycode-kg = {version = ">=0.23.1", optional=true}
 doc-kg = {version = ">=0.21.2", optional=true}
 ftree-kg = {version = ">=0.13.0", optional=true}

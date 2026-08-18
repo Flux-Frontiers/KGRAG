@@ -45,12 +45,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   not linger as a phantom, and a converter upgrade needs no special flag.
   Sources are deduplicated by content digest in both modes.
 
-- **`kgmodule-utils` floor raised to `>=0.17.0`** (`pyproject.toml`), the
-  release that ships `kg_utils.ingest`. The converter itself is a new optional
-  `ingest` extra (`firecrawl-anydoc`) and is imported lazily: staging
-  `.md`/`.txt`/`.rst` needs nothing extra, and `kgrag ingest` reports the exact
-  install command rather than traceback if a user reaches for a format the
-  extra covers without having installed it.
+- **`kgmodule-utils` floor left at `>=0.16.0`** (`pyproject.toml`) even though
+  `kgrag ingest` needs `kg_utils.ingest`, which lands in 0.17.0. That release is
+  not on PyPI yet, and declaring a floor no resolution can satisfy breaks
+  `poetry lock` and the installed-CLI smoke test outright. So the import is
+  guarded and reports `pip install -U 'kgmodule-utils[ingest]'` instead —
+  exactly the approach this package used while `TEIEmbedder` was unreleased.
+  **Raise the floor to `>=0.17.0` once 0.17.0 ships.**
+
+- **`firecrawl-anydoc` added as a new optional `ingest` extra**
+  (`pyproject.toml`), folded into `all` but not `kg`. Imported lazily by
+  `kg_utils.ingest`, so staging `.md`/`.txt`/`.rst` needs nothing extra, and a
+  format the extra covers is reported per-document with its install command
+  rather than failing the run.
 
 - **`embed_backend = "tei"` — route embedding to a Text Embeddings Inference
   server** (`src/kg_rag/embed.py`). Selects `kg_utils.embedder.TEIEmbedder`, so
