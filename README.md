@@ -91,14 +91,20 @@ pip install kg-rag
 # With Streamlit dashboard
 pip install 'kg-rag[viz]'
 
-# With PyCodeKG / DocKG / FTreeKG adapters
+# With the common adapter backends (PyCodeKG, DocKG, MemoryKG).
+# DocKG also backs every GutenbergKG corpus, which queries through it.
 pip install 'kg-rag[kg]'
 
-# With multi-format document ingestion (PDF, Word, PowerPoint, Excel, EPUB, …)
+# DiaryKG and FileTreeKG back kinds most registries never hold, so they
+# have their own extras rather than riding along with [kg].
+pip install 'kg-rag[diary]'
+pip install 'kg-rag[filetree]'
+
+# With multi-format document ingestion (PDF, Word, PowerPoint, Excel, EPUB, ...)
 pip install 'kg-rag[ingest]'
 
-# With git-sourced adapters (AgentKG, DiaryKG, MetaboKG, MemoryKG) — Poetry only
-poetry install --with kgdeps
+# Everything except [pi], which needs a compiler toolchain
+pip install 'kg-rag[all]'
 ```
 
 ```bash

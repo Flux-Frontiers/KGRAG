@@ -1,9 +1,8 @@
-# kgrag - Knowledge Graph Builder for Python Codebases
+# pyproject.toml -- kg-rag package configuration (PEP 621)
 #
-# kgrag is a tool that builds searchable knowledge graphs from Python repositories.
-# It analyzes Python code to extract semantic relationships between modules, classes,
-# functions, and methods, creating a comprehensive graph representation that can be
-# queried using natural language.
+# kgrag is the orchestration layer for the KGRAG(tm) components. It builds and
+# queries searchable knowledge graphs across code, documents, and other corpora,
+# federating whatever KG modules happen to be installed.
 #
 # Key Features:
 # - AST-based code analysis with semantic understanding
@@ -13,229 +12,233 @@
 # - MCP (Model Context Protocol) server integration
 # - Streamlit-based web interface for exploration
 #
-# The tool is designed for developers who want to understand large codebases,
-# perform code analysis, or build AI-powered development tools.
-#
 # Author: Eric G. Suchanek, PhD
 #
-# Quick install (poetry) — recommended
-# -------------------------------------
-#   poetry install                               core orchestrator only
-#   poetry install --with dev                    core + dev tools (the group is optional)
-#   poetry install --extras "kg"                 core + PyPI KG adapters (pycode-kg, doc-kg, ftree-kg, diary-kg)
-#   poetry install --extras "viz"                core + 2D visualization (streamlit, pyvis, plotly)
-#   poetry install --extras "viz3d"              core + 3D visualization (pyvista, pyvistaqt, PyQt5)
-#   poetry install --extras "pi"                 core + llama-cpp-python (Raspberry Pi / local LLM)
-#   poetry install --extras "all"                everything except "pi" (needs a compiler)
-#   poetry install --extras "all" --with dev     everything + dev tools
+# Build system : Poetry 2.x with PEP 621 [project] table
 #
-# Git-only adapters (agent-kg, metabo-kg) — install via uv directly:
-#   uv add git+https://github.com/Flux-Frontiers/agent_kg.git
-#   uv add git+https://github.com/Flux-Frontiers/metabo_kg.git
+# Extras (user-facing features)
+# -----------------------------
+#   kg       the KG kinds most registries actually hold -- pycode-kg (code),
+#            doc-kg (doc, and every gutenberg KG), memory-kg (memory)
+#   diary    diary KGs (diary-kg -- pulls spacy, ~21M)
+#   filetree filetree KGs (ftree-kg)
+#   ingest   multi-format document ingestion, `kgrag ingest` (firecrawl-anydoc)
+#   viz      2-D visualization (streamlit, pyvis, plotly)
+#   viz2d    Qt surface for `kgrag viz2d` (PyQt5)
+#   qt       alias for viz2d, kept for older install instructions
+#   viz3d    3-D visualiser (pyvista, pyvistaqt, PyQt5)
+#   pi       llama-cpp-python embedder (Raspberry Pi / local GGUF)
+#   all      everything except `pi` -- see the note on that extra below
+#
+# Quick install (poetry)
+# ----------------------
+#   poetry install                            core orchestrator only
+#   poetry install --with dev                 core + dev tools (the group is optional)
+#   poetry install --extras "kg"              core + the common KG backends
+#   poetry install --extras "kg diary filetree"
+#                                             core + every PyPI KG backend
+#   poetry install --extras "viz"             core + 2-D visualization
+#   poetry install --extras "viz3d"           core + 3-D visualization
+#   poetry install --extras "pi"              core + llama-cpp-python
+#   poetry install --extras "all"             everything except "pi" (needs a compiler)
+#   poetry install --extras "all" --with dev  everything + dev tools
 #
 # Quick install (pip)
 # -------------------
-#   pip install -e "."                           core only
-#   pip install -e ".[kg]"                       core + PyPI KG adapters
-#   pip install -e ".[all]"                      everything (PyPI-resolvable)
+#   pip install -e "."                        core only
+#   pip install -e ".[kg]"                    core + the common KG backends
+#   pip install -e ".[kg,diary,filetree]"     core + every PyPI KG backend
+#   pip install -e ".[all]"                   everything except "pi"
 #
-# Universal CLI on PATH (uv) — recommended
-# ----------------------------------------
+# Git-only adapter backends (gutenberg-kg, metabo-kg) are not on PyPI and so
+# cannot be declared here. Install them separately when you register a KG of
+# that kind:
+#   uv add git+https://github.com/Flux-Frontiers/gutenberg_kg.git
+#   uv add git+https://github.com/Flux-Frontiers/metabo_kg.git
+#
+# Dev tooling lives in the optional Poetry `dev` group, NOT an extra, so it
+# stays out of published wheel metadata -- there is no `.[dev]` to pip-install.
+# (Fleet convention: extras are user-facing features, groups are repo tooling.
+# See kgrag_priv/docs/FLEET_STANDARDS.md.)
+#
+# Universal CLI on PATH (uv) -- recommended
+# -----------------------------------------
 #   uv tool install --editable ".[all]" --python 3.12
-#                                                install whole stack into isolated venv, kgrag* on PATH
-#   uv tool upgrade kg-rag                       pull in latest versions
-#   uv tool uninstall kg-rag                     remove
+#                                             whole stack in an isolated venv, kgrag* on PATH
+#   uv tool upgrade kg-rag                    pull in latest versions
+#   uv tool uninstall kg-rag                  remove
 #
 # Run tests
 # ---------
-#   pytest                                       uses [tool.pytest.ini_options]
+#   pytest                                    uses [tool.pytest.ini_options]
 #
 # MCP server
 # ----------
-#   kgrag-mcp                                    start the KGRAG MCP server
+#   kgrag-mcp                                 start the KGRAG MCP server
 #
 # Build KG indices (run inside each repo after code changes)
-# -----------------------------------------------------------
-#   pycodekg build --repo .                      rebuild code KG
-#   dockg build --repo .                         rebuild doc KG
-#   memorykg build                               rebuild memory KG
-
+# ----------------------------------------------------------
+#   pycodekg build --repo .                   rebuild code KG
+#   dockg build --repo .                      rebuild doc KG
+#   memorykg build                            rebuild memory KG
 
 [build-system]
 requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
+packages = [{ include = "kg_rag", from = "src" }]
+
+# ---------------------------------------------------------------------------
+# PEP 621 project metadata
+# ---------------------------------------------------------------------------
+[project]
 name = "kg-rag"
 version = "0.13.0"
 description = "Orchestration layer for the KGRAG(tm) components."
-authors = ["Eric G. Suchanek, PhD <suchanek@flux-frontiers.com>"]
-license = "Elastic-2.0"
 readme = "README.md"
-homepage = "https://github.com/Flux-Frontiers/KGRAG"
-repository = "https://github.com/Flux-Frontiers/KGRAG"
+license = "Elastic-2.0"
+authors = [
+    { name = "Eric G. Suchanek, PhD", email = "suchanek@flux-frontiers.com" }
+]
 keywords = ["knowledge-graph", "code-analysis", "ast", "lancedb", "sqlite", "semantic-search", "kgrag"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
-packages = [
-  { include = "kg_rag", from = "src" },
-]
-
-# CPU-only torch on Linux: dev/CI here has no GPU, but the default PyPI linux
-# wheel bundles the full CUDA runtime (~2.7G of nvidia-* packages, ~700M of
-# triton) regardless. "explicit" priority means only packages naming this
-# source use it — nothing else is redirected off PyPI. This affects local/CI
-# installs only; it is not part of published wheel metadata, so `pip install
-# kg-rag` for a GPU user still resolves torch normally.
-#
-# Linux only: macOS/Windows torch builds are already CPU/MPS, and this index
-# publishes the macOS ones without the "+cpu" local version label, so locking
-# it globally leaves those platforms with no installable candidate.
-[[tool.poetry.source]]
-name = "pytorch-cpu"
-url = "https://download.pytorch.org/whl/cpu"
-priority = "explicit"
-
-[tool.poetry.dependencies]
-python = ">=3.12,<3.14"
+requires-python = ">=3.12,<3.14"
 # No lancedb here: KGRAG never imports it. Vector stores belong to the KG
 # modules, which declare their own; KGRAG only passes paths through and, in
 # `kgrag audit-lancedb`, looks for leftover directories on disk. Health checks
 # shell out to each module's CLI for the same reason (see cmd_health).
-# As of the doc-kg >=0.21.0 floor below, `kgrag[kg]` no longer drags lancedb in
-# transitively either: doc-kg moved it to an opt-in `[lancedb]` extra needed
-# only to read a pre-0.20.0 store. `kgrag audit-lancedb` is unaffected — it only
-# looks for leftover directories on disk and never imports the package.
-numpy = ">=1.24.0"
-# personal agent
-
-# from personal_agent
-transformers = ">=5.5.0,<6"
-sentence-transformers = "^5.2.0"
-safetensors = ">=0.5.0"
-
-torch = [
-    { markers = "sys_platform == 'linux'", version = ">=2.5.1", source = "pytorch-cpu" },
-    { markers = "sys_platform != 'linux'", version = ">=2.5.1" },
+# As of the doc-kg >=0.21.2 floor in the `kg` extra, `kgrag[kg]` no longer drags
+# lancedb in transitively either: doc-kg moved it to an opt-in `[lancedb]` extra
+# needed only to read a pre-0.20.0 store. `kgrag audit-lancedb` is unaffected --
+# it only looks for leftover directories on disk and never imports the package.
+dependencies = [
+    "click>=8.1.0",
+    # 0.13.0 was the original floor because it ships TEIEmbedder, which
+    # `embed_backend = "tei"` in src/kg_rag/embed.py imports directly. 0.13.1
+    # made SnapshotManager's `repo_root` a read-only property and broke every
+    # subclass that assigns it, so nothing in the fleet may resolve to it.
+    # 0.17.0 is the floor now: `kgrag ingest` needs kg_utils.ingest, which
+    # shipped to PyPI 2026-08-18. The anydoc import inside it stays guarded
+    # regardless, so staging .md/.txt/.rst still needs no extra.
+    "kgmodule-utils>=0.17.0",
+    # Upper-bounded: mcp 2.0 removed the low-level Server decorator API
+    # (`@server.list_tools()` / `@server.call_tool()`) that kg_rag.mcp_server
+    # uses. The Server class itself still imports under 2.0, so the failure
+    # surfaces as an AttributeError when _make_server() runs -- not at import --
+    # which makes it easy to miss. Lift this only alongside a port to the 2.x
+    # handler API.
+    "mcp>=1.0.0,<2",
+    "numpy>=1.24.0",
+    "pandas>=2.0.0",
+    "rich>=14.3.3,<15",
+    "safetensors>=0.5.0",
+    "sentence-transformers>=5.2.0,<6",
+    "torch>=2.5.1",
+    "transformers>=5.5.0,<6",
 ]
-streamlit = { version = ">=1.35.0", optional = true }
-pyvis = { version = ">=0.3.2", optional = true }
-pandas = ">=2.0.0"
-rich = "^14.3.3"
-click = ">=8.1.0"
-# Upper-bounded: mcp 2.0 removed the low-level Server decorator API
-# (`@server.list_tools()` / `@server.call_tool()`) that kg_rag.mcp_server uses.
-# The Server class itself still imports under 2.0, so the failure surfaces as an
-# AttributeError when _make_server() runs — not at import — which makes it easy
-# to miss. Lift this only alongside a port to the 2.x handler API.
-mcp = ">=1.0.0,<2"
-plotly = { version = ">=5.14.0", optional = true }
-# No `extras = ["jupyter"]`: that pulled the whole notebook stack
-# (jupyter-server-proxy -> jupyter-server, nbconvert -> mistune) for a renderer
-# nothing here drives from a notebook — viz3d is Qt-based via
-# `pyvistaqt.QtInteractor`, and no module sets a Jupyter backend. Re-add it only
-# alongside code that actually calls `pv.set_jupyter_backend()`.
-pyvista = { version = ">=0.44.0", optional = true }
-pyvistaqt = { version = ">=0.11.0", optional = true }
-PyQt5 = { version = ">=5.15.0", optional = true }
-param = { version = ">=2.0.0", optional = true }
-markdown = { version = ">=3.6", optional = true }
-trame-vtk = { version = ">=2.0.0", optional = true }
-spacy = {version = ">=3.7.0", optional = true}
-llama-cpp-python = { version = ">=0.3.0", optional = true }
-# Converts Word/PowerPoint/Excel/OpenDocument/RTF/EPUB/CSV/PDF to Markdown
-# for `kgrag ingest`. Optional: staging .md/.txt/.rst needs nothing extra,
-# and kg_utils.ingest imports it lazily.
-firecrawl-anydoc = { version = ">=0.1.9", optional = true }
 
-
-# our own adaptors (PyPI-only; git-only adapters installed separately via uv)
-# 0.13.0 was the original floor because it ships TEIEmbedder, which
-# `embed_backend = "tei"` in src/kg_rag/embed.py imports directly. 0.13.2 is
-# the floor now: 0.13.1 made SnapshotManager's `repo_root` a read-only property
-# and broke every subclass that assigns it, so nothing in the fleet declares a
-# floor that can resolve to it.
-# 0.17.0 is the floor now: `kgrag ingest` needs kg_utils.ingest, which shipped
-# to PyPI 2026-08-18. The anydoc import inside it stays guarded regardless, so
-# staging .md/.txt/.rst still needs no extra.
-kgmodule-utils = ">=0.17.0"
-pycode-kg = {version = ">=0.23.1", optional=true}
-doc-kg = {version = ">=0.21.2", optional=true}
-ftree-kg = {version = ">=0.13.0", optional=true}
-diary-kg  = {version = ">=0.97.0", optional = true}
-
-
-[tool.poetry.extras]
-viz = ["streamlit", "pyvis", "plotly"]
-viz2d = ["PyQt5"]
-qt = ["PyQt5"]
-viz3d = ["pyvista", "pyvistaqt", "PyQt5", "param", "markdown", "trame-vtk"]
-kg = ["pycode-kg", "ftree-kg", "doc-kg", "diary-kg"]
-# Multi-format document ingestion: `kgrag ingest`.
-ingest = ["firecrawl-anydoc"]
-pi = ["llama-cpp-python"]
+[project.optional-dependencies]
+# KG adapter backends. Every adapter in kg_rag.adapters imports its backend
+# lazily inside a method and gates on is_available(), so the orchestrator runs
+# with none of these installed -- it simply has nothing it can query. Install
+# the ones matching the KG kinds you actually register.
+#
+# `kg` carries the three that a typical registry leans on:
+#   pycode-kg   kind=code
+#   doc-kg      kind=doc AND kind=gutenberg -- the gutenberg adapter queries
+#               through DocKG, so a 241-book corpus needs doc-kg and nothing
+#               else. (gutenberg-kg itself is only for corpus_status/snapshot,
+#               which nothing in kg_rag calls, and it is not on PyPI anyway.)
+#   memory-kg   kind=memory
+# diary-kg and ftree-kg moved to their own extras below rather than staying
+# here: they back kinds most registries never hold, and diary-kg pulls spacy
+# (~21M) for a backend that then sits unused.
+kg = [
+    "doc-kg>=0.21.2",
+    "memory-kg>=0.7.0",
+    "pycode-kg>=0.23.1",
+]
+diary = [
+    "diary-kg>=0.97.0",
+]
+filetree = [
+    "ftree-kg>=0.13.0",
+]
+# Multi-format document ingestion: `kgrag ingest`. Converts Word / PowerPoint /
+# Excel / OpenDocument / RTF / EPUB / CSV / PDF to Markdown. Optional because
+# staging .md/.txt/.rst needs nothing extra and kg_utils.ingest imports it
+# lazily.
+ingest = [
+    "firecrawl-anydoc>=0.1.9",
+]
+viz = [
+    "plotly>=5.14.0",
+    "pyvis>=0.3.2",
+    "streamlit>=1.35.0",
+]
+viz2d = [
+    "PyQt5>=5.15.0",
+]
+qt = [
+    "PyQt5>=5.15.0",
+]
+viz3d = [
+    "markdown>=3.6",
+    "param>=2.0.0",
+    "PyQt5>=5.15.0",
+    # No `[jupyter]`: that pulled the whole notebook stack (jupyter-server-proxy
+    # -> jupyter-server, nbconvert -> mistune) for a renderer nothing here drives
+    # from a notebook -- viz3d is Qt-based via `pyvistaqt.QtInteractor`, and no
+    # module sets a Jupyter backend. Re-add it only alongside code that actually
+    # calls `pv.set_jupyter_backend()`.
+    "pyvista>=0.44.0",
+    "pyvistaqt>=0.11.0",
+    "trame-vtk>=2.0.0",
+]
+pi = [
+    "llama-cpp-python>=0.3.0",
+]
 # Deliberately excludes "pi": llama-cpp-python has no wheel for every platform
 # and falls back to a source build, so folding it in here would make `--all-extras`
-# require a compiler toolchain.  Install it explicitly with --extras "pi".
+# require a compiler toolchain. Install it explicitly with --extras "pi".
+#
+# Constraints here must match the per-extra ones above character for character.
+# Re-listing a package under a *different* constraint makes it a second
+# declaration under an overlapping marker, which poetry reports as "Duplicate
+# dependencies ... Different requirements found" and resolves by restarting the
+# whole lock with an override -- pathologically slow once a few packages do it.
 all = [
-  "pycode-kg", "ftree-kg", "doc-kg", "diary-kg",
-  "firecrawl-anydoc",
-  "streamlit", "pyvis", "plotly",
-  "pyvista", "pyvistaqt", "PyQt5", "param", "markdown", "trame-vtk",
+    "diary-kg>=0.97.0",
+    "doc-kg>=0.21.2",
+    "ftree-kg>=0.13.0",
+    "memory-kg>=0.7.0",
+    "pycode-kg>=0.23.1",
+    "firecrawl-anydoc>=0.1.9",
+    "plotly>=5.14.0",
+    "pyvis>=0.3.2",
+    "streamlit>=1.35.0",
+    "markdown>=3.6",
+    "param>=2.0.0",
+    "PyQt5>=5.15.0",
+    "pyvista>=0.44.0",
+    "pyvistaqt>=0.11.0",
+    "trame-vtk>=2.0.0",
 ]
 
-[tool.poetry.group.qt]
-optional = true
+[project.urls]
+Homepage   = "https://github.com/Flux-Frontiers/KGRAG"
+Repository = "https://github.com/Flux-Frontiers/KGRAG"
 
-[tool.poetry.group.qt.dependencies]
-PyQt5 = ">=5.15.0"
-
-[tool.poetry.group.viz3d]
-optional = true
-
-[tool.poetry.group.viz3d.dependencies]
-pyvista = { version = ">=0.44.0" }
-pyvistaqt = ">=0.11.0"
-PyQt5 = ">=5.15.0"
-param = ">=2.0.0"
-markdown = ">=3.6"
-trame-vtk = ">=2.0.0"
-
-[tool.poetry.group.dev]
-optional = true
-
-[tool.poetry.group.dev.dependencies]
-pytest = ">=9.0.3"
-pytest-cov = ">=5.0.0"
-# Capped below 0.16 deliberately, matching `kgmodule-utils`. 0.16 began
-# formatting Python inside Markdown code blocks, which rewrites hand-aligned
-# examples in 11 files here — `docs/ADAPTER_SPEC.md`, `docs/MCP.md`,
-# `articles/kgrag_medium.md` and the rest — and expanded the default rule set.
-# The floor was unbounded, so the lock had already resolved 0.16.3 and
-# `ruff format --check .` fails on `main` today, independent of any branch.
-# Both are upgrades to adopt on purpose, not side effects a lock regeneration
-# should smuggle in. Lift the cap in its own change, together with the
-# reformatting it implies.
-ruff = ">=0.4.0,<0.16"
-ty = ">=0.0.44,<0.0.45"
-pre-commit = "^4.5.1"
-detect-secrets = "^1.5.0"
-pdoc = ">=14.0.0"
-pip-audit = "^2.10.0"
-# The adapters are optional at runtime (the `kg` extra) but not optional to
-# test: an adapter's whole job is constructing a real DocKG/PyCodeKG with the
-# right arguments, and a mocked-out import cannot show that it does. Installed
-# here so the suite exercises the real classes. The marginal cost is small —
-# sentence-transformers already pulls the torch/transformers stack.
-pycode-kg = ">=0.23.1"
-doc-kg = ">=0.21.2"
-
-
-[tool.poetry.scripts]
+[project.scripts]
 kgrag              = "kg_rag.cli.main:cli"
 kgrag-mcp          = "kg_rag.mcp_server:main"
 kgrag-register     = "kg_rag.cli.cmd_registry:register"
@@ -251,6 +254,81 @@ kgrag-analyze      = "kg_rag.cli.cmd_analyze:analyze"
 kgrag-viz          = "kg_rag.cli.cmd_viz:viz"
 kgrag-viz2d        = "kg_rag.cli.cmd_viz2d:viz2d"
 
+# ---------------------------------------------------------------------------
+# Poetry-specific dependency enrichment and groups
+# ---------------------------------------------------------------------------
+# CPU-only torch on Linux: dev/CI here has no GPU, but the default PyPI linux
+# wheel bundles the full CUDA runtime (~2.7G of nvidia-* packages, ~700M of
+# triton) regardless. "explicit" priority means only packages naming this
+# source use it -- nothing else is redirected off PyPI. This affects local/CI
+# installs only; it is not part of published wheel metadata, so `pip install
+# kg-rag` for a GPU user still resolves torch normally.
+#
+# Linux only: macOS/Windows torch builds are already CPU/MPS, and this index
+# publishes the macOS ones without the "+cpu" local version label, so locking
+# it globally leaves those platforms with no installable candidate.
+[[tool.poetry.source]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "explicit"
+
+# The version constraint lives in [project.dependencies]; this block only adds
+# the source routing poetry needs and PEP 621 cannot express.
+[tool.poetry.dependencies]
+torch = [
+    { markers = "sys_platform == 'linux'", source = "pytorch-cpu" },
+    { markers = "sys_platform != 'linux'" },
+]
+
+[tool.poetry.group.qt]
+optional = true
+
+[tool.poetry.group.qt.dependencies]
+PyQt5 = ">=5.15.0"
+
+[tool.poetry.group.viz3d]
+optional = true
+
+[tool.poetry.group.viz3d.dependencies]
+pyvista = ">=0.44.0"
+pyvistaqt = ">=0.11.0"
+PyQt5 = ">=5.15.0"
+param = ">=2.0.0"
+markdown = ">=3.6"
+trame-vtk = ">=2.0.0"
+
+[tool.poetry.group.dev]
+optional = true
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=9.0.3"
+pytest-cov = ">=5.0.0"
+# Capped below 0.16 deliberately, matching `kgmodule-utils`. 0.16 began
+# formatting Python inside Markdown code blocks, which rewrites hand-aligned
+# examples in 11 files here -- `docs/ADAPTER_SPEC.md`, `docs/MCP.md`,
+# `articles/kgrag_medium.md` and the rest -- and expanded the default rule set.
+# The floor was unbounded, so the lock had already resolved 0.16.3 and
+# `ruff format --check .` fails on `main` today, independent of any branch.
+# Both are upgrades to adopt on purpose, not side effects a lock regeneration
+# should smuggle in. Lift the cap in its own change, together with the
+# reformatting it implies.
+ruff = ">=0.4.0,<0.16"
+ty = ">=0.0.44,<0.0.45"
+pre-commit = "^4.5.1"
+detect-secrets = "^1.5.0"
+pdoc = ">=14.0.0"
+pip-audit = "^2.10.0"
+# The adapters are optional at runtime (the `kg` extra) but not optional to
+# test: an adapter's whole job is constructing a real DocKG/PyCodeKG with the
+# right arguments, and a mocked-out import cannot show that it does. Installed
+# here so the suite exercises the real classes. The marginal cost is small --
+# sentence-transformers already pulls the torch/transformers stack.
+pycode-kg = ">=0.23.1"
+doc-kg = ">=0.21.2"
+
+# ---------------------------------------------------------------------------
+# Tool configuration
+# ---------------------------------------------------------------------------
 [tool.ruff]
 line-length = 100
 target-version = "py312"
@@ -279,6 +357,9 @@ unresolved-import = "ignore"
 testpaths = ["tests"]
 addopts = "-v --tb=short"
 
+# ---------------------------------------------------------------------------
+# KG index configuration
+# ---------------------------------------------------------------------------
 [tool.pycodekg]
 # Directories to include in the knowledge graph build and analysis.
 # When unset, all directories are indexed.
@@ -296,13 +377,29 @@ exclude = ["bundles", "dist", "books"]
 exclude = ["bundles", "dist", "books"]
 
 [tool.memorykg]
-# Claude_T self-knowledge corpus — architecture, identity, and stack docs.
-# Built with: memorykg build --source docs/ --extra CLAUDE_T_IDENTITY.md,CLAUDE.md,README.md
+# Claude_T self-knowledge corpus -- architecture, identity, and stack docs.
+# Rebuild after any change to the identity documents:
+#   memorykg build --repo .
 # Registered with: kgrag register --name claude_t_self --path .memorykg/
-source = ["docs"]
-extra = ["CLAUDE_T_IDENTITY.md", "CLAUDE.md", "README.md", "PORTABLE_KNOWLEDGE_VISION.md", "AGENT_PERSPECTIVE.md"]
-output = ".memorykg"
-corpus_name = "claude_t_self"
+#
+# `exclude` is the only key memory-kg reads (see memory_kg/config.py). The
+# previous block declared source/extra/output/corpus_name, which nothing reads,
+# and documented `--source` / `--extra` flags the CLI no longer has -- so the
+# exclusions below had to be repeated by hand as --exclude-dir on every build.
+# Everything not listed here is corpus: the identity documents at the repo root
+# and the whole of docs/.
+exclude = [
+    ".venv",
+    "articles",
+    "books",
+    "bundles",
+    "dist",
+    "patents",
+    "pepys",
+    "scripts",
+    "src",
+    "tests",
+]
 
 [tool.poe.tasks.docs]
 help = "Generate project documentation and user guide PDFs"
@@ -330,7 +427,7 @@ embed_backend = "sentence_transformers"
 #
 # tei_endpoint    = "http://localhost:8080"  # or the KG_EMBED_ENDPOINT env var
 # tei_dim         = 384    # skips the one-off startup probe; must match the served model
-# tei_model       = ""     # informational label only — the server chooses the model
+# tei_model       = ""     # informational label only -- the server chooses the model
 # tei_api_key     = ""     # or the KG_EMBED_API_KEY env var; stock TEI needs none
 # tei_timeout     = 120.0
 # tei_max_retries = 3      # retries 429/502/503/504 and transport errors
