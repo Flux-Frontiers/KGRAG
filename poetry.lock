@@ -1284,6 +1284,25 @@ files = [
 ]
 
 [[package]]
+name = "firecrawl-anydoc"
+version = "0.1.9"
+description = "Convert documents (doc, docx, odt, rtf, epub, pdf, presentations, spreadsheets, csv) to GitHub-Flavored Markdown"
+optional = true
+python-versions = ">=3.10"
+groups = ["main"]
+markers = "extra == \"ingest\" or extra == \"all\""
+files = [
+    {file = "firecrawl_anydoc-0.1.9-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:ebd956831822d3ea1831253406736e0e4d9b217e3471eb68c9bf2eba9302ce73"},
+    {file = "firecrawl_anydoc-0.1.9-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:a2372d97826e8e7e68fd28cd415d08815f6aa66dcc09c6b423ac33dd2dfa91cf"},
+    {file = "firecrawl_anydoc-0.1.9-cp310-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ba1c19bdaa97f4850daf3fb4ca2855cefa146b5621ce7b22a71d158d3b84e54e"},
+    {file = "firecrawl_anydoc-0.1.9-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:deea7a270fccda9be29c73235e938ca32e0f703e1ae120f08bf0fdb39301c6b4"},
+    {file = "firecrawl_anydoc-0.1.9-cp310-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:de0858decd18188b0b88545689544fb3703ec08ade37f63c2857e4414e99bdf1"},
+    {file = "firecrawl_anydoc-0.1.9-cp310-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:e4e1765ed5574fa502931f8bfaec1f87af913afa5bb432aaaf5f9c094efc7f43"},
+    {file = "firecrawl_anydoc-0.1.9-cp310-abi3-win_amd64.whl", hash = "sha256:aa6a5ca2e10939a87c9bd21c918ef8b146ad0061fedae661d4483ef5a5bbdf60"},
+    {file = "firecrawl_anydoc-0.1.9.tar.gz", hash = "sha256:0dfc64b82b4e971143dd6f0e4f39f8152fcc38be6523663682a241d8f3301b14"},
+]
+
+[[package]]
 name = "flatbuffers"
 version = "25.12.19"
 description = "The FlatBuffers serialization format for Python"
@@ -1844,14 +1863,14 @@ referencing = ">=0.31.0"
 
 [[package]]
 name = "kgmodule-utils"
-version = "0.13.2"
+version = "0.17.0"
 description = "Shared types, graph store, semantic index, and pipeline base for the KGModule SDK"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "kgmodule_utils-0.13.2-py3-none-any.whl", hash = "sha256:379f6a6f47ed3523375a53895fb310830272b6782e057492c4b2b089f5464890"},
-    {file = "kgmodule_utils-0.13.2.tar.gz", hash = "sha256:43d6797f7dec305ee841cd997f4ea0e55de7d04546e15ae6199865bbdf58ea86"},
+    {file = "kgmodule_utils-0.17.0-py3-none-any.whl", hash = "sha256:985c35837669cf63f809d6f823da3790293360240b67363b9705128bf0c57ece"},
+    {file = "kgmodule_utils-0.17.0.tar.gz", hash = "sha256:fb26ecf6e22180aefb2b71802580e0271738d53c75bc5915fe0ec6a182f16fef"},
 ]
 
 [package.dependencies]
@@ -1863,6 +1882,7 @@ torch = {version = ">=2.5.1", optional = true, markers = "extra == \"semantic\""
 transformers = {version = ">=5.5.0,<6", optional = true, markers = "extra == \"semantic\""}
 
 [package.extras]
+ingest = ["firecrawl-anydoc (>=0.1.9)"]
 lancedb = ["lancedb (>=0.19.0)"]
 semantic = ["numpy (>=1.24.0)", "rich (>=13.0.0,<15.0.0)", "sentence-transformers (>=5.4.1)", "sqlite-vec (==0.1.9)", "torch (>=2.5.1)", "transformers (>=5.5.0,<6)"]
 sqlite-vec = ["sqlite-vec (==0.1.9)"]
@@ -1870,6 +1890,7 @@ synthesis = ["httpx (>=0.27.0)", "openai (>=1.30.0)", "pillow (>=10.0.0)"]
 synthesis-mflux = ["httpx (>=0.27.0)", "mflux (>=0.9.0)", "openai (>=1.30.0)", "pillow (>=10.0.0)"]
 viz = ["pyvis (>=0.3.2)"]
 viz3d = ["numpy (>=1.24.0)"]
+viz3d-qt = ["PyQt5 (>=5.15.0)", "numpy (>=1.24.0)", "pyvista (>=0.44.0)", "quiltwright (>=0.6.0)"]
 viz3d-render = ["numpy (>=1.24.0)", "pyvista (>=0.44.0)"]
 
 [[package]]
@@ -6373,7 +6394,8 @@ files = [
 dev = ["pytest", "setuptools"]
 
 [extras]
-all = ["PyQt5", "diary-kg", "doc-kg", "ftree-kg", "markdown", "param", "plotly", "pycode-kg", "pyvis", "pyvista", "pyvistaqt", "streamlit", "trame-vtk"]
+all = ["PyQt5", "diary-kg", "doc-kg", "firecrawl-anydoc", "ftree-kg", "markdown", "param", "plotly", "pycode-kg", "pyvis", "pyvista", "pyvistaqt", "streamlit", "trame-vtk"]
+ingest = ["firecrawl-anydoc"]
 kg = ["diary-kg", "doc-kg", "ftree-kg", "pycode-kg"]
 pi = ["llama-cpp-python"]
 qt = ["PyQt5"]
@@ -6384,4 +6406,4 @@ viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "559b168bddc6b2ecd5bd7575e48c3c24179866e9d1029725d52272181dee101b"
+content-hash = "717aa5d2c99aab41050592582568fbfbad124c9eb8bd33be99284a9f5c2f7d01"

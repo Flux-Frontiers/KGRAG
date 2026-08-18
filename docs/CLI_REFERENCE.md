@@ -261,6 +261,46 @@ kgrag-mcp                               # standalone entry point
 kgrag init --repo .
 ```
 
+**Ingest (loose documents → staged corpus → built KG → registry):**
+```bash
+# a directory of mixed formats
+kgrag ingest ~/Documents/specs --into ~/corpora/specs
+
+# named files, registered under a chosen name
+kgrag ingest report.pdf notes.docx --into ~/corpora/mixed --name mixed-docs
+
+# convert only — no build, no registry write
+kgrag ingest ~/Downloads --into ~/corpora/inbox --no-build
+
+# add the result to an existing corpus in the same run
+kgrag ingest ~/papers --into ~/corpora/papers --corpus research
+
+# incremental: keep what is staged, convert only what is new
+kgrag ingest ~/papers --into ~/corpora/papers --update
+```
+
+Accepts `.md`, `.txt` and `.rst` directly. Converts Word (`.doc`, `.docx`,
+`.docm`), PowerPoint (`.ppt`, `.pptx`, `.pptm`, …), Excel (`.xls`, `.xlsx`,
+`.xlsm`, `.xlsb`), OpenDocument (`.odt`, `.ods`, `.odp`), `.rtf`, `.epub`,
+`.csv` and text-based `.pdf` via `anydoc`. Needs the extra:
+
+```bash
+pip install 'kg-rag[ingest]'      # or: pip install 'kgmodule-utils[ingest]'
+```
+
+A run rebuilds the staged corpus from nothing, matching `dockg build` and
+`pycodekg build`, so the corpus reflects exactly the sources given — a document
+removed upstream does not linger, and a converter upgrade needs no special flag.
+`--update` selects the incremental path (`dockg build --update`,
+`pycodekg update`), keeping what is staged and converting only what is new.
+Sources are deduplicated by content digest either way. There is **no OCR**:
+scanned, image-only PDFs are recorded as skipped with a reason rather than
+silently omitted. Every file examined is accounted for in the staging manifest:
+
+```bash
+cat ~/corpora/specs/.ingest/manifest.json    # source, sha256, converter, status, reason
+```
+
 **MCP tools exposed (19):**
 `kgrag_query`, `kgrag_pack`, `kgrag_stats`, `kgrag_list`, `kgrag_info`,
 `kgrag_corpus_query`, `kgrag_corpus_pack`, `kgrag_corpus_create`,

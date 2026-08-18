@@ -9,6 +9,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`kgrag ingest` — one command from loose documents to a registered,
+  queryable KG.** KGRAG could previously only read corpora that already existed
+  as Markdown or plain text on disk. This supplies the missing front end: point
+  it at PDFs, Word documents, EPUBs, spreadsheets, slide decks or a directory
+  of mixed formats and it normalizes them to Markdown, builds a DocKG over the
+  result, and registers that KG.
+
+  ```
+  kgrag ingest ~/Documents/specs --into ~/corpora/specs
+  kgrag ingest report.pdf notes.docx --into ~/corpora/mixed --corpus research
+  ```
+
+  Three stages — stage, build, register — each independently skippable via
+  `--no-build` / `--no-register`, so the command is usable as a pure converter
+  when that is all you want. `--corpus NAME` folds the result into an existing
+  corpus in the same run, mirroring `kgrag init`.
+
+  Conversion comes from `kg_utils.ingest` (kgmodule-utils 0.17.0) rather than
+  from a converter vendored here, so `dockg build` and every other KGModule
+  builder gains the same multi-format front end instead of KGRAG holding a
+  private copy of it.
+
+- **Documents that cannot be ingested are reported, not dropped.** The run
+  prints a "Not ingested" table naming each skipped or failed document with its
+  reason — unsupported format, malformed file, or converted-to-empty, which is
+  what a scanned PDF looks like to a converter that does no OCR — and points at
+  the staging manifest for the full record.
+
+- **A run rebuilds the staged corpus from nothing; `--update` is incremental.**
+  Matches what the fleet's builders already settled on — `dockg build` /
+  `dockg build --update` and `pycodekg build` / `pycodekg update` — where the
+  wipe is implicit and the incremental path is the named opt-in. The corpus
+  therefore reflects exactly the sources given: a document removed upstream does
+  not linger as a phantom, and a converter upgrade needs no special flag.
+  Sources are deduplicated by content digest in both modes.
+
+- **`kgmodule-utils` floor raised to `>=0.17.0`** (`pyproject.toml`):
+  `kgrag ingest` needs `kg_utils.ingest`, which shipped to PyPI in 0.17.0 on
+  2026-08-18. While this branch was open the floor sat at `>=0.16.0` with the
+  ingest import guarded — declaring a floor no resolution could satisfy would
+  have broken `poetry lock` outright — and the guard itself stays, since it is
+  what reports `pip install -U 'kgmodule-utils[ingest]'` when the extra is
+  absent.
+
+- **`firecrawl-anydoc` added as a new optional `ingest` extra**
+  (`pyproject.toml`), folded into `all` but not `kg`. Imported lazily by
+  `kg_utils.ingest`, so staging `.md`/`.txt`/`.rst` needs nothing extra, and a
+  format the extra covers is reported per-document with its install command
+  rather than failing the run.
+
 - **`embed_backend = "tei"` — route embedding to a Text Embeddings Inference
   server** (`src/kg_rag/embed.py`). Selects `kg_utils.embedder.TEIEmbedder`, so
   no model, no torch and no sentence-transformers load in this process. Reads

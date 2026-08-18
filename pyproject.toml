@@ -129,6 +129,10 @@ markdown = { version = ">=3.6", optional = true }
 trame-vtk = { version = ">=2.0.0", optional = true }
 spacy = {version = ">=3.7.0", optional = true}
 llama-cpp-python = { version = ">=0.3.0", optional = true }
+# Converts Word/PowerPoint/Excel/OpenDocument/RTF/EPUB/CSV/PDF to Markdown
+# for `kgrag ingest`. Optional: staging .md/.txt/.rst needs nothing extra,
+# and kg_utils.ingest imports it lazily.
+firecrawl-anydoc = { version = ">=0.1.9", optional = true }
 
 
 # our own adaptors (PyPI-only; git-only adapters installed separately via uv)
@@ -137,7 +141,10 @@ llama-cpp-python = { version = ">=0.3.0", optional = true }
 # the floor now: 0.13.1 made SnapshotManager's `repo_root` a read-only property
 # and broke every subclass that assigns it, so nothing in the fleet declares a
 # floor that can resolve to it.
-kgmodule-utils = ">=0.13.2"
+# 0.17.0 is the floor now: `kgrag ingest` needs kg_utils.ingest, which shipped
+# to PyPI 2026-08-18. The anydoc import inside it stays guarded regardless, so
+# staging .md/.txt/.rst still needs no extra.
+kgmodule-utils = ">=0.17.0"
 pycode-kg = {version = ">=0.23.1", optional=true}
 doc-kg = {version = ">=0.21.2", optional=true}
 ftree-kg = {version = ">=0.13.0", optional=true}
@@ -150,12 +157,15 @@ viz2d = ["PyQt5"]
 qt = ["PyQt5"]
 viz3d = ["pyvista", "pyvistaqt", "PyQt5", "param", "markdown", "trame-vtk"]
 kg = ["pycode-kg", "ftree-kg", "doc-kg", "diary-kg"]
+# Multi-format document ingestion: `kgrag ingest`.
+ingest = ["firecrawl-anydoc"]
 pi = ["llama-cpp-python"]
 # Deliberately excludes "pi": llama-cpp-python has no wheel for every platform
 # and falls back to a source build, so folding it in here would make `--all-extras`
 # require a compiler toolchain.  Install it explicitly with --extras "pi".
 all = [
   "pycode-kg", "ftree-kg", "doc-kg", "diary-kg",
+  "firecrawl-anydoc",
   "streamlit", "pyvis", "plotly",
   "pyvista", "pyvistaqt", "PyQt5", "param", "markdown", "trame-vtk",
 ]
