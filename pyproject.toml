@@ -85,6 +85,21 @@ packages = [
   { include = "kg_rag", from = "src" },
 ]
 
+# CPU-only torch on Linux: dev/CI here has no GPU, but the default PyPI linux
+# wheel bundles the full CUDA runtime (~2.7G of nvidia-* packages, ~700M of
+# triton) regardless. "explicit" priority means only packages naming this
+# source use it — nothing else is redirected off PyPI. This affects local/CI
+# installs only; it is not part of published wheel metadata, so `pip install
+# kg-rag` for a GPU user still resolves torch normally.
+#
+# Linux only: macOS/Windows torch builds are already CPU/MPS, and this index
+# publishes the macOS ones without the "+cpu" local version label, so locking
+# it globally leaves those platforms with no installable candidate.
+[[tool.poetry.source]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "explicit"
+
 [tool.poetry.dependencies]
 python = ">=3.12,<3.14"
 # No lancedb here: KGRAG never imports it. Vector stores belong to the KG
@@ -103,7 +118,10 @@ transformers = ">=5.5.0,<6"
 sentence-transformers = "^5.2.0"
 safetensors = ">=0.5.0"
 
-torch = ">=2.5.1"
+torch = [
+    { markers = "sys_platform == 'linux'", version = ">=2.5.1", source = "pytorch-cpu" },
+    { markers = "sys_platform != 'linux'", version = ">=2.5.1" },
+]
 streamlit = { version = ">=1.35.0", optional = true }
 pyvis = { version = ">=0.3.2", optional = true }
 pandas = ">=2.0.0"

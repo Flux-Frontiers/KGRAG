@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`torch` routes to the CPU-only wheel index on Linux** (`pyproject.toml`).
+  The default PyPI Linux wheel bundles the full CUDA runtime (~2.7G of
+  `nvidia-*` packages, ~700M of `triton`) regardless of whether a GPU is
+  present; CI and most dev machines here have none. Matches the pattern
+  already in use in `pycode_kg`. macOS/Windows are unaffected — their torch
+  builds are already CPU/MPS and are left on plain PyPI. Not part of
+  published wheel metadata, so a GPU user installing `kg-rag` still resolves
+  torch normally.
+
 ## [0.13.0] - 2026-08-18
 
 ### Added
