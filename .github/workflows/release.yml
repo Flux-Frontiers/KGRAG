@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: write  # needed to create GitHub Releases and upload assets
+  id-token: write  # needed for PyPI Trusted Publishing (OIDC, no stored token)
 
 jobs:
   release:
@@ -45,3 +46,9 @@ jobs:
               --title "KGRAG $TAG" \
               --notes-file release-notes.md
           fi
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+          skip-existing: true
