@@ -1660,7 +1660,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   raised when subclasses (e.g. FTreeKG) hydrate `snap.metrics` as a dataclass rather
   than a dict.
 
-## [0.3.3] — 2026-03-18
+## [0.3.3] - 2026-03-18
 
 ### Added
 - `src/kg_rag/cli/cmd_hooks.py` — new `kgrag install-hooks` CLI command that
@@ -1682,7 +1682,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `cuda-pathfinder` 1.4.2 → 1.4.3. Removed transitive deps no longer needed:
   `typer`, `shellingham`, `annotated-doc`.
 
-## [0.3.1] — 2026-03-18
+## [0.3.1] - 2026-03-18
 
 ### Added
 - `analysis/kgrag_analysis_20260318.md` — fresh architectural analysis report
@@ -1791,7 +1791,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with timezone-aware `datetime.now(UTC)` to avoid `DeprecationWarning` on
   Python 3.12+ and ensure correct UTC semantics.
 
-## [0.2.0] — 2026-03-12
+## [0.2.0] - 2026-03-12
 
 ### Added
 - `kgrag init` command (`src/kg_rag/cli/cmd_init.py`) — one-shot initialisation
