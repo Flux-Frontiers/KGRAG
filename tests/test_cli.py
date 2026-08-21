@@ -342,3 +342,41 @@ class TestCLIScan:
         # Verify it was registered
         result = runner.invoke(cli, ["list"] + _reg_opt(tmp_path))
         assert "myrepo-code" in result.output
+
+    def test_scan_finds_filetreekg(self, tmp_path):
+        """Regression: .filetreekg was missing from _KG_MARKERS entirely, so
+        scan silently skipped every FTreeKG instance on disk.
+
+        Asserts on registry state, not printed output: pytest names tmp_path
+        after the test function, so a naive `"filetree" in result.output`
+        check passes on the echoed *path* alone (it contains
+        "test_scan_finds_filetreekg0") regardless of whether scan found
+        anything at all.
+        """
+        repo = tmp_path / "myrepo"
+        repo.mkdir()
+        marker_dir = repo / ".filetreekg"
+        marker_dir.mkdir()
+        (marker_dir / "graph.sqlite").touch()
+
+        _runner().invoke(cli, ["scan", str(tmp_path), "--auto-register"] + _reg_opt(tmp_path))
+
+        with KGRegistry(db_path=tmp_path / "registry.sqlite") as reg:
+            entry = reg.get("myrepo-filetree")
+        assert entry is not None
+        assert entry.kind.value == "filetree"
+
+    def test_scan_finds_agentkg(self, tmp_path):
+        """Regression: .agentkg had the same gap as .filetreekg."""
+        repo = tmp_path / "myrepo"
+        repo.mkdir()
+        marker_dir = repo / ".agentkg"
+        marker_dir.mkdir()
+        (marker_dir / "graph.sqlite").touch()
+
+        _runner().invoke(cli, ["scan", str(tmp_path), "--auto-register"] + _reg_opt(tmp_path))
+
+        with KGRegistry(db_path=tmp_path / "registry.sqlite") as reg:
+            entry = reg.get("myrepo-agent")
+        assert entry is not None
+        assert entry.kind.value == "agent"
