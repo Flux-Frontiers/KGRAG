@@ -8,11 +8,15 @@ touches ~/.kgrag.
 
 from __future__ import annotations
 
+import json
+import sys
 from pathlib import Path
+from unittest.mock import patch
 
 from click.testing import CliRunner
 
 from kg_rag.cli.main import cli
+from kg_rag.orchestrator import KGRAG
 from kg_rag.registry import KGRegistry
 
 # ---------------------------------------------------------------------------
@@ -27,6 +31,30 @@ def _runner():
 def _reg_opt(tmp_path: Path) -> list[str]:
     """Return --registry <tmp_path/reg.sqlite> args."""
     return ["--registry", str(tmp_path / "registry.sqlite")]
+
+
+def _json_runner():
+    """A CliRunner that keeps stderr out of the stdout stream.
+
+    click >= 8.2 always captures the two separately; 8.1 (still allowed by
+    our floor) merges them unless told not to.
+    """
+    try:
+        return CliRunner(mix_stderr=False)  # click < 8.2
+    except TypeError:
+        return CliRunner()
+
+
+def _json_stdout(result):
+    """Parse a CliRunner result's *stdout* as JSON.
+
+    Deliberately not ``result.output``: on click >= 8.2 that is stdout and
+    stderr combined. ``status --stats`` builds a KGRAG orchestrator, which
+    eagerly loads an embedder, and on a cold model cache (every CI run)
+    huggingface_hub writes a download progress bar to stderr. Real stdout
+    stays clean JSON -- only the merged view does not.
+    """
+    return json.loads(result.stdout)
 
 
 # ---------------------------------------------------------------------------
@@ -81,6 +109,98 @@ class TestCLIList:
         result = runner.invoke(cli, ["list"] + _reg_opt(tmp_path))
         assert result.exit_code == 0
         assert "mykg" in result.output
+
+
+# ---------------------------------------------------------------------------
+# kgrag status --json
+# ---------------------------------------------------------------------------
+
+
+class TestCLIStatusJson:
+    def test_status_json_shape(self, tmp_path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        _runner().invoke(cli, ["register", "mykg", "code", str(repo)] + _reg_opt(tmp_path))
+
+        result = _json_runner().invoke(cli, ["status", "--json"] + _reg_opt(tmp_path))
+        assert result.exit_code == 0, result.output
+        data = _json_stdout(result)
+        assert data["total"] == 1
+        assert data["by_kind"] == {"code": 1}
+        assert data["built"] == 0
+        assert data["issues"][0]["name"] == "mykg"
+        assert data["issues"][0]["reason"] == "not built"
+
+    def test_status_json_flags_missing_repo(self, tmp_path):
+        repo = tmp_path / "gone"
+        repo.mkdir()
+        _runner().invoke(cli, ["register", "vanished", "code", str(repo)] + _reg_opt(tmp_path))
+        repo.rmdir()
+
+        result = _json_runner().invoke(cli, ["status", "--json"] + _reg_opt(tmp_path))
+        assert result.exit_code == 0, result.output
+        data = _json_stdout(result)
+        assert data["issues"][0] == {
+            "name": "vanished",
+            "reason": "missing",
+            "repo_path": str(repo),
+        }
+
+    def test_status_json_is_valid_with_no_registry(self, tmp_path):
+        """An empty/nonexistent registry must still emit parseable JSON."""
+        result = _json_runner().invoke(cli, ["status", "--json"] + _reg_opt(tmp_path))
+        assert result.exit_code == 0, result.output
+        data = _json_stdout(result)
+        assert data["total"] == 0
+        assert data["issues"] == []
+
+    def test_status_stats_json_no_matching_kgs(self, tmp_path):
+        """--stats --json with nothing to show is an empty JSON array, not text."""
+        result = _json_runner().invoke(
+            cli, ["status", "--stats", "--json", "--kind", "code"] + _reg_opt(tmp_path)
+        )
+        assert result.exit_code == 0, result.output
+        assert _json_stdout(result) == []
+
+    def test_status_stats_json_reports_unbuilt(self, tmp_path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        _runner().invoke(cli, ["register", "mykg", "code", str(repo)] + _reg_opt(tmp_path))
+
+        result = _json_runner().invoke(cli, ["status", "--stats", "--json"] + _reg_opt(tmp_path))
+        assert result.exit_code == 0, result.output
+        data = _json_stdout(result)
+        assert data == [
+            {"name": "mykg", "kind": "code", "builder_version": "unknown", "status": "not built"}
+        ]
+
+    def test_status_stats_json_survives_stderr_noise(self, tmp_path):
+        """Stdout stays parseable when a library scribbles on stderr.
+
+        This is the CI failure mode reproduced without the network: on a cold
+        model cache huggingface_hub draws a download progress bar while the
+        orchestrator is being built. It goes to stderr, so stdout is still
+        clean JSON -- but click's ``result.output`` merges the two streams.
+        """
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        _runner().invoke(cli, ["register", "mykg", "code", str(repo)] + _reg_opt(tmp_path))
+
+        class _NoisyKGRAG(KGRAG):
+            def __init__(self, *args, **kwargs):
+                print("Fetching 3 files:   0%|          | 0/3", end="\r", file=sys.stderr)
+                super().__init__(*args, **kwargs)
+
+        with patch("kg_rag.orchestrator.KGRAG", _NoisyKGRAG):
+            result = _json_runner().invoke(
+                cli, ["status", "--stats", "--json"] + _reg_opt(tmp_path)
+            )
+
+        assert result.exit_code == 0, result.output
+        assert "Fetching" in result.stderr
+        assert _json_stdout(result) == [
+            {"name": "mykg", "kind": "code", "builder_version": "unknown", "status": "not built"}
+        ]
 
 
 # ---------------------------------------------------------------------------

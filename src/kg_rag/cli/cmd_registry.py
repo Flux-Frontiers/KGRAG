@@ -355,8 +355,9 @@ def _fmt_domain(s: dict) -> str:
     ),
     help="Filter --stats output to a specific KG kind.",
 )
+@click.option("--json", "as_json", is_flag=True, help="Output results as JSON.")
 @registry_option
-def status(name_or_id, show_stats, kind_filter, registry):
+def status(name_or_id, show_stats, kind_filter, as_json, registry):
     """Show registry health: counts, built/unbuilt, missing paths.
 
     With --stats, open each built KG and display live domain counts
@@ -368,7 +369,10 @@ def status(name_or_id, show_stats, kind_filter, registry):
         kgrag status --stats
         kgrag status --stats --kind doc
         kgrag status my-dockg --stats
+        kgrag status --stats --json
     """
+    import json as _json  # pylint: disable=import-outside-toplevel
+
     reg_path = Path(registry).resolve() if registry else default_registry_path()
     with KGRegistry(db_path=reg_path) as reg:
         reg_stats = reg.stats()
@@ -380,23 +384,47 @@ def status(name_or_id, show_stats, kind_filter, registry):
 
     if not show_stats:
         # ── fast registry-only view ──────────────────────────────────────
+        issues = [
+            {
+                "name": e.name,
+                "reason": "missing" if not e.repo_path.exists() else "not built",
+                "repo_path": str(e.repo_path),
+            }
+            for e in entries
+            if not e.repo_path.exists() or not e.is_built
+        ]
+
+        if as_json:
+            print(
+                _json.dumps(
+                    {
+                        "registry": str(reg_path),
+                        "total": reg_stats.total,
+                        "by_kind": reg_stats.by_kind,
+                        "built": reg_stats.built,
+                        "issues": issues,
+                    },
+                    indent=2,
+                )
+            )
+            return
+
         console.print(f"[bold]Registry[/bold] : {reg_path}")
         console.print(f"[bold]Total KGs[/bold] : {reg_stats.total}")
         for k, v in reg_stats.by_kind.items():
             console.print(f"  {k:8s} : {v}")
         console.print(f"[bold]Built[/bold]    : {reg_stats.built} / {reg_stats.total}")
 
-        issues = []
-        for e in entries:
-            if not e.repo_path.exists():
-                issues.append(f"  [red]missing[/red] {e.name}: repo_path missing ({e.repo_path})")
-            if not e.is_built:
-                issues.append(f"  [dim]-[/dim] {e.name}: no databases found (run build first)")
-
         if issues:
             console.print("\n[bold]Issues:[/bold]")
             for i in issues:
-                console.print(i)
+                tag = "[red]missing[/red]" if i["reason"] == "missing" else "[dim]-[/dim]"
+                detail = (
+                    f"repo_path missing ({i['repo_path']})"
+                    if i["reason"] == "missing"
+                    else "no databases found (run build first)"
+                )
+                console.print(f"  {tag} {i['name']}: {detail}")
         else:
             console.print("\n[green]All registered KGs look healthy.[/green]")
         return
@@ -408,10 +436,13 @@ def status(name_or_id, show_stats, kind_filter, registry):
         entries = [e for e in entries if e.kind.value == kind_filter]
 
     if not entries:
-        console.print("[yellow]No matching KGs found.[/yellow]")
+        if as_json:
+            print(_json.dumps([]))
+        else:
+            console.print("[yellow]No matching KGs found.[/yellow]")
         return
 
-    if len(entries) > 20 and not name_or_id:
+    if len(entries) > 20 and not name_or_id and not as_json:
         console.print(
             f"[yellow]Loading stats for {len(entries)} KGs — this may take a moment…[/yellow]"
         )
@@ -425,9 +456,18 @@ def status(name_or_id, show_stats, kind_filter, registry):
     table.add_column("MB", justify="right", width=5)
     table.add_column("Domain Counts")
 
+    rows = []
+
     with KGRAG(registry_path=reg_path) as kg:
         for entry in entries:
+            base = {
+                "name": entry.name,
+                "kind": entry.kind.value,
+                "builder_version": entry.builder_version,
+            }
+
             if not entry.is_built:
+                rows.append({**base, "status": "not built"})
                 table.add_row(
                     entry.name,
                     entry.kind.value,
@@ -440,6 +480,7 @@ def status(name_or_id, show_stats, kind_filter, registry):
                 continue
             adapter = kg._get_adapter(entry)
             if adapter is None:
+                rows.append({**base, "status": "no adapter"})
                 table.add_row(
                     entry.name,
                     entry.kind.value,
@@ -453,6 +494,7 @@ def status(name_or_id, show_stats, kind_filter, registry):
             try:
                 s = adapter.stats()
             except Exception as exc:  # pylint: disable=broad-exception-caught
+                rows.append({**base, "status": "error", "error": str(exc)})
                 table.add_row(
                     entry.name,
                     entry.kind.value,
@@ -465,18 +507,41 @@ def status(name_or_id, show_stats, kind_filter, registry):
                 continue
 
             bver = s.get("builder_version", "?")
-            nodes = str(s.get("node_count", "—"))
-            edges = str(s.get("edge_count", "—"))
-            mb = str(s.get("db_size_mb", "—"))
+            nodes = s.get("node_count")
+            edges = s.get("edge_count")
+            mb = s.get("db_size_mb")
             err = s.get("error")
+
+            rows.append(
+                {
+                    **base,
+                    "builder_version": bver,
+                    "node_count": nodes,
+                    "edge_count": edges,
+                    "db_size_mb": mb,
+                    "status": "error" if err else "ok",
+                    **({"error": err} if err else {"domain": s}),
+                }
+            )
+
             if err:
                 domain = f"[red]{err}[/red]"
             else:
                 domain = _fmt_domain(s)
+            table.add_row(
+                entry.name,
+                entry.kind.value,
+                bver,
+                str(nodes if nodes is not None else "—"),
+                str(edges if edges is not None else "—"),
+                str(mb if mb is not None else "—"),
+                domain,
+            )
 
-            table.add_row(entry.name, entry.kind.value, bver, nodes, edges, mb, domain)
-
-    console.print(table)
+    if as_json:
+        print(_json.dumps(rows, indent=2, default=str))
+    else:
+        console.print(table)
 
 
 @cli.command("refresh-versions")

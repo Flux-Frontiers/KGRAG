@@ -83,6 +83,64 @@ class TestKGRAGInit:
 
 
 # ---------------------------------------------------------------------------
+# Lazy embedder resolution
+# ---------------------------------------------------------------------------
+
+
+class TestLazyEmbedder:
+    def test_construction_resolves_no_embedder(self, tmp_path):
+        """Building a KGRAG must not load (or download) a model."""
+        with patch("kg_rag.orchestrator.make_embedder") as make_emb:
+            with KGRAG(registry_path=tmp_path / "reg.sqlite"):
+                pass
+        make_emb.assert_not_called()
+
+    def test_first_adapter_resolves_and_passes_the_embedder(self, tmp_path):
+        embedder = MagicMock()
+        with KGRAG(registry_path=tmp_path / "reg.sqlite") as kgrag:
+            with (
+                patch("kg_rag.orchestrator.make_embedder", return_value=embedder) as make_emb,
+                patch("kg_rag.orchestrator.make_adapter", return_value=_mock_adapter()) as make_ad,
+            ):
+                kgrag._get_adapter(_make_entry(tmp_path, "a"))
+            make_emb.assert_called_once()
+            assert make_ad.call_args.kwargs["embedder"] is embedder
+
+    def test_embedder_resolved_once_across_adapters(self, tmp_path):
+        with KGRAG(registry_path=tmp_path / "reg.sqlite") as kgrag:
+            with (
+                patch("kg_rag.orchestrator.make_embedder", return_value=MagicMock()) as make_emb,
+                patch("kg_rag.orchestrator.make_adapter", return_value=_mock_adapter()) as make_ad,
+            ):
+                kgrag._get_adapter(_make_entry(tmp_path, "a"))
+                kgrag._get_adapter(_make_entry(tmp_path, "b"))
+            assert make_ad.call_count == 2
+            assert make_emb.call_count == 1
+
+    def test_no_configured_backend_is_not_re_resolved(self, tmp_path):
+        """``None`` ("each KG uses its own default") is a resolved answer too."""
+        with KGRAG(registry_path=tmp_path / "reg.sqlite") as kgrag:
+            with (
+                patch("kg_rag.orchestrator.make_embedder", return_value=None) as make_emb,
+                patch("kg_rag.orchestrator.make_adapter", return_value=_mock_adapter()),
+            ):
+                kgrag._get_adapter(_make_entry(tmp_path, "a"))
+                kgrag._get_adapter(_make_entry(tmp_path, "b"))
+            assert make_emb.call_count == 1
+
+    def test_explicit_embedder_skips_resolution(self, tmp_path):
+        embedder = MagicMock()
+        with KGRAG(registry_path=tmp_path / "reg.sqlite", embedder=embedder) as kgrag:
+            with (
+                patch("kg_rag.orchestrator.make_embedder") as make_emb,
+                patch("kg_rag.orchestrator.make_adapter", return_value=_mock_adapter()) as make_ad,
+            ):
+                kgrag._get_adapter(_make_entry(tmp_path, "a"))
+            make_emb.assert_not_called()
+            assert make_ad.call_args.kwargs["embedder"] is embedder
+
+
+# ---------------------------------------------------------------------------
 # _resolve_entries
 # ---------------------------------------------------------------------------
 
