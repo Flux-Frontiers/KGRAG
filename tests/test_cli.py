@@ -9,15 +9,9 @@ touches ~/.kgrag.
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 
 from click.testing import CliRunner
-
-# `status --stats` eagerly loads an embedder, which prints a tqdm progress
-# bar. CliRunner has no way to keep that off stdout on this Click version,
-# so suppress it at the source rather than trying to parse around it.
-os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
 
 from kg_rag.cli.main import cli
 from kg_rag.registry import KGRegistry
@@ -36,9 +30,28 @@ def _reg_opt(tmp_path: Path) -> list[str]:
     return ["--registry", str(tmp_path / "registry.sqlite")]
 
 
+def _json_runner():
+    """A CliRunner that keeps stderr out of the stdout stream.
+
+    click >= 8.2 always captures the two separately; 8.1 (still allowed by
+    our floor) merges them unless told not to.
+    """
+    try:
+        return CliRunner(mix_stderr=False)  # click < 8.2
+    except TypeError:
+        return CliRunner()
+
+
 def _json_stdout(result):
-    """Parse a CliRunner result's output as JSON."""
-    return json.loads(result.output)
+    """Parse a CliRunner result's *stdout* as JSON.
+
+    Deliberately not ``result.output``: on click >= 8.2 that is stdout and
+    stderr combined. ``status --stats`` builds a KGRAG orchestrator, which
+    eagerly loads an embedder, and on a cold model cache (every CI run)
+    huggingface_hub writes a download progress bar to stderr. Real stdout
+    stays clean JSON -- only the merged view does not.
+    """
+    return json.loads(result.stdout)
 
 
 # ---------------------------------------------------------------------------
@@ -106,7 +119,7 @@ class TestCLIStatusJson:
         repo.mkdir()
         _runner().invoke(cli, ["register", "mykg", "code", str(repo)] + _reg_opt(tmp_path))
 
-        result = _runner().invoke(cli, ["status", "--json"] + _reg_opt(tmp_path))
+        result = _json_runner().invoke(cli, ["status", "--json"] + _reg_opt(tmp_path))
         assert result.exit_code == 0, result.output
         data = _json_stdout(result)
         assert data["total"] == 1
@@ -121,7 +134,7 @@ class TestCLIStatusJson:
         _runner().invoke(cli, ["register", "vanished", "code", str(repo)] + _reg_opt(tmp_path))
         repo.rmdir()
 
-        result = _runner().invoke(cli, ["status", "--json"] + _reg_opt(tmp_path))
+        result = _json_runner().invoke(cli, ["status", "--json"] + _reg_opt(tmp_path))
         assert result.exit_code == 0, result.output
         data = _json_stdout(result)
         assert data["issues"][0] == {
@@ -132,7 +145,7 @@ class TestCLIStatusJson:
 
     def test_status_json_is_valid_with_no_registry(self, tmp_path):
         """An empty/nonexistent registry must still emit parseable JSON."""
-        result = _runner().invoke(cli, ["status", "--json"] + _reg_opt(tmp_path))
+        result = _json_runner().invoke(cli, ["status", "--json"] + _reg_opt(tmp_path))
         assert result.exit_code == 0, result.output
         data = _json_stdout(result)
         assert data["total"] == 0
@@ -140,7 +153,7 @@ class TestCLIStatusJson:
 
     def test_status_stats_json_no_matching_kgs(self, tmp_path):
         """--stats --json with nothing to show is an empty JSON array, not text."""
-        result = _runner().invoke(
+        result = _json_runner().invoke(
             cli, ["status", "--stats", "--json", "--kind", "code"] + _reg_opt(tmp_path)
         )
         assert result.exit_code == 0, result.output
@@ -151,7 +164,7 @@ class TestCLIStatusJson:
         repo.mkdir()
         _runner().invoke(cli, ["register", "mykg", "code", str(repo)] + _reg_opt(tmp_path))
 
-        result = _runner().invoke(cli, ["status", "--stats", "--json"] + _reg_opt(tmp_path))
+        result = _json_runner().invoke(cli, ["status", "--stats", "--json"] + _reg_opt(tmp_path))
         assert result.exit_code == 0, result.output
         data = _json_stdout(result)
         assert data == [
