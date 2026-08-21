@@ -8,9 +8,16 @@ touches ~/.kgrag.
 
 from __future__ import annotations
 
+import json
+import os
 from pathlib import Path
 
 from click.testing import CliRunner
+
+# `status --stats` eagerly loads an embedder, which prints a tqdm progress
+# bar. CliRunner has no way to keep that off stdout on this Click version,
+# so suppress it at the source rather than trying to parse around it.
+os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
 
 from kg_rag.cli.main import cli
 from kg_rag.registry import KGRegistry
@@ -27,6 +34,11 @@ def _runner():
 def _reg_opt(tmp_path: Path) -> list[str]:
     """Return --registry <tmp_path/reg.sqlite> args."""
     return ["--registry", str(tmp_path / "registry.sqlite")]
+
+
+def _json_stdout(result):
+    """Parse a CliRunner result's output as JSON."""
+    return json.loads(result.output)
 
 
 # ---------------------------------------------------------------------------
@@ -81,6 +93,70 @@ class TestCLIList:
         result = runner.invoke(cli, ["list"] + _reg_opt(tmp_path))
         assert result.exit_code == 0
         assert "mykg" in result.output
+
+
+# ---------------------------------------------------------------------------
+# kgrag status --json
+# ---------------------------------------------------------------------------
+
+
+class TestCLIStatusJson:
+    def test_status_json_shape(self, tmp_path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        _runner().invoke(cli, ["register", "mykg", "code", str(repo)] + _reg_opt(tmp_path))
+
+        result = _runner().invoke(cli, ["status", "--json"] + _reg_opt(tmp_path))
+        assert result.exit_code == 0, result.output
+        data = _json_stdout(result)
+        assert data["total"] == 1
+        assert data["by_kind"] == {"code": 1}
+        assert data["built"] == 0
+        assert data["issues"][0]["name"] == "mykg"
+        assert data["issues"][0]["reason"] == "not built"
+
+    def test_status_json_flags_missing_repo(self, tmp_path):
+        repo = tmp_path / "gone"
+        repo.mkdir()
+        _runner().invoke(cli, ["register", "vanished", "code", str(repo)] + _reg_opt(tmp_path))
+        repo.rmdir()
+
+        result = _runner().invoke(cli, ["status", "--json"] + _reg_opt(tmp_path))
+        assert result.exit_code == 0, result.output
+        data = _json_stdout(result)
+        assert data["issues"][0] == {
+            "name": "vanished",
+            "reason": "missing",
+            "repo_path": str(repo),
+        }
+
+    def test_status_json_is_valid_with_no_registry(self, tmp_path):
+        """An empty/nonexistent registry must still emit parseable JSON."""
+        result = _runner().invoke(cli, ["status", "--json"] + _reg_opt(tmp_path))
+        assert result.exit_code == 0, result.output
+        data = _json_stdout(result)
+        assert data["total"] == 0
+        assert data["issues"] == []
+
+    def test_status_stats_json_no_matching_kgs(self, tmp_path):
+        """--stats --json with nothing to show is an empty JSON array, not text."""
+        result = _runner().invoke(
+            cli, ["status", "--stats", "--json", "--kind", "code"] + _reg_opt(tmp_path)
+        )
+        assert result.exit_code == 0, result.output
+        assert _json_stdout(result) == []
+
+    def test_status_stats_json_reports_unbuilt(self, tmp_path):
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        _runner().invoke(cli, ["register", "mykg", "code", str(repo)] + _reg_opt(tmp_path))
+
+        result = _runner().invoke(cli, ["status", "--stats", "--json"] + _reg_opt(tmp_path))
+        assert result.exit_code == 0, result.output
+        data = _json_stdout(result)
+        assert data == [
+            {"name": "mykg", "kind": "code", "builder_version": "unknown", "status": "not built"}
+        ]
 
 
 # ---------------------------------------------------------------------------

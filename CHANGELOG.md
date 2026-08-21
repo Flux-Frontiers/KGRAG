@@ -15,6 +15,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   reported "No available KGs to query" no matter how the KG was built. It is
   on PyPI and is floored at `>=0.7.0`.
 
+- **`--json` on `kgrag status`.** Both modes -- the fast registry-only view
+  and `--stats` (which opens each built KG and reads live domain counts via
+  its adapter) -- now accept `--json` and emit the same data as a plain
+  `print(json.dumps(...))` instead of a Rich table, matching the existing
+  `--json` convention on `kgrag corpus query`/`pack`. `--stats --json`
+  passes through each adapter's full `stats()` dict under `"domain"`
+  (`node_count`, `edge_count`, `document_count` for doc kinds, and so on)
+  rather than the pre-formatted summary string the table shows, so a caller
+  gets the real numbers without re-parsing rendered text. Added for
+  `kgrag_priv`'s fleet-audit roll-up, which previously had no source for
+  fleet-wide document/node/edge totals short of reading every registered
+  KG's SQLite file directly.
+
 ### Fixed
 
 - **`kgrag scan` was blind to FTreeKG and AgentKG instances.** `_KG_MARKERS`
