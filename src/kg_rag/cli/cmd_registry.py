@@ -28,7 +28,6 @@ console = Console()
 _KG_MARKERS: dict[str, str] = {
     ".pycodekg": "code",
     ".dockg": "doc",
-    ".metakg": "meta",
     ".diarykg": "diary",
     ".versekg": "verse",
     ".memorykg": "memory",

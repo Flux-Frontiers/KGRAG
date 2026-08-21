@@ -27,6 +27,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   meant the fleet's own FTreeKG graph would have gone unregistered by `scan
   --auto-register` with no error or warning.
 
+- **`.metakg` removed from `_KG_MARKERS`.** Predates the `Metabo_kg` rename
+  and matches no directory any fleet repo actually produces -- confirmed no
+  `.metakg` directory exists on disk and no registry entry carries
+  `kind=meta`. `scan` no longer looks for it. `KGKind.META`/`MetaKGAdapter`
+  are untouched; this only removes scan's dead auto-discovery entry for it.
+
 - **`MemoryKGAdapter` no longer raises on load.** It passed `lancedb_dir=` to
   `MemoryKG.__init__`, a parameter memory-kg dropped in 0.7.0 when it moved to
   sqlite-vec, so every construction died with `TypeError: unexpected keyword
