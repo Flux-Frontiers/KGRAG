@@ -17,6 +17,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`kgrag scan` was blind to FTreeKG and AgentKG instances.** `_KG_MARKERS`
+  mapped every KG marker directory to its kind except `.filetreekg` and
+  `.agentkg`, even though both have real adapters (`ftree_adapter`,
+  `agent_adapter`) and `filetree`/`agent` are valid `KGKind` values -- `scan`
+  simply never looked for those two directory names. `kgrag register` worked
+  fine for them all along; only auto-discovery missed them. Found scanning
+  the fleet for Phase D of `kgrag_priv`'s fleet-operations ADR, where it
+  meant the fleet's own FTreeKG graph would have gone unregistered by `scan
+  --auto-register` with no error or warning.
+
 - **`MemoryKGAdapter` no longer raises on load.** It passed `lancedb_dir=` to
   `MemoryKG.__init__`, a parameter memory-kg dropped in 0.7.0 when it moved to
   sqlite-vec, so every construction died with `TypeError: unexpected keyword

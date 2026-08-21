@@ -38,6 +38,8 @@ _KG_MARKERS: dict[str, str] = {
     ".personkg": "person",
     ".gutenbergkg": "gutenberg",
     ".iakg": "ia",
+    ".agentkg": "agent",
+    ".filetreekg": "filetree",
 }
 
 # Map kind string → default database subdirectory name
@@ -48,9 +50,10 @@ def _find_kg_dirs(root: Path) -> list[dict]:
     """Walk *root* for KG database directories, skipping hidden subdirectories.
 
     For each non-hidden directory encountered, checks for the presence of
-    ``.pycodekg``, ``.dockg``, and ``.metakg`` child directories.  Hidden dirs
-    (names starting with ``"."``) are pruned from traversal so we never
-    descend into ``.git``, ``.venv``, or a neighbour repo's own KG dirs.
+    any marker directory in ``_KG_MARKERS`` (``.pycodekg``, ``.dockg``,
+    ``.filetreekg``, ``.agentkg``, and the rest).  Hidden dirs (names
+    starting with ``"."``) are pruned from traversal so we never descend
+    into ``.git``, ``.venv``, or a neighbour repo's own KG dirs.
 
     :param root: Directory to walk.
     :return: List of dicts with keys ``kind``, ``repo``, ``sqlite``, ``vectors``,
@@ -522,7 +525,8 @@ def refresh_versions(registry):
 def scan(root_path, auto_register, registry):
     """Scan a directory tree for existing KG databases and (optionally) register them.
 
-    Looks for .pycodekg/, .dockg/, .metakg/ directories with built databases.
+    Looks for any marker directory in _KG_MARKERS (.pycodekg/, .dockg/,
+    .filetreekg/, .agentkg/, etc.) with a built database.
 
     \b
     ROOT_PATH  Directory to scan (default: current directory)
