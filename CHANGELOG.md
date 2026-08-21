@@ -30,6 +30,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`KGRAG` no longer loads an embedding model just to be constructed.** The
+  shared embedder is now resolved on the first adapter that needs one instead
+  of in `__init__`, so everything that never reaches an adapter -- `kgrag
+  status`, `status --stats` over unbuilt KGs, a registry listing, an MCP call
+  that resolves nothing -- does no model download and no model load at all. On
+  a cold cache that was ~130 MB from the HuggingFace Hub before the command
+  could print a single row. Resolution still happens once per orchestrator and
+  is cached, including the `None` result that means "let each KG use its own
+  default embedder"; an explicitly supplied `embedder=` is used as-is. The one
+  behavioural change: a misconfigured `embed_backend` (say `llama` with no
+  model path) now raises on first use rather than at construction.
+
 - **`kgrag scan` was blind to FTreeKG and AgentKG instances.** `_KG_MARKERS`
   mapped every KG marker directory to its kind except `.filetreekg` and
   `.agentkg`, even though both have real adapters (`ftree_adapter`,

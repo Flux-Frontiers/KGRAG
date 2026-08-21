@@ -46,7 +46,10 @@ class KGRAG:
     (``SentenceTransformerEmbedder``).  Pass an explicit ``embedder`` or
     configure ``embed_backend`` in ``[tool.kgrag]`` to override this for all
     KGs at once.  A single shared embedder instance is used across every
-    adapter so the GGUF model is loaded only once.
+    adapter so the GGUF model is loaded only once, and it is created lazily
+    on the first adapter that needs it — constructing a ``KGRAG`` loads no
+    model by itself.  A misconfigured ``embed_backend`` therefore raises on
+    first use rather than at construction.
 
     Example ``pyproject.toml`` configuration for Raspberry Pi / ARM:
 
@@ -81,11 +84,15 @@ class KGRAG:
         self._strict = strict
         self._adapters: dict[str, KGAdapter] = {}  # name → adapter
 
-        if embedder is not None:
-            self._embedder: Embedder | None = embedder
-        else:
-            cfg = load_kgrag_config(project_root)
-            self._embedder = make_embedder(cfg)
+        # The embedder is resolved on first adapter use, not here: with the
+        # default sentence-transformers backend `make_embedder` downloads and
+        # loads a model, which is pure cost for everything that never reaches
+        # an adapter (`status`, `status --stats` over unbuilt KGs, a registry
+        # listing, an MCP call that resolves nothing). An explicitly supplied
+        # embedder is already resolved.
+        self._project_root = project_root
+        self._embedder: Embedder | None = embedder
+        self._embedder_resolved = embedder is not None
 
     @property
     def registry(self) -> KGRegistry:
@@ -118,9 +125,26 @@ class KGRAG:
     # Adapter management
     # ------------------------------------------------------------------
 
+    def _get_embedder(self) -> Embedder | None:
+        """Return the shared embedder, creating it on first use.
+
+        Deferred rather than built in ``__init__`` so that constructing a
+        KGRAG never loads a model on its own. Resolution happens once; the
+        result (including ``None``, meaning "let each KG use its own default
+        embedder") is cached for the life of the orchestrator.
+
+        :return: The shared Embedder, or None when no ``embed_backend`` is
+            configured.
+        """
+        if not self._embedder_resolved:
+            cfg = load_kgrag_config(self._project_root)
+            self._embedder = make_embedder(cfg)
+            self._embedder_resolved = True
+        return self._embedder
+
     def _get_adapter(self, entry: KGEntry) -> KGAdapter | None:
         if entry.name not in self._adapters:
-            adapter = make_adapter(entry, embedder=self._embedder)
+            adapter = make_adapter(entry, embedder=self._get_embedder())
             if not adapter.is_available():
                 if self._strict:
                     raise ImportError(

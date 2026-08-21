@@ -9,11 +9,14 @@ touches ~/.kgrag.
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
+from unittest.mock import patch
 
 from click.testing import CliRunner
 
 from kg_rag.cli.main import cli
+from kg_rag.orchestrator import KGRAG
 from kg_rag.registry import KGRegistry
 
 # ---------------------------------------------------------------------------
@@ -168,6 +171,34 @@ class TestCLIStatusJson:
         assert result.exit_code == 0, result.output
         data = _json_stdout(result)
         assert data == [
+            {"name": "mykg", "kind": "code", "builder_version": "unknown", "status": "not built"}
+        ]
+
+    def test_status_stats_json_survives_stderr_noise(self, tmp_path):
+        """Stdout stays parseable when a library scribbles on stderr.
+
+        This is the CI failure mode reproduced without the network: on a cold
+        model cache huggingface_hub draws a download progress bar while the
+        orchestrator is being built. It goes to stderr, so stdout is still
+        clean JSON -- but click's ``result.output`` merges the two streams.
+        """
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        _runner().invoke(cli, ["register", "mykg", "code", str(repo)] + _reg_opt(tmp_path))
+
+        class _NoisyKGRAG(KGRAG):
+            def __init__(self, *args, **kwargs):
+                print("Fetching 3 files:   0%|          | 0/3", end="\r", file=sys.stderr)
+                super().__init__(*args, **kwargs)
+
+        with patch("kg_rag.orchestrator.KGRAG", _NoisyKGRAG):
+            result = _json_runner().invoke(
+                cli, ["status", "--stats", "--json"] + _reg_opt(tmp_path)
+            )
+
+        assert result.exit_code == 0, result.output
+        assert "Fetching" in result.stderr
+        assert _json_stdout(result) == [
             {"name": "mykg", "kind": "code", "builder_version": "unknown", "status": "not built"}
         ]
 

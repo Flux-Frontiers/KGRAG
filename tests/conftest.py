@@ -7,11 +7,29 @@ Shared fixtures for the KGRAG test suite.
 from __future__ import annotations
 
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
 from kg_rag.primitives import KGEntry, KGKind
 from kg_rag.registry import KGRegistry
+
+
+@pytest.fixture(autouse=True)
+def no_embedder_downloads():
+    """Keep the unit suite off the HuggingFace Hub.
+
+    :class:`~kg_rag.orchestrator.KGRAG` resolves its shared embedder on the
+    first adapter that needs one, and this repo configures
+    ``embed_backend = "sentence_transformers"``, so that resolution would
+    download ~130 MB on any machine (and every CI run) with a cold model
+    cache. Every test that gets that far mocks its adapters, so ``None`` --
+    the documented "let each KG use its own default embedder" answer -- is
+    the faithful stand-in. Tests that assert on resolution itself patch this
+    same target inside the test, which takes precedence.
+    """
+    with patch("kg_rag.orchestrator.make_embedder", return_value=None):
+        yield
 
 
 @pytest.fixture
