@@ -462,3 +462,103 @@ class TestQueryScope:
     def test_empty_scope_matches_everything(self):
         scope = QueryScope()
         assert scope.matches(source_path="anything", kind="whatever") is True
+
+
+# ---------------------------------------------------------------------------
+# QueryScope.time_range — time as a scoping axis
+# ---------------------------------------------------------------------------
+
+
+class TestQueryScopeTimeRange:
+    """Time scoping reads the shared kg_utils.temporal contract.
+
+    The asymmetry worth remembering: an unknown ``kind`` is admitted, an
+    unknown *date* is rejected. Admitting undated results would make a time
+    window meaningless — every function in a code KG would match every window.
+    """
+
+    _DATED = {"occurred_start": "2026-04-15"}
+
+    def test_hit_inside_window_matches(self):
+        scope = QueryScope(time_range=("2026-04-01", "2026-04-30"))
+        assert scope.matches(metadata=self._DATED) is True
+
+    def test_hit_outside_window_rejected(self):
+        scope = QueryScope(time_range=("2026-05-01", "2026-05-31"))
+        assert scope.matches(metadata=self._DATED) is False
+
+    def test_undated_result_is_rejected(self):
+        scope = QueryScope(time_range=("2026-04-01", "2026-04-30"))
+        assert scope.matches(metadata={}) is False
+        assert scope.matches(metadata=None) is False
+        assert scope.matches(metadata={"kind": "function"}) is False
+
+    def test_unknown_kind_still_admitted(self):
+        """The opposite stance from time, and both are deliberate."""
+        scope = QueryScope(node_kinds=("chunk",))
+        assert scope.matches(kind=None) is True
+
+    def test_open_ended_windows(self):
+        assert QueryScope(time_range=("2026-01-01", None)).matches(metadata=self._DATED)
+        assert QueryScope(time_range=(None, "2026-12-31")).matches(metadata=self._DATED)
+        assert not QueryScope(time_range=("2027-01-01", None)).matches(metadata=self._DATED)
+
+    def test_precision_is_honoured(self):
+        """A year-dated node overlaps any window touching that year."""
+        scope = QueryScope(time_range=("1876-03-04", "1876-03-04"))
+        assert scope.matches(metadata={"occurred_start": "1876"}) is True
+        assert scope.matches(metadata={"occurred_start": "1877"}) is False
+
+    def test_occurred_beats_recorded(self):
+        """An entry written later about an earlier day belongs to the earlier day."""
+        metadata = {"occurred_start": "2026-04-15", "recorded_at": "2026-08-17"}
+        assert QueryScope(time_range=("2026-04-01", "2026-04-30")).matches(metadata=metadata)
+
+    def test_recorded_only_falls_back(self):
+        metadata = {"recorded_at": "2026-04-15"}
+        assert QueryScope(time_range=("2026-04-01", "2026-04-30")).matches(metadata=metadata)
+
+    def test_time_range_combines_with_other_constraints(self):
+        scope = QueryScope(source_path_prefixes=("journal/",), time_range=("2026-04-01", None))
+        assert scope.matches(source_path="journal/x.md", metadata=self._DATED) is True
+        assert scope.matches(source_path="other/x.md", metadata=self._DATED) is False
+
+    def test_empty_bounds_are_not_a_constraint(self):
+        assert QueryScope(time_range=(None, None)).is_empty is True
+        assert QueryScope(time_range=("", "")).is_empty is True
+        assert QueryScope(time_range=(None, None)).matches(metadata={}) is True
+
+    def test_time_range_makes_scope_non_empty(self):
+        scope = QueryScope(time_range=("2026-04-01", None))
+        assert scope.is_empty is False
+        assert bool(scope) is True
+
+    def test_scope_stays_hashable(self):
+        """Scopes are frozen and get used as dict keys / cache keys."""
+        assert hash(QueryScope(time_range=("2026-01-01", None))) is not None
+
+
+class TestHitMetadataPassthrough:
+    def test_crosshit_metadata_defaults_empty(self):
+        hit = CrossHit(
+            kg_name="k", kg_kind=KGKind.DOC, node_id="n", name="n", kind="chunk", score=1.0
+        )
+        assert hit.metadata == {}
+
+    def test_crosshit_carries_metadata(self):
+        hit = CrossHit(
+            kg_name="k",
+            kg_kind=KGKind.DOC,
+            node_id="n",
+            name="n",
+            kind="chunk",
+            score=1.0,
+            metadata={"occurred_start": "2026-04-15"},
+        )
+        assert hit.metadata["occurred_start"] == "2026-04-15"
+
+    def test_crosssnippet_metadata_defaults_empty(self):
+        snip = CrossSnippet(
+            kg_name="k", kg_kind=KGKind.DOC, node_id="n", source_path="p", content="c"
+        )
+        assert snip.metadata == {}

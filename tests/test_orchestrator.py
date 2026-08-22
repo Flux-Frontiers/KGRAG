@@ -524,3 +524,113 @@ class TestQueryScope:
         pack = kgrag.pack("desert", k=5, scope=scope)
         assert [s.source_path for s in pack.snippets] == ["science-fiction/Dune.md"]
         kgrag.close()
+
+
+# ---------------------------------------------------------------------------
+# time_range post-filter (the degradation path for adapters without pushdown)
+# ---------------------------------------------------------------------------
+
+
+def _dated_hit(kg_name: str, source_path: str, occurred: str | None, score: float = 0.9):
+    """A hit carrying (or deliberately lacking) the temporal contract keys."""
+    return CrossHit(
+        kg_name=kg_name,
+        kg_kind=KGKind.DIARY,
+        node_id=f"{kg_name}:{source_path}",
+        name=source_path,
+        kind="entry",
+        score=score,
+        source_path=source_path,
+        metadata={"occurred_start": occurred} if occurred else {},
+    )
+
+
+class TestTimeRangeScope:
+    """Time scoping must actually filter on the post-filter path.
+
+    Before CrossHit carried metadata there was nothing here to read, so a
+    time-scoped query against an adapter without pushdown would have returned
+    everything while appearing to be scoped — the silent-no-op this wiring
+    exists to prevent.
+    """
+
+    def _registered(self, tmp_path, adapter):
+        kgrag = KGRAG(registry_path=tmp_path / "reg.sqlite")
+        entry = _make_entry(tmp_path, "journal", KGKind.DIARY)
+        kgrag.registry.register(entry)
+        kgrag._adapters[entry.name] = adapter
+        return kgrag
+
+    def test_filters_out_of_window_hits(self, tmp_path):
+        from kg_rag.primitives import QueryScope
+
+        adapter = _mock_adapter(
+            hits=[
+                _dated_hit("journal", "april.md", "2026-04-15"),
+                _dated_hit("journal", "august.md", "2026-08-17"),
+            ]
+        )
+        adapter.supports_scope = False
+        kgrag = self._registered(tmp_path, adapter)
+
+        result = kgrag.query(
+            "what happened", k=5, scope=QueryScope(time_range=("2026-04-01", "2026-04-30"))
+        )
+        paths = [h.source_path for h in result.hits]
+        assert paths == ["april.md"]
+        kgrag.close()
+
+    def test_undated_hits_are_dropped(self, tmp_path):
+        """A module that has not adopted the contract drops out of time queries."""
+        from kg_rag.primitives import QueryScope
+
+        adapter = _mock_adapter(
+            hits=[
+                _dated_hit("journal", "dated.md", "2026-04-15"),
+                _dated_hit("journal", "undated.md", None),
+            ]
+        )
+        adapter.supports_scope = False
+        kgrag = self._registered(tmp_path, adapter)
+
+        result = kgrag.query("x", k=5, scope=QueryScope(time_range=("2026-04-01", "2026-04-30")))
+        assert [h.source_path for h in result.hits] == ["dated.md"]
+        kgrag.close()
+
+    def test_no_time_scope_keeps_undated_hits(self, tmp_path):
+        """Undated hits are only excluded when a time window is actually set."""
+        adapter = _mock_adapter(hits=[_dated_hit("journal", "undated.md", None)])
+        adapter.supports_scope = False
+        kgrag = self._registered(tmp_path, adapter)
+
+        result = kgrag.query("x", k=5)
+        assert len(result.hits) == 1
+        kgrag.close()
+
+    def test_open_ended_window(self, tmp_path):
+        from kg_rag.primitives import QueryScope
+
+        adapter = _mock_adapter(
+            hits=[
+                _dated_hit("journal", "old.md", "2025-01-01"),
+                _dated_hit("journal", "new.md", "2026-08-17"),
+            ]
+        )
+        adapter.supports_scope = False
+        kgrag = self._registered(tmp_path, adapter)
+
+        result = kgrag.query("x", k=5, scope=QueryScope(time_range=("2026-01-01", None)))
+        assert [h.source_path for h in result.hits] == ["new.md"]
+        kgrag.close()
+
+    def test_time_scope_is_pushed_down_when_supported(self, tmp_path):
+        from kg_rag.primitives import QueryScope
+
+        adapter = _mock_adapter(hits=[_dated_hit("journal", "april.md", "2026-04-15")])
+        adapter.supports_scope = True
+        kgrag = self._registered(tmp_path, adapter)
+        scope = QueryScope(time_range=("2026-04-01", "2026-04-30"))
+
+        kgrag.query("x", k=5, scope=scope)
+        assert adapter.query.call_args.kwargs.get("scope") == scope
+        kgrag.close()

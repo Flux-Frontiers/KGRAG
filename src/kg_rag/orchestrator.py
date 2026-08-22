@@ -255,7 +255,11 @@ class KGRAG:
                 hits = self._query_adapter(adapter, q, k, min_score, semantic_floor, scope)
                 if scope:
                     hits = [
-                        h for h in hits if scope.matches(source_path=h.source_path, kind=h.kind)
+                        h
+                        for h in hits
+                        if scope.matches(
+                            source_path=h.source_path, kind=h.kind, metadata=h.metadata
+                        )
                     ]
                 all_hits.extend(hits)
                 by_kg[entry.name] = hits
@@ -311,7 +315,11 @@ class KGRAG:
             try:
                 snippets = self._pack_adapter(adapter, q, k, context, semantic_floor, scope)
                 if scope:
-                    snippets = [s for s in snippets if scope.matches(source_path=s.source_path)]
+                    snippets = [
+                        s
+                        for s in snippets
+                        if scope.matches(source_path=s.source_path, metadata=s.metadata)
+                    ]
                 all_snippets.extend(snippets)
                 kgs_queried += 1
             except Exception:  # pylint: disable=broad-exception-caught
