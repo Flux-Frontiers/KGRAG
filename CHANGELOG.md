@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`kgrag timeline` — chronological cross-KG query.** The point at which the
+  temporal contract becomes something a person can ask a question with. A diary
+  entry, a book publication, a photograph and a conversation topic sort into
+  one sequence, because every adopting module writes the same three keys.
+
+  Ordered by *when*, not by relevance — that is what separates it from
+  `kgrag query --from`. `--from` / `--to` accept any ISO precision, and the
+  precision is meaningful: `--from 1876` means the whole of 1876, not its first
+  midnight.
+
+  Three things it is careful not to lie about:
+
+  - **Precision is shown, never padded.** A book dated `1876` renders as
+    `1876`, not as a false midnight on 1 January.
+  - **Only an explicit `occurred_end` becomes a range.** A year-precision span
+    *implies* an end of 31 December, and printing `1876 → 1876-12-31` would
+    claim a bound the source never wrote.
+  - **A recorded-only date is marked `~`.** It says when something was written
+    down, not when it happened, and a timeline showing the two identically is
+    lying about one of them.
+
+  Undated hits are counted and reported rather than silently dropped — a module
+  that has not adopted the contract would otherwise look like a module with
+  nothing to say.
+
 - **`QueryScope.time_range` — time becomes a federation axis.** A federated
   query can now be scoped to a window as well as a subtree and node kinds:
   `QueryScope(time_range=("2026-04-01", "2026-04-30"))`. Either bound may be
