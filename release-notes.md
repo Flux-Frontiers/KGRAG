@@ -1,50 +1,58 @@
-# Release Notes — v0.13.0
+# Release Notes — v0.14.0
 
-> Released: 2026-08-18
+> Released: 2026-08-22
 
-This release gives KGRAG a front door for documents that don't start life as
-Markdown. `kgrag ingest` takes PDFs, Word files, EPUBs, spreadsheets, and slide
-decks straight to a registered, queryable KG in one command, and a new TEI
-embedding backend lets the embedding step run outside the client process
-entirely.
+This release makes time a first-class axis for federated queries. `kgrag
+timeline` sorts hits from every adopting KG into one chronological sequence,
+and `QueryScope.time_range` lets any federated query be windowed to a date
+range as well as a subtree or node kind. Several adapters and a dependency
+fix round out the release.
 
 ## What changed
 
-**`kgrag ingest` — loose documents to a registered KG, in one command.**
-Point it at a directory of mixed formats, or a handful of specific files, and
-it stages them to Markdown, builds a DocKG over the result, and registers
-that KG — the staging, build, and register stages are each independently
-skippable, so the command doubles as a pure converter when that's all you
-need. Documents that can't be converted are reported by name and reason
-rather than silently dropped, and `--corpus NAME` folds the result into an
-existing corpus in the same run. A run rebuilds the staged corpus from
-nothing by default, matching the wipe-by-default convention the rest of the
-fleet's builders already use; `--update` opts into the incremental path
-instead. Conversion itself comes from `kg_utils.ingest` (kgmodule-utils
-0.17.0), so this capability is shared with every other KGModule builder
-rather than living as a private copy here.
+**`kgrag timeline` — chronological cross-KG query.** A diary entry, a book
+publication, a photograph, and a conversation topic can now sort into one
+sequence ordered by *when*, not by relevance, because every adopting module
+writes the same three temporal keys. `--from`/`--to` accept any ISO
+precision, and the precision is honored rather than padded: a book dated
+`1876` renders as `1876`, not as a false midnight on January 1. A recorded-
+only date is marked `~` to distinguish "when it was written down" from "when
+it happened," and undated hits are counted and reported rather than silently
+dropped.
 
-**An embedding backend that doesn't need torch in the client.** Setting
-`embed_backend = "tei"` routes embedding calls to a Text Embeddings Inference
-server instead of loading a model in-process — no torch, no
-sentence-transformers, and a client footprint of roughly 176 MiB instead of
-1.5 GiB RSS. It's roughly half the throughput of in-process CPU embedding, so
-it isn't the default, but the vectors it produces are interchangeable with
-the sentence-transformers backend (cosine similarity ≥ 0.999997), so
-switching backends doesn't require re-embedding anything already indexed.
-See `docs/TEI_EVALUATION.md` for the full evaluation.
+**`QueryScope.time_range` — time as a federation axis.** Federated queries
+can now be scoped to a date window alongside a subtree and node kinds, with
+either bound left open-ended. This fills the slot `metadata_eq` had been
+reserving since 0.10.0, and is what makes "what happened in April" answerable
+across diary, memory, conversation, filesystem, and snapshot KGs in a single
+call. Undated results are rejected when a time window is set, so a module
+that hasn't adopted the temporal contract drops out of time-scoped queries
+rather than silently matching everything. Requires `kgmodule-utils>=0.18.0`,
+which also fixes the underlying bug that made this impossible before:
+`GraphStore` was dropping node metadata on write.
 
-**Housekeeping.** The `kgmodule-utils` floor moves to `>=0.17.0` for the
-ingest support, and backend dispatch — including the TEI path — now has
-dedicated test coverage.
+**Adapters now carry node metadata into hits**, wiring the doc, gutenberg,
+diary, memory, and filetree adapters up to the temporal contract above —
+without it, `time_range` scoping would have been inert in practice.
+
+**Fixes.** `KGRAG` no longer loads an embedding model just to be
+constructed — resolution is deferred to the first adapter that actually
+needs one, cutting a ~130 MB cold-cache download from commands like `kgrag
+status` that never touch an embedder. `kgrag scan` now discovers FTreeKG and
+AgentKG instances during auto-registration, and `MemoryKGAdapter` no longer
+raises on load after memory-kg's move to sqlite-vec.
+
+**Packaging.** `memory-kg` is now a declared dependency of the `kg` and
+`all` extras, fixing `kgrag query --kind memory` on a stock install.
+`pyproject.toml` converted to PEP 621. `diary-kg` and `ftree-kg` moved out
+of the `kg` extra into their own `diary` and `filetree` extras — **breaking**
+for anyone who relied on `kg-rag[kg]` to supply diary or filetree support.
 
 ## Upgrading
 
-Run `poetry update` (or reinstall) to pick up `kgmodule-utils >=0.17.0`. If
-you want document ingestion, install the `ingest` extra
-(`pip install -U 'kgmodule-utils[ingest]'` reports this automatically when
-it's missing). Everything else is opt-in: existing embedding configuration is
-unaffected unless you set `embed_backend = "tei"` explicitly.
+Run `poetry update` (or reinstall) to pick up `kgmodule-utils>=0.18.0`. If
+you use diary or filetree KGs, install `kg-rag[kg,diary,filetree]` — the
+plain `kg` extra no longer pulls them in.
 
 ---
 

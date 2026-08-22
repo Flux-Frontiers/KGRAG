@@ -60,6 +60,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
+from kg_rag import __version__
 from kg_rag.viz import DisplayMode, RenderBackend, Viewport
 
 if TYPE_CHECKING:
@@ -75,7 +76,6 @@ logger = logging.getLogger(__name__)
 # Constants
 # ---------------------------------------------------------------------------
 
-__version__ = "0.1.0"
 __author__ = "Eric G. Suchanek, PhD"
 
 SIDEBAR_W: int = 220

@@ -94,7 +94,7 @@ packages = [{ include = "kg_rag", from = "src" }]
 # ---------------------------------------------------------------------------
 [project]
 name = "kg-rag"
-version = "0.13.0"
+version = "0.14.0"
 description = "Orchestration layer for the KGRAG(tm) components."
 readme = "README.md"
 license = "Elastic-2.0"

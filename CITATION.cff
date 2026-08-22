@@ -15,8 +15,8 @@ authors:
     orcid: "https://orcid.org/0009-0009-0891-1507"
     email: suchanek@flux-frontiers.com
     affiliation: "Flux-Frontiers"
-version: "0.13.0"
-date-released: "2026-08-18"
+version: "0.14.0"
+date-released: "2026-08-22"
 doi: "10.5281/zenodo.20018524"
 license-url: "https://www.elastic.co/licensing/elastic-license"
 repository-code: "https://github.com/Flux-Frontiers/KGRAG"
