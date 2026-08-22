@@ -9,6 +9,73 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`kgrag timeline` — chronological cross-KG query.** The point at which the
+  temporal contract becomes something a person can ask a question with. A diary
+  entry, a book publication, a photograph and a conversation topic sort into
+  one sequence, because every adopting module writes the same three keys.
+
+  Ordered by *when*, not by relevance — that is what separates it from
+  `kgrag query --from`. `--from` / `--to` accept any ISO precision, and the
+  precision is meaningful: `--from 1876` means the whole of 1876, not its first
+  midnight.
+
+  Three things it is careful not to lie about:
+
+  - **Precision is shown, never padded.** A book dated `1876` renders as
+    `1876`, not as a false midnight on 1 January.
+  - **Only an explicit `occurred_end` becomes a range.** A year-precision span
+    *implies* an end of 31 December, and printing `1876 → 1876-12-31` would
+    claim a bound the source never wrote.
+  - **A recorded-only date is marked `~`.** It says when something was written
+    down, not when it happened, and a timeline showing the two identically is
+    lying about one of them.
+
+  Undated hits are counted and reported rather than silently dropped — a module
+  that has not adopted the contract would otherwise look like a module with
+  nothing to say.
+
+- **`QueryScope.time_range` — time becomes a federation axis.** A federated
+  query can now be scoped to a window as well as a subtree and node kinds:
+  `QueryScope(time_range=("2026-04-01", "2026-04-30"))`. Either bound may be
+  `None` for an open-ended window. Filtering reads the shared temporal
+  contract in `kg_utils.temporal`, so precision is honoured — a node dated
+  `"1876"` overlaps any window touching that year, and a node's *occurrence*
+  outranks when it was recorded.
+
+  This fills the slot `metadata_eq` had been reserving since 0.10.0, and it is
+  what makes "what happened in April" answerable across diary, memory,
+  conversation, filesystem and snapshot KGs in one call rather than per-repo.
+
+  **Undated results are rejected when `time_range` is set** — the opposite of
+  how an unknown `kind` is treated, and deliberately so. A result with no
+  temporal metadata cannot answer "when", and admitting it would make the
+  window meaningless: a code KG would return every function for every window.
+  The practical consequence is that a module which has not yet adopted the
+  temporal contract drops out of time-scoped queries entirely. That is the
+  honest outcome rather than a silent one.
+
+  `CrossHit` and `CrossSnippet` gained a `metadata` field (defaulting to `{}`)
+  so the orchestrator's post-filter has something to read for adapters without
+  scope pushdown. Without it, time scoping would have silently matched nothing
+  on the degradation path — the failure mode the class was written to avoid.
+  Adapters populate it as they adopt the contract; until an adapter does, its
+  hits count as undated.
+
+  Requires `kgmodule-utils>=0.18.0`, and the floor moves with it. That release
+  also fixes the reason this could not have worked before: `GraphStore` was
+  dropping node metadata on write, so a module could attach `occurred_start`
+  to a node and no query would ever see it.
+
+- **Adapters carry node metadata into hits** via a new `node_metadata()` helper
+  in `kg_rag.adapters.base`, wired into the doc, gutenberg, diary, memory and
+  filetree adapters. It reads either a nested `metadata` mapping or the
+  temporal keys flattened onto the node, since backends differ, and returns a
+  copy so a hit cannot mutate the backend's node.
+
+  Without this the `time_range` scope would have been inert in practice:
+  hits arrived with empty metadata, so every result counted as undated and
+  a time-scoped query returned nothing at all.
+
 - **`memory-kg` is now a declared dependency** (the `kg` and `all` extras).
   It was in no extra at all, so a registered `kind=memory` KG could never be
   queried through KGRAG on a stock install -- `kgrag query --kind memory`

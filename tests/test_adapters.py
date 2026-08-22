@@ -948,3 +948,58 @@ class TestIABookKGAdapterStub:
         adapter = IABookKGAdapter(entry)
         report = adapter.analyze()
         assert "unavailable" in report.lower()
+
+
+# ---------------------------------------------------------------------------
+# node_metadata — the bridge that makes time scoping reach real hits
+# ---------------------------------------------------------------------------
+
+
+class TestNodeMetadataHelper:
+    """Adapters must carry node metadata into hits or time scoping cannot work.
+
+    QueryScope.time_range reads CrossHit.metadata; if an adapter leaves it
+    empty, every hit from that KG counts as undated and is filtered out. This
+    helper is what each adapter calls to populate it.
+    """
+
+    def test_reads_nested_metadata(self):
+        from kg_rag.adapters.base import node_metadata
+
+        node = {"id": "n", "metadata": {"occurred_start": "2026-04-15"}}
+        assert node_metadata(node) == {"occurred_start": "2026-04-15"}
+
+    def test_reads_flattened_contract_keys(self):
+        """Some modules put the contract keys straight on the node."""
+        from kg_rag.adapters.base import node_metadata
+
+        node = {"id": "n", "occurred_start": "2026-04-15", "recorded_at": "2026-08-17"}
+        assert node_metadata(node) == {
+            "occurred_start": "2026-04-15",
+            "recorded_at": "2026-08-17",
+        }
+
+    def test_nested_wins_over_flattened(self):
+        from kg_rag.adapters.base import node_metadata
+
+        node = {"metadata": {"occurred_start": "2026-04-15"}, "occurred_start": "1999-01-01"}
+        assert node_metadata(node)["occurred_start"] == "2026-04-15"
+
+    def test_undated_node_yields_empty(self):
+        from kg_rag.adapters.base import node_metadata
+
+        assert node_metadata({"id": "n", "kind": "function"}) == {}
+
+    def test_ignores_non_dict_metadata(self):
+        from kg_rag.adapters.base import node_metadata
+
+        assert node_metadata({"metadata": "not-a-dict"}) == {}
+
+    def test_returns_a_copy(self):
+        """Mutating a hit's metadata must not reach back into the backend's node."""
+        from kg_rag.adapters.base import node_metadata
+
+        original = {"occurred_start": "2026-04-15"}
+        out = node_metadata({"metadata": original})
+        out["occurred_start"] = "changed"
+        assert original["occurred_start"] == "2026-04-15"

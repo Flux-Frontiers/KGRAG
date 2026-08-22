@@ -24,6 +24,7 @@ import kg_rag.cli.cmd_models  # noqa: F401
 import kg_rag.cli.cmd_query  # noqa: F401
 import kg_rag.cli.cmd_registry  # noqa: F401
 import kg_rag.cli.cmd_synthesize  # noqa: F401
+import kg_rag.cli.cmd_timeline  # noqa: F401
 import kg_rag.cli.cmd_viz  # noqa: F401
 import kg_rag.cli.cmd_viz2d  # noqa: F401
 from kg_rag.cli.group import cli  # noqa: F401 — re-exported as entrypoint

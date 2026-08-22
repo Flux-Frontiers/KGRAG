@@ -129,7 +129,12 @@ dependencies = [
     # 0.17.0 is the floor now: `kgrag ingest` needs kg_utils.ingest, which
     # shipped to PyPI 2026-08-18. The anydoc import inside it stays guarded
     # regardless, so staging .md/.txt/.rst still needs no extra.
-    "kgmodule-utils>=0.17.0",
+    # 0.18.0 raises it again: QueryScope.time_range reads kg_utils.temporal,
+    # which is a core (stdlib-only) module there, so this needs no new extra.
+    # Sequencing: this floor must not merge before kgmodule-utils 0.18.0 is on
+    # PyPI, or a clean install resolves a kg_utils without `temporal` and
+    # `kg_rag.primitives` fails at import.
+    "kgmodule-utils>=0.18.0",
     # Upper-bounded: mcp 2.0 removed the low-level Server decorator API
     # (`@server.list_tools()` / `@server.call_tool()`) that kg_rag.mcp_server
     # uses. The Server class itself still imports under 2.0, so the failure
@@ -171,7 +176,7 @@ diary = [
     "diary-kg>=0.97.0",
 ]
 filetree = [
-    "ftree-kg>=0.13.0",
+    "ftree-kg>=0.14.0",
 ]
 # Multi-format document ingestion: `kgrag ingest`. Converts Word / PowerPoint /
 # Excel / OpenDocument / RTF / EPUB / CSV / PDF to Markdown. Optional because
@@ -219,7 +224,7 @@ pi = [
 all = [
     "diary-kg>=0.97.0",
     "doc-kg>=0.21.2",
-    "ftree-kg>=0.13.0",
+    "ftree-kg>=0.14.0",
     "memory-kg>=0.7.0",
     "pycode-kg>=0.23.1",
     "firecrawl-anydoc>=0.1.9",

@@ -13,6 +13,8 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
+from kg_utils.temporal import read_span
+
 
 class KGKind(StrEnum):
     """Kind of knowledge graph."""
@@ -214,12 +216,27 @@ class QueryScope:
         (e.g. ``("chunk", "section")`` to drop structural/topic nodes).  Note
         that snippet packs may not carry a ``kind``; kind filtering on snippets
         is therefore only reliable via adapter pushdown.
+    :param time_range: Keep only results whose occurrence overlaps this
+        ``(start, end)`` window, as ISO-8601 strings.  Either bound may be
+        ``None`` for an open-ended window, so ``("2026-04-01", None)`` means
+        "April 2026 onwards".  Read against the shared temporal contract in
+        :mod:`kg_utils.temporal`, so precision is honoured: a node dated
+        ``"1876"`` overlaps any window touching that year.
+
+        Unlike ``node_kinds``, a result carrying **no** temporal metadata is
+        rejected when this constraint is set.  Undated results cannot answer
+        "when", and admitting them would make a time window meaningless — a
+        code KG would return every function for any window.  The practical
+        consequence: a module that has not yet adopted the temporal contract
+        drops out of time-scoped queries entirely, which is the honest
+        outcome, not a bug.
     :param metadata_eq: Reserved for future metadata-equality scoping.  Accepted
         for API stability but not yet enforced.
     """
 
     source_path_prefixes: tuple[str, ...] | None = None
     node_kinds: tuple[str, ...] | None = None
+    time_range: tuple[str | None, str | None] | None = None
     metadata_eq: dict[str, str] | None = None
 
     def __post_init__(self) -> None:
@@ -228,25 +245,42 @@ class QueryScope:
             object.__setattr__(self, "source_path_prefixes", tuple(self.source_path_prefixes))
         if self.node_kinds is not None:
             object.__setattr__(self, "node_kinds", tuple(self.node_kinds))
+        if self.time_range is not None:
+            start, end = self.time_range
+            object.__setattr__(self, "time_range", (start or None, end or None))
 
     @property
     def is_empty(self) -> bool:
         """True if this scope imposes no constraints (a no-op filter)."""
-        return not (self.source_path_prefixes or self.node_kinds or self.metadata_eq)
+        return not (
+            self.source_path_prefixes
+            or self.node_kinds
+            or self.metadata_eq
+            or (self.time_range and any(self.time_range))
+        )
 
     def __bool__(self) -> bool:
         return not self.is_empty
 
-    def matches(self, *, source_path: str = "", kind: str | None = None) -> bool:
+    def matches(
+        self,
+        *,
+        source_path: str = "",
+        kind: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> bool:
         """Return True if a result with these attributes is in scope.
 
         Applied as a post-filter for adapters without pushdown.  A ``None``
         ``kind`` is treated as "unknown" and is **not** rejected by a
         ``node_kinds`` constraint, so kind filtering never silently drops
-        snippets that simply lack a kind field.
+        snippets that simply lack a kind field.  ``time_range`` deliberately
+        takes the opposite stance on missing data — see the class docstring.
 
         :param source_path: The result's source/document path.
         :param kind: The result's node kind, or None if unknown.
+        :param metadata: The result's node metadata, carrying the temporal
+            contract keys if the producing module writes them.
         :return: True if the result satisfies all enforced constraints.
         """
         if self.source_path_prefixes:
@@ -255,6 +289,13 @@ class QueryScope:
                 return False
         if self.node_kinds and kind is not None and kind not in self.node_kinds:
             return False
+        if self.time_range and any(self.time_range):
+            span = read_span(metadata)
+            if span is None:
+                return False
+            start, end = self.time_range
+            if not span.overlaps(start, end):
+                return False
         return True
 
 
@@ -270,6 +311,10 @@ class CrossHit:
     :param score: Relevance score (higher is better).
     :param summary: Short description or docstring snippet.
     :param source_path: File/document path within the repo.
+    :param metadata: Node metadata carried through from the source KG.  Adapters
+        populate it with at least the :mod:`kg_utils.temporal` contract keys
+        where their nodes have them; without it a ``time_range`` scope has
+        nothing to read and the hit is treated as undated.
     """
 
     kg_name: str
@@ -280,6 +325,7 @@ class CrossHit:
     score: float
     summary: str = ""
     source_path: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -312,6 +358,10 @@ class CrossSnippet:
     :param end_lineno: Ending line number (code KGs).
     :param content: The raw source text.
     :param score: Relevance score.
+    :param metadata: Node metadata carried through from the source KG, including
+        the :mod:`kg_utils.temporal` contract keys where the producing module
+        writes them.  A ``time_range`` scope reads this; a snippet without it
+        counts as undated and is filtered out.
     """
 
     kg_name: str
@@ -322,6 +372,7 @@ class CrossSnippet:
     score: float = 0.0
     lineno: int | None = None
     end_lineno: int | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

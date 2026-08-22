@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from kg_rag.adapters.base import KGAdapter
+from kg_rag.adapters.base import KGAdapter, node_metadata
 from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry, KGKind, QueryScope
 
 
@@ -99,6 +99,7 @@ class MemoryKGAdapter(KGAdapter):
                     score=round(score, 4),
                     summary=node.get("text") or node.get("title", ""),
                     source_path=node.get("file_path") or "",
+                    metadata=node_metadata(node),
                 )
             )
         return hits

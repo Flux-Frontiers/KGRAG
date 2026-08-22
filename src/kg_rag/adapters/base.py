@@ -10,6 +10,8 @@ from abc import ABC, abstractmethod
 from datetime import UTC, datetime
 from typing import Any
 
+from kg_utils.temporal import TEMPORAL_KEYS
+
 from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry, QueryScope
 from kg_rag.viz import DisplayMode, Viewport
 
@@ -351,3 +353,28 @@ class KGAdapter(ABC):
             "node_count": _to_int(raw.get("node_count")),
             "edge_count": _to_int(raw.get("edge_count")),
         }
+
+
+def node_metadata(node: dict[str, Any]) -> dict[str, Any]:
+    """Extract a node's metadata mapping from a backend query result.
+
+    Backends differ in how they surface it: ``kg_utils.store`` returns a
+    decoded ``metadata`` dict, while some modules flatten the temporal contract
+    keys onto the node itself.  This reads both, preferring the nested mapping
+    and falling back to any contract keys found at the top level, so an adapter
+    populates :attr:`~kg_rag.primitives.CrossHit.metadata` with one call
+    regardless of which shape its backend uses.
+
+    Returning ``{}`` for a node with no metadata is meaningful rather than
+    merely empty: a ``time_range`` scope treats an undated result as out of
+    scope, so a backend that carries no dates drops out of time-scoped queries
+    instead of matching everything.
+
+    :param node: A node dict from a backend query result.
+    :return: The node's metadata mapping, possibly empty.
+    """
+    raw = node.get("metadata")
+    if isinstance(raw, dict) and raw:
+        return dict(raw)
+    flat = {k: node[k] for k in TEMPORAL_KEYS if node.get(k)}
+    return flat
