@@ -176,7 +176,7 @@ diary = [
     "diary-kg>=0.97.0",
 ]
 filetree = [
-    "ftree-kg>=0.13.0",
+    "ftree-kg>=0.14.0",
 ]
 # Multi-format document ingestion: `kgrag ingest`. Converts Word / PowerPoint /
 # Excel / OpenDocument / RTF / EPUB / CSV / PDF to Markdown. Optional because
@@ -224,7 +224,7 @@ pi = [
 all = [
     "diary-kg>=0.97.0",
     "doc-kg>=0.21.2",
-    "ftree-kg>=0.13.0",
+    "ftree-kg>=0.14.0",
     "memory-kg>=0.7.0",
     "pycode-kg>=0.23.1",
     "firecrawl-anydoc>=0.1.9",

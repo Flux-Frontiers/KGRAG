@@ -949,7 +949,6 @@ nvidia-cuda-cupti = {version = "==13.0.85.*", optional = true, markers = "(sys_p
 nvidia-cuda-nvrtc = {version = "==13.0.88.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and (extra == \"cublas\" or extra == \"nvrtc\")"}
 nvidia-cuda-runtime = {version = "==13.0.96.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cudart\""}
 nvidia-cufft = {version = "==12.0.0.61.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cufft\""}
-nvidia-cufile = {version = "==1.15.1.6.*", optional = true, markers = "sys_platform == \"linux\" and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cufile\""}
 nvidia-curand = {version = "==10.4.0.35.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"curand\""}
 nvidia-cusolver = {version = "==12.0.4.66.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cusolver\""}
 nvidia-cusparse = {version = "==12.6.3.3.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and (extra == \"cusolver\" or extra == \"cusparse\")"}
@@ -1436,20 +1435,20 @@ tqdm = ["tqdm"]
 
 [[package]]
 name = "ftree-kg"
-version = "0.13.0"
+version = "0.14.0"
 description = "KGModule for file tree knowledge graphs"
 optional = true
 python-versions = "<3.14,>=3.12"
 groups = ["main"]
 markers = "extra == \"filetree\" or extra == \"all\""
 files = [
-    {file = "ftree_kg-0.13.0-py3-none-any.whl", hash = "sha256:d523376dec945ab10da07fee8bb3251a6c6dc65add17679b91109df4abe4a897"},
-    {file = "ftree_kg-0.13.0.tar.gz", hash = "sha256:141e80f18b99f2effce315f5845d17c27c9544ccaaebc613aff2dfe96910dfe6"},
+    {file = "ftree_kg-0.14.0-py3-none-any.whl", hash = "sha256:b1e2397741ea03a6e9a5cd24555d43dd36a5c517091b64974c593fe7f68d67e5"},
+    {file = "ftree_kg-0.14.0.tar.gz", hash = "sha256:0cffca37f441de76289ff8affc7ae2697bbb6e4b52ba4040f9061193958180ed"},
 ]
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = {version = ">=0.13.2", extras = ["semantic", "sqlite-vec"]}
+kgmodule-utils = {version = ">=0.18.0", extras = ["semantic", "sqlite-vec"]}
 mcp = ">=1.0.0,<2"
 pillow = ">=10.0.0"
 rich = ">=13.0.0,<15.0.0"
@@ -1869,14 +1868,14 @@ referencing = ">=0.31.0"
 
 [[package]]
 name = "kgmodule-utils"
-version = "0.17.0"
+version = "0.18.0"
 description = "Shared types, graph store, semantic index, and pipeline base for the KGModule SDK"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "kgmodule_utils-0.17.0-py3-none-any.whl", hash = "sha256:985c35837669cf63f809d6f823da3790293360240b67363b9705128bf0c57ece"},
-    {file = "kgmodule_utils-0.17.0.tar.gz", hash = "sha256:fb26ecf6e22180aefb2b71802580e0271738d53c75bc5915fe0ec6a182f16fef"},
+    {file = "kgmodule_utils-0.18.0-py3-none-any.whl", hash = "sha256:230adc9bdeb517867c18d9f357d25f619f66a64aee7fef0ee9a7cc125553a818"},
+    {file = "kgmodule_utils-0.18.0.tar.gz", hash = "sha256:b8b02d1f5397e39d1459b8f05af0ae29b218ea183ad21f2a37b533fbe75725c7"},
 ]
 
 [package.dependencies]
@@ -2820,19 +2819,6 @@ files = [
 
 [package.dependencies]
 nvidia-nvjitlink = "*"
-
-[[package]]
-name = "nvidia-cufile"
-version = "1.15.1.6"
-description = "cuFile GPUDirect libraries"
-optional = false
-python-versions = ">=3"
-groups = ["main", "dev"]
-markers = "<empty>"
-files = [
-    {file = "nvidia_cufile-1.15.1.6-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:08a3ecefae5a01c7f5117351c64f17c7c62efa5fffdbe24fc7d298da19cd0b44"},
-    {file = "nvidia_cufile-1.15.1.6-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:bdc0deedc61f548bddf7733bdc216456c2fdb101d020e1ab4b88d232d5e2f6d1"},
-]
 
 [[package]]
 name = "nvidia-curand"
@@ -6521,4 +6507,4 @@ viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "3854fe16dad401f9fa8a4df9d2c755efa8428881794aacdce8a3c2c16c359f60"
+content-hash = "b5b9ed2dd217be4774ff58fa6ee097ebaf6558295e6cc5e90c4ee0c749df096a"
