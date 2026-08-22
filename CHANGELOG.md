@@ -36,7 +36,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Adapters populate it as they adopt the contract; until an adapter does, its
   hits count as undated.
 
-  Requires `kgmodule-utils>=0.18.0`, and the floor moves with it.
+  Requires `kgmodule-utils>=0.18.0`, and the floor moves with it. That release
+  also fixes the reason this could not have worked before: `GraphStore` was
+  dropping node metadata on write, so a module could attach `occurred_start`
+  to a node and no query would ever see it.
+
+- **Adapters carry node metadata into hits** via a new `node_metadata()` helper
+  in `kg_rag.adapters.base`, wired into the doc, gutenberg, diary, memory and
+  filetree adapters. It reads either a nested `metadata` mapping or the
+  temporal keys flattened onto the node, since backends differ, and returns a
+  copy so a hit cannot mutate the backend's node.
+
+  Without this the `time_range` scope would have been inert in practice:
+  hits arrived with empty metadata, so every result counted as undated and
+  a time-scoped query returned nothing at all.
 
 - **`memory-kg` is now a declared dependency** (the `kg` and `all` extras).
   It was in no extra at all, so a registered `kind=memory` KG could never be

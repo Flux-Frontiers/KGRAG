@@ -18,7 +18,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from kg_rag.adapters.base import KGAdapter
+from kg_rag.adapters.base import KGAdapter, node_metadata
 from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry, KGKind, QueryScope
 
 
@@ -114,6 +114,7 @@ class GutenbergKGAdapter(KGAdapter):
                     score=round(score, 4),
                     summary=node.get("text") or node.get("title", ""),
                     source_path=node.get("file_path") or "",
+                    metadata=node_metadata(node),
                 )
             )
         return hits

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from kg_rag.adapters.base import KGAdapter
+from kg_rag.adapters.base import KGAdapter, node_metadata
 from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry, KGKind, QueryScope
 
 
@@ -96,6 +96,7 @@ class FTreeKGAdapter(KGAdapter):
                     score=score,
                     summary=n.get("docstring", ""),
                     source_path=n.get("source_path", ""),
+                    metadata=node_metadata(n),
                 )
             )
         return hits
