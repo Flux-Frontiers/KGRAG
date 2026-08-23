@@ -1215,20 +1215,20 @@ files = [
 
 [[package]]
 name = "doc-kg"
-version = "0.21.2"
+version = "0.22.0"
 description = "A tool to build a semantically searchable knowledge graph from markdown and text documents"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "doc_kg-0.21.2-py3-none-any.whl", hash = "sha256:56a9daca368d96c782b96bc5e238c3b1ea03ec84a35784b0e2c469badbe723f2"},
-    {file = "doc_kg-0.21.2.tar.gz", hash = "sha256:d02fa9b25b50512bf0fbbf574861cd28c6a8a82f0602528f8e8e212940dca363"},
+    {file = "doc_kg-0.22.0-py3-none-any.whl", hash = "sha256:9ad50cad83ac37518ff916b44342c72cbb1972034963b3ab4ebbfd21e8361a43"},
+    {file = "doc_kg-0.22.0.tar.gz", hash = "sha256:77ccf66da16dee6c79ce22cebd08d9c27f1ec907f5f9bb32c67f096cb258dcc0"},
 ]
 markers = {main = "extra == \"kg\" or extra == \"all\" or extra == \"diary\""}
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = {version = ">=0.12.1", extras = ["semantic"]}
+kgmodule-utils = {version = ">=0.18.0", extras = ["semantic"]}
 mcp = ">=1.0.0,<2"
 pymupdf4llm = ">=0.0.17"
 pyyaml = ">=6.0.0"
@@ -1236,9 +1236,7 @@ rich = ">=14.3.3,<15"
 tqdm = ">=4.60"
 
 [package.extras]
-all = ["detect-secrets (>=1.5.0)", "joblib (>=1.4.0)", "pdoc (>=14.0.0)", "pre-commit (>=4.5.1)", "pytest (>=9.0.3)", "pytest-cov (>=5.0.0)", "pyvis (>=0.3.2)", "ruff (>=0.4.0,<0.16)", "scikit-learn (>=1.3.0)", "streamlit (>=1.35.0)", "ty (>=0.0.41)"]
 analysis = ["joblib (>=1.4.0)", "scikit-learn (>=1.3.0)"]
-dev = ["detect-secrets (>=1.5.0)", "pdoc (>=14.0.0)", "pre-commit (>=4.5.1)", "pytest (>=9.0.3)", "pytest-cov (>=5.0.0)", "ruff (>=0.4.0,<0.16)", "ty (>=0.0.41)"]
 lancedb = ["lancedb (>=0.29.0)"]
 viz = ["pyvis (>=0.3.2)", "streamlit (>=1.35.0)"]
 
@@ -6507,4 +6505,4 @@ viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "b5b9ed2dd217be4774ff58fa6ee097ebaf6558295e6cc5e90c4ee0c749df096a"
+content-hash = "b41602a943ea065377f3d1cb556e0b40655c0d10fe345a1d983f5dd4d90a7964"
