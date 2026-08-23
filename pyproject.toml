@@ -168,7 +168,7 @@ dependencies = [
 # here: they back kinds most registries never hold, and diary-kg pulls spacy
 # (~21M) for a backend that then sits unused.
 kg = [
-    "doc-kg>=0.21.2",
+    "doc-kg>=0.22.0",
     "memory-kg>=0.7.0",
     "pycode-kg>=0.23.1",
 ]
@@ -223,7 +223,7 @@ pi = [
 # whole lock with an override -- pathologically slow once a few packages do it.
 all = [
     "diary-kg>=0.97.0",
-    "doc-kg>=0.21.2",
+    "doc-kg>=0.22.0",
     "ftree-kg>=0.14.0",
     "memory-kg>=0.7.0",
     "pycode-kg>=0.23.1",
@@ -329,7 +329,7 @@ pip-audit = "^2.10.0"
 # here so the suite exercises the real classes. The marginal cost is small --
 # sentence-transformers already pulls the torch/transformers stack.
 pycode-kg = ">=0.23.1"
-doc-kg = ">=0.21.2"
+doc-kg = ">=0.22.0"
 
 # ---------------------------------------------------------------------------
 # Tool configuration
