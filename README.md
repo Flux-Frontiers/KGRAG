@@ -46,6 +46,7 @@ RAG embeds text chunks and retrieves by approximate similarity — no structure,
 | `filetree` | FTreeKG | File system tree — directory/file/module/dependency structure |
 | `memory` | MemoryKG | Episodic memory — hybrid semantic + structural graph for conversation/event corpora |
 | `gutenberg` | GutenbergKG | Project Gutenberg book corpus — literature indexed by author, genre, and chapter via DocKG-compatible indices |
+| `genealogy` | GenealogyKG | Genealogical records — person/family graph with relational edges *(genealogy-kg not yet published to PyPI; adapter reports unavailable until it is)* |
 
 ### Stub Adapters (protocol boundary, backends under development)
 
