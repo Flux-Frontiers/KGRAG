@@ -16,13 +16,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   imports it and reports unavailable until it is.
 
   Its `query()`/`pack()` reshaping reads `node["relevance"]["score"]` and
-  `node["snippet"]`, which is where `kg_utils.pipeline.KGModule` actually
-  puts them -- not the top-level `score` / `node_id` keys and `.snippets`
-  list that `ftree_adapter.py` still assumes. Verified live against a real
-  KGModule.query()/pack() call: `ftree_adapter.py`'s `node_id` is always
-  `""`, its score-based filtering is always a no-op, and its `pack()`
-  always returns `[]`. Not fixed here -- flagged for a dedicated pass; see
-  kgrag_priv's fleet sweep plan.
+  `node["snippet"]`, which is where the generic `kg_utils.pipeline.KGModule`
+  base class puts them. That prompted a check of `ftree_adapter.py`, which
+  reads the older `node_id` / top-level `score` / `.snippets` shape instead
+  -- initially logged here as a bug on the assumption every KGModule
+  subclass returns the shared base shape. It does not: `FileTreeKG`
+  overrides `query()`/`pack()` itself and deliberately keeps the older
+  shape for backward compatibility (`ftree_kg/module.py`'s own docstrings
+  say so, and a live build confirmed `node_id`/`score` were already
+  correct). Retracted below.
+
+### Fixed
+
+- **`ftree_adapter.py.pack()` dropped snippet metadata.** `FileTreeKG.pack()`
+  populates each snippet's `metadata` (including the temporal contract
+  keys); `query()`'s `CrossHit` already read it via `node_metadata()`, but
+  `pack()`'s `CrossSnippet` never did, so a `time_range`-scoped `pack()`
+  call saw every FTreeKG snippet as undated even though the same KG's
+  `query()` correctly dated it. One line (`metadata=node_metadata(s)`),
+  pinned by two new tests in `tests/test_adapters.py`. This is the one real
+  defect in `ftree_adapter.py`; the `node_id`/score/`.snippets` reads noted
+  above are correct as written.
 
 ## [0.14.0] - 2026-08-22
 
