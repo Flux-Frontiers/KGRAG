@@ -529,10 +529,13 @@ class TestPrintSummaryHelper:
         assert "gaps" in out
         assert "manifest.json" in out
 
-    def test_summary_omits_gaps_row_when_clean(self, tmp_path):
+    def test_summary_omits_gaps_row_when_clean(self):
         from kg_rag.cli.cmd_ingest import console
 
-        staging = tmp_path / "corpus"
+        # A short, fixed path avoids both Rich column-width truncation and a
+        # collision with pytest's tmp_path name (derived from this test's own
+        # name, which happens to contain the literal substring "gaps").
+        staging = Path("/corpus")
         stats = _stats(ingested=1)
         with console.capture() as capture:
             _print_summary(stats, staging, "mykg", built_ok=True, entry=None)
