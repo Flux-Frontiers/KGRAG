@@ -31,6 +31,7 @@ import pytest
 
 from kg_rag.adapters import make_adapter
 from kg_rag.adapters.dockg_adapter import DocKGAdapter
+from kg_rag.adapters.genealogy_adapter import GenealogyKGAdapter
 from kg_rag.adapters.gutenberg_adapter import GutenbergKGAdapter
 from kg_rag.adapters.ia_adapter import IABookKGAdapter
 from kg_rag.adapters.memory_adapter import MemoryKGAdapter
@@ -82,6 +83,11 @@ class TestMakeAdapter:
         entry = _entry(tmp_path, KGKind.META)
         adapter = make_adapter(entry)
         assert isinstance(adapter, MetaKGAdapter)
+
+    def test_genealogy_kind_returns_genealogykg_adapter(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.GENEALOGY)
+        adapter = make_adapter(entry)
+        assert isinstance(adapter, GenealogyKGAdapter)
 
     def test_entry_is_stored(self, tmp_path):
         entry = _entry(tmp_path, KGKind.CODE)
@@ -1003,3 +1009,236 @@ class TestNodeMetadataHelper:
         out = node_metadata({"metadata": original})
         out["occurred_start"] = "changed"
         assert original["occurred_start"] == "2026-04-15"
+
+
+# ---------------------------------------------------------------------------
+# GenealogyKGAdapter
+# ---------------------------------------------------------------------------
+
+
+class TestGenealogyKGAdapterIsAvailable:
+    def test_unavailable_when_import_fails(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.GENEALOGY)
+        with patch.dict("sys.modules", {"genealogy_kg": None}):
+            adapter = GenealogyKGAdapter(entry)
+            assert adapter.is_available() is False
+
+    def test_available_when_built(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.GENEALOGY, with_sqlite=True)
+        mock_genealogy_kg = MagicMock()
+        with patch.dict("sys.modules", {"genealogy_kg": mock_genealogy_kg}):
+            adapter = GenealogyKGAdapter(entry)
+            assert adapter.is_available() is True
+
+    def test_unavailable_when_not_built(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.GENEALOGY)  # no sqlite
+        mock_genealogy_kg = MagicMock()
+        with patch.dict("sys.modules", {"genealogy_kg": mock_genealogy_kg}):
+            adapter = GenealogyKGAdapter(entry)
+            assert adapter.is_available() is False
+
+
+class TestGenealogyKGAdapterQuery:
+    """The score kg_utils.pipeline actually returns lives at
+    node["relevance"]["score"], not a top-level "score" key -- and the node
+    id is under "id", not "node_id". These tests pin that shape so a future
+    kg_utils.pipeline refactor is caught here rather than silently degrading
+    every hit to score 0.0 and node_id "", the way ftree_adapter.py currently
+    does (verified against a live GenealogyKG.query() call, not assumed).
+    """
+
+    def test_query_returns_cross_hits(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.GENEALOGY, with_sqlite=True)
+        mock_kg = MagicMock()
+        mock_kg.query.return_value.nodes = [
+            {
+                "id": "person:I1",
+                "name": "John Hartwell",
+                "kind": "person",
+                "docstring": "John Hartwell (male).",
+                "module_path": "family.ged",
+                "metadata": {"occurred_start": "1820", "occurred_end": "1891-11-07"},
+                "relevance": {"score": 0.93},
+            }
+        ]
+
+        adapter = GenealogyKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        hits = adapter.query("Hartwell")
+        assert len(hits) == 1
+        hit = hits[0]
+        assert isinstance(hit, CrossHit)
+        assert hit.node_id == "person:I1"
+        assert hit.name == "John Hartwell"
+        assert hit.score == 0.93
+        assert hit.source_path == "family.ged"
+        assert hit.metadata == {"occurred_start": "1820", "occurred_end": "1891-11-07"}
+        assert hit.kg_kind == KGKind.GENEALOGY
+
+    def test_query_drops_hits_below_min_score(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.GENEALOGY, with_sqlite=True)
+        mock_kg = MagicMock()
+        mock_kg.query.return_value.nodes = [
+            {"id": "a", "name": "A", "kind": "person", "relevance": {"score": 0.9}},
+            {"id": "b", "name": "B", "kind": "person", "relevance": {"score": 0.1}},
+        ]
+
+        adapter = GenealogyKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        hits = adapter.query("x", min_score=0.5)
+        assert [h.node_id for h in hits] == ["a"]
+
+    def test_query_semantic_floor_discards_whole_result_set(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.GENEALOGY, with_sqlite=True)
+        mock_kg = MagicMock()
+        mock_kg.query.return_value.nodes = [
+            {"id": "a", "name": "A", "kind": "person", "relevance": {"score": 0.2}},
+        ]
+
+        adapter = GenealogyKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        assert adapter.query("x", semantic_floor=0.5) == []
+
+
+class TestGenealogyKGAdapterPack:
+    def test_pack_returns_cross_snippets_from_node_snippet(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.GENEALOGY, with_sqlite=True)
+        mock_kg = MagicMock()
+        mock_kg.pack.return_value.nodes = [
+            {
+                "id": "person:I1",
+                "module_path": "family.ged",
+                "relevance": {"score": 0.8},
+                "metadata": {"occurred_start": "1820"},
+                "snippet": {
+                    "path": "family.ged",
+                    "start": 13,
+                    "end": 30,
+                    "text": "0 @I1@ INDI\n...",
+                },
+            }
+        ]
+
+        adapter = GenealogyKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        snippets = adapter.pack("Hartwell")
+        assert len(snippets) == 1
+        s = snippets[0]
+        assert isinstance(s, CrossSnippet)
+        assert s.node_id == "person:I1"
+        assert s.lineno == 13
+        assert s.end_lineno == 30
+        assert "0 @I1@ INDI" in s.content
+        assert s.score == 0.8
+        assert s.kg_kind == KGKind.GENEALOGY
+
+    def test_pack_skips_nodes_without_a_snippet(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.GENEALOGY, with_sqlite=True)
+        mock_kg = MagicMock()
+        mock_kg.pack.return_value.nodes = [
+            {"id": "person:I1", "relevance": {"score": 0.8}},  # no snippet: span omitted
+        ]
+
+        adapter = GenealogyKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        assert adapter.pack("x") == []
+
+    def test_pack_returns_empty_on_exception(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.GENEALOGY, with_sqlite=True)
+        mock_kg = MagicMock()
+        mock_kg.pack.side_effect = RuntimeError("internal error")
+
+        adapter = GenealogyKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        # pack() does not itself catch exceptions -- the orchestrator does,
+        # per KGAdapter's documented contract (query/pack "or [] on error"
+        # is enforced one layer up, not in every adapter). Assert the
+        # exception propagates rather than assuming it is swallowed here.
+        with pytest.raises(RuntimeError):
+            adapter.pack("x")
+
+
+class TestGenealogyKGAdapterStats:
+    def test_stats_returns_dict_with_person_and_family_counts(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.GENEALOGY, with_sqlite=True)
+        mock_kg = MagicMock()
+        mock_kg.stats.return_value = {
+            "total_nodes": 42,
+            "total_edges": 55,
+            "node_counts": {"person": 12, "family": 4, "event": 20, "place": 5, "source": 1},
+        }
+
+        adapter = GenealogyKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        stats = adapter.stats()
+        assert stats["kind"] == "genealogy"
+        assert stats["node_count"] == 42
+        assert stats["edge_count"] == 55
+        assert stats["person_count"] == 12
+        assert stats["family_count"] == 4
+
+    def test_stats_graceful_on_error(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.GENEALOGY, with_sqlite=True)
+        mock_kg = MagicMock()
+        mock_kg.stats.side_effect = RuntimeError("boom")
+
+        adapter = GenealogyKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        stats = adapter.stats()
+        assert stats["kind"] == "genealogy"
+        assert "error" in stats
+
+
+class TestGenealogyKGAdapterAnalyze:
+    def test_analyze_returns_string(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.GENEALOGY, with_sqlite=True)
+        mock_kg = MagicMock()
+        mock_kg.analyze.return_value = "# GenealogyKG Analysis\n\nSome report."
+
+        adapter = GenealogyKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        report = adapter.analyze()
+        assert isinstance(report, str)
+        assert "GenealogyKG Analysis" in report
+
+    def test_analyze_graceful_on_error(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.GENEALOGY, with_sqlite=True)
+        mock_kg = MagicMock()
+        mock_kg.analyze.side_effect = RuntimeError("analysis boom")
+
+        adapter = GenealogyKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        report = adapter.analyze()
+        assert "Analysis failed" in report
+
+
+class TestGenealogyKGAdapterSnapshotMetrics:
+    def test_collect_snapshot_metrics(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.GENEALOGY, with_sqlite=True)
+        mock_kg = MagicMock()
+        mock_kg.stats.return_value = {
+            "total_nodes": 42,
+            "total_edges": 55,
+            "node_counts": {"person": 12, "family": 4},
+        }
+
+        adapter = GenealogyKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        metrics = adapter._collect_snapshot_metrics()
+        assert metrics == {
+            "total_nodes": 42,
+            "total_edges": 55,
+            "person_count": 12,
+            "family_count": 4,
+        }

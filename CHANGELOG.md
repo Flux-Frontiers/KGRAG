@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`KGKind.GENEALOGY` -- federation support for GenealogyKG.** New adapter
+  (`genealogy_adapter.py`), registry directory marker (`.genealogykg`), and
+  colour/icon in the visualizer, following the same four touches every new
+  kind has needed. genealogy-kg is not yet published; the adapter lazily
+  imports it and reports unavailable until it is.
+
+  Its `query()`/`pack()` reshaping reads `node["relevance"]["score"]` and
+  `node["snippet"]`, which is where `kg_utils.pipeline.KGModule` actually
+  puts them -- not the top-level `score` / `node_id` keys and `.snippets`
+  list that `ftree_adapter.py` still assumes. Verified live against a real
+  KGModule.query()/pack() call: `ftree_adapter.py`'s `node_id` is always
+  `""`, its score-based filtering is always a no-op, and its `pack()`
+  always returns `[]`. Not fixed here -- flagged for a dedicated pass; see
+  kgrag_priv's fleet sweep plan.
+
 ## [0.14.0] - 2026-08-22
 
 ### Added

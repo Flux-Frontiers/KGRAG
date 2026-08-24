@@ -51,6 +51,7 @@ _KG_KIND_COLOR: dict[str, str] = {
     "disulfide": "#E65100",  # deep orange
     "pdbfile": "#37474F",  # blue grey
     "person": "#F57F17",  # yellow
+    "genealogy": "#6D4C41",  # brown
 }
 
 _KG_KIND_ICON: dict[str, str] = {
@@ -68,6 +69,7 @@ _KG_KIND_ICON: dict[str, str] = {
     "disulfide": "🔗",
     "pdbfile": "🗂️",
     "person": "👤",
+    "genealogy": "🌳",
 }
 
 _NODE_KIND_COLOR: dict[str, str] = {

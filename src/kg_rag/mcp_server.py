@@ -82,6 +82,7 @@ def _make_server(registry_path: Path | None = None) -> Server:
                                 "filetree",
                                 "gutenberg",
                                 "ia",
+                                "genealogy",
                             ],
                             "description": "Optional filter by KG kind.",
                         }
@@ -128,6 +129,7 @@ def _make_server(registry_path: Path | None = None) -> Server:
                                     "filetree",
                                     "gutenberg",
                                     "ia",
+                                    "genealogy",
                                 ],
                             },
                             "description": "Restrict to these KG kinds.",
@@ -171,6 +173,7 @@ def _make_server(registry_path: Path | None = None) -> Server:
                                     "filetree",
                                     "gutenberg",
                                     "ia",
+                                    "genealogy",
                                 ],
                             },
                             "description": "Restrict to these KG kinds.",

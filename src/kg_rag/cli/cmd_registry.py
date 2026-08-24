@@ -39,6 +39,7 @@ _KG_MARKERS: dict[str, str] = {
     ".iakg": "ia",
     ".agentkg": "agent",
     ".filetreekg": "filetree",
+    ".genealogykg": "genealogy",
 }
 
 # Map kind string → default database subdirectory name

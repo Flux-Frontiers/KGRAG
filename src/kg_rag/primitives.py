@@ -33,6 +33,7 @@ class KGKind(StrEnum):
     FILETREE = "filetree"
     GUTENBERG = "gutenberg"
     IA = "ia"
+    GENEALOGY = "genealogy"
 
     @classmethod
     def from_str(cls, s: str) -> KGKind:
