@@ -132,6 +132,12 @@ class FTreeKGAdapter(KGAdapter):
                 source_path=s.get("source_path", ""),
                 content=s.get("content", ""),
                 score=s.get("score", 0.0),
+                # FileTreeKG.pack() populates each snippet's "metadata" (the
+                # temporal contract keys included) -- query() already reads it
+                # via node_metadata() below; pack() was dropping it, so a
+                # time_range-scoped pack() call saw every FTreeKG snippet as
+                # undated even though the same KG's query() correctly dated it.
+                metadata=node_metadata(s),
             )
             for s in snippets
         ]

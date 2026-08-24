@@ -31,6 +31,7 @@ import pytest
 
 from kg_rag.adapters import make_adapter
 from kg_rag.adapters.dockg_adapter import DocKGAdapter
+from kg_rag.adapters.ftree_adapter import FTreeKGAdapter
 from kg_rag.adapters.genealogy_adapter import GenealogyKGAdapter
 from kg_rag.adapters.gutenberg_adapter import GutenbergKGAdapter
 from kg_rag.adapters.ia_adapter import IABookKGAdapter
@@ -88,6 +89,11 @@ class TestMakeAdapter:
         entry = _entry(tmp_path, KGKind.GENEALOGY)
         adapter = make_adapter(entry)
         assert isinstance(adapter, GenealogyKGAdapter)
+
+    def test_filetree_kind_returns_ftreekg_adapter(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.FILETREE)
+        adapter = make_adapter(entry)
+        assert isinstance(adapter, FTreeKGAdapter)
 
     def test_entry_is_stored(self, tmp_path):
         entry = _entry(tmp_path, KGKind.CODE)
@@ -1242,3 +1248,85 @@ class TestGenealogyKGAdapterSnapshotMetrics:
             "person_count": 12,
             "family_count": 4,
         }
+
+
+# ---------------------------------------------------------------------------
+# FTreeKGAdapter
+# ---------------------------------------------------------------------------
+
+
+class TestFTreeKGAdapterFieldMapping:
+    """FileTreeKG.query()/pack() do NOT return the generic
+    kg_utils.pipeline.KGModule shape -- FileTreeKG overrides both methods
+    itself and deliberately keeps the older "node_id" / top-level "score" /
+    populated SnippetPack.snippets shape for backward compatibility (see
+    ftree_kg/module.py's own docstrings). Verified live against a real
+    FileTreeKG build, not assumed: node_id and score were already correct
+    here. What pack() was NOT doing was forwarding the metadata dict that
+    FileTreeKG.pack() puts on every snippet (query()'s CrossHit already got
+    it via node_metadata()) -- a time_range-scoped pack() call therefore saw
+    every FTreeKG snippet as undated. These tests pin the fix.
+    """
+
+    def test_query_passes_through_node_id_score_and_metadata(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.FILETREE, with_sqlite=True)
+        mock_kg = MagicMock()
+        mock_kg.query.return_value.nodes = [
+            {
+                "id": "file:readme.txt:readme.txt",
+                "node_id": "file:readme.txt:readme.txt",
+                "name": "readme.txt",
+                "kind": "file",
+                "docstring": "a readme",
+                "source_path": "readme.txt",
+                "score": 0.87,
+                "metadata": {"occurred_start": "2026-01-01T00:00:00+00:00"},
+            }
+        ]
+
+        adapter = FTreeKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        hits = adapter.query("readme")
+        assert len(hits) == 1
+        assert hits[0].node_id == "file:readme.txt:readme.txt"
+        assert hits[0].score == 0.87
+        assert hits[0].metadata == {"occurred_start": "2026-01-01T00:00:00+00:00"}
+
+    def test_pack_carries_metadata_from_the_snippet_dict(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.FILETREE, with_sqlite=True)
+        mock_kg = MagicMock()
+        mock_kg.pack.return_value.snippets = [
+            {
+                "node_id": "file:readme.txt:readme.txt",
+                "source_path": "readme.txt",
+                "content": "file: readme.txt\na readme",
+                "score": 0.87,
+                "kind": "file",
+                "name": "readme.txt",
+                "metadata": {"occurred_start": "2026-01-01T00:00:00+00:00"},
+            }
+        ]
+
+        adapter = FTreeKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        snippets = adapter.pack("readme")
+        assert len(snippets) == 1
+        assert snippets[0].node_id == "file:readme.txt:readme.txt"
+        # This is the regression the fix pins: before it, metadata was
+        # dropped here even though FileTreeKG.pack() populates it.
+        assert snippets[0].metadata == {"occurred_start": "2026-01-01T00:00:00+00:00"}
+
+    def test_pack_omits_metadata_key_gracefully(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.FILETREE, with_sqlite=True)
+        mock_kg = MagicMock()
+        mock_kg.pack.return_value.snippets = [
+            {"node_id": "n", "source_path": "p", "content": "c", "score": 0.5}
+        ]
+
+        adapter = FTreeKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        snippets = adapter.pack("x")
+        assert snippets[0].metadata == {}
