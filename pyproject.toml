@@ -116,24 +116,14 @@ requires-python = ">=3.12,<3.14"
 # modules, which declare their own; KGRAG only passes paths through and, in
 # `kgrag audit-lancedb`, looks for leftover directories on disk. Health checks
 # shell out to each module's CLI for the same reason (see cmd_health).
-# As of the doc-kg >=0.21.2 floor in the `kg` extra, `kgrag[kg]` no longer drags
-# lancedb in transitively either: doc-kg moved it to an opt-in `[lancedb]` extra
-# needed only to read a pre-0.20.0 store. `kgrag audit-lancedb` is unaffected --
-# it only looks for leftover directories on disk and never imports the package.
+# `kgrag[kg]` no longer drags lancedb in transitively either: doc-kg moved it
+# to an opt-in `[lancedb]` extra needed only to read a pre-0.20.0 store.
 dependencies = [
     "click>=8.1.0",
-    # 0.13.0 was the original floor because it ships TEIEmbedder, which
-    # `embed_backend = "tei"` in src/kg_rag/embed.py imports directly. 0.13.1
-    # made SnapshotManager's `repo_root` a read-only property and broke every
-    # subclass that assigns it, so nothing in the fleet may resolve to it.
-    # 0.17.0 is the floor now: `kgrag ingest` needs kg_utils.ingest, which
-    # shipped to PyPI 2026-08-18. The anydoc import inside it stays guarded
-    # regardless, so staging .md/.txt/.rst still needs no extra.
-    # 0.18.0 raises it again: QueryScope.time_range reads kg_utils.temporal,
-    # which is a core (stdlib-only) module there, so this needs no new extra.
-    # Sequencing: this floor must not merge before kgmodule-utils 0.18.0 is on
-    # PyPI, or a clean install resolves a kg_utils without `temporal` and
-    # `kg_rag.primitives` fails at import.
+    # 0.18.0 is the minimum: QueryScope.time_range reads kg_utils.temporal,
+    # a core (stdlib-only) module there, so this needs no extra. Nothing in a
+    # later release is required -- the lock tracks the newest published
+    # version, this states the minimum, and the two are not the same claim.
     "kgmodule-utils>=0.18.0",
     # Upper-bounded: mcp 2.0 removed the low-level Server decorator API
     # (`@server.list_tools()` / `@server.call_tool()`) that kg_rag.mcp_server
