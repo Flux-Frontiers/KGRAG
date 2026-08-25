@@ -10,7 +10,9 @@ classification and the remediation command emitted for each.
 
 from __future__ import annotations
 
+import contextlib
 import json
+import sqlite3
 from pathlib import Path
 
 from click.testing import CliRunner
@@ -30,6 +32,25 @@ def _reg_opt(tmp_path: Path) -> list[str]:
     return ["--registry", str(tmp_path / "registry.sqlite")]
 
 
+def _write_vector_store(path: Path, *, populated: bool = True) -> None:
+    """Write a sqlite-vec store at ``path``.
+
+    Mirrors the shape :mod:`kg_utils.vector_backend` produces: a plain
+    ``vec_meta`` table row-aligned to a ``vec0`` virtual table. Only
+    ``vec_meta`` is created here -- it is what the audit reads, and it needs
+    no sqlite-vec extension to query.
+
+    :param path: Where to write the store.
+    :param populated: If False, create the table but insert no rows, which is
+        the shape a failed or interrupted migration leaves behind.
+    """
+    with contextlib.closing(sqlite3.connect(path)) as conn:
+        conn.execute("CREATE TABLE vec_meta(id TEXT PRIMARY KEY, kind TEXT)")
+        if populated:
+            conn.execute("INSERT INTO vec_meta(id, kind) VALUES ('n1', 'function')")
+        conn.commit()
+
+
 def _make_kg(
     tmp_path: Path,
     name: str,
@@ -40,11 +61,17 @@ def _make_kg(
     vectors_on_disk: bool = False,
     record_lancedb: bool = False,
     lancedb_bytes: int = 0,
+    vectors_populated: bool = True,
 ) -> KGEntry:
     """Build a repo layout and a matching KGEntry.
 
     ``record_lancedb`` controls the *registry* reference independently of
     whether the directory exists, so stale rows can be modelled.
+
+    ``vectors_on_disk`` writes a real sqlite-vec store -- a ``vec_meta``
+    table carrying one row -- because that is what the audit now checks.
+    Set ``vectors_populated=False`` to get the failed-migration shape
+    instead: the file exists and is a valid database, but holds no vectors.
     """
     repo = tmp_path / name
     kg_dir = repo / marker
@@ -58,7 +85,7 @@ def _make_kg(
         lancedb.mkdir(exist_ok=True)
         (lancedb / "data.lance").write_bytes(b"x" * lancedb_bytes)
     if vectors_on_disk:
-        (kg_dir / "vectors.sqlite").touch()
+        _write_vector_store(kg_dir / "vectors.sqlite", populated=vectors_populated)
 
     return KGEntry(
         name=name,
@@ -94,6 +121,46 @@ class TestAuditClassification:
         f = audit_entry(entry)
         assert f.status == "residue"
         assert f.has_vectors is True
+
+    def test_empty_vector_store_is_unmigrated_not_residue(self, tmp_path):
+        """A failed migration must never be told to delete its LanceDB dir.
+
+        The regression this guards: ``vectors.sqlite`` was probed with
+        :meth:`Path.exists`, so a zero-row stub counted as a finished
+        migration. The KG then classified as ``residue``, whose remediation
+        is ``rm -rf`` of the LanceDB directory -- which in this state holds
+        the only copy of the index. Found on ``waverider``'s doc KG,
+        2026-08-25.
+        """
+        entry = _make_kg(
+            tmp_path,
+            "stub",
+            lancedb_on_disk=True,
+            vectors_on_disk=True,
+            vectors_populated=False,
+        )
+        f = audit_entry(entry)
+
+        assert f.status == "unmigrated"
+        assert f.has_vectors is False
+        assert "rm -rf" not in (f.fix_cmd or "")
+
+    def test_unreadable_vector_store_is_not_counted_as_migrated(self, tmp_path):
+        entry = _make_kg(tmp_path, "junk", lancedb_on_disk=True)
+        (tmp_path / "junk" / ".pycodekg" / "vectors.sqlite").write_bytes(b"not a database")
+        f = audit_entry(entry)
+
+        assert f.status == "unmigrated"
+        assert f.has_vectors is False
+
+    def test_populated_vector_store_still_reads_as_migrated(self, tmp_path):
+        """The fix must not swing the other way and call real stores empty."""
+        entry = _make_kg(tmp_path, "real", lancedb_on_disk=True, vectors_on_disk=True)
+        f = audit_entry(entry)
+
+        assert f.status == "residue"
+        assert f.has_vectors is True
+        assert f.fix_cmd.startswith("rm -rf")
 
     def test_stale_row_when_registry_points_at_missing_dir(self, tmp_path):
         entry = _make_kg(tmp_path, "c", vectors_on_disk=True, record_lancedb=True)

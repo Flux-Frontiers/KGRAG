@@ -13,8 +13,11 @@ of them:
 1. **Registry** — the row still records a ``lancedb_path``.
 2. **Disk** — a ``lancedb/`` directory is still present (and still costing
    space) even when nothing reads it any more.
-3. **Not yet migrated** — no ``vectors.sqlite`` exists, so LanceDB is still
-   the live index and must be converted before it can be removed.
+3. **Not yet migrated** -- no *populated* ``vectors.sqlite`` exists, so
+   LanceDB is still the live index and must be converted before it can be
+   removed.  The file being present is not the test: a failed or interrupted
+   migration leaves a zero-table stub, and counting that as migrated would
+   turn the remediation into ``rm -rf`` of the only surviving index.
 
 ``kgrag audit-lancedb`` reports all three and emits the exact remediation
 command per KG.  It never modifies anything.
@@ -30,8 +33,10 @@ Usage::
 
 from __future__ import annotations
 
+import contextlib
 import json
 import shlex
+import sqlite3
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
@@ -112,7 +117,8 @@ class LanceFinding:
     :param registry_reference: True if the registry row records a ``lancedb_path``.
     :param lancedb_dirs: LanceDB directories found on disk.
     :param reclaimable_bytes: Total size of those directories.
-    :param has_vectors: True if a sqlite-vec store exists for this KG.
+    :param has_vectors: True if a *populated* sqlite-vec store exists for
+        this KG; a present-but-empty ``vectors.sqlite`` reads as False.
     :param vectors_path: The sqlite-vec store, if one was found.
     :param fix_cmd: Suggested remediation command, or None when nothing to do.
     :param action: Short human-readable verb summarising ``fix_cmd``.
@@ -181,16 +187,56 @@ def _find_lancedb_dirs(entry: KGEntry) -> list[Path]:
     return list(seen)
 
 
+def _is_populated_vector_store(path: Path) -> bool:
+    """Report whether ``path`` is a sqlite-vec store that actually holds vectors.
+
+    Existence is not enough. A ``vectors.sqlite`` can be present and useless:
+    an interrupted or failed migration leaves a zero-table file behind, and to
+    a check that only calls :meth:`Path.exists` that stub is indistinguishable
+    from a finished migration. Treating it as finished is dangerous rather than
+    merely wrong -- it downgrades the KG from ``unmigrated`` to ``residue``,
+    and ``residue``'s remediation is ``rm -rf`` of the LanceDB directory that
+    is, in that state, still the only copy of the index.
+
+    ``vec_meta`` is the plain table :mod:`kg_utils.vector_backend` creates
+    alongside the ``vec_nodes`` ``vec0`` virtual table, one row per indexed
+    node. It is deliberately the thing checked here: being an ordinary table
+    it reads without loading the sqlite-vec extension, which the audit
+    process has no reason to have available.
+
+    :param path: Candidate ``vectors.sqlite``.
+    :return: True if the file is a readable SQLite database whose ``vec_meta``
+        table exists and carries at least one row.
+    """
+    if not path.is_file():
+        return False
+    try:
+        with contextlib.closing(sqlite3.connect(f"file:{path}?mode=ro", uri=True)) as conn:
+            row = conn.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='vec_meta'"
+            ).fetchone()
+            if row is None:
+                return False
+            return conn.execute("SELECT EXISTS(SELECT 1 FROM vec_meta)").fetchone()[0] == 1
+    except sqlite3.Error:
+        # Unreadable, encrypted, or not a database at all: not a usable index.
+        return False
+
+
 def _find_vectors(entry: KGEntry) -> Path | None:
-    """Locate this KG's sqlite-vec store, if it has one.
+    """Locate this KG's sqlite-vec store, if it has a usable one.
+
+    A store that exists but holds no vectors is reported as absent, so the KG
+    classifies as ``unmigrated`` and is told to convert or rebuild rather than
+    to delete its LanceDB directory. See :func:`_is_populated_vector_store`.
 
     :param entry: The registry entry.
-    :return: Path to ``vectors.sqlite``, or None.
+    :return: Path to a populated ``vectors.sqlite``, or None.
     """
-    if entry.vectors_path and Path(entry.vectors_path).exists():
+    if entry.vectors_path and _is_populated_vector_store(Path(entry.vectors_path)):
         return Path(entry.vectors_path)
     default = _kg_dir(entry) / "vectors.sqlite"
-    return default if default.exists() else None
+    return default if _is_populated_vector_store(default) else None
 
 
 def _fix_for(entry: KGEntry, status: str, lancedb_dirs: list[Path]) -> tuple[str | None, str]:
@@ -355,7 +401,9 @@ def audit_lancedb(
     Reports three kinds of LanceDB residue and how to clear each:
 
     \b
-      unmigrated  LanceDB is still the live index (no vectors.sqlite).
+      unmigrated  LanceDB is still the live index (no populated
+                  vectors.sqlite -- the file may be absent, or present
+                  but empty from a failed migration).
                   Convert it — for doc-family KGs `dockg convert-index`
                   re-reads the stored vectors, so there is no re-embedding.
       residue     Already on sqlite-vec, but the lancedb/ dir is still
