@@ -30,7 +30,7 @@ class {{AdapterName}}(KGAdapter):
         self._kg = {{ClassName}}(
             repo_root=self.entry.repo_path,
             db_path=self.entry.sqlite_path,
-            lancedb_path=self.entry.lancedb_path,
+            vectors_path=self.entry.vectors_path,
         )
 
     def is_available(self) -> bool:

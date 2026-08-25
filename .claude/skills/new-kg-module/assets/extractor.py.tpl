@@ -10,7 +10,8 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
-from code_kg.module import EdgeSpec, KGExtractor, NodeSpec
+from kg_utils.extractor import KGExtractor
+from kg_utils.specs import EdgeSpec, NodeSpec
 
 
 class {{ExtractorName}}(KGExtractor):

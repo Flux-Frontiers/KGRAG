@@ -9,7 +9,7 @@ from __future__ import annotations
 import pytest
 from pathlib import Path
 
-from code_kg.module import NodeSpec, EdgeSpec
+from kg_utils.specs import NodeSpec, EdgeSpec
 from {{name}}.extractor import {{ExtractorName}}
 
 
