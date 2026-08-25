@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`kgrag audit-lancedb` could tell you to delete a live index.** The audit
+  decided a KG had migrated to sqlite-vec by calling `Path.exists()` on its
+  `vectors.sqlite`. A failed or interrupted migration leaves a zero-table stub
+  behind, and to that check the stub is indistinguishable from a finished
+  migration -- so the KG classified as `residue` rather than `unmigrated`, and
+  `residue`'s emitted remediation is `rm -rf` of the LanceDB directory that, in
+  that state, still holds the only copy of the index. `_find_vectors()` now
+  reports a store only when its `vec_meta` table exists and carries at least
+  one row. `vec_meta` is the plain table `kg_utils.vector_backend` writes
+  alongside the `vec_nodes` `vec0` virtual table, so the check reads without
+  loading the sqlite-vec extension. Found on `waverider`'s doc KG, 2026-08-25.
+  The test fixtures could never have caught this: they built every "migrated"
+  store with `Path.touch()`, which is exactly the empty-stub shape. They now
+  write a real populated `vec_meta`, and three cases cover the stub, an
+  unreadable file, and the populated store that must still read as `residue`.
+
+### Changed
+
+- Lock moved to `kgmodule-utils` 0.18.1 and `pycode-kg` 0.24.1. Floors are
+  unchanged and deliberately so: `kgmodule-utils>=0.18.0` is a requirement
+  statement (`QueryScope.time_range` needs `kg_utils.temporal`) and nothing in
+  0.18.1 is needed. `memory-kg>=0.7.0` likewise stays put -- 0.8.0 exists in
+  that repo's CHANGELOG but was never published to PyPI, so it is not a floor
+  anything can resolve.
+- Trimmed the `kgmodule-utils` dependency comment, which had accreted a
+  paragraph per floor bump (0.13.0, 0.13.1, 0.17.0) plus merge-sequencing
+  advice that expired when 0.18.0 shipped. Git records that history; the
+  comment now states only why the current floor is what it is.
+- Regenerated `.secrets.baseline`, stale since 2026-08-15. Three SHA-256
+  checksums in `docs/INGESTION.md`'s example manifest were failing
+  `detect-secrets` on `--all-files` runs.
+
 ## [0.15.0] - 2026-08-23
 
 ### Added
