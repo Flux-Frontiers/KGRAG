@@ -9,7 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from code_kg.module import KGModule
+from kg_utils.module import KGModule
 
 from {{name}}.extractor import {{ExtractorName}}
 
@@ -22,7 +22,7 @@ class {{ClassName}}(KGModule):
 
     :param repo_root: Absolute path to the repository or corpus root.
     :param db_path: Path for the SQLite graph database.
-    :param lancedb_path: Path for the LanceDB vector index directory.
+    :param vectors_path: Path for the sqlite-vec vector store file.
     :param config: Optional domain-specific configuration dict.
     """
 
@@ -30,13 +30,13 @@ class {{ClassName}}(KGModule):
         self,
         repo_root: Path | str,
         db_path: Path | str | None = None,
-        lancedb_path: Path | str | None = None,
+        vectors_path: Path | str | None = None,
         config: dict[str, Any] | None = None,
     ) -> None:
         repo_root = Path(repo_root).resolve()
         db_path = Path(db_path) if db_path else repo_root / ".{{name}}" / "graph.sqlite"
-        lancedb_path = Path(lancedb_path) if lancedb_path else repo_root / ".{{name}}" / "lancedb"
-        super().__init__(repo_root=repo_root, db_path=db_path, lancedb_path=lancedb_path, config=config)
+        vectors_path = Path(vectors_path) if vectors_path else repo_root / ".{{name}}" / "vectors.sqlite"
+        super().__init__(repo_root=repo_root, db_path=db_path, vectors_path=vectors_path, config=config)
 
     def make_extractor(self) -> {{ExtractorName}}:
         """Return the domain extractor for this module.

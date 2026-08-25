@@ -33,9 +33,15 @@ class MetaKGAdapter(KGAdapter):
         except ImportError as e:
             raise ImportError("metabo-kg is not installed.") from e
         entry = self.entry
+        # No lancedb_dir: metabo-kg 0.10.0 dropped the parameter when it moved
+        # to sqlite-vec, so passing it raises TypeError. None lets metabo-kg
+        # derive the sidecar next to the graph, which is right for the default
+        # layout; an explicit path is required only when the store lives
+        # elsewhere.
+        vectors = str(entry.vectors_path) if entry.vectors_path else None
         self._kg = MetaKG(
             db_path=str(entry.sqlite_path) if entry.sqlite_path else None,
-            lancedb_dir=str(entry.lancedb_path) if entry.lancedb_path else None,
+            vectors_path=vectors,
         )
 
     def is_available(self) -> bool:

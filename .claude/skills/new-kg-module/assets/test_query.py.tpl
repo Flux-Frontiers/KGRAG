@@ -18,7 +18,7 @@ def kg(tmp_path: Path) -> {{ClassName}}:
     instance = {{ClassName}}(
         repo_root=tmp_path,
         db_path=tmp_path / ".{{name}}" / "graph.sqlite",
-        lancedb_path=tmp_path / ".{{name}}" / "lancedb",
+        vectors_path=tmp_path / ".{{name}}" / "vectors.sqlite",
     )
     instance.build(wipe=True)
     return instance

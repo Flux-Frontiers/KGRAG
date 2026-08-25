@@ -1,18 +1,19 @@
 #!/usr/bin/env bash
 # =============================================================================
-# install-skill.sh — Bootstrap the CodeKG AI integration layer
+# install-skill.sh — Bootstrap the kgrag AI integration layer
 #
-# Installs SKILL.md reference files and the /codekg slash command for AI agents,
-# then configures MCP server integration for the specified providers.
+# Installs the kgrag SKILL.md into agent skill directories and the kgrag
+# slash commands for AI agents, then configures MCP server integration for
+# the specified providers.
 #
 # Supported providers:
-#   claude   — Claude Code  (.claude/claude_code_config.json)
+#   claude   — Claude Code  (.mcp.json)
 #   kilo     — Kilo Code    (.mcp.json, shared with Claude Code)
 #   copilot  — GitHub Copilot (.vscode/mcp.json)
-#   cline    — Cline        (.claude/commands/codekg.md slash command + .mcp.json)
+#   cline    — Cline        (reads .mcp.json automatically; no extra command)
 #
 # Usage (from a target repo, no clone needed):
-#   curl -fsSL https://raw.githubusercontent.com/Flux-Frontiers/kg_rag/main/scripts/install-skill.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/Flux-Frontiers/KGRAG/main/scripts/install-skill.sh | bash
 #
 # With provider selection:
 #   curl -fsSL .../install-skill.sh | bash -s -- --providers all
@@ -21,30 +22,28 @@
 #
 # Flags:
 #   --providers <list>   Comma-separated provider names, or "all" (default: all)
-#   --wipe               Force rebuild of SQLite graph and LanceDB index
+#   --wipe               Force rebuild of every KG layer kgrag registers
 #   --dry-run            Print what would be done without making any changes
 #
 # What it does:
-#   1. Creates skill directories for Claude Code, Kilo Code, and other agents
-#      and installs SKILL.md + references/installation.md into each
-#   2. Installs Claude Code slash commands (codekg, setup-mcp, changelog-commit,
-#      continue, protocol, release) to ~/.claude/commands/
-#   3. Installs the /codekg slash command into the target repo for Cline
-#   4. Installs code-kg if codekg is not found:
+#   1. Installs SKILL.md into each agent's skill directory
+#   2. Installs Claude Code slash commands (setup-kgrag-mcp, continue,
+#      protocol) to ~/.claude/commands/
+#   3. Installs kg-rag if kgrag is not found:
 #        a. pip install from latest GitHub release wheel (preferred, no git needed)
 #        b. pip install from git+https (fallback, needs git)
 #        c. poetry add (fallback for Poetry-managed repos)
-#   5. Builds the SQLite knowledge graph (skips if already present, unless --wipe)
-#   6. Builds the LanceDB vector index  (skips if already present, unless --wipe)
-#   7. Writes provider MCP configs as requested (.mcp.json and/or .vscode/mcp.json)
-#   8. Prints a final summary
+#   4. Runs `kgrag init` to detect, build, and register every applicable KG
+#      layer for the target repo (skips already-registered layers unless
+#      --wipe)
+#   5. Writes provider MCP configs as requested (.mcp.json and/or .vscode/mcp.json)
+#   6. Prints a final summary
 #
 # NOTE: MCP server registration is written to the workspace-local .mcp.json only.
-# The global Cline cline_mcp_settings.json is NOT modified — Cline reads .mcp.json
-# automatically when opening a workspace.
+# Cline reads .mcp.json automatically when opening a workspace, so it needs no
+# separate per-repo command install.
 #
 # Author: Eric G. Suchanek, PhD
-# Last Revision: 2026-03-19
 # =============================================================================
 
 set -eo pipefail
@@ -111,25 +110,27 @@ for _p in "${_PLIST[@]}"; do
     _enable_provider "$(echo "$_p" | tr -d ' ')"
 done
 
-REPO="Flux-Frontiers/kg_rag"
+# GitHub repo names are case-sensitive on raw.githubusercontent.com; the repo
+# is KGRAG (uppercase), not the pre-rename kg_rag/codekg spelling.
+REPO="Flux-Frontiers/KGRAG"
 BRANCH="main"
 RAW_BASE="https://raw.githubusercontent.com/${REPO}/${BRANCH}"
 
 # Install to Claude Code, Kilo Code, and other agent skill directories
 SKILL_DIRS=(
-    "${HOME}/.claude/skills/codekg"
-    "${HOME}/.kilocode/skills/codekg"
-    "${HOME}/.agents/skills/codekg"
+    "${HOME}/.claude/skills/kgrag"
+    "${HOME}/.kilocode/skills/kgrag"
+    "${HOME}/.agents/skills/kgrag"
 )
 
-# Global Claude Code command files to install to ~/.claude/commands/
+# Global Claude Code command files to install to ~/.claude/commands/.
+# changelog-commit.md and release.md are fleet-wide and live in
+# ~/.claude/commands already — shipping repo copies would overwrite the
+# global ones with a stale, kgrag-specific fork.
 CLAUDE_COMMAND_FILES=(
-    "codekg.md"
-    "setup-mcp.md"
-    "changelog-commit.md"
+    "setup-kgrag-mcp.md"
     "continue.md"
     "protocol.md"
-    "release.md"
 )
 
 # ── Detect if we're running from inside the repo ─────────────────────────────
@@ -144,15 +145,13 @@ else
     SCRIPT_DIR=""
     REPO_ROOT=""
 fi
-LOCAL_SKILL="${REPO_ROOT:+${REPO_ROOT}/.claude/skills/codekg/SKILL.md}"
+LOCAL_SKILL="${REPO_ROOT:+${REPO_ROOT}/.claude/skills/kgrag/SKILL.md}"
 
 # The target repo is where the user ran the script from (CWD).
 TARGET_REPO="${PWD}"
-SQLITE_DB="${TARGET_REPO}/.codekg/graph.sqlite"
-LANCEDB_DIR="${TARGET_REPO}/.codekg/lancedb"
 
 echo "╔══════════════════════════════════════════════════╗"
-echo "║       CodeKG Integration Installer               ║"
+echo "║       kgrag Integration Installer                ║"
 echo "╚══════════════════════════════════════════════════╝"
 echo ""
 [ -n "$DRY_RUN" ] && echo "  *** DRY RUN — no changes will be made ***"
@@ -165,81 +164,44 @@ _PNAMES=""
 echo "  Providers:   ${_PNAMES# }"
 echo ""
 
-# ── Step 1: Install skill files to agent directories ─────────────────────────
-echo "── Step 1: Installing skill files ──────────────────"
+# ── Step 1: Install SKILL.md to agent skill directories ──────────────────────
+echo "── Step 1: Installing skill file ────────────────────"
 echo ""
 
 for SKILL_DIR in "${SKILL_DIRS[@]}"; do
-    REFS_DIR="${SKILL_DIR}/references"
     _exec mkdir -p "$SKILL_DIR"
-    _exec mkdir -p "$REFS_DIR"
 
     if [ -f "$LOCAL_SKILL" ]; then
         if [ "${FIRST_RUN:-1}" = "1" ]; then
             echo "→ Local repo detected at: $REPO_ROOT"
-            echo "  Copying skill files from local clone..."
+            echo "  Copying skill file from local clone..."
             FIRST_RUN=0
         fi
-        _exec cp "${REPO_ROOT}/.claude/skills/codekg/SKILL.md" "${SKILL_DIR}/SKILL.md"
-        _exec cp "${REPO_ROOT}/.claude/skills/codekg/references/installation.md" "${REFS_DIR}/installation.md"
+        _exec cp "$LOCAL_SKILL" "${SKILL_DIR}/SKILL.md"
     else
         if [ "${FIRST_RUN:-1}" = "1" ]; then
             echo "→ No local clone detected. Downloading from GitHub..."
             FIRST_RUN=0
         fi
         if [ -n "$DRY_RUN" ]; then
-            echo "  [dry-run] would download ${RAW_BASE}/.claude/skills/codekg/SKILL.md → ${SKILL_DIR}/SKILL.md"
-            echo "  [dry-run] would download ${RAW_BASE}/.claude/skills/codekg/references/installation.md → ${REFS_DIR}/installation.md"
+            echo "  [dry-run] would download ${RAW_BASE}/.claude/skills/kgrag/SKILL.md → ${SKILL_DIR}/SKILL.md"
         elif command -v curl &>/dev/null; then
-            curl -fsSL "${RAW_BASE}/.claude/skills/codekg/SKILL.md" -o "${SKILL_DIR}/SKILL.md"
-            curl -fsSL "${RAW_BASE}/.claude/skills/codekg/references/installation.md" -o "${REFS_DIR}/installation.md"
+            curl -fsSL "${RAW_BASE}/.claude/skills/kgrag/SKILL.md" -o "${SKILL_DIR}/SKILL.md"
         elif command -v wget &>/dev/null; then
-            wget -q "${RAW_BASE}/.claude/skills/codekg/SKILL.md" -O "${SKILL_DIR}/SKILL.md"
-            wget -q "${RAW_BASE}/.claude/skills/codekg/references/installation.md" -O "${REFS_DIR}/installation.md"
+            wget -q "${RAW_BASE}/.claude/skills/kgrag/SKILL.md" -O "${SKILL_DIR}/SKILL.md"
         else
             echo "ERROR: Neither curl nor wget found. Install one and retry."
             exit 1
         fi
     fi
 
-    # Verify (skip in dry-run — files may not exist yet)
-    if [ -z "$DRY_RUN" ]; then
-        if [ ! -f "${SKILL_DIR}/SKILL.md" ] || [ ! -f "${REFS_DIR}/installation.md" ]; then
-            echo "ERROR: Installation failed for ${SKILL_DIR}"
-            exit 1
-        fi
+    # Verify (skip in dry-run — file may not exist yet)
+    if [ -z "$DRY_RUN" ] && [ ! -f "${SKILL_DIR}/SKILL.md" ]; then
+        echo "ERROR: Installation failed for ${SKILL_DIR}"
+        exit 1
     fi
 
     echo "  ✓ ${SKILL_DIR}/SKILL.md"
-    echo "  ✓ ${REFS_DIR}/installation.md"
-done
-
-# Install the kgrag orchestrator skill (SKILL.md only — no references subdir)
-KGRAG_SKILL_DIRS=(
-    "${HOME}/.claude/skills/kgrag"
-    "${HOME}/.kilocode/skills/kgrag"
-    "${HOME}/.agents/skills/kgrag"
-)
-LOCAL_KGRAG_SKILL="${REPO_ROOT:+${REPO_ROOT}/.claude/skills/kgrag/SKILL.md}"
-
-for KGRAG_SKILL_DIR in "${KGRAG_SKILL_DIRS[@]}"; do
-    _exec mkdir -p "$KGRAG_SKILL_DIR"
-    if [ -f "$LOCAL_KGRAG_SKILL" ]; then
-        _exec cp "$LOCAL_KGRAG_SKILL" "${KGRAG_SKILL_DIR}/SKILL.md"
-    else
-        if [ -n "$DRY_RUN" ]; then
-            echo "  [dry-run] would download ${RAW_BASE}/.claude/skills/kgrag/SKILL.md → ${KGRAG_SKILL_DIR}/SKILL.md"
-        elif command -v curl &>/dev/null; then
-            curl -fsSL "${RAW_BASE}/.claude/skills/kgrag/SKILL.md" -o "${KGRAG_SKILL_DIR}/SKILL.md"
-        elif command -v wget &>/dev/null; then
-            wget -q "${RAW_BASE}/.claude/skills/kgrag/SKILL.md" -O "${KGRAG_SKILL_DIR}/SKILL.md"
-        fi
-    fi
-    if [ -z "$DRY_RUN" ] && [ ! -f "${KGRAG_SKILL_DIR}/SKILL.md" ]; then
-        echo "  ⚠  kgrag skill install failed for ${KGRAG_SKILL_DIR} — continuing"
-    else
-        echo "  ✓ ${KGRAG_SKILL_DIR}/SKILL.md"
-    fi
 done
 
 # ── Step 2: Install Claude Code commands to ~/.claude/commands/ ───────────────
@@ -272,44 +234,19 @@ for _CMD_FILE in "${CLAUDE_COMMAND_FILES[@]}"; do
     fi
 done
 
-# ── Step 3: Install Cline slash command into the target repo ──────────────────
 echo ""
-echo "── Step 3: Installing Cline slash command ───────────"
+echo "── Cline ─────────────────────────────────────────────"
 echo ""
-
 if [ "$DO_CLINE" = "1" ]; then
-    CLINE_CMD_DIR="${TARGET_REPO}/.claude/commands"
-    CLINE_CMD_FILE="${CLINE_CMD_DIR}/codekg.md"
-    _LOCAL_CMD="${REPO_ROOT:+${REPO_ROOT}/.claude/commands/codekg.md}"
-
-    _exec mkdir -p "$CLINE_CMD_DIR"
-
-    if [ -f "$CLINE_CMD_FILE" ]; then
-        echo "  ✓ ${CLINE_CMD_FILE} already exists — skipping"
-    elif [ -n "$_LOCAL_CMD" ] && [ -f "$_LOCAL_CMD" ]; then
-        _exec cp "$_LOCAL_CMD" "$CLINE_CMD_FILE"
-        echo "  ✓ Copied from local repo → ${CLINE_CMD_FILE}"
-    else
-        # Download from GitHub
-        if [ -n "$DRY_RUN" ]; then
-            echo "  [dry-run] would download ${RAW_BASE}/.claude/commands/codekg.md → ${CLINE_CMD_FILE}"
-        elif command -v curl &>/dev/null; then
-            curl -fsSL "${RAW_BASE}/.claude/commands/codekg.md" -o "$CLINE_CMD_FILE"
-            echo "  ✓ Downloaded → ${CLINE_CMD_FILE}"
-        elif command -v wget &>/dev/null; then
-            wget -q "${RAW_BASE}/.claude/commands/codekg.md" -O "$CLINE_CMD_FILE"
-            echo "  ✓ Downloaded → ${CLINE_CMD_FILE}"
-        else
-            echo "  ⚠ Neither curl nor wget found — skipping Cline command install"
-        fi
-    fi
+    echo "  – No separate command needed: Cline reads .mcp.json automatically"
+    echo "    (written in Step 5 below)."
 else
     echo "  – Skipped (cline not selected)"
 fi
 
-# ── Step 4: Install code-kg if not already present ────────────────────────────
+# ── Step 3: Install kg-rag if not already present ────────────────────────────
 echo ""
-echo "── Step 4: Checking code-kg installation ────────────"
+echo "── Step 3: Checking kgrag installation ───────────────"
 echo ""
 
 # Resolve the latest GitHub release wheel URL (requires curl or wget + python3).
@@ -336,108 +273,71 @@ except Exception:
 PYEOF
 }
 
-CODEKG_BIN=""
+KGRAG_BIN=""
 
 # Probe for an existing installation in order of priority:
-#   1. Local .venv in the target repo (Poetry project that added code-kg)
+#   1. Local .venv in the target repo (Poetry project that added kg-rag)
 #   2. Local .venv in the kg_rag source repo (running the script from the repo itself)
 #   3. Importable in the active Python environment
 #   4. On $PATH
-if [ -x "${TARGET_REPO}/.venv/bin/codekg" ]; then
-    CODEKG_BIN="${TARGET_REPO}/.venv/bin/codekg"
-    echo "  ✓ Found codekg in local venv: ${CODEKG_BIN}"
-elif [ -n "${REPO_ROOT}" ] && [ -x "${REPO_ROOT}/.venv/bin/codekg" ]; then
-    CODEKG_BIN="${REPO_ROOT}/.venv/bin/codekg"
-    echo "  ✓ Found codekg in source venv: ${CODEKG_BIN}"
+if [ -x "${TARGET_REPO}/.venv/bin/kgrag" ]; then
+    KGRAG_BIN="${TARGET_REPO}/.venv/bin/kgrag"
+    echo "  ✓ Found kgrag in local venv: ${KGRAG_BIN}"
+elif [ -n "${REPO_ROOT}" ] && [ -x "${REPO_ROOT}/.venv/bin/kgrag" ]; then
+    KGRAG_BIN="${REPO_ROOT}/.venv/bin/kgrag"
+    echo "  ✓ Found kgrag in source venv: ${KGRAG_BIN}"
 elif python3 -c "import kg_rag" &>/dev/null 2>&1; then
     # Importable — resolve the binary from the same interpreter's Scripts/bin
-    CODEKG_BIN="$(python3 -c "import sysconfig; print(sysconfig.get_path('scripts'))")/codekg"
-    [ -x "$CODEKG_BIN" ] || CODEKG_BIN="codekg"   # fallback to PATH entry
-    echo "  ✓ Found kg_rag in Python environment — codekg: ${CODEKG_BIN}"
-elif command -v codekg &>/dev/null; then
-    CODEKG_BIN="$(command -v codekg)"
-    echo "  ✓ Found codekg on PATH: ${CODEKG_BIN}"
+    KGRAG_BIN="$(python3 -c "import sysconfig; print(sysconfig.get_path('scripts'))")/kgrag"
+    [ -x "$KGRAG_BIN" ] || KGRAG_BIN="kgrag"   # fallback to PATH entry
+    echo "  ✓ Found kg_rag in Python environment — kgrag: ${KGRAG_BIN}"
+elif command -v kgrag &>/dev/null; then
+    KGRAG_BIN="$(command -v kgrag)"
+    echo "  ✓ Found kgrag on PATH: ${KGRAG_BIN}"
 fi
 
-if [ -z "$CODEKG_BIN" ]; then
+if [ -z "$KGRAG_BIN" ]; then
     if [ -n "$DRY_RUN" ]; then
-        echo "  [dry-run] would install code-kg from GitHub (wheel or git source)"
-        CODEKG_BIN="codekg"
+        echo "  [dry-run] would install kg-rag from GitHub (wheel or git source)"
+        KGRAG_BIN="kgrag"
     else
         # ── Preferred: latest GitHub release wheel (no git needed) ────────────
         WHEEL_URL="$(_latest_wheel_url || true)"
         if [ -n "$WHEEL_URL" ]; then
-            echo "  → Installing code-kg from GitHub release wheel..."
-            pip install --quiet "code-kg @ ${WHEEL_URL}"
+            echo "  → Installing kg-rag from GitHub release wheel..."
+            pip install --quiet "kg-rag @ ${WHEEL_URL}"
         else
             # ── Fallback: pip from git source ─────────────────────────────────
-            echo "  → Installing code-kg from GitHub source..."
-            pip install --quiet "code-kg @ git+https://github.com/${REPO}.git"
+            echo "  → Installing kg-rag from GitHub source..."
+            pip install --quiet "kg-rag @ git+https://github.com/${REPO}.git"
         fi
         # Re-probe after install
-        CODEKG_BIN="$(command -v codekg 2>/dev/null || true)"
-        if [ -n "$CODEKG_BIN" ]; then
-            echo "  ✓ Installed code-kg — codekg at: ${CODEKG_BIN}"
+        KGRAG_BIN="$(command -v kgrag 2>/dev/null || true)"
+        if [ -n "$KGRAG_BIN" ]; then
+            echo "  ✓ Installed kg-rag — kgrag at: ${KGRAG_BIN}"
         else
             echo "  ✗ Installation failed. Install manually:"
-            echo "      pip install 'code-kg @ git+https://github.com/${REPO}.git'"
+            echo "      pip install 'kg-rag @ git+https://github.com/${REPO}.git'"
             exit 1
         fi
     fi
 fi
 
-# ── Step 5: Build the SQLite knowledge graph ──────────────────────────────────
+# ── Step 4: Register this repo's KG layers ────────────────────────────────────
 echo ""
-echo "── Step 5: Building SQLite knowledge graph ──────────"
+echo "── Step 4: Registering KG layers (kgrag init) ────────"
 echo ""
 
-if [ -f "$SQLITE_DB" ] && [ -z "$WIPE_FLAG" ]; then
-    echo "  ✓ SQLite graph already exists: ${SQLITE_DB} — skipping build"
-    echo "    (Run with --wipe to force rebuild)"
+if [ -n "$DRY_RUN" ]; then
+    echo "  [dry-run] would run: kgrag init ${TARGET_REPO}${WIPE_FLAG:+ --wipe}"
 else
-    if [ -n "$DRY_RUN" ]; then
-        echo "  [dry-run] would run: codekg build-sqlite --repo ${TARGET_REPO}${WIPE_FLAG:+ --wipe}"
-    else
-        _exec mkdir -p "$(dirname "$SQLITE_DB")"
-        echo "  → Building SQLite graph at: ${SQLITE_DB}"
-        _WIPE_ARG=${WIPE_FLAG:+--wipe}
-        (cd "${TARGET_REPO}" && "${CODEKG_BIN}" build-sqlite --repo "${TARGET_REPO}" ${_WIPE_ARG})
-        if [ -f "$SQLITE_DB" ]; then
-            echo "  ✓ Built: ${SQLITE_DB}"
-        else
-            echo "  ✗ Build failed — ${SQLITE_DB} not created"
-            exit 1
-        fi
-    fi
+    _WIPE_ARG=${WIPE_FLAG:+--wipe}
+    (cd "${TARGET_REPO}" && "${KGRAG_BIN}" init "${TARGET_REPO}" ${_WIPE_ARG})
 fi
 
-# ── Step 6: Build the LanceDB vector index ────────────────────────────────────
+# ── Step 5: Write .mcp.json (Claude Code + Kilo Code) ────────────────────────
 echo ""
-echo "── Step 6: Building LanceDB vector index ────────────"
-echo ""
-
-if [ -d "$LANCEDB_DIR" ] && [ "$(ls -A "$LANCEDB_DIR" 2>/dev/null)" ] && [ -z "$WIPE_FLAG" ]; then
-    echo "  ✓ LanceDB index already exists: ${LANCEDB_DIR} — skipping build"
-    echo "    (Run with --wipe to force rebuild)"
-else
-    if [ -n "$DRY_RUN" ]; then
-        echo "  [dry-run] would run: codekg build-lancedb --repo ${TARGET_REPO}${WIPE_FLAG:+ --wipe}"
-    else
-        echo "  → Building LanceDB index at: ${LANCEDB_DIR}"
-        _WIPE_ARG=${WIPE_FLAG:+--wipe}
-        (cd "${TARGET_REPO}" && "${CODEKG_BIN}" build-lancedb --repo "${TARGET_REPO}" ${_WIPE_ARG})
-        if [ -d "$LANCEDB_DIR" ] && [ "$(ls -A "$LANCEDB_DIR" 2>/dev/null)" ]; then
-            echo "  ✓ Built: ${LANCEDB_DIR}"
-        else
-            echo "  ✗ Build failed — ${LANCEDB_DIR} not populated"
-            exit 1
-        fi
-    fi
-fi
-
-# ── Step 7: Write .mcp.json (Claude Code + Kilo Code) ────────────────────────
-echo ""
-echo "── Step 7: Configuring .mcp.json (Claude Code + Kilo Code) ──"
+echo "── Step 5: Configuring .mcp.json (Claude Code + Kilo Code) ──"
 echo ""
 
 MCP_JSON="${TARGET_REPO}/.mcp.json"
@@ -445,46 +345,42 @@ MCP_JSON="${TARGET_REPO}/.mcp.json"
 if [ "$DO_KILO" = "0" ] && [ "$DO_CLAUDE" = "0" ]; then
     echo "  – Skipped (neither claude nor kilo selected)"
 elif [ -n "$DRY_RUN" ]; then
-    echo "  [dry-run] would upsert codekg entry in ${MCP_JSON}"
+    echo "  [dry-run] would upsert kgrag entry in ${MCP_JSON}"
 elif [ ! -f "$MCP_JSON" ]; then
     cat > "$MCP_JSON" <<EOF
 {
   "mcpServers": {
-    "codekg": {
-      "command": "${CODEKG_BIN}",
-      "args": [
-        "mcp",
-        "--repo", "${TARGET_REPO}"
-      ]
+    "kgrag": {
+      "command": "${KGRAG_BIN}",
+      "args": ["mcp"]
     }
   }
 }
 EOF
     echo "  ✓ Created ${MCP_JSON}"
 else
-    python3 - "$MCP_JSON" "$TARGET_REPO" "$CODEKG_BIN" <<'PYEOF'
+    python3 - "$MCP_JSON" "$KGRAG_BIN" <<'PYEOF'
 import json, sys
-mcp_json    = sys.argv[1]
-target_repo = sys.argv[2]
-codekg_bin  = sys.argv[3]
+mcp_json  = sys.argv[1]
+kgrag_bin = sys.argv[2]
 with open(mcp_json, "r") as f:
     data = json.load(f)
 if "mcpServers" not in data:
     data["mcpServers"] = {}
-data["mcpServers"]["codekg"] = {
-    "command": codekg_bin,
-    "args": ["mcp", "--repo", target_repo]
+data["mcpServers"]["kgrag"] = {
+    "command": kgrag_bin,
+    "args": ["mcp"]
 }
 with open(mcp_json, "w") as f:
     json.dump(data, f, indent=2)
     f.write("\n")
 PYEOF
-    echo "  ✓ Updated codekg entry in ${MCP_JSON}"
+    echo "  ✓ Updated kgrag entry in ${MCP_JSON}"
 fi
 
-# ── Step 8: Write .vscode/mcp.json (GitHub Copilot) ──────────────────────────
+# ── Step 6: Write .vscode/mcp.json (GitHub Copilot) ──────────────────────────
 echo ""
-echo "── Step 8: Configuring .vscode/mcp.json (GitHub Copilot) ──"
+echo "── Step 6: Configuring .vscode/mcp.json (GitHub Copilot) ──"
 echo ""
 
 VSCODE_DIR="${TARGET_REPO}/.vscode"
@@ -496,7 +392,7 @@ elif [ -n "$DRY_RUN" ]; then
     if [ ! -f "$VSCODE_MCP" ]; then
         echo "  [dry-run] would create ${VSCODE_MCP}"
     else
-        echo "  [dry-run] would upsert codekg entry in existing ${VSCODE_MCP}"
+        echo "  [dry-run] would upsert kgrag entry in existing ${VSCODE_MCP}"
     fi
 else
     _exec mkdir -p "$VSCODE_DIR"
@@ -505,40 +401,34 @@ else
         cat > "$VSCODE_MCP" <<EOF
 {
   "servers": {
-    "codekg": {
+    "kgrag": {
       "type": "stdio",
-      "command": "${CODEKG_BIN}",
-      "args": [
-        "mcp",
-        "--repo", "${TARGET_REPO}",
-        "--db",   "${TARGET_REPO}/.codekg/graph.sqlite"
-      ]
+      "command": "${KGRAG_BIN}",
+      "args": ["mcp"]
     }
   }
 }
 EOF
         echo "  ✓ Created ${VSCODE_MCP}"
     else
-        python3 - "$VSCODE_MCP" "$TARGET_REPO" "$CODEKG_BIN" <<'PYEOF'
+        python3 - "$VSCODE_MCP" "$KGRAG_BIN" <<'PYEOF'
 import json, sys
-vscode_mcp  = sys.argv[1]
-target_repo = sys.argv[2]
-codekg_bin  = sys.argv[3]
+vscode_mcp = sys.argv[1]
+kgrag_bin  = sys.argv[2]
 with open(vscode_mcp, "r") as f:
     data = json.load(f)
 if "servers" not in data:
     data["servers"] = {}
-data["servers"]["codekg"] = {
+data["servers"]["kgrag"] = {
     "type": "stdio",
-    "command": codekg_bin,
-    "args": ["mcp", "--repo", target_repo,
-             "--db", f"{target_repo}/.codekg/graph.sqlite"]
+    "command": kgrag_bin,
+    "args": ["mcp"]
 }
 with open(vscode_mcp, "w") as f:
     json.dump(data, f, indent=2)
     f.write("\n")
 PYEOF
-        echo "  ✓ Updated codekg entry in ${VSCODE_MCP}"
+        echo "  ✓ Updated kgrag entry in ${VSCODE_MCP}"
     fi
 fi  # DO_COPILOT
 
@@ -546,35 +436,30 @@ fi  # DO_COPILOT
 echo ""
 if [ -n "$DRY_RUN" ]; then
 echo "╔══════════════════════════════════════════════════╗"
-echo "║   CodeKG dry-run complete — no changes made.     ║"
+echo "║   kgrag dry-run complete — no changes made.      ║"
 echo "╚══════════════════════════════════════════════════╝"
 else
 echo "╔══════════════════════════════════════════════════╗"
-echo "║   CodeKG installed and configured successfully!  ║"
+echo "║   kgrag installed and configured successfully!   ║"
 echo "╚══════════════════════════════════════════════════╝"
 fi
 echo ""
-echo "  Repo:    ${TARGET_REPO}"
-echo "  SQLite:  ${SQLITE_DB}"
-echo "  LanceDB: ${LANCEDB_DIR}"
+echo "  Repo: ${TARGET_REPO}"
 echo ""
 echo "  Claude commands installed:"
-echo "    ✓ ~/.claude/commands/codekg.md"
-echo "    ✓ ~/.claude/commands/setup-mcp.md"
-echo "    ✓ ~/.claude/commands/changelog-commit.md"
-echo "    ✓ ~/.claude/commands/continue.md"
-echo "    ✓ ~/.claude/commands/protocol.md"
-echo "    ✓ ~/.claude/commands/release.md"
+for _CMD_FILE in "${CLAUDE_COMMAND_FILES[@]}"; do
+    echo "    ✓ ~/.claude/commands/${_CMD_FILE}"
+done
 echo ""
 echo "  Providers configured:"
 ( [ "$DO_CLAUDE" = "1" ] || [ "$DO_KILO" = "1" ] ) && echo "    ✓ Claude Code + Kilo Code  (.mcp.json)"
 [ "$DO_COPILOT" = "1" ] && echo "    ✓ GitHub Copilot (.vscode/mcp.json)"
-[ "$DO_CLINE"   = "1" ] && echo "    ✓ Cline          (.claude/commands/codekg.md + .mcp.json)"
+[ "$DO_CLINE"   = "1" ] && echo "    ✓ Cline          (reads .mcp.json automatically)"
 echo ""
 echo "  ⚠ One manual step required:"
 echo "    Reload VS Code to activate the MCP servers:"
 echo "    Cmd+Shift+P → 'Developer: Reload Window'"
 echo ""
-[ "$DO_COPILOT" = "1" ] && echo "  GitHub Copilot: VS Code will prompt you to Trust the codekg server on first use."
+[ "$DO_COPILOT" = "1" ] && echo "  GitHub Copilot: VS Code will prompt you to Trust the kgrag server on first use."
 echo ""
-echo "  Full docs: https://github.com/Flux-Frontiers/kg_rag/blob/main/docs/MCP.md"
+echo "  Full docs: https://github.com/Flux-Frontiers/KGRAG/blob/main/docs/INSTALLATION.md"
