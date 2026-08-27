@@ -104,9 +104,11 @@ def timeline(query_text, date_from, date_to, k, kind, output_json, min_score, re
         kgrag timeline "manifold work" --from 2026-04
         kgrag timeline "photographs" --from 1998 --kind filetree
 
-    Hits that carry no date at all are counted and reported, never silently
-    dropped — a module that has not adopted the temporal contract would
-    otherwise look like a module with nothing to say.
+    Hits that carry no date are counted and named, never silently dropped.
+    Being undated is often correct rather than missing: code KGs track change
+    through snapshots and git already owns their dates, and a metabolic pathway
+    does not occur at a time. The count exists so those results stay visible,
+    not to mark a module as unfinished.
     """
     scope = QueryScope(time_range=(date_from, date_to)) if (date_from or date_to) else None
 
@@ -191,7 +193,14 @@ def timeline(query_text, date_from, date_to, k, kind, output_json, min_score, re
         console.print(table)
 
     if undated:
+        # Deliberately neutral. Some modules carry no dates *by design* -- code
+        # KGs answer "how did this change" with snapshots and git already owns
+        # their dates, and MetaboKG's only clock is an ODE integration axis.
+        # Wording that implied a missing feature read as a defect in modules
+        # that are correctly abstaining.
+        kgs = ", ".join(sorted({h.kg_name for h in undated}))
         console.print(
-            f"[dim]{len(undated)} undated hit(s) not shown — "
-            f"their module does not write the temporal contract.[/dim]"
+            f"[dim]{len(undated)} hit(s) carry no date and are not placed on the "
+            f"timeline ({kgs}). Not every KG is dated — code and pathway graphs "
+            f"track change through snapshots instead.[/dim]"
         )

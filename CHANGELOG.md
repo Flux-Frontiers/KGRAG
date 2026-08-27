@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`kgrag timeline` no longer implies that an undated module is unfinished.**
+  The line read *"their module does not write the temporal contract"*, which
+  frames being undated as a gap. It usually is not: code KGs answer "how did
+  this change" with snapshots and git already owns their dates, and a metabolic
+  pathway does not occur at a time — its `t=0..100` is an integration axis.
+  Those modules are correctly abstaining, and the old wording made a settled
+  design decision read as a defect.
+
+  The count now names which KGs the undated hits came from and says plainly
+  that not every KG is dated.
+
+
 ### Fixed
 
 - **`kgrag audit-lancedb` could tell you to delete a live index.** The audit
