@@ -137,7 +137,10 @@ class TestSnapshot:
             "metrics": {"total_nodes": 10, "total_edges": 20},
         }
         s = Snapshot.from_dict(data)
-        assert s.tree_hash == "new_hash"
+        assert s.key == "new_hash"
+        # Not a 40-char hex string, so it is not recorded as a tree hash --
+        # key and tree_hash stopped being the same field with the key scheme.
+        assert s.tree_hash == ""
 
     def test_default_hotspots_and_issues_are_empty(self):
         s = self._make()
@@ -216,7 +219,14 @@ def mgr(tmp_path):
 
 
 def _snap(mgr, *, nodes=100, edges=200, branch="main", tree_hash="abc", version="1.0", **kw):
-    """Convenience: capture a snapshot with explicit git params (no subprocess)."""
+    """Convenience: capture a snapshot with explicit git params (no subprocess).
+
+    Defaults the snapshot key to the given tree_hash unless the caller supplies
+    its own -- these tests predate the key scheme and address snapshots by
+    their mocked tree hash throughout; passing it through as the key keeps
+    that addressing working without a rewrite of every call site.
+    """
+    kw.setdefault("key", tree_hash)
     return mgr.capture(
         version=version,
         branch=branch,
@@ -257,6 +267,32 @@ class TestSnapshotManagerCapture:
     def test_capture_no_vs_previous_on_first_snapshot(self, mgr):
         s = _snap(mgr, tree_hash="h1")
         assert s.vs_previous is None
+
+    def test_capture_without_a_key_does_not_key_on_the_tree_hash(self, mgr):
+        """The tree hash is provenance, not an identifier.
+
+        It is read before ``git add`` stages the snapshot, so it names a tree
+        that is never committed. Bypasses ``_snap``'s default of passing the
+        tree hash through as the key, to exercise capture()'s own default.
+        """
+        s = mgr.capture(
+            version="1.0",
+            branch="main",
+            tree_hash="b" * 40,
+            graph_stats_dict={"total_nodes": 5, "total_edges": 3},
+        )
+        assert s.key != "b" * 40
+        assert s.tree_hash == "b" * 40
+
+    def test_capture_uses_a_supplied_release_key(self, mgr):
+        s = mgr.capture(
+            version="0.15.0",
+            branch="main",
+            tree_hash="h1",
+            key="v0.15.0",
+            graph_stats_dict={"total_nodes": 5, "total_edges": 3},
+        )
+        assert s.key == "v0.15.0"
 
     def test_load_has_vs_previous_after_two_saves(self, mgr):
         """vs_previous is backfilled by load_snapshot(), not set during capture().

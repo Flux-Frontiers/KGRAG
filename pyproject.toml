@@ -157,13 +157,23 @@ dependencies = [
 # diary-kg and ftree-kg moved to their own extras below rather than staying
 # here: they back kinds most registries never hold, and diary-kg pulls spacy
 # (~21M) for a backend that then sits unused.
+#
+# doc-kg/pycode-kg pinned past their .0: both shipped the snapshot key scheme
+# with a save_snapshot that dropped snapshot_key/subject/tool on the way to
+# disk, so every snapshot fell back to tree-hash keying regardless. .1 is the
+# fix. memory-kg>=0.9.0: 0.9.0 is the first release where MemoryKG's store has
+# a metadata column at all, which is what QueryScope.time_range needs to reach
+# a memory-kg corpus -- below it, a federated time-scoped query against one was
+# structurally impossible, not just untested.
 kg = [
-    "doc-kg>=0.22.0",
-    "memory-kg>=0.7.0",
-    "pycode-kg>=0.23.1",
+    "doc-kg>=0.24.1",
+    "memory-kg>=0.9.0",
+    "pycode-kg>=0.25.1",
 ]
 diary = [
-    "diary-kg>=0.97.0",
+    # 0.98.0: DiaryKG gained close()/__enter__/__exit__. kg_rag's own adapter
+    # holds a DiaryKG for its lifetime with no way to release it before this.
+    "diary-kg>=0.98.0",
 ]
 filetree = [
     "ftree-kg>=0.14.0",
@@ -212,11 +222,11 @@ pi = [
 # dependencies ... Different requirements found" and resolves by restarting the
 # whole lock with an override -- pathologically slow once a few packages do it.
 all = [
-    "diary-kg>=0.97.0",
-    "doc-kg>=0.22.0",
+    "diary-kg>=0.98.0",
+    "doc-kg>=0.24.1",
     "ftree-kg>=0.14.0",
-    "memory-kg>=0.7.0",
-    "pycode-kg>=0.23.1",
+    "memory-kg>=0.9.0",
+    "pycode-kg>=0.25.1",
     "firecrawl-anydoc>=0.1.9",
     "plotly>=5.14.0",
     "pyvis>=0.3.2",
@@ -318,8 +328,13 @@ pip-audit = "^2.10.0"
 # right arguments, and a mocked-out import cannot show that it does. Installed
 # here so the suite exercises the real classes. The marginal cost is small --
 # sentence-transformers already pulls the torch/transformers stack.
-pycode-kg = ">=0.23.1"
-doc-kg = ">=0.22.0"
+#
+# Pinned past .0 for the same reason as the kg/all extras: doc-kg 0.24.0 and
+# pycode-kg 0.25.0 shipped save_snapshot dropping snapshot provenance, fixed in
+# .1. A dev-dep floor that could still resolve the broken .0 would defeat the
+# whole point of testing against the real class.
+pycode-kg = ">=0.25.1"
+doc-kg = ">=0.24.1"
 
 # ---------------------------------------------------------------------------
 # Tool configuration

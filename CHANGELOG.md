@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Dependency floors raised to pick up published fixes**, all skipping a
+  known-bad `.0` where one exists:
+  - `doc-kg>=0.24.1` and `pycode-kg>=0.25.1` (both extras and the dev-group
+    real-class test dependencies). `.0` of each shipped the snapshot key
+    scheme with a `save_snapshot` that dropped `snapshot_key`/`subject`/`tool`
+    on the way to disk, so every snapshot fell back to tree-hash keying
+    regardless of the fix; `.1` is the correction.
+  - `diary-kg>=0.98.0` -- `DiaryKG` gained `close()`/`__enter__`/`__exit__`.
+    `DiaryKGAdapter` holds a `DiaryKG` for its lifetime with no prior way to
+    release it.
+  - `memory-kg>=0.9.0` -- 0.9.0 is the first release where `MemoryKG`'s store
+    has a `metadata` column at all, which `QueryScope.time_range` needs to
+    reach a memory-kg corpus. Below it, a federated time-scoped query against
+    one was structurally impossible, not merely untested.
+
+  `kgmodule-utils`'s own floor stays at `>=0.18.0` -- nothing in this repo's
+  code needs 0.19.0's snapshot key scheme directly -- but the lock now
+  resolves it to 0.19.0 transitively, since `diary-kg`/`memory-kg` require it.
+  `kg_rag.snapshots` re-exports `kg_utils.snapshots` with no subclass, so it
+  inherits that scheme with no source change; its tests, which addressed
+  snapshots by their mocked tree hash directly, are updated to pass an
+  explicit key, and one asserting the old tree-hash/key coupling on a
+  `from_dict` legacy field now asserts the current contract instead.
+
+### Changed
+
 - **`kgrag timeline` no longer implies that an undated module is unfinished.**
   The line read *"their module does not write the temporal contract"*, which
   frames being undated as a gap. It usually is not: code KGs answer "how did
