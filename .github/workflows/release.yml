@@ -13,10 +13,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
@@ -35,7 +35,7 @@ jobs:
       # Hand the built files to the publish job rather than letting it rebuild,
       # so PyPI and the GitHub Release carry byte-identical artifacts.
       - name: Stash dist for the publish job
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist/
@@ -67,7 +67,7 @@ jobs:
       id-token: write
     steps:
       - name: Fetch the artifacts the release job built
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist/
