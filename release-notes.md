@@ -1,35 +1,20 @@
-# Release Notes — v0.15.0
+# Release Notes — v0.15.1
 
-> Released: 2026-08-24
+> Released: 2026-09-18
 
-This release adds a sixth KG kind to the federation and closes a gap left by
-last release's temporal contract, where one adapter's `pack()` was silently
-dropping the metadata its own `query()` already carried correctly.
+`kgrag audit-lancedb` no longer tells you to delete a live index, and dependency floors catch up to the fleet.
 
 ## What changed
 
-**`KGKind.GENEALOGY` — federation support for GenealogyKG.** A new adapter
-(`genealogy_adapter.py`), a registry directory marker (`.genealogykg`), and a
-colour/icon in the visualizer, following the same four touches every KG kind
-has needed so far. genealogy-kg itself is not yet published to PyPI, so the
-adapter lazily imports it and reports itself unavailable until it is —
-registering the kind now means no second wave of adapter/registry/visualizer
-plumbing is needed once the package lands.
+**`audit-lancedb` could recommend deleting real data.** It decided a KG had finished migrating to sqlite-vec by checking whether `vectors.sqlite` existed. A failed or interrupted migration leaves an empty-stub file in exactly that shape, so the audit classified it as leftover residue and its suggested remediation was `rm -rf` on the directory that, in that state, still held the only copy of the index. The check now confirms the store actually has data before calling it migrated, found on `waverider`'s doc KG.
 
-**`ftree_adapter.py.pack()` no longer drops snippet metadata.** FileTreeKG's
-`pack()` populates each snippet's `metadata` dict, including the temporal
-contract keys from 0.14.0's `time_range` scoping — but the adapter's own
-`pack()` never forwarded it, even though the same adapter's `query()` already
-did. A `time_range`-scoped `pack()` call over a FTreeKG instance therefore
-saw every result as undated, silently excluding it from any date-windowed
-federated query. One line pinned by new regression tests.
+**`kgrag timeline` stopped framing an undated module as unfinished.** Not every knowledge graph is dated by design -- code KGs already have git for that, and some domains don't occur at a time at all -- and the wording used to read that abstention as a gap.
+
+**Dependency floors caught up.** `kgmodule-utils`, `doc-kg`, `pycode-kg`, `memory-kg` and `diary-kg` all move to the fleet's current releases; the `doc-kg`/`pycode-kg` dev-group test dependencies, which govern which real class the adapter tests actually construct, had drifted behind their own extras' floors and are corrected along with them.
 
 ## Upgrading
 
-No action needed — this is a drop-in upgrade. GenealogyKG support is inert
-until `genealogy-kg` is installed and registered; the `ftree_adapter.py` fix
-takes effect automatically for anyone already using `time_range`-scoped
-`pack()` calls against a FileTreeKG instance.
+No action needed. `poetry update` picks up the new floors; nothing else changes behavior for existing callers.
 
 ---
 

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.1] - 2026-09-18
+
 ### Changed
 
 - **Dependency floors raised to pick up published fixes**, all skipping a
@@ -50,6 +52,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   The count now names which KGs the undated hits came from and says plainly
   that not every KG is dated.
 
+- Lock moved to `kgmodule-utils` 0.18.1 and `pycode-kg` 0.24.1. Floors are
+  unchanged and deliberately so: `kgmodule-utils>=0.18.0` is a requirement
+  statement (`QueryScope.time_range` needs `kg_utils.temporal`) and nothing in
+  0.18.1 is needed. `memory-kg>=0.7.0` likewise stays put -- 0.8.0 exists in
+  that repo's CHANGELOG but was never published to PyPI, so it is not a floor
+  anything can resolve.
+- Trimmed the `kgmodule-utils` dependency comment, which had accreted a
+  paragraph per floor bump (0.13.0, 0.13.1, 0.17.0) plus merge-sequencing
+  advice that expired when 0.18.0 shipped. Git records that history; the
+  comment now states only why the current floor is what it is.
+- Regenerated `.secrets.baseline`, stale since 2026-08-15. Three SHA-256
+  checksums in `docs/INGESTION.md`'s example manifest were failing
+  `detect-secrets` on `--all-files` runs.
 
 ### Fixed
 
@@ -68,22 +83,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   store with `Path.touch()`, which is exactly the empty-stub shape. They now
   write a real populated `vec_meta`, and three cases cover the stub, an
   unreadable file, and the populated store that must still read as `residue`.
-
-### Changed
-
-- Lock moved to `kgmodule-utils` 0.18.1 and `pycode-kg` 0.24.1. Floors are
-  unchanged and deliberately so: `kgmodule-utils>=0.18.0` is a requirement
-  statement (`QueryScope.time_range` needs `kg_utils.temporal`) and nothing in
-  0.18.1 is needed. `memory-kg>=0.7.0` likewise stays put -- 0.8.0 exists in
-  that repo's CHANGELOG but was never published to PyPI, so it is not a floor
-  anything can resolve.
-- Trimmed the `kgmodule-utils` dependency comment, which had accreted a
-  paragraph per floor bump (0.13.0, 0.13.1, 0.17.0) plus merge-sequencing
-  advice that expired when 0.18.0 shipped. Git records that history; the
-  comment now states only why the current floor is what it is.
-- Regenerated `.secrets.baseline`, stale since 2026-08-15. Three SHA-256
-  checksums in `docs/INGESTION.md`'s example manifest were failing
-  `detect-secrets` on `--all-files` runs.
 
 ## [0.15.0] - 2026-08-23
 
