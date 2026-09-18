@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
+import warnings
 from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
@@ -203,7 +204,7 @@ class KGRegistry:
             "SELECT * FROM kg_entries WHERE id = ? OR name = ?",
             (name_or_id, name_or_id),
         ).fetchone()
-        return self._row_to_entry(row) if row else None
+        return self._row_to_entry(row) if row and self._known(row) else None
 
     def find_by_name(self, name: str) -> KGEntry | None:
         """Fetch a single entry by exact name.
@@ -212,7 +213,7 @@ class KGRegistry:
         :return: KGEntry if found, None otherwise.
         """
         row = self._conn.execute("SELECT * FROM kg_entries WHERE name = ?", (name,)).fetchone()
-        return self._row_to_entry(row) if row else None
+        return self._row_to_entry(row) if row and self._known(row) else None
 
     def find_by_repo(self, repo_path: Path | str) -> list[KGEntry]:  # ty: ignore[invalid-type-form]
         """Find all entries whose repo_path matches.
@@ -222,7 +223,7 @@ class KGRegistry:
         """
         p = str(Path(repo_path).resolve())
         rows = self._conn.execute("SELECT * FROM kg_entries WHERE repo_path = ?", (p,)).fetchall()
-        return [self._row_to_entry(r) for r in rows]
+        return [self._row_to_entry(r) for r in rows if self._known(r)]
 
     def list(self, kind: KGKind | str | None = None) -> list[KGEntry]:  # ty: ignore[invalid-type-form]
         """List all registered KG entries, optionally filtered by kind.
@@ -237,7 +238,7 @@ class KGRegistry:
             ).fetchall()
         else:
             rows = self._conn.execute("SELECT * FROM kg_entries ORDER BY name").fetchall()
-        return [self._row_to_entry(r) for r in rows]
+        return [self._row_to_entry(r) for r in rows if self._known(r)]
 
     def iter(self, kind: KGKind | None = None) -> Iterator[KGEntry]:
         """Iterate over all entries (memory-efficient for large registries).
@@ -268,6 +269,32 @@ class KGRegistry:
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
+
+    @staticmethod
+    def _known(row: sqlite3.Row) -> bool:
+        """Whether this version of kg-rag knows the row's kind.
+
+        A registry is shared by every kg-rag on the machine, so a newer one can
+        write a kind an older one has never heard of. Constructing
+        ``KGKind(row["kind"])`` for it used to raise, which took down
+        ``kgrag list``, ``status`` and the MCP server over one row. The row is
+        now skipped with a warning; it is still in the registry for the
+        version that wrote it.
+
+        :param row: A ``kg_entries`` row.
+        :return: True if the kind is a member of :class:`KGKind`.
+        """
+        try:
+            KGKind(row["kind"])
+        except ValueError:
+            warnings.warn(
+                f"skipping registry entry {row['name']!r}: kind {row['kind']!r} is not "
+                "known to this version of kg-rag; upgrade kg-rag to use it",
+                RuntimeWarning,
+                stacklevel=3,
+            )
+            return False
+        return True
 
     @staticmethod
     def _row_to_entry(row: sqlite3.Row) -> KGEntry:

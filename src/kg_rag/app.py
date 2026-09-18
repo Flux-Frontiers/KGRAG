@@ -52,6 +52,9 @@ _KG_KIND_COLOR: dict[str, str] = {
     "pdbfile": "#37474F",  # blue grey
     "person": "#F57F17",  # yellow
     "genealogy": "#6D4C41",  # brown
+    "connectome": "#5E35B1",  # deep purple
+    "swift": "#F05138",  # swift orange
+    "typescript": "#3178C6",  # typescript blue
 }
 
 _KG_KIND_ICON: dict[str, str] = {
@@ -70,6 +73,9 @@ _KG_KIND_ICON: dict[str, str] = {
     "pdbfile": "🗂️",
     "person": "👤",
     "genealogy": "🌳",
+    "connectome": "🧠",
+    "swift": "🐦",
+    "typescript": "🟦",
 }
 
 _NODE_KIND_COLOR: dict[str, str] = {

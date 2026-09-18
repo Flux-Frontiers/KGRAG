@@ -40,6 +40,9 @@ _KG_MARKERS: dict[str, str] = {
     ".agentkg": "agent",
     ".filetreekg": "filetree",
     ".genealogykg": "genealogy",
+    ".connectomekg": "connectome",
+    ".swiftkg": "swift",
+    ".tscodekg": "typescript",
 }
 
 # Map kind string → default database subdirectory name

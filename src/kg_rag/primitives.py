@@ -34,6 +34,9 @@ class KGKind(StrEnum):
     GUTENBERG = "gutenberg"
     IA = "ia"
     GENEALOGY = "genealogy"
+    CONNECTOME = "connectome"
+    SWIFT = "swift"
+    TYPESCRIPT = "typescript"
 
     @classmethod
     def from_str(cls, s: str) -> KGKind:
