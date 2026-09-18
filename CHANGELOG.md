@@ -24,16 +24,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     reach a memory-kg corpus. Below it, a federated time-scoped query against
     one was structurally impossible, not merely untested.
 
-  `kgmodule-utils`'s own floor stays at `>=0.18.0` -- nothing in this repo's
-  code needs 0.19.0's snapshot key scheme directly -- but the lock now
-  resolves it to 0.19.0 transitively, since `diary-kg`/`memory-kg` require it.
-  `kg_rag.snapshots` re-exports `kg_utils.snapshots` with no subclass, so it
-  inherits that scheme with no source change; its tests, which addressed
-  snapshots by their mocked tree hash directly, are updated to pass an
-  explicit key, and one asserting the old tree-hash/key coupling on a
-  `from_dict` legacy field now asserts the current contract instead.
+  `kgmodule-utils`'s own floor stayed at `>=0.18.0` here, resolving to 0.19.0
+  only transitively through `diary-kg`/`memory-kg`.
 
-### Changed
+- **Floors raised again to the current fleet releases**: `kgmodule-utils`
+  `>=0.18.0` -> `>=0.22.0`, `doc-kg` `>=0.24.1` -> `>=0.26.0`, `pycode-kg`
+  `>=0.25.1` -> `>=0.27.1`, `memory-kg` `>=0.9.0` -> `>=0.11.0`, and
+  `diary-kg` `>=0.98.0` -> `>=0.99.0`. `doc-kg`/`pycode-kg`'s dev-group
+  real-class test dependencies had also drifted below the extras' own floor
+  -- the dev-dep pin is what actually governs which real class the adapter
+  tests construct, so a lagging pin there was testing against an older class
+  than the one the extras ship. No source change: `kg_rag.snapshots` inherits
+  `kgmodule-utils`'s snapshot scheme with no subclass, so raising its floor
+  explicitly rather than leaving it to resolve transitively is a declaration
+  change, not a behavior one.
 
 - **`kgrag timeline` no longer implies that an undated module is unfinished.**
   The line read *"their module does not write the temporal contract"*, which
