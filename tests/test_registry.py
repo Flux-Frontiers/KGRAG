@@ -440,3 +440,46 @@ class TestKGRegistryContextManager:
         # Connection is closed — further operations should fail
         with pytest.raises(Exception):
             reg.list()
+
+
+class TestUnknownKinds:
+    """A registry is shared by every kg-rag on the machine, so a newer one can
+    write a kind this one has never heard of. One such row used to raise
+    ``ValueError`` out of every read, taking down ``list``, ``status`` and the
+    MCP server. It must be skipped, with a warning, and left in place.
+    """
+
+    def _write_future_row(self, registry, sample_entry):
+        registry.register(sample_entry)
+        registry._conn.execute(
+            "UPDATE kg_entries SET name = 'from-the-future', kind = 'hologram', id = 'future' "
+            "WHERE name = ?",
+            (sample_entry.name,),
+        )
+        registry._conn.commit()
+        registry.register(sample_entry)  # a known row alongside it
+
+    def test_list_skips_the_unknown_row(self, tmp_registry, sample_entry):
+        self._write_future_row(tmp_registry, sample_entry)
+        with pytest.warns(RuntimeWarning, match="hologram"):
+            entries = tmp_registry.list()
+        assert [e.name for e in entries] == [sample_entry.name]
+
+    def test_get_returns_none_for_the_unknown_row(self, tmp_registry, sample_entry):
+        self._write_future_row(tmp_registry, sample_entry)
+        with pytest.warns(RuntimeWarning):
+            assert tmp_registry.get("from-the-future") is None
+
+    def test_stats_still_works(self, tmp_registry, sample_entry):
+        self._write_future_row(tmp_registry, sample_entry)
+        with pytest.warns(RuntimeWarning):
+            assert tmp_registry.stats().total == 1
+
+    def test_the_row_is_left_in_place(self, tmp_registry, sample_entry):
+        self._write_future_row(tmp_registry, sample_entry)
+        with pytest.warns(RuntimeWarning):
+            tmp_registry.list()
+        n = tmp_registry._conn.execute(
+            "SELECT count(*) FROM kg_entries WHERE kind = 'hologram'"
+        ).fetchone()[0]
+        assert n == 1

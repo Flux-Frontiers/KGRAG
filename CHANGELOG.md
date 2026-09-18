@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Three new KG kinds: `connectome`, `swift` and `typescript`.** kg-rag
+  could not see three fleet KGs at all. Discovery walks a fixed table of
+  store directories, and `.connectomekg/`, `.swiftkg/` and `.tscodekg/` were
+  not in it, with no `KGKind` or adapter behind them, so `kgrag scan` walked
+  past every ConnectomeKG, SwiftKG and TypeScriptKG store. Each kind now has
+  its marker, an adapter, a colour and icon in the app, and a place in the
+  three MCP tool kind filters.
+
+  - `swift` and `typescript` share one adapter base,
+    `CodeModuleKGAdapter`: SwiftKG and TypeScriptKG are ports of PyCodeKG
+    with the same constructor and node shape, so the two adapters differ only
+    in which package they import. Both modules call themselves `code`
+    internally; they are separate kinds here so a registry can filter by
+    language.
+  - `connectome` wraps ConnectomeKG (the FlyWire FAFB v783 fly connectome).
+    Its nodes have no source file, so `KGModule.pack()` gives them no
+    `snippet`; the adapter packs each node's description, a full English
+    sentence about the cell type or neuropil, instead of returning nothing.
+    A connectome can be built without a vector index (`connkg build
+    --no-index`), which `ConnectomeKG.query()` answers by raising, so the
+    adapter reports itself available only when the graph **and** the vector
+    store exist, not either one as `KGEntry.is_built` accepts. Queries need
+    `connectome-kg` with the fix that stops a built store from demanding the
+    raw Codex release; earlier versions fail with `source='codex' needs
+    data_dir`.
+
+  All three adapters were checked against real stores (Alamofire's Swift
+  graph, a TypeScript project, the full v783 connectome), and all three
+  score hits by the raw `relevance["semantic"]` similarity, as
+  `CodeKGAdapter` does. The reranked `relevance["score"]` is normalised so
+  every query's top hit reads 1.0, which would make `semantic_floor` a no-op
+  and rank each KG's best hit level with every other KG's.
+
+### Fixed
+
+- **A registry row of an unknown kind no longer breaks every read.** The
+  registry is shared by every kg-rag on the machine, so a newer kg-rag can
+  write a kind an older one has never heard of. `KGKind(row["kind"])` then
+  raised out of `list()`, `get()` and `stats()`, taking down `kgrag list`,
+  `kgrag status` and the MCP server over one row. The row is now skipped
+  with a `RuntimeWarning` and left in place for the version that wrote it.
+  This release is the first to add kinds since that was possible to hit:
+  registering a `swift`, `typescript` or `connectome` store makes any
+  installed kg-rag older than this one fail until it is upgraded.
+
 ## [0.15.1] - 2026-09-18
 
 ### Changed

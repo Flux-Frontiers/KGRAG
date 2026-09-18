@@ -32,6 +32,7 @@ import pytest
 from kg_rag.adapters import make_adapter
 from kg_rag.adapters._stub_adapter import StubKGAdapter
 from kg_rag.adapters.agent_adapter import AgentKGAdapter
+from kg_rag.adapters.connectome_adapter import ConnectomeKGAdapter
 from kg_rag.adapters.diary_adapter import DiaryKGAdapter
 from kg_rag.adapters.dockg_adapter import DocKGAdapter
 from kg_rag.adapters.ftree_adapter import FTreeKGAdapter
@@ -42,6 +43,8 @@ from kg_rag.adapters.memory_adapter import MemoryKGAdapter
 from kg_rag.adapters.metakg_adapter import MetaKGAdapter
 from kg_rag.adapters.person_adapter import PersonKGAdapter
 from kg_rag.adapters.pycodekg_adaptor import CodeKGAdapter
+from kg_rag.adapters.swift_adapter import SwiftKGAdapter
+from kg_rag.adapters.typescript_adapter import TypeScriptKGAdapter
 from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry, KGKind
 
 # ---------------------------------------------------------------------------
@@ -93,6 +96,18 @@ class TestMakeAdapter:
         entry = _entry(tmp_path, KGKind.GENEALOGY)
         adapter = make_adapter(entry)
         assert isinstance(adapter, GenealogyKGAdapter)
+
+    def test_connectome_kind_returns_connectomekg_adapter(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.CONNECTOME)
+        adapter = make_adapter(entry)
+        assert isinstance(adapter, ConnectomeKGAdapter)
+
+    def test_swift_kind_returns_swiftkg_adapter(self, tmp_path):
+        assert isinstance(make_adapter(_entry(tmp_path, KGKind.SWIFT)), SwiftKGAdapter)
+
+    def test_typescript_kind_returns_typescriptkg_adapter(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.TYPESCRIPT)
+        assert isinstance(make_adapter(entry), TypeScriptKGAdapter)
 
     def test_filetree_kind_returns_ftreekg_adapter(self, tmp_path):
         entry = _entry(tmp_path, KGKind.FILETREE)
@@ -1252,6 +1267,309 @@ class TestGenealogyKGAdapterSnapshotMetrics:
             "person_count": 12,
             "family_count": 4,
         }
+
+
+# ---------------------------------------------------------------------------
+# ConnectomeKGAdapter
+# ---------------------------------------------------------------------------
+
+
+def _connectome_entry(tmp_path, *, with_sqlite: bool = True, with_vectors: bool = True) -> KGEntry:
+    """A connectome entry; unlike ``_entry`` it can carry a vectors store."""
+    entry = _entry(tmp_path, KGKind.CONNECTOME, with_sqlite=with_sqlite)
+    if with_vectors:
+        vectors = entry.repo_path / "vectors.sqlite"
+        vectors.touch()
+        entry.vectors_path = vectors
+    return entry
+
+
+class TestConnectomeKGAdapterIsAvailable:
+    """A connectome can be built without a vector index (``connkg build
+    --no-index``), and ``ConnectomeKG.query()`` then raises. So availability
+    needs both stores, not ``entry.is_built``'s either-one.
+    """
+
+    def test_unavailable_when_import_fails(self, tmp_path):
+        entry = _connectome_entry(tmp_path)
+        with patch.dict("sys.modules", {"connectomekg": None}):
+            assert ConnectomeKGAdapter(entry).is_available() is False
+
+    def test_available_with_graph_and_vectors(self, tmp_path):
+        entry = _connectome_entry(tmp_path)
+        with patch.dict("sys.modules", {"connectomekg": MagicMock()}):
+            assert ConnectomeKGAdapter(entry).is_available() is True
+
+    def test_unavailable_with_graph_but_no_vector_index(self, tmp_path):
+        entry = _connectome_entry(tmp_path, with_vectors=False)
+        assert entry.is_built  # the generic check would call this usable
+        with patch.dict("sys.modules", {"connectomekg": MagicMock()}):
+            assert ConnectomeKGAdapter(entry).is_available() is False
+
+    def test_unavailable_when_not_built(self, tmp_path):
+        entry = _connectome_entry(tmp_path, with_sqlite=False, with_vectors=False)
+        with patch.dict("sys.modules", {"connectomekg": MagicMock()}):
+            assert ConnectomeKGAdapter(entry).is_available() is False
+
+
+class TestConnectomeKGAdapterLoad:
+    def test_load_passes_both_store_paths(self, tmp_path):
+        entry = _connectome_entry(tmp_path)
+        fake = MagicMock()
+        with patch.dict("sys.modules", {"connectomekg": fake}):
+            ConnectomeKGAdapter(entry)._load()
+        fake.ConnectomeKG.assert_called_once_with(
+            str(entry.repo_path),
+            db_path=str(entry.sqlite_path),
+            vectors_path=str(entry.vectors_path),
+        )
+
+
+# Node shapes below were taken from a live ConnectomeKG.query()/pack() call
+# against a synthetic build, not assumed.
+_CELL_TYPE_NODE = {
+    "id": "connectome:fafb783:t:DNp01",
+    "name": "DNp01",
+    "kind": "cell_type",
+    "module_path": "",
+    "docstring": "Cell type DNp01: 2 neurons (1 left, 1 right); descending, class descending_GNG.",
+    "metadata": {"n_neurons": 2, "nt_type": "ACH", "sign": 1},
+    "relevance": {"score": 0.91},
+}
+
+
+class TestConnectomeKGAdapterQuery:
+    def test_query_returns_cross_hits(self, tmp_path):
+        adapter = ConnectomeKGAdapter(_connectome_entry(tmp_path))
+        adapter._kg = MagicMock()
+        adapter._kg.query.return_value.nodes = [_CELL_TYPE_NODE]
+
+        hits = adapter.query("giant fiber escape")
+        assert len(hits) == 1
+        hit = hits[0]
+        assert isinstance(hit, CrossHit)
+        assert hit.kg_kind == KGKind.CONNECTOME
+        assert hit.node_id == "connectome:fafb783:t:DNp01"
+        assert hit.kind == "cell_type"
+        assert hit.score == 0.91
+        assert hit.summary.startswith("Cell type DNp01")
+        assert hit.metadata["nt_type"] == "ACH"
+
+    def test_query_drops_hits_below_min_score(self, tmp_path):
+        adapter = ConnectomeKGAdapter(_connectome_entry(tmp_path))
+        adapter._kg = MagicMock()
+        adapter._kg.query.return_value.nodes = [
+            {"id": "a", "name": "A", "kind": "cell_type", "relevance": {"score": 0.9}},
+            {"id": "b", "name": "B", "kind": "cell_type", "relevance": {"score": 0.1}},
+        ]
+        assert [h.node_id for h in adapter.query("x", min_score=0.5)] == ["a"]
+
+    def test_query_semantic_floor_discards_whole_result_set(self, tmp_path):
+        adapter = ConnectomeKGAdapter(_connectome_entry(tmp_path))
+        adapter._kg = MagicMock()
+        adapter._kg.query.return_value.nodes = [
+            {"id": "a", "name": "A", "kind": "cell_type", "relevance": {"score": 0.2}},
+        ]
+        assert adapter.query("x", semantic_floor=0.5) == []
+
+
+class TestConnectomeKGAdapterScore:
+    def test_scores_by_raw_semantic_not_the_normalised_rerank(self, tmp_path):
+        """The reranked "score" reads 1.0 for every query's top hit; using it
+        would make semantic_floor a no-op. The raw "semantic" must win."""
+        adapter = ConnectomeKGAdapter(_connectome_entry(tmp_path))
+        adapter._kg = MagicMock()
+        adapter._kg.query.return_value.nodes = [
+            {
+                "id": "a",
+                "name": "A",
+                "kind": "taxon",
+                "relevance": {"score": 1.0, "semantic": 0.31},
+            },
+        ]
+        assert adapter.query("x")[0].score == 0.31
+        assert adapter.query("x", semantic_floor=0.5) == []
+
+
+class TestConnectomeKGAdapterPack:
+    """Connectome nodes have no source file, so KGModule.pack() gives them no
+    ``snippet``. Packing through ``snippet`` the way the code and genealogy
+    adapters do would return nothing at all; the description is the content.
+    """
+
+    def test_pack_builds_snippets_from_the_description(self, tmp_path):
+        adapter = ConnectomeKGAdapter(_connectome_entry(tmp_path))
+        adapter._kg = MagicMock()
+        adapter._kg.pack.return_value.nodes = [_CELL_TYPE_NODE]
+
+        snippets = adapter.pack("giant fiber escape")
+        assert len(snippets) == 1
+        s = snippets[0]
+        assert isinstance(s, CrossSnippet)
+        assert s.kg_kind == KGKind.CONNECTOME
+        assert s.content.startswith("DNp01 (cell_type)")
+        assert "descending_GNG" in s.content
+        assert s.lineno is None
+        assert s.score == 0.91
+
+    def test_pack_skips_nodes_without_a_description(self, tmp_path):
+        adapter = ConnectomeKGAdapter(_connectome_entry(tmp_path))
+        adapter._kg = MagicMock()
+        adapter._kg.pack.return_value.nodes = [
+            {"id": "x", "name": "x", "kind": "dataset", "relevance": {"score": 0.5}},
+        ]
+        assert adapter.pack("x") == []
+
+    def test_pack_honours_k(self, tmp_path):
+        adapter = ConnectomeKGAdapter(_connectome_entry(tmp_path))
+        adapter._kg = MagicMock()
+        adapter._kg.pack.return_value.nodes = [_CELL_TYPE_NODE] * 5
+        assert len(adapter.pack("x", k=2)) == 2
+
+
+class TestConnectomeKGAdapterStats:
+    def test_stats_reports_connectome_counts(self, tmp_path):
+        adapter = ConnectomeKGAdapter(_connectome_entry(tmp_path))
+        adapter._kg = MagicMock()
+        adapter._kg.stats.return_value = {
+            "total_nodes": 157698,
+            "total_edges": 5072285,
+            "node_counts": {"neuron": 139255, "cell_type": 8772, "neuropil": 79},
+            "edge_counts": {"SYNAPSES_TO": 3732460},
+        }
+        stats = adapter.stats()
+        assert stats["kind"] == "connectome"
+        assert stats["node_count"] == 157698
+        assert stats["neuron_count"] == 139255
+        assert stats["cell_type_count"] == 8772
+        assert stats["neuropil_count"] == 79
+        assert stats["synapse_pair_count"] == 3732460
+
+    def test_stats_graceful_on_error(self, tmp_path):
+        adapter = ConnectomeKGAdapter(_connectome_entry(tmp_path))
+        adapter._kg = MagicMock()
+        adapter._kg.stats.side_effect = RuntimeError("boom")
+        stats = adapter.stats()
+        assert stats["kind"] == "connectome"
+        assert "error" in stats
+
+
+class TestConnectomeKGAdapterAnalyze:
+    def test_analyze_graceful_on_error(self, tmp_path):
+        adapter = ConnectomeKGAdapter(_connectome_entry(tmp_path))
+        adapter._kg = MagicMock()
+        adapter._kg.analyze.side_effect = RuntimeError("analysis boom")
+        assert "Analysis failed" in adapter.analyze()
+
+
+# ---------------------------------------------------------------------------
+# SwiftKGAdapter and TypeScriptKGAdapter (shared CodeModuleKGAdapter)
+# ---------------------------------------------------------------------------
+
+# Node shapes taken from live SwiftKG.query()/pack() against Alamofire and
+# TypeScriptKG against a scratch project, not assumed.
+_CODE_ADAPTERS = [
+    pytest.param(SwiftKGAdapter, KGKind.SWIFT, "swift_kg", "SwiftKG", ".swiftkg", id="swift"),
+    pytest.param(
+        TypeScriptKGAdapter, KGKind.TYPESCRIPT, "tscode_kg", "TypeScriptKG", ".tscodekg", id="ts"
+    ),
+]
+_CODE_NODE = {
+    "id": "meth:Source/Core/Request.swift:RequestDelegate.retryRequest",
+    "name": "retryRequest",
+    "kind": "method",
+    "module_path": "Source/Core/Request.swift",
+    "docstring": "Retries the request after a delay.",
+    "relevance": {"score": 1.0, "semantic": 0.83},
+    "snippet": {
+        "path": "Source/Core/Request.swift",
+        "start": 1273,
+        "end": 1290,
+        "text": "func retryRequest",
+    },
+}
+
+
+@pytest.mark.parametrize(("cls", "kind", "module", "class_name", "store"), _CODE_ADAPTERS)
+class TestCodeModuleKGAdapter:
+    def test_unavailable_when_import_fails(self, tmp_path, cls, kind, module, class_name, store):
+        entry = _entry(tmp_path, kind, with_sqlite=True)
+        with patch.dict("sys.modules", {module: None}):
+            assert cls(entry).is_available() is False
+
+    def test_available_when_built(self, tmp_path, cls, kind, module, class_name, store):
+        entry = _entry(tmp_path, kind, with_sqlite=True)
+        with patch.dict("sys.modules", {module: MagicMock()}):
+            assert cls(entry).is_available() is True
+
+    def test_unavailable_when_not_built(self, tmp_path, cls, kind, module, class_name, store):
+        entry = _entry(tmp_path, kind)
+        with patch.dict("sys.modules", {module: MagicMock()}):
+            assert cls(entry).is_available() is False
+
+    def test_load_defaults_both_paths_to_the_store_dir(
+        self, tmp_path, cls, kind, module, class_name, store
+    ):
+        entry = _entry(tmp_path, kind)
+        fake = MagicMock()
+        with patch.dict("sys.modules", {module: fake}):
+            cls(entry)._load()
+        getattr(fake, class_name).assert_called_once_with(
+            repo_root=str(entry.repo_path),
+            db_path=str(entry.repo_path / store / "graph.sqlite"),
+            vectors_path=str(entry.repo_path / store / "vectors.sqlite"),
+        )
+
+    def test_query_scores_by_semantic(self, tmp_path, cls, kind, module, class_name, store):
+        adapter = cls(_entry(tmp_path, kind, with_sqlite=True))
+        adapter._kg = MagicMock()
+        adapter._kg.query.return_value.nodes = [_CODE_NODE]
+        hit = adapter.query("retry a failed request")[0]
+        assert isinstance(hit, CrossHit)
+        assert hit.kg_kind == kind
+        assert hit.name == "retryRequest"
+        assert hit.score == 0.83
+        assert hit.source_path == "Source/Core/Request.swift"
+
+    def test_semantic_floor_uses_the_raw_score(
+        self, tmp_path, cls, kind, module, class_name, store
+    ):
+        adapter = cls(_entry(tmp_path, kind, with_sqlite=True))
+        adapter._kg = MagicMock()
+        adapter._kg.query.return_value.nodes = [_CODE_NODE]
+        assert adapter.query("x", semantic_floor=0.9) == []
+
+    def test_pack_returns_source_spans(self, tmp_path, cls, kind, module, class_name, store):
+        adapter = cls(_entry(tmp_path, kind, with_sqlite=True))
+        adapter._kg = MagicMock()
+        adapter._kg.pack.return_value.nodes = [_CODE_NODE, {"id": "x", "relevance": {}}]
+        snippets = adapter.pack("retry")
+        assert len(snippets) == 1
+        s = snippets[0]
+        assert isinstance(s, CrossSnippet)
+        assert (s.lineno, s.end_lineno) == (1273, 1290)
+        assert s.content == "func retryRequest"
+        assert s.kg_kind == kind
+
+    def test_stats_reports_kind_and_counts(self, tmp_path, cls, kind, module, class_name, store):
+        adapter = cls(_entry(tmp_path, kind, with_sqlite=True))
+        adapter._kg = MagicMock()
+        adapter._kg.stats.return_value = {
+            "total_nodes": 4112,
+            "meaningful_nodes": 3528,
+            "total_edges": 12837,
+            "node_counts": {"class": 180},
+        }
+        stats = adapter.stats()
+        assert stats["kind"] == kind.value
+        assert stats["node_count"] == 3528
+        assert stats["edge_count"] == 12837
+
+    def test_analyze_graceful_on_error(self, tmp_path, cls, kind, module, class_name, store):
+        adapter = cls(_entry(tmp_path, kind, with_sqlite=True))
+        adapter._kg = MagicMock()
+        adapter._kg.analyze.side_effect = RuntimeError("boom")
+        assert "Analysis failed" in adapter.analyze()
 
 
 # ---------------------------------------------------------------------------

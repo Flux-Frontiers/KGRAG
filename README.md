@@ -47,6 +47,9 @@ RAG embeds text chunks and retrieves by approximate similarity — no structure,
 | `memory` | MemoryKG | Episodic memory — hybrid semantic + structural graph for conversation/event corpora |
 | `gutenberg` | GutenbergKG | Project Gutenberg book corpus — literature indexed by author, genre, and chapter via DocKG-compatible indices |
 | `genealogy` | GenealogyKG | Genealogical records — person/family graph with relational edges *(genealogy-kg not yet published to PyPI; adapter reports unavailable until it is)* |
+| `connectome` | ConnectomeKG | Synapse-resolution connectome (FlyWire FAFB v783): neurons, cell types, neuropils and labels, searched by their descriptions *(connectome-kg is not on PyPI; needs a connectome-kg release that can query a built store without its source data, and a store built with its vector index)* |
+| `swift` | SwiftKG | Swift codebases -- classes, structs, protocols, extensions, methods, and their calls *(swift-kg)* |
+| `typescript` | TypeScriptKG | TypeScript and JavaScript codebases -- modules, classes, functions, methods, and their calls *(tscode-kg)* |
 
 ### Stub Adapters (protocol boundary, backends under development)
 
