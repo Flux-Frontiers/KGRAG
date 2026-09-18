@@ -124,7 +124,7 @@ dependencies = [
     # a core (stdlib-only) module there, so this needs no extra. Nothing in a
     # later release is required -- the lock tracks the newest published
     # version, this states the minimum, and the two are not the same claim.
-    "kgmodule-utils>=0.18.0",
+    "kgmodule-utils>=0.22.0",
     # Upper-bounded: mcp 2.0 removed the low-level Server decorator API
     # (`@server.list_tools()` / `@server.call_tool()`) that kg_rag.mcp_server
     # uses. The Server class itself still imports under 2.0, so the failure
@@ -166,14 +166,14 @@ dependencies = [
 # a memory-kg corpus -- below it, a federated time-scoped query against one was
 # structurally impossible, not just untested.
 kg = [
-    "doc-kg>=0.24.1",
-    "memory-kg>=0.9.0",
-    "pycode-kg>=0.25.1",
+    "doc-kg>=0.26.0",
+    "memory-kg>=0.11.0",
+    "pycode-kg>=0.27.1",
 ]
 diary = [
     # 0.98.0: DiaryKG gained close()/__enter__/__exit__. kg_rag's own adapter
     # holds a DiaryKG for its lifetime with no way to release it before this.
-    "diary-kg>=0.98.0",
+    "diary-kg>=0.99.0",
 ]
 filetree = [
     "ftree-kg>=0.14.0",
@@ -222,11 +222,11 @@ pi = [
 # dependencies ... Different requirements found" and resolves by restarting the
 # whole lock with an override -- pathologically slow once a few packages do it.
 all = [
-    "diary-kg>=0.98.0",
-    "doc-kg>=0.24.1",
+    "diary-kg>=0.99.0",
+    "doc-kg>=0.26.0",
     "ftree-kg>=0.14.0",
-    "memory-kg>=0.9.0",
-    "pycode-kg>=0.25.1",
+    "memory-kg>=0.11.0",
+    "pycode-kg>=0.27.1",
     "firecrawl-anydoc>=0.1.9",
     "plotly>=5.14.0",
     "pyvis>=0.3.2",
@@ -329,12 +329,11 @@ pip-audit = "^2.10.0"
 # here so the suite exercises the real classes. The marginal cost is small --
 # sentence-transformers already pulls the torch/transformers stack.
 #
-# Pinned past .0 for the same reason as the kg/all extras: doc-kg 0.24.0 and
-# pycode-kg 0.25.0 shipped save_snapshot dropping snapshot provenance, fixed in
-# .1. A dev-dep floor that could still resolve the broken .0 would defeat the
-# whole point of testing against the real class.
-pycode-kg = ">=0.25.1"
-doc-kg = ">=0.24.1"
+# Kept in step with the kg/all extras' floors above -- a dev-dep floor lagging
+# behind them would test against an older real class than the one the extras
+# actually ship, defeating the point of installing the real class at all.
+pycode-kg = ">=0.27.1"
+doc-kg = ">=0.26.0"
 
 # ---------------------------------------------------------------------------
 # Tool configuration
