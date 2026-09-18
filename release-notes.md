@@ -1,20 +1,20 @@
-# Release Notes — v0.15.1
+# Release Notes — v0.16.0
 
 > Released: 2026-09-18
 
-`kgrag audit-lancedb` no longer tells you to delete a live index, and dependency floors catch up to the fleet.
+kg-rag can now see three more kinds of knowledge graph: connectomes, Swift codebases and TypeScript codebases. Before this release, discovery walked straight past them.
 
 ## What changed
 
-**`audit-lancedb` could recommend deleting real data.** It decided a KG had finished migrating to sqlite-vec by checking whether `vectors.sqlite` existed. A failed or interrupted migration leaves an empty-stub file in exactly that shape, so the audit classified it as leftover residue and its suggested remediation was `rm -rf` on the directory that, in that state, still held the only copy of the index. The check now confirms the store actually has data before calling it migrated, found on `waverider`'s doc KG.
+**Three new kinds.** `connectome`, `swift` and `typescript` each have a discovery marker, an adapter, a place in the MCP tools' kind filters, and a colour and icon in the app. The Swift and TypeScript adapters share one base, because SwiftKG and TypeScriptKG have the same shape as PyCodeKG. All three rank hits by raw semantic similarity, as the code adapter does, so their best hits compete fairly with every other KG's in a federated query.
 
-**`kgrag timeline` stopped framing an undated module as unfinished.** Not every knowledge graph is dated by design -- code KGs already have git for that, and some domains don't occur at a time at all -- and the wording used to read that abstention as a gap.
+**Connectomes install through a new extra.** `pip install "kg-rag[connectome]"` brings in `connectome-kg` 0.3.1, its first PyPI release, which can query a built connectome without the 34 GB source release. Each connectome is its own KG, so discovery registers the FlyWire brain and any later dataset separately. The adapter reports a connectome available only when it has both its graph and its vector index, since a query without the index would fail rather than return nothing.
 
-**Dependency floors caught up.** `kgmodule-utils`, `doc-kg`, `pycode-kg`, `memory-kg` and `diary-kg` all move to the fleet's current releases; the `doc-kg`/`pycode-kg` dev-group test dependencies, which govern which real class the adapter tests actually construct, had drifted behind their own extras' floors and are corrected along with them.
+**One unknown registry row no longer takes everything down.** The registry is shared by every kg-rag on a machine, so a newer kg-rag can write a kind an older one has never seen. That used to raise out of every registry read, breaking `kgrag list`, `kgrag status` and the MCP server. The row is now skipped with a warning.
 
 ## Upgrading
 
-No action needed. `poetry update` picks up the new floors; nothing else changes behavior for existing callers.
+Upgrade every kg-rag on the machine that reads the shared registry. A kg-rag older than 0.16.0 fails on any `connectome`, `swift` or `typescript` row as soon as one is registered. Add the `connectome` extra if you register connectomes. swift-kg and tscode-kg are installed on their own.
 
 ---
 

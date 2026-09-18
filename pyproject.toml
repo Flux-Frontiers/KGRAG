@@ -94,7 +94,7 @@ packages = [{ include = "kg_rag", from = "src" }]
 # ---------------------------------------------------------------------------
 [project]
 name = "kg-rag"
-version = "0.15.1"
+version = "0.16.0"
 description = "Orchestration layer for the KGRAG(tm) components."
 readme = "README.md"
 license = "Elastic-2.0"
@@ -178,6 +178,12 @@ diary = [
 filetree = [
     "ftree-kg>=0.14.0",
 ]
+connectome = [
+    # 0.3.1: the first release on PyPI. It carries 0.3.0's two changes the
+    # adapter relies on: a built store queries without the raw Codex release,
+    # and each dataset is its own store under connectomes/<id>/.connectomekg/.
+    "connectome-kg>=0.3.1",
+]
 # Multi-format document ingestion: `kgrag ingest`. Converts Word / PowerPoint /
 # Excel / OpenDocument / RTF / EPUB / CSV / PDF to Markdown. Optional because
 # staging .md/.txt/.rst needs nothing extra and kg_utils.ingest imports it
@@ -222,6 +228,7 @@ pi = [
 # dependencies ... Different requirements found" and resolves by restarting the
 # whole lock with an override -- pathologically slow once a few packages do it.
 all = [
+    "connectome-kg>=0.3.1",
     "diary-kg>=0.99.0",
     "doc-kg>=0.26.0",
     "ftree-kg>=0.14.0",

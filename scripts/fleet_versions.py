@@ -39,6 +39,7 @@ FLEET = {
     "doc_kg": "doc-kg",
     "pycode_kg": "pycode-kg",
     "tscode_kg": "tscode-kg",
+    "connectome_kg": "connectome-kg",
     "diary_kg": "diary-kg",
     "gutenberg_kg": "gutenberg-kg",
     "agent_kg": "agent-kg",

@@ -1,6 +1,6 @@
 [![Python](https://img.shields.io/badge/python-3.12%20%7C%203.13-blue.svg)](https://www.python.org/)
 [![License: Elastic-2.0](https://img.shields.io/badge/License-Elastic%202.0-blue.svg)](https://www.elastic.co/licensing/elastic-license)
-[![Version](https://img.shields.io/badge/version-0.15.1-blue.svg)](https://github.com/Flux-Frontiers/KGRAG/releases)
+[![Version](https://img.shields.io/badge/version-0.16.0-blue.svg)](https://github.com/Flux-Frontiers/KGRAG/releases)
 [![CI](https://github.com/Flux-Frontiers/KGRAG/actions/workflows/ci.yml/badge.svg)](https://github.com/Flux-Frontiers/KGRAG/actions/workflows/ci.yml)
 [![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.20018524-blue.svg)](https://doi.org/10.5281/zenodo.20018524)
@@ -47,7 +47,7 @@ RAG embeds text chunks and retrieves by approximate similarity — no structure,
 | `memory` | MemoryKG | Episodic memory — hybrid semantic + structural graph for conversation/event corpora |
 | `gutenberg` | GutenbergKG | Project Gutenberg book corpus — literature indexed by author, genre, and chapter via DocKG-compatible indices |
 | `genealogy` | GenealogyKG | Genealogical records — person/family graph with relational edges *(genealogy-kg not yet published to PyPI; adapter reports unavailable until it is)* |
-| `connectome` | ConnectomeKG | Synapse-resolution connectome (FlyWire FAFB v783): neurons, cell types, neuropils and labels, searched by their descriptions *(connectome-kg is not on PyPI; needs a connectome-kg release that can query a built store without its source data, and a store built with its vector index)* |
+| `connectome` | ConnectomeKG | Synapse-resolution connectome (FlyWire FAFB v783): neurons, cell types, neuropils and labels, searched by their descriptions *(connectome-kg; `kg-rag[connectome]`. Needs a store built with its vector index)* |
 | `swift` | SwiftKG | Swift codebases -- classes, structs, protocols, extensions, methods, and their calls *(swift-kg)* |
 | `typescript` | TypeScriptKG | TypeScript and JavaScript codebases -- modules, classes, functions, methods, and their calls *(tscode-kg)* |
 
@@ -206,13 +206,13 @@ If you use KGRAG in your research or project, please cite it:
 
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.20018524-blue.svg)](https://doi.org/10.5281/zenodo.20018524)
 
-> Suchanek, E. G. (2026). *KGRAG: Knowledge Compiler and Federated Retrieval Layer* (Version 0.15.1) [Software]. Flux-Frontiers. https://doi.org/10.5281/zenodo.20018524
+> Suchanek, E. G. (2026). *KGRAG: Knowledge Compiler and Federated Retrieval Layer* (Version 0.16.0) [Software]. Flux-Frontiers. https://doi.org/10.5281/zenodo.20018524
 
 ```bibtex
 @software{suchanek_kgrag,
   author    = {Suchanek, Eric G.},
   title     = {{KGRAG}: Knowledge Compiler and Federated Retrieval Layer},
-  version   = {0.15.1},
+  version   = {0.16.0},
   year      = {2026},
   publisher = {Flux-Frontiers},
   url       = {https://github.com/Flux-Frontiers/KGRAG},

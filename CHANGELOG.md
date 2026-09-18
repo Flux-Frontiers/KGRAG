@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-09-18
+
 ### Added
 
 - **Three new KG kinds: `connectome`, `swift` and `typescript`.** kg-rag
@@ -30,10 +32,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     A connectome can be built without a vector index (`connkg build
     --no-index`), which `ConnectomeKG.query()` answers by raising, so the
     adapter reports itself available only when the graph **and** the vector
-    store exist, not either one as `KGEntry.is_built` accepts. Queries need
-    `connectome-kg` with the fix that stops a built store from demanding the
-    raw Codex release; earlier versions fail with `source='codex' needs
-    data_dir`.
+    store exist, not either one as `KGEntry.is_built` accepts. Install it with
+    the new `connectome` extra, `pip install "kg-rag[connectome]"`, which
+    requires `connectome-kg>=0.3.1`, its first PyPI release. Earlier versions
+    demand the raw Codex release for every query and fail with
+    `source='codex' needs data_dir`. Each connectome is its own KG under
+    `connectomes/<dataset_id>/.connectomekg/`, so discovery registers each
+    dataset separately.
 
   All three adapters were checked against real stores (Alamofire's Swift
   graph, a TypeScript project, the full v783 connectome), and all three

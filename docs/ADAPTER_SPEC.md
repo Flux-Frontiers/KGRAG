@@ -612,6 +612,7 @@ class CrossSnippet:
 | MemoryKG | `memory` | `memory-kg` | `MemoryKG` stats summary | ✅ Adapter ready |
 | FTreeKG | `filetree` | `ftree-kg` | `FTreeKG` stats summary | ✅ Adapter ready |
 | GutenbergKG | `gutenberg` | `doc-kg` | `DocKGAnalyzer.run_analysis()` | ✅ Adapter ready |
+| ConnectomeKG | `connectome` | `connectome-kg` | `ConnectomeKG.analyze()` | ✅ Adapter ready |
 | IABookKG | `ia` | `ia-kg` (planned) | — | 🔲 Stub |
 | VerseKG | `verse` | `verse-kg` (planned) | — | 🔲 Stub |
 | LegalKG | `legal` | `legal-kg` (planned) | — | 🔲 Stub |

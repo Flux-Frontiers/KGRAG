@@ -18,6 +18,7 @@ run them from source.
 | **[GutenbergKG](https://github.com/Flux-Frontiers/gutenberg_kg)** | Project Gutenberg texts: books as documents, sections, and chunks | not a package |
 | **[DocKG](https://github.com/Flux-Frontiers/doc_kg)** | Markdown and prose. any Markdown or prose corpus becomes a queryable graph | `doc-kg` |
 | **[DiaryKG](https://github.com/Flux-Frontiers/diary_kg)** | Personal journals and diary corpora — semantic search and traversal over a writer's body of work | `diary-kg` |
+| **[ConnectomeKG](https://github.com/Flux-Frontiers/connectome_kg)** | Electron-microscopy connectomes, starting with the FlyWire fly brain: neurons, cell types, neuropils and the synapses between them | `connectome-kg` |
 | **[AgentKG](https://github.com/Flux-Frontiers/agent_kg)** | Conversational memory: turns, decisions, commitments, preferences, and the relationships between them | `agent-kg` |
 | **[FTreeKG](https://github.com/Flux-Frontiers/ftree_kg)** | Filesystem trees as a graph of directories, files, and contents | `ftree-kg` |
 | **[IAKG](https://github.com/Flux-Frontiers/ia_kg)** | Internet Archive books, downloaded and ingested as graphs | `ia-kg` |

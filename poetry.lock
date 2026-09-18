@@ -596,6 +596,33 @@ files = [
 ]
 
 [[package]]
+name = "connectome-kg"
+version = "0.3.1"
+description = "Connectomes (FlyWire, hemibrain, MaleCNS) as KGModule knowledge graphs"
+optional = true
+python-versions = "<3.14,>=3.12"
+groups = ["main"]
+markers = "extra == \"connectome\" or extra == \"all\""
+files = [
+    {file = "connectome_kg-0.3.1-py3-none-any.whl", hash = "sha256:1d25f34dca00e188e85d9c6759dc5786fde8f4d69e77540009c4e2cc6ba2bd0d"},
+    {file = "connectome_kg-0.3.1.tar.gz", hash = "sha256:7f2998ca99972a9ffe3ee93cff0875c68cf0673a6c34090d78790dfae130d62f"},
+]
+
+[package.dependencies]
+click = ">=8.1.0,<9"
+kgmodule-utils = ">=0.22.0"
+mcp = ">=1.0.0,<2"
+numpy = ">=1.24.0"
+pandas = ">=2.2.0"
+pyarrow = ">=15.0.0"
+scipy = ">=1.12.0"
+
+[package.extras]
+semantic = ["kgmodule-utils[semantic] (>=0.22.0)"]
+viz = ["kgmodule-utils[viz] (>=0.22.0)", "plotly (>=5.14.0)"]
+viz3d = ["kgmodule-utils[viz3d-qt,viz3d-render] (>=0.22.0)", "pyvistaqt (>=0.11.0)", "quiltwright (>=0.14.1)"]
+
+[[package]]
 name = "contourpy"
 version = "1.3.3"
 description = "Python library for calculating contours of 2D quadrilateral grids"
@@ -3660,7 +3687,7 @@ description = "Python library for Apache Arrow"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "extra == \"viz\" or extra == \"all\""
+markers = "extra == \"connectome\" or extra == \"all\" or extra == \"viz\""
 files = [
     {file = "pyarrow-24.0.0-cp310-cp310-macosx_12_0_arm64.whl", hash = "sha256:7c2b98645d576a0b9616892ead22b64a83a5f043c5e2ca15ebcefcb5b70c80cb"},
     {file = "pyarrow-24.0.0-cp310-cp310-macosx_12_0_x86_64.whl", hash = "sha256:644a246325b8c69c595ad1dd4b463eba4b0cdb731370e4a86137d433208d6147"},
@@ -6489,7 +6516,8 @@ files = [
 dev = ["pytest", "setuptools"]
 
 [extras]
-all = ["PyQt5", "diary-kg", "doc-kg", "firecrawl-anydoc", "ftree-kg", "markdown", "memory-kg", "param", "plotly", "pycode-kg", "pyvis", "pyvista", "pyvistaqt", "streamlit", "trame-vtk"]
+all = ["PyQt5", "connectome-kg", "diary-kg", "doc-kg", "firecrawl-anydoc", "ftree-kg", "markdown", "memory-kg", "param", "plotly", "pycode-kg", "pyvis", "pyvista", "pyvistaqt", "streamlit", "trame-vtk"]
+connectome = ["connectome-kg"]
 diary = ["diary-kg"]
 filetree = ["ftree-kg"]
 ingest = ["firecrawl-anydoc"]
@@ -6503,4 +6531,4 @@ viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "19fe60ea073f8b49ad412c8d2e0709c3841eb97db987fa5b11085c12a4c4b0ed"
+content-hash = "389d02e05989c648acf1b98d597058293f0091d8523d0566d44dd6dca42a3046"
