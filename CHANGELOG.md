@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`ftree-kg` floor 0.14.0 -> 0.16.0** in the `filetree` and `all` extras,
+  with the lock moved to match. It was the one fleet package kg-rag still
+  locked behind its newest release.
+
 ## [0.16.0] - 2026-09-18
 
 ### Added

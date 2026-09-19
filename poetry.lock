@@ -1460,26 +1460,26 @@ tqdm = ["tqdm"]
 
 [[package]]
 name = "ftree-kg"
-version = "0.14.0"
+version = "0.16.0"
 description = "KGModule for file tree knowledge graphs"
 optional = true
 python-versions = "<3.14,>=3.12"
 groups = ["main"]
 markers = "extra == \"filetree\" or extra == \"all\""
 files = [
-    {file = "ftree_kg-0.14.0-py3-none-any.whl", hash = "sha256:b1e2397741ea03a6e9a5cd24555d43dd36a5c517091b64974c593fe7f68d67e5"},
-    {file = "ftree_kg-0.14.0.tar.gz", hash = "sha256:0cffca37f441de76289ff8affc7ae2697bbb6e4b52ba4040f9061193958180ed"},
+    {file = "ftree_kg-0.16.0-py3-none-any.whl", hash = "sha256:fd3314d3171ed95ce70f2cac354ef4ad96e5b3e90ab48ae0e05063dadb40feed"},
+    {file = "ftree_kg-0.16.0.tar.gz", hash = "sha256:8c0fc21e7a70a38b697fe260456bebdcb6ea5637e5351a36992a5960a227a0e0"},
 ]
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = {version = ">=0.18.0", extras = ["semantic", "sqlite-vec"]}
+kgmodule-utils = {version = ">=0.20.0", extras = ["semantic", "sqlite-vec"]}
 mcp = ">=1.0.0,<2"
 pillow = ">=10.0.0"
 rich = ">=13.0.0,<15.0.0"
 
 [package.extras]
-adapter = ["kg-rag (>=0.12.0)"]
+adapter = ["kg-rag (>=0.14.0)"]
 
 [[package]]
 name = "h11"
@@ -6531,4 +6531,4 @@ viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "389d02e05989c648acf1b98d597058293f0091d8523d0566d44dd6dca42a3046"
+content-hash = "f5d1623f8eae6ac003c6189b7f3db5b3ee31601ba3bccf64d93efb010f498132"
