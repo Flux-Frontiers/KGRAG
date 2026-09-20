@@ -12,6 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`ftree-kg` floor 0.14.0 -> 0.16.0** in the `filetree` and `all` extras,
   with the lock moved to match. It was the one fleet package kg-rag still
   locked behind its newest release.
+- **`connectome-kg` floor 0.3.1 -> 0.5.0** in the `connectome` and `all`
+  extras, with the lock moved to match (`kgrag_priv` sweep item 49, tier 1).
+  It was the widest single gap in the fleet: `connectome_kg` released 0.4.0
+  and 0.5.0 on 2026-09-19/20, and 0.5.0 renames `Dataset.licence` to
+  `Dataset.license`. The adapter does not read that attribute -- it wraps
+  `ConnectomeKG` only -- and was smoke-tested against the real 0.5.0 class.
+- **`ruff` floor raised from `>=0.4.0` to `>=0.15`**, inside the existing
+  `<0.16` cap. Every fleet lock already installs 0.15.
 
 ## [0.16.0] - 2026-09-18
 
