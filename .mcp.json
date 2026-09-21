@@ -1,0 +1,62 @@
+{
+  "mcpServers": {
+    "copilot-memory": {
+      "command": "node",
+      "args": [
+        "${HOME}/.claude/copilot/mcp-servers/copilot-memory/dist/index.js"
+      ],
+      "env": {
+        "MEMORY_PATH": "${HOME}/.claude/memory",
+        "WORKSPACE_ID": "kgrag"
+      }
+    },
+    "skills-copilot": {
+      "command": "node",
+      "args": [
+        "${HOME}/.claude/copilot/mcp-servers/skills-copilot/dist/index.js"
+      ],
+      "env": {
+        "LOCAL_SKILLS_PATH": ".claude/skills"
+      }
+    },
+    "task-copilot": {
+      "command": "node",
+      "args": [
+        "${HOME}/.claude/copilot/mcp-servers/task-copilot/dist/index.js"
+      ],
+      "env": {
+        "TASK_DB_PATH": "${HOME}/.claude/tasks",
+        "WORKSPACE_ID": "kgrag"
+      }
+    },
+    "pycodekg": {
+      "command": "${HOME}/.local/bin/pycodekg-mcp",
+      "args": [
+        "--repo",
+        "."
+      ]
+    },
+    "dockg": {
+      "command": "${HOME}/.local/bin/dockg",
+      "args": [
+        "mcp",
+        "--repo",
+        "."
+      ]
+    },
+    "kgrag": {
+      "command": ".venv/bin/kgrag",
+      "args": [
+        "mcp"
+      ]
+    },
+    "memorykg": {
+      "command": ".venv/bin/memorykg",
+      "args": [
+        "mcp",
+        "--repo",
+        "."
+      ]
+    }
+  }
+}
