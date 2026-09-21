@@ -27,8 +27,7 @@
 #   viz2d    Qt surface for `kgrag viz2d` (PyQt5)
 #   qt       alias for viz2d, kept for older install instructions
 #   viz3d    3-D visualiser (pyvista, pyvistaqt, PyQt5)
-#   pi       llama-cpp-python embedder (Raspberry Pi / local GGUF)
-#   all      everything except `pi` -- see the note on that extra below
+#   all      every extra above
 #
 # Quick install (poetry)
 # ----------------------
@@ -39,8 +38,7 @@
 #                                             core + every PyPI KG backend
 #   poetry install --extras "viz"             core + 2-D visualization
 #   poetry install --extras "viz3d"           core + 3-D visualization
-#   poetry install --extras "pi"              core + llama-cpp-python
-#   poetry install --extras "all"             everything except "pi" (needs a compiler)
+#   poetry install --extras "all"             every extra
 #   poetry install --extras "all" --with dev  everything + dev tools
 #
 # Quick install (pip)
@@ -48,7 +46,7 @@
 #   pip install -e "."                        core only
 #   pip install -e ".[kg]"                    core + the common KG backends
 #   pip install -e ".[kg,diary,filetree]"     core + every PyPI KG backend
-#   pip install -e ".[all]"                   everything except "pi"
+#   pip install -e ".[all]"                   every extra
 #
 # Git-only adapter backends (gutenberg-kg, metabo-kg) are not on PyPI and so
 # cannot be declared here. Install them separately when you register a KG of
@@ -215,12 +213,15 @@ viz3d = [
     "pyvistaqt>=0.11.0",
     "trame-vtk>=2.0.0",
 ]
-pi = [
-    "llama-cpp-python>=0.3.0",
-]
-# Deliberately excludes "pi": llama-cpp-python has no wheel for every platform
-# and falls back to a source build, so folding it in here would make `--all-extras`
-# require a compiler toolchain. Install it explicitly with --extras "pi".
+# `all` is every extra above, so `--all-extras` and `--extras all` agree.
+#
+# There is deliberately no extra for llama-cpp-python. `embed_backend = "llama"`
+# still works and LlamaCppEmbedder says how to install it, but the wheel does not
+# exist for every platform and falls back to a source build, so an extra would
+# make `--all-extras` need a compiler toolchain. It was carried as `[pi]` from
+# 2026-04-25 until 2026-09-21 for a Raspberry Pi deployment that never happened;
+# nothing in the fleet ever configured the backend, and TEI now covers the
+# no-torch case. Install it by hand if you want it.
 #
 # Constraints here must match the per-extra ones above character for character.
 # Re-listing a package under a *different* constraint makes it a second

@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **The `pi` extra** (`llama-cpp-python`). Added 2026-04-25 for a Raspberry
+  Pi deployment that never happened, and never installed by anything: no
+  `[tool.kgrag]` block in the fleet sets `embed_backend = "llama"`, no
+  dependent requests `kg-rag[pi]`, and CI installs no extras. The backend
+  itself is unchanged -- `embed_backend = "llama"` still works, and
+  `LlamaCppEmbedder` already tells you to `pip install llama-cpp-python`.
+  Only the packaging goes, which makes `--all-extras` correct in this repo
+  again: it was the one extra that needed a compiler, and the reason the
+  fleet's `--all-extras` convention carried a documented exception for
+  kg-rag. The no-torch case it was meant to serve is now TEI's job
+  (decided 2026-08-15).
+
 ### Changed
 
 - **Fleet dependency floors raised and relocked** (`kgrag_priv` sweep item 46):

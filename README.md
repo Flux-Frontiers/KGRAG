@@ -107,7 +107,7 @@ pip install 'kg-rag[filetree]'
 # With multi-format document ingestion (PDF, Word, PowerPoint, Excel, EPUB, ...)
 pip install 'kg-rag[ingest]'
 
-# Everything except [pi], which needs a compiler toolchain
+# Every extra
 pip install 'kg-rag[all]'
 ```
 
