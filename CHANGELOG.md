@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Fleet dependency floors raised and relocked** (`kgrag_priv` sweep item 46):
+  `kgmodule-utils` to `>=0.23.0`, `doc-kg` to `>=0.27.0`, `pycode-kg` to `>=0.28.0`. The three packages released on 2026-09-20 and put
+  every consumer's lock behind them within hours; this is the routine
+  currency bump that follows.
+
 - **`ftree-kg` floor 0.14.0 -> 0.16.0** in the `filetree` and `all` extras,
   with the lock moved to match. It was the one fleet package kg-rag still
   locked behind its newest release.
