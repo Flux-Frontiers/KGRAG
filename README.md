@@ -50,6 +50,7 @@ RAG embeds text chunks and retrieves by approximate similarity — no structure,
 | `connectome` | ConnectomeKG | Synapse-resolution connectome (FlyWire FAFB v783): neurons, cell types, neuropils and labels, searched by their descriptions *(connectome-kg; `kg-rag[connectome]`. Needs a store built with its vector index)* |
 | `swift` | SwiftKG | Swift codebases -- classes, structs, protocols, extensions, methods, and their calls *(swift-kg)* |
 | `typescript` | TypeScriptKG | TypeScript and JavaScript codebases -- modules, classes, functions, methods, and their calls *(tscode-kg)* |
+| `vault` | VaultKG | Obsidian-style Markdown vaults -- notes, sections, tags, and the wikilinks, embeds and typed links (`supports:: [[X]]`) their authors wrote *(vault-kg; not yet on PyPI, so the adapter reports unavailable until it is installed)* |
 
 ### Stub Adapters (protocol boundary, backends under development)
 

@@ -37,6 +37,7 @@ class KGKind(StrEnum):
     CONNECTOME = "connectome"
     SWIFT = "swift"
     TYPESCRIPT = "typescript"
+    VAULT = "vault"
 
     @classmethod
     def from_str(cls, s: str) -> KGKind:

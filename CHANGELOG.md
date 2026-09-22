@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **A new KG kind: `vault`** (Obsidian-style Markdown vaults, backed by
+  `vault-kg`). The vault's own structure becomes the graph: notes,
+  sections, tags, wikilinks, embeds and typed links (`supports:: [[X]]`,
+  or frontmatter keys holding wikilinks). All of it is parsed, not extracted
+  by a model, which is the same rule the rest of the fleet follows.
+  `.vaultkg/` is a discovery marker, and the kind has a `VaultKGAdapter`, a
+  colour and icon in the app, and a place in the three MCP tool kind
+  filters. VaultKG is a `KGModule` with the code modules' constructor and
+  node shape, so the adapter subclasses `CodeModuleKGAdapter` and adds only
+  vault counts to `stats()`. Notes with frontmatter `date`/`created` carry
+  the fleet temporal keys through hit metadata, so `time_range` scopes
+  filter them. Checked end to end: `kgrag scan --auto-register` then
+  `kgrag query` against a 250-note vault with a real MiniLM index.
+  `vault-kg` is not on PyPI yet, so there is no extra; until it is
+  installed the adapter reports unavailable, as `genealogy` does.
+
 ### Removed
 
 - **The `pi` extra** (`llama-cpp-python`). Added 2026-04-25 for a Raspberry
