@@ -86,6 +86,7 @@ def _make_server(registry_path: Path | None = None) -> Server:
                                 "connectome",
                                 "swift",
                                 "typescript",
+                                "vault",
                             ],
                             "description": "Optional filter by KG kind.",
                         }
@@ -136,6 +137,7 @@ def _make_server(registry_path: Path | None = None) -> Server:
                                     "connectome",
                                     "swift",
                                     "typescript",
+                                    "vault",
                                 ],
                             },
                             "description": "Restrict to these KG kinds.",
@@ -183,6 +185,7 @@ def _make_server(registry_path: Path | None = None) -> Server:
                                     "connectome",
                                     "swift",
                                     "typescript",
+                                    "vault",
                                 ],
                             },
                             "description": "Restrict to these KG kinds.",

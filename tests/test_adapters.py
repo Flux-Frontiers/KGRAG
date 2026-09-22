@@ -45,6 +45,7 @@ from kg_rag.adapters.person_adapter import PersonKGAdapter
 from kg_rag.adapters.pycodekg_adaptor import CodeKGAdapter
 from kg_rag.adapters.swift_adapter import SwiftKGAdapter
 from kg_rag.adapters.typescript_adapter import TypeScriptKGAdapter
+from kg_rag.adapters.vault_adapter import VaultKGAdapter
 from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry, KGKind
 
 # ---------------------------------------------------------------------------
@@ -108,6 +109,9 @@ class TestMakeAdapter:
     def test_typescript_kind_returns_typescriptkg_adapter(self, tmp_path):
         entry = _entry(tmp_path, KGKind.TYPESCRIPT)
         assert isinstance(make_adapter(entry), TypeScriptKGAdapter)
+
+    def test_vault_kind_returns_vaultkg_adapter(self, tmp_path):
+        assert isinstance(make_adapter(_entry(tmp_path, KGKind.VAULT)), VaultKGAdapter)
 
     def test_filetree_kind_returns_ftreekg_adapter(self, tmp_path):
         entry = _entry(tmp_path, KGKind.FILETREE)
@@ -1473,6 +1477,8 @@ _CODE_ADAPTERS = [
     pytest.param(
         TypeScriptKGAdapter, KGKind.TYPESCRIPT, "tscode_kg", "TypeScriptKG", ".tscodekg", id="ts"
     ),
+    # VaultKG is a KGModule with the same constructor and node shape.
+    pytest.param(VaultKGAdapter, KGKind.VAULT, "vaultkg", "VaultKG", ".vaultkg", id="vault"),
 ]
 _CODE_NODE = {
     "id": "meth:Source/Core/Request.swift:RequestDelegate.retryRequest",
@@ -2894,3 +2900,30 @@ class TestStubKGAdapterSnapshotMetrics:
             metrics = adapter._collect_snapshot_metrics()
 
         assert metrics == {"status": "available"}
+
+
+class TestVaultKGAdapterStats:
+    def test_stats_adds_vault_counts(self, tmp_path):
+        adapter = VaultKGAdapter(_entry(tmp_path, KGKind.VAULT, with_sqlite=True))
+        adapter._kg = MagicMock()
+        adapter._kg.stats.return_value = {
+            "total_nodes": 1168,
+            "meaningful_nodes": 1167,
+            "total_edges": 1386,
+            "node_counts": {"note": 250, "heading": 917, "symbol": 1},
+            "notes": 250,
+            "headings": 917,
+            "tags": 0,
+            "unresolved": 1,
+        }
+        stats = adapter.stats()
+        assert stats["kind"] == "vault"
+        assert stats["node_count"] == 1167
+        assert (stats["notes"], stats["headings"], stats["unresolved"]) == (250, 917, 1)
+        assert "docstring_coverage" not in stats
+
+    def test_stats_error_passes_through(self, tmp_path):
+        adapter = VaultKGAdapter(_entry(tmp_path, KGKind.VAULT, with_sqlite=True))
+        adapter._kg = MagicMock()
+        adapter._kg.stats.side_effect = RuntimeError("locked")
+        assert adapter.stats()["error"] == "locked"

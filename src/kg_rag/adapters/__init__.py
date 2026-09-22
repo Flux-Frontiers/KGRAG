@@ -19,6 +19,7 @@ from kg_rag.adapters.person_adapter import PersonKGAdapter
 from kg_rag.adapters.pycodekg_adaptor import CodeKGAdapter
 from kg_rag.adapters.swift_adapter import SwiftKGAdapter
 from kg_rag.adapters.typescript_adapter import TypeScriptKGAdapter
+from kg_rag.adapters.vault_adapter import VaultKGAdapter
 from kg_rag.adapters.verse_adapter import VerseKGAdapter
 from kg_rag.primitives import KGKind
 
@@ -53,6 +54,7 @@ def make_adapter(entry, embedder=None) -> KGAdapter:
         KGKind.CONNECTOME: ConnectomeKGAdapter,
         KGKind.SWIFT: SwiftKGAdapter,
         KGKind.TYPESCRIPT: TypeScriptKGAdapter,
+        KGKind.VAULT: VaultKGAdapter,
     }
     cls = _map.get(entry.kind)
     if cls is None:
@@ -81,5 +83,6 @@ __all__ = [
     "ConnectomeKGAdapter",
     "SwiftKGAdapter",
     "TypeScriptKGAdapter",
+    "VaultKGAdapter",
     "make_adapter",
 ]

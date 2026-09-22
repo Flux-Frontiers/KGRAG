@@ -55,6 +55,7 @@ _KG_KIND_COLOR: dict[str, str] = {
     "connectome": "#5E35B1",  # deep purple
     "swift": "#F05138",  # swift orange
     "typescript": "#3178C6",  # typescript blue
+    "vault": "#7C3AED",  # violet
 }
 
 _KG_KIND_ICON: dict[str, str] = {
@@ -76,6 +77,7 @@ _KG_KIND_ICON: dict[str, str] = {
     "connectome": "🧠",
     "swift": "🐦",
     "typescript": "🟦",
+    "vault": "💎",
 }
 
 _NODE_KIND_COLOR: dict[str, str] = {
