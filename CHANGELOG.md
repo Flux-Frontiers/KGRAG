@@ -22,8 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the fleet temporal keys through hit metadata, so `time_range` scopes
   filter them. Checked end to end: `kgrag scan --auto-register` then
   `kgrag query` against a 250-note vault with a real MiniLM index.
-  `vault-kg` is not on PyPI yet, so there is no extra; until it is
-  installed the adapter reports unavailable, as `genealogy` does.
+  Install the backend with the new `vault` extra, `kg-rag[vault]`
+  (`vault-kg>=0.1.0`, the first release), also part of `all`; without it
+  the adapter reports unavailable, as every optional kind does. The kind is
+  listed in `docs/ADAPTER_SPEC.md` and `docs/SISTER_PROJECTS.md`.
 
 ### Removed
 
@@ -41,6 +43,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Relocked onto the latest fleet releases**: `connectome-kg` 0.5.0 ->
+  0.7.1, `diary-kg` 0.99.0 -> 0.100.0, `ftree-kg` 0.16.0 -> 0.17.0 and
+  `memory-kg` 0.11.0 -> 0.12.0, plus `vault-kg` 0.1.0 for the new extra. No
+  floor moved: nothing here needs what those releases added.
 - **Fleet dependency floors raised and relocked** (`kgrag_priv` sweep item 46):
   `kgmodule-utils` to `>=0.23.0`, `doc-kg` to `>=0.27.0`, `pycode-kg` to `>=0.28.0`. The three packages released on 2026-09-20 and put
   every consumer's lock behind them within hours; this is the routine
@@ -57,6 +63,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `ConnectomeKG` only -- and was smoke-tested against the real 0.5.0 class.
 - **`ruff` floor raised from `>=0.4.0` to `>=0.15`**, inside the existing
   `<0.16` cap. Every fleet lock already installs 0.15.
+
+### Fixed
+
+- **Stale kind listings in the docs and the version script.** GenealogyKG,
+  SwiftKG and TypeScriptKG are in `docs/ADAPTER_SPEC.md`'s adapter table,
+  replacing a TypeScript row that still called it planned under a `tskg`
+  name; GenealogyKG and SwiftKG are in `docs/SISTER_PROJECTS.md`; and
+  `scripts/fleet_versions.py` now tracks `genealogy-kg`, `swift-kg`,
+  `quiltwright` and `vault-kg`. The README no longer says `genealogy-kg` is
+  unpublished; it has been on PyPI since 0.1.0.
 
 ## [0.16.0] - 2026-09-18
 

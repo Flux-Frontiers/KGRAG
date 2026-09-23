@@ -21,11 +21,14 @@ run them from source.
 | **[ConnectomeKG](https://github.com/Flux-Frontiers/connectome_kg)** | Electron-microscopy connectomes, starting with the FlyWire fly brain: neurons, cell types, neuropils and the synapses between them | `connectome-kg` |
 | **[AgentKG](https://github.com/Flux-Frontiers/agent_kg)** | Conversational memory: turns, decisions, commitments, preferences, and the relationships between them | `agent-kg` |
 | **[FTreeKG](https://github.com/Flux-Frontiers/ftree_kg)** | Filesystem trees as a graph of directories, files, and contents | `ftree-kg` |
+| **[GenealogyKG](https://github.com/Flux-Frontiers/genealogy_kg)** | GEDCOM family-history files: people, families, events and places, with a living-person filter | `genealogy-kg` |
 | **[IAKG](https://github.com/Flux-Frontiers/ia_kg)** | Internet Archive books, downloaded and ingested as graphs | `ia-kg` |
 | **[MemoryKG](https://github.com/Flux-Frontiers/memory_kg)** | Long-term agent memory as a graph | `memory-kg` |
 | **[MetaboKG](https://github.com/Flux-Frontiers/metabo_kg)** | Metabolic pathway data (KEGG, SBML, BioPAX), with FBA / ODE simulation on top of the graph | not a package |
 | **[PyCodeKG](https://github.com/Flux-Frontiers/pycode_kg)** | Python codebases — modules, classes, functions, and the calls between them | `pycode-kg` |
+| **[SwiftKG](https://github.com/Flux-Frontiers/swift_kg)** | Swift codebases: classes, structs, protocols, extensions and the calls between them | `swift-kg` |
 | **[TSCodeKG](https://github.com/Flux-Frontiers/tscode_kg)** | TypeScript and JavaScript codebases, the same treatment | `tscode-kg` |
+| **[VaultKG](https://github.com/Flux-Frontiers/vault_kg)** | Obsidian-style Markdown vaults: notes, sections and tags, joined by the wikilinks, embeds and typed links their authors wrote | `vault-kg` |
 
 ## The federation
 
