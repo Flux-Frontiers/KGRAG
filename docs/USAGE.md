@@ -261,7 +261,7 @@ kgrag query QUERY_TEXT [-k N] [--kind KIND] [--json]
 kgrag pack  QUERY_TEXT [-k N] [--kind KIND] [--context N] [--out FILE]
 ```
 
-`--kind` accepts any of the 18 KG types. Queries against stubbed kinds
+`--kind` accepts any of the 19 KG types. Queries against stubbed kinds
 (verse, disulfide, pdbfile, legal, person, ia) return no hits, and any other
 kind returns none until its backing library is installed.
 

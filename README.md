@@ -1,6 +1,6 @@
 [![Python](https://img.shields.io/badge/python-3.12%20%7C%203.13-blue.svg)](https://www.python.org/)
 [![License: Elastic-2.0](https://img.shields.io/badge/License-Elastic%202.0-blue.svg)](https://www.elastic.co/licensing/elastic-license)
-[![Version](https://img.shields.io/badge/version-0.16.0-blue.svg)](https://github.com/Flux-Frontiers/KGRAG/releases)
+[![Version](https://img.shields.io/badge/version-0.17.0-blue.svg)](https://github.com/Flux-Frontiers/KGRAG/releases)
 [![CI](https://github.com/Flux-Frontiers/KGRAG/actions/workflows/ci.yml/badge.svg)](https://github.com/Flux-Frontiers/KGRAG/actions/workflows/ci.yml)
 [![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.20018524-blue.svg)](https://doi.org/10.5281/zenodo.20018524)
@@ -100,10 +100,12 @@ pip install 'kg-rag[viz]'
 # DocKG also backs every GutenbergKG corpus, which queries through it.
 pip install 'kg-rag[kg]'
 
-# DiaryKG and FileTreeKG back kinds most registries never hold, so they
-# have their own extras rather than riding along with [kg].
+# DiaryKG, FileTreeKG, ConnectomeKG and VaultKG back kinds most registries
+# never hold, so they have their own extras rather than riding along with [kg].
 pip install 'kg-rag[diary]'
 pip install 'kg-rag[filetree]'
+pip install 'kg-rag[connectome]'
+pip install 'kg-rag[vault]'
 
 # With multi-format document ingestion (PDF, Word, PowerPoint, Excel, EPUB, ...)
 pip install 'kg-rag[ingest]'
@@ -207,13 +209,13 @@ If you use KGRAG in your research or project, please cite it:
 
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.20018524-blue.svg)](https://doi.org/10.5281/zenodo.20018524)
 
-> Suchanek, E. G. (2026). *KGRAG: Knowledge Compiler and Federated Retrieval Layer* (Version 0.16.0) [Software]. Flux-Frontiers. https://doi.org/10.5281/zenodo.20018524
+> Suchanek, E. G. (2026). *KGRAG: Knowledge Compiler and Federated Retrieval Layer* (Version 0.17.0) [Software]. Flux-Frontiers. https://doi.org/10.5281/zenodo.20018524
 
 ```bibtex
 @software{suchanek_kgrag,
   author    = {Suchanek, Eric G.},
   title     = {{KGRAG}: Knowledge Compiler and Federated Retrieval Layer},
-  version   = {0.16.0},
+  version   = {0.17.0},
   year      = {2026},
   publisher = {Flux-Frontiers},
   url       = {https://github.com/Flux-Frontiers/KGRAG},

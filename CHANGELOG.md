@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-09-22
+
 ### Added
 
 - **A new KG kind: `vault`** (Obsidian-style Markdown vaults, backed by
@@ -73,6 +75,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `scripts/fleet_versions.py` now tracks `genealogy-kg`, `swift-kg`,
   `quiltwright` and `vault-kg`. The README no longer says `genealogy-kg` is
   unpublished; it has been on PyPI since 0.1.0.
+  `docs/USAGE.md` counts 19 KG types, and the README's install block lists
+  the `connectome` and `vault` extras beside `diary` and `filetree`.
 
 ## [0.16.0] - 2026-09-18
 

@@ -1,20 +1,45 @@
-# Release Notes — v0.16.0
+# Release Notes -- v0.17.0
 
-> Released: 2026-09-18
+> Released: 2026-09-22
 
-kg-rag can now see three more kinds of knowledge graph: connectomes, Swift codebases and TypeScript codebases. Before this release, discovery walked straight past them.
+KGRAG can now federate Obsidian-style Markdown vaults. A vault registered as
+kind `vault` is searched alongside code, documents, diaries and every other
+registered knowledge graph, and its hits carry the note's path, line span
+and frontmatter dates like any other.
 
 ## What changed
 
-**Three new kinds.** `connectome`, `swift` and `typescript` each have a discovery marker, an adapter, a place in the MCP tools' kind filters, and a colour and icon in the app. The Swift and TypeScript adapters share one base, because SwiftKG and TypeScriptKG have the same shape as PyCodeKG. All three rank hits by raw semantic similarity, as the code adapter does, so their best hits compete fairly with every other KG's in a federated query.
+**A new kind: `vault`.** VaultKG builds a graph from the links a vault's
+author wrote -- wikilinks, embeds, tags and typed links such as
+`supports:: [[X]]` -- with no model extraction. KGRAG reaches it through a
+`VaultKGAdapter`, finds `.vaultkg/` stores with `kgrag scan`, and lists the
+kind in the app and the MCP tools' kind filters. Notes with a frontmatter
+`date` or `created` carry the fleet's time keys, so time-scoped queries
+filter them with everything else.
 
-**Connectomes install through a new extra.** `pip install "kg-rag[connectome]"` brings in `connectome-kg` 0.3.1, its first PyPI release, which can query a built connectome without the 34 GB source release. Each connectome is its own KG, so discovery registers the FlyWire brain and any later dataset separately. The adapter reports a connectome available only when it has both its graph and its vector index, since a query without the index would fail rather than return nothing.
+**A `vault` extra.** `pip install "kg-rag[vault]"` installs VaultKG with
+KGRAG; it is also part of `all`. Without it the kind reports unavailable
+rather than failing.
 
-**One unknown registry row no longer takes everything down.** The registry is shared by every kg-rag on a machine, so a newer kg-rag can write a kind an older one has never seen. That used to raise out of every registry read, breaking `kgrag list`, `kgrag status` and the MCP server. The row is now skipped with a warning.
+**Current fleet dependencies.** The lock moves to connectome-kg 0.7.1,
+diary-kg 0.100.0, ftree-kg 0.17.0 and memory-kg 0.12.0. The `pi` extra is
+gone: it pulled `llama-cpp-python`, which nothing configured, and made
+`--all-extras` need a compiler on some platforms. The `llama` embedding
+backend still works if you install that package yourself.
+
+**Docs that match the fleet.** The adapter table and sister-project list now
+include GenealogyKG, SwiftKG, TypeScriptKG and VaultKG, the usage guide
+counts 19 KG types, and the install instructions list every per-kind extra.
 
 ## Upgrading
 
-Upgrade every kg-rag on the machine that reads the shared registry. A kg-rag older than 0.16.0 fails on any `connectome`, `swift` or `typescript` row as soon as one is registered. Add the `connectome` extra if you register connectomes. swift-kg and tscode-kg are installed on their own.
+```bash
+uv tool install --force 'kg-rag[all]'
+kgrag register my-brain vault ~/brain     # after: vaultkg build --vault ~/brain
+```
+
+Nothing else changes for existing registries. If you installed the `pi`
+extra, install `llama-cpp-python` directly instead.
 
 ---
 
