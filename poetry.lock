@@ -597,20 +597,20 @@ files = [
 
 [[package]]
 name = "connectome-kg"
-version = "0.5.0"
+version = "0.7.1"
 description = "Connectomes (FlyWire, hemibrain, MaleCNS) as KGModule knowledge graphs"
 optional = true
 python-versions = "<3.14,>=3.12"
 groups = ["main"]
 markers = "extra == \"connectome\" or extra == \"all\""
 files = [
-    {file = "connectome_kg-0.5.0-py3-none-any.whl", hash = "sha256:97dfd88661b6ae3720af41894afbf74c57d5f74200a61d7cc1b62cb9607ba103"},
-    {file = "connectome_kg-0.5.0.tar.gz", hash = "sha256:72a16cb74ec28be4314556c15edeb668927844300434151d414585dac6ab95fb"},
+    {file = "connectome_kg-0.7.1-py3-none-any.whl", hash = "sha256:61dbbb5039edaf91b4c0a056ebf3b0489955766e4b656fc2db7394934acb3418"},
+    {file = "connectome_kg-0.7.1.tar.gz", hash = "sha256:c43304892146336fb062d5f45770ec2ac7d33089c899735c5ba26a6a4c1c91da"},
 ]
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = ">=0.22.0"
+kgmodule-utils = ">=0.23.0"
 mcp = ">=1.3.0,<2"
 numpy = ">=1.26.0"
 pandas = ">=2.2.0"
@@ -618,9 +618,9 @@ pyarrow = ">=15.0.0"
 scipy = ">=1.12.0"
 
 [package.extras]
-semantic = ["kgmodule-utils[semantic] (>=0.22.0)"]
-viz = ["kgmodule-utils[viz] (>=0.22.0)", "plotly (>=5.14.0)"]
-viz3d = ["kgmodule-utils[viz3d-qt,viz3d-render] (>=0.22.0)", "pyvistaqt (>=0.11.0)", "quiltwright (>=0.14.1)"]
+semantic = ["kgmodule-utils[semantic] (>=0.23.0)"]
+viz = ["kgmodule-utils[viz] (>=0.23.0)", "plotly (>=5.14.0)"]
+viz3d = ["kgmodule-utils[viz3d-qt,viz3d-render] (>=0.23.0)", "pyvistaqt (>=0.11.0)", "quiltwright (>=0.15.0)"]
 
 [[package]]
 name = "contourpy"
@@ -976,6 +976,7 @@ nvidia-cuda-cupti = {version = "==13.0.85.*", optional = true, markers = "(sys_p
 nvidia-cuda-nvrtc = {version = "==13.0.88.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and (extra == \"cublas\" or extra == \"nvrtc\")"}
 nvidia-cuda-runtime = {version = "==13.0.96.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cudart\""}
 nvidia-cufft = {version = "==12.0.0.61.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cufft\""}
+nvidia-cufile = {version = "==1.15.1.6.*", optional = true, markers = "sys_platform == \"linux\" and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cufile\""}
 nvidia-curand = {version = "==10.4.0.35.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"curand\""}
 nvidia-cusolver = {version = "==12.0.4.66.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cusolver\""}
 nvidia-cusparse = {version = "==12.6.3.3.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and (extra == \"cusolver\" or extra == \"cusparse\")"}
@@ -1189,22 +1190,22 @@ word-list = ["pyahocorasick"]
 
 [[package]]
 name = "diary-kg"
-version = "0.99.0"
+version = "0.100.0"
 description = "A knowledge graph builder and semantic search engine for diaries and journals"
 optional = true
 python-versions = "<3.14,>=3.12"
 groups = ["main"]
 markers = "extra == \"diary\" or extra == \"all\""
 files = [
-    {file = "diary_kg-0.99.0-py3-none-any.whl", hash = "sha256:48e0b4f6c36e7f06cc4eb50fe731fb2ffc88ed65e7eccc7a8de83c94e8e007ea"},
-    {file = "diary_kg-0.99.0.tar.gz", hash = "sha256:3f0fb8b25d7d06baaf1ea368f49c377f0d7ea140d781d3511fddbeda14fff907"},
+    {file = "diary_kg-0.100.0-py3-none-any.whl", hash = "sha256:aa4ce8bc4088f97d793c6beea73b04a2607a620abc0417581345599a59bed877"},
+    {file = "diary_kg-0.100.0.tar.gz", hash = "sha256:47966a28ae61e802ca06b90a748374249391a205edb9e88faccd0100259321cf"},
 ]
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-doc-kg = ">=0.24.1"
-kgmodule-utils = ">=0.20.0"
-mcp = ">=1.0.0,<2"
+doc-kg = ">=0.27.0"
+kgmodule-utils = ">=0.23.0"
+mcp = ">=1.3.0,<2"
 numpy = ">=1.24.0"
 pandas = ">=2.0.0"
 rich = ">=14.3.3,<15"
@@ -1447,26 +1448,26 @@ tqdm = ["tqdm"]
 
 [[package]]
 name = "ftree-kg"
-version = "0.16.0"
+version = "0.17.0"
 description = "KGModule for file tree knowledge graphs"
 optional = true
 python-versions = "<3.14,>=3.12"
 groups = ["main"]
 markers = "extra == \"filetree\" or extra == \"all\""
 files = [
-    {file = "ftree_kg-0.16.0-py3-none-any.whl", hash = "sha256:fd3314d3171ed95ce70f2cac354ef4ad96e5b3e90ab48ae0e05063dadb40feed"},
-    {file = "ftree_kg-0.16.0.tar.gz", hash = "sha256:8c0fc21e7a70a38b697fe260456bebdcb6ea5637e5351a36992a5960a227a0e0"},
+    {file = "ftree_kg-0.17.0-py3-none-any.whl", hash = "sha256:b7f5f7bd75ffc57dec3d24f42f8bdca013a3e9008db46ed2072ea966ea957f84"},
+    {file = "ftree_kg-0.17.0.tar.gz", hash = "sha256:e12cfe0411f37ac22196822095ebf00585e7edd58c87d682e11fdaeeab7314de"},
 ]
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = {version = ">=0.20.0", extras = ["semantic", "sqlite-vec"]}
-mcp = ">=1.0.0,<2"
+kgmodule-utils = {version = ">=0.23.0", extras = ["semantic", "sqlite-vec"]}
+mcp = ">=1.3.0,<2"
 pillow = ">=10.0.0"
 rich = ">=13.0.0,<15.0.0"
 
 [package.extras]
-adapter = ["kg-rag (>=0.14.0)"]
+adapter = ["kg-rag (>=0.16.0)"]
 
 [[package]]
 name = "h11"
@@ -2348,22 +2349,22 @@ files = [
 
 [[package]]
 name = "memory-kg"
-version = "0.11.0"
+version = "0.12.0"
 description = "A tool to build a semantically searchable knowledge graph from memories"
 optional = true
 python-versions = "<3.14,>=3.12"
 groups = ["main"]
 markers = "extra == \"kg\" or extra == \"all\""
 files = [
-    {file = "memory_kg-0.11.0-py3-none-any.whl", hash = "sha256:d0fdb7bba9d77ab7f8fe091e8d0f2b40820108a1e9a70b1da5849697c1c13193"},
-    {file = "memory_kg-0.11.0.tar.gz", hash = "sha256:7acdc6faebdc72f868f3afcaf6f3facef1316af542b4ddaad8b3606bf9d995fb"},
+    {file = "memory_kg-0.12.0-py3-none-any.whl", hash = "sha256:d405a40ea71441d229b3034be5cf0ccf105e1d500798e793f0035cdbdd23ffa9"},
+    {file = "memory_kg-0.12.0.tar.gz", hash = "sha256:72e9e6b5f6d153e3a3dac9ac0827eefea939059daee024ddab9446500fdec4c6"},
 ]
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = {version = ">=0.20.0", extras = ["sqlite-vec"]}
+kgmodule-utils = {version = ">=0.23.0", extras = ["sqlite-vec"]}
 markdown-it-py = ">=3.0.0"
-mcp = ">=1.0.0,<2"
+mcp = ">=1.3.0,<2"
 numpy = ">=1.24.0"
 pandas = ">=2.0.0"
 pyyaml = ">=6.0.0"
@@ -2805,6 +2806,19 @@ files = [
 
 [package.dependencies]
 nvidia-nvjitlink = "*"
+
+[[package]]
+name = "nvidia-cufile"
+version = "1.15.1.6"
+description = "cuFile GPUDirect libraries"
+optional = false
+python-versions = ">=3"
+groups = ["main", "dev"]
+markers = "<empty>"
+files = [
+    {file = "nvidia_cufile-1.15.1.6-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:08a3ecefae5a01c7f5117351c64f17c7c62efa5fffdbe24fc7d298da19cd0b44"},
+    {file = "nvidia_cufile-1.15.1.6-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:bdc0deedc61f548bddf7733bdc216456c2fdb101d020e1ab4b88d232d5e2f6d1"},
+]
 
 [[package]]
 name = "nvidia-curand"
@@ -6090,6 +6104,30 @@ h11 = ">=0.8"
 standard = ["httptools (>=0.8.0)", "python-dotenv (>=0.13)", "pyyaml (>=5.1)", "uvloop (>=0.15.1) ; sys_platform != \"win32\" and sys_platform != \"cygwin\" and platform_python_implementation != \"PyPy\"", "watchfiles (>=0.20)", "websockets (>=13.0)"]
 
 [[package]]
+name = "vault-kg"
+version = "0.1.0"
+description = "Obsidian-style Markdown vaults as KGModule knowledge graphs: wikilinks, typed links, tags and headings, no LLM extraction"
+optional = true
+python-versions = "<3.14,>=3.12"
+groups = ["main"]
+markers = "extra == \"vault\" or extra == \"all\""
+files = [
+    {file = "vault_kg-0.1.0-py3-none-any.whl", hash = "sha256:1e3c93706d2fa67e4ad468631dbc9f09e37f10f85a8887996c52a4c46ee8b5b2"},
+    {file = "vault_kg-0.1.0.tar.gz", hash = "sha256:0a40394fec674102ddea0822fb65367f10a00ea2cf077da254366eb070c43128"},
+]
+
+[package.dependencies]
+click = ">=8.1.0,<9"
+kgmodule-utils = ">=0.23.0"
+mcp = ">=1.3.0,<2"
+pyyaml = ">=6.0"
+
+[package.extras]
+semantic = ["kgmodule-utils[semantic] (>=0.23.0)"]
+viz = ["kgmodule-utils[viz] (>=0.23.0)"]
+viz3d = ["kgmodule-utils[viz3d-qt,viz3d-render] (>=0.23.0)", "pyvistaqt (>=0.11.0)", "quiltwright (>=0.15.0)"]
+
+[[package]]
 name = "virtualenv"
 version = "21.7.4"
 description = "Virtual Python Environment builder"
@@ -6479,13 +6517,14 @@ files = [
 dev = ["pytest", "setuptools"]
 
 [extras]
-all = ["PyQt5", "connectome-kg", "diary-kg", "doc-kg", "firecrawl-anydoc", "ftree-kg", "markdown", "memory-kg", "param", "plotly", "pycode-kg", "pyvis", "pyvista", "pyvistaqt", "streamlit", "trame-vtk"]
+all = ["PyQt5", "connectome-kg", "diary-kg", "doc-kg", "firecrawl-anydoc", "ftree-kg", "markdown", "memory-kg", "param", "plotly", "pycode-kg", "pyvis", "pyvista", "pyvistaqt", "streamlit", "trame-vtk", "vault-kg"]
 connectome = ["connectome-kg"]
 diary = ["diary-kg"]
 filetree = ["ftree-kg"]
 ingest = ["firecrawl-anydoc"]
 kg = ["doc-kg", "memory-kg", "pycode-kg"]
 qt = ["PyQt5"]
+vault = ["vault-kg"]
 viz = ["plotly", "pyvis", "streamlit"]
 viz2d = ["PyQt5"]
 viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
@@ -6493,4 +6532,4 @@ viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "e9b23d43f2e50d3d5f099ed90e700a75721be9aea7bd07cb4ac8a0db316fdb56"
+content-hash = "7d5d76d4d03764f45be7755ec1227bf31182b68e52a4c0848c4631f3dc43debc"

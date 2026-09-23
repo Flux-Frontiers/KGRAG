@@ -613,13 +613,16 @@ class CrossSnippet:
 | FTreeKG | `filetree` | `ftree-kg` | `FTreeKG` stats summary | ✅ Adapter ready |
 | GutenbergKG | `gutenberg` | `doc-kg` | `DocKGAnalyzer.run_analysis()` | ✅ Adapter ready |
 | ConnectomeKG | `connectome` | `connectome-kg` | `ConnectomeKG.analyze()` | ✅ Adapter ready |
+| VaultKG | `vault` | `vault-kg` | `VaultKG.analyze()` | ✅ Adapter ready |
+| GenealogyKG | `genealogy` | `genealogy-kg` | `GenealogyKG.analyze()` | ✅ Adapter ready |
+| SwiftKG | `swift` | `swift-kg` | `SwiftKG.analyze()` | ✅ Adapter ready |
+| TypeScriptKG | `typescript` | `tscode-kg` | `TypeScriptKG.analyze()` | ✅ Adapter ready |
 | IABookKG | `ia` | `ia-kg` (planned) | — | 🔲 Stub |
 | VerseKG | `verse` | `verse-kg` (planned) | — | 🔲 Stub |
 | LegalKG | `legal` | `legal-kg` (planned) | — | 🔲 Stub |
 | PersonKG | `person` | `person-kg` (planned) | — | 🔲 Stub |
 | DisulfideKG | `disulfide` | `disulfide-kg` (planned) | — | 🔲 Stub |
 | PDBFileKG | `pdbfile` | `pdbfile-kg` (planned) | — | 🔲 Stub |
-| CodeKG-TypeScript | `code` | `tskg` (planned) | `TypeScriptKG.analyze()` | 🔲 Planned |
 | CodeKG-Cpp | `code` | `cppkg` (planned) | `CppKG.analyze()` | 🔲 Planned |
 | SchemaKG | `meta` | `schemakg` (planned) | `SchemaKGAnalyzer.run_analysis()` | 🔲 Planned |
 | InfraKG | `meta` | `infrakg` (planned) | `InfraKGAnalyzer.run_analysis()` | 🔲 Planned |

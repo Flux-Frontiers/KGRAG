@@ -22,6 +22,8 @@
 #            doc-kg (doc, and every gutenberg KG), memory-kg (memory)
 #   diary    diary KGs (diary-kg -- pulls spacy, ~21M)
 #   filetree filetree KGs (ftree-kg)
+#   connectome connectome KGs (connectome-kg)
+#   vault    Obsidian-style Markdown vaults (vault-kg)
 #   ingest   multi-format document ingestion, `kgrag ingest` (firecrawl-anydoc)
 #   viz      2-D visualization (streamlit, pyvis, plotly)
 #   viz2d    Qt surface for `kgrag viz2d` (PyQt5)
@@ -182,6 +184,12 @@ connectome = [
     # and each dataset is its own store under connectomes/<id>/.connectomekg/.
     "connectome-kg>=0.5.0",
 ]
+vault = [
+    # 0.1.0: the first release, and the one the vault adapter was written
+    # against. VaultKG shares the code modules' KGModule constructor and node
+    # shape, so VaultKGAdapter rides CodeModuleKGAdapter.
+    "vault-kg>=0.1.0",
+]
 # Multi-format document ingestion: `kgrag ingest`. Converts Word / PowerPoint /
 # Excel / OpenDocument / RTF / EPUB / CSV / PDF to Markdown. Optional because
 # staging .md/.txt/.rst needs nothing extra and kg_utils.ingest imports it
@@ -235,6 +243,7 @@ all = [
     "ftree-kg>=0.16.0",
     "memory-kg>=0.11.0",
     "pycode-kg>=0.28.0",
+    "vault-kg>=0.1.0",
     "firecrawl-anydoc>=0.1.9",
     "plotly>=5.14.0",
     "pyvis>=0.3.2",
