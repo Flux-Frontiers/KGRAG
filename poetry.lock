@@ -597,20 +597,20 @@ files = [
 
 [[package]]
 name = "connectome-kg"
-version = "0.7.1"
+version = "0.8.1"
 description = "Connectomes (FlyWire, hemibrain, MaleCNS) as KGModule knowledge graphs"
 optional = true
 python-versions = "<3.14,>=3.12"
 groups = ["main"]
 markers = "extra == \"connectome\" or extra == \"all\""
 files = [
-    {file = "connectome_kg-0.7.1-py3-none-any.whl", hash = "sha256:61dbbb5039edaf91b4c0a056ebf3b0489955766e4b656fc2db7394934acb3418"},
-    {file = "connectome_kg-0.7.1.tar.gz", hash = "sha256:c43304892146336fb062d5f45770ec2ac7d33089c899735c5ba26a6a4c1c91da"},
+    {file = "connectome_kg-0.8.1-py3-none-any.whl", hash = "sha256:12697616675f46d27534f33704a0e5a66d028d48f2ca64e6450c4a2b260a2207"},
+    {file = "connectome_kg-0.8.1.tar.gz", hash = "sha256:807147dfd77315b1cb223e4df08ca5d58d985dd33f2d27da539a9c1a30140183"},
 ]
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = ">=0.23.0"
+kgmodule-utils = ">=0.26.0"
 mcp = ">=1.3.0,<2"
 numpy = ">=1.26.0"
 pandas = ">=2.2.0"
@@ -618,9 +618,9 @@ pyarrow = ">=15.0.0"
 scipy = ">=1.12.0"
 
 [package.extras]
-semantic = ["kgmodule-utils[semantic] (>=0.23.0)"]
-viz = ["kgmodule-utils[viz] (>=0.23.0)", "plotly (>=5.14.0)"]
-viz3d = ["kgmodule-utils[viz3d-qt,viz3d-render] (>=0.23.0)", "pyvistaqt (>=0.11.0)", "quiltwright (>=0.15.0)"]
+semantic = ["kgmodule-utils[semantic] (>=0.26.0)"]
+viz = ["kgmodule-utils[viz] (>=0.26.0)", "plotly (>=5.14.0)"]
+viz3d = ["kgmodule-utils[viz3d-qt,viz3d-render] (>=0.26.0)", "pyvistaqt (>=0.11.0)", "quiltwright (>=0.16.0)"]
 
 [[package]]
 name = "contourpy"
@@ -976,6 +976,7 @@ nvidia-cuda-cupti = {version = "==13.0.85.*", optional = true, markers = "(sys_p
 nvidia-cuda-nvrtc = {version = "==13.0.88.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and (extra == \"cublas\" or extra == \"nvrtc\")"}
 nvidia-cuda-runtime = {version = "==13.0.96.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cudart\""}
 nvidia-cufft = {version = "==12.0.0.61.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cufft\""}
+nvidia-cufile = {version = "==1.15.1.6.*", optional = true, markers = "sys_platform == \"linux\" and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cufile\""}
 nvidia-curand = {version = "==10.4.0.35.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"curand\""}
 nvidia-cusolver = {version = "==12.0.4.66.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cusolver\""}
 nvidia-cusparse = {version = "==12.6.3.3.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and (extra == \"cusolver\" or extra == \"cusparse\")"}
@@ -1880,14 +1881,14 @@ referencing = ">=0.31.0"
 
 [[package]]
 name = "kgmodule-utils"
-version = "0.23.0"
+version = "0.26.0"
 description = "Shared types, graph store, semantic index, and pipeline base for the KGModule SDK"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "kgmodule_utils-0.23.0-py3-none-any.whl", hash = "sha256:f0ec8050f33fb0d71b4d1ca3fa8148627118df2201b53da0737f00622f35f97c"},
-    {file = "kgmodule_utils-0.23.0.tar.gz", hash = "sha256:264a137efdcf36265172f7c223816ef1c2e0697dc6dc7e35606f5835dc1a379d"},
+    {file = "kgmodule_utils-0.26.0-py3-none-any.whl", hash = "sha256:4cacd27d38f8b1dd9fb9a0919bdd7c622c885286a1af047c478b669e91149491"},
+    {file = "kgmodule_utils-0.26.0.tar.gz", hash = "sha256:457dc1c55535233131bc8ef4536240bc8e69ab15e983ad9ae132f090c1d7c513"},
 ]
 
 [package.dependencies]
@@ -2807,6 +2808,19 @@ files = [
 nvidia-nvjitlink = "*"
 
 [[package]]
+name = "nvidia-cufile"
+version = "1.15.1.6"
+description = "cuFile GPUDirect libraries"
+optional = false
+python-versions = ">=3"
+groups = ["main", "dev"]
+markers = "<empty>"
+files = [
+    {file = "nvidia_cufile-1.15.1.6-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:08a3ecefae5a01c7f5117351c64f17c7c62efa5fffdbe24fc7d298da19cd0b44"},
+    {file = "nvidia_cufile-1.15.1.6-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:bdc0deedc61f548bddf7733bdc216456c2fdb101d020e1ab4b88d232d5e2f6d1"},
+]
+
+[[package]]
 name = "nvidia-curand"
 version = "10.4.0.35"
 description = "CURAND native runtime libraries"
@@ -3706,14 +3720,14 @@ files = [
 
 [[package]]
 name = "pycode-kg"
-version = "0.28.0"
+version = "0.28.1"
 description = "A tool to build a searchable knowledge graph from Python repositories"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "pycode_kg-0.28.0-py3-none-any.whl", hash = "sha256:9291c9f5ff22026b2c97daec546f82dd6a3aaeffa2302b28e5403f9646b7feec"},
-    {file = "pycode_kg-0.28.0.tar.gz", hash = "sha256:0d2dbddb6c8f737cd70ef93916ddca51098ba4e15e92711707f9184f7eb171e6"},
+    {file = "pycode_kg-0.28.1-py3-none-any.whl", hash = "sha256:ef9a4d98f36367184fd78c45f17469a104ec06a21593eee99c4f277cff458208"},
+    {file = "pycode_kg-0.28.1.tar.gz", hash = "sha256:2960e9e2db859899a23bc143ae3de13cb13a29a9d7aec71f34000dec84d31770"},
 ]
 markers = {main = "extra == \"kg\" or extra == \"all\""}
 
@@ -6091,27 +6105,27 @@ standard = ["httptools (>=0.8.0)", "python-dotenv (>=0.13)", "pyyaml (>=5.1)", "
 
 [[package]]
 name = "vault-kg"
-version = "0.1.0"
+version = "0.2.0"
 description = "Obsidian-style Markdown vaults as KGModule knowledge graphs: wikilinks, typed links, tags and headings, no LLM extraction"
 optional = true
 python-versions = "<3.14,>=3.12"
 groups = ["main"]
 markers = "extra == \"vault\" or extra == \"all\""
 files = [
-    {file = "vault_kg-0.1.0-py3-none-any.whl", hash = "sha256:1e3c93706d2fa67e4ad468631dbc9f09e37f10f85a8887996c52a4c46ee8b5b2"},
-    {file = "vault_kg-0.1.0.tar.gz", hash = "sha256:0a40394fec674102ddea0822fb65367f10a00ea2cf077da254366eb070c43128"},
+    {file = "vault_kg-0.2.0-py3-none-any.whl", hash = "sha256:12a7b41eb3009404ee8829d44fa5ad7ffcafa77c28cf0d812005ab131bc0f3cb"},
+    {file = "vault_kg-0.2.0.tar.gz", hash = "sha256:0e61aba6cef2cf854c1af95440759c212889c52a9a9198e5a728275007203647"},
 ]
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = ">=0.23.0"
+kgmodule-utils = ">=0.24.0"
 mcp = ">=1.3.0,<2"
 pyyaml = ">=6.0"
 
 [package.extras]
-semantic = ["kgmodule-utils[semantic] (>=0.23.0)"]
-viz = ["kgmodule-utils[viz] (>=0.23.0)"]
-viz3d = ["kgmodule-utils[viz3d-qt,viz3d-render] (>=0.23.0)", "pyvistaqt (>=0.11.0)", "quiltwright (>=0.15.0)"]
+semantic = ["kgmodule-utils[semantic] (>=0.24.0)"]
+viz = ["kgmodule-utils[viz] (>=0.24.0)"]
+viz3d = ["kgmodule-utils[viz3d-qt,viz3d-render] (>=0.24.0)", "pyvistaqt (>=0.11.0)", "quiltwright (>=0.15.0)"]
 
 [[package]]
 name = "virtualenv"
@@ -6518,4 +6532,4 @@ viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "7d5d76d4d03764f45be7755ec1227bf31182b68e52a4c0848c4631f3dc43debc"
+content-hash = "7881b0bfff93317aff840492af65ac2278432be4f2546c9f4576b4c3af35ac7b"

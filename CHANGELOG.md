@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Fleet dependency floors raised to each sibling's newest release and
+  relocked: `kgmodule-utils` 0.26.0, `connectome-kg` 0.8.1, `vault-kg`
+  0.2.0, `pycode-kg` 0.28.1, `memory-kg` 0.12.0, `diary-kg` 0.100.0,
+  `ftree-kg` 0.17.0.
+- `docs/FLEET_VERSIONS.md` regenerated from the current fleet. It had not
+  been regenerated since 2026-08-15.
+
+### Removed
+
+- `scripts/fleet_versions.py`. The page is now generated outside this repo,
+  and `--write` would have overwritten it in the old format.
+
 ## [0.17.0] - 2026-09-22
 
 ### Added
