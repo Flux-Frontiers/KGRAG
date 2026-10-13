@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **The KGRAG owl**, the system's voice in the Streamlit Synthesize tab
+  (`kg_rag.owl`). An Art Techno owl avatar in a chip-package frame that shows
+  what the pipeline is doing: idle (mint) while waiting, retrieving (copper,
+  rays sweeping) while it walks the KGs, answering (gold, sweeping) while the
+  answer streams, and lit gold once it is done, with how many snippets and KGs
+  ground it. Replaces the retrieval spinner. Pure Python with no dependencies;
+  `owl_svg()` returns the bare SVG for other front ends. The sweep stops under
+  `prefers-reduced-motion`.
+
 ### Changed
 
 - Fleet dependency floors raised to each sibling's newest release and

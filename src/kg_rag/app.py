@@ -29,6 +29,7 @@ from kg_rag.cli.cmd_synthesize import (
 from kg_rag.cli.cmd_synthesize import (
     _SYSTEM_PROMPT as _SYNTH_SYSTEM,
 )
+from kg_rag.owl import OwlState, owl_html
 from kg_rag.primitives import KGKind
 from kg_rag.registry import default_registry_path
 
@@ -909,27 +910,44 @@ def _tab_synthesize(cfg: dict) -> None:
         show_ctx = st.checkbox("Show retrieved context", value=False, key="synth_show_ctx")
     synth_btn = st.button("🧠 Synthesize", type="primary", key="synth_btn")
 
+    # The owl is KGRAG's voice: idle while waiting, sweeping copper while it
+    # walks the KGs, sweeping gold while it answers, lit gold once it has.
+    owl_box = st.empty()
+
+    def _owl(
+        state: OwlState, label: str, detail: str | None = None, working: bool | None = None
+    ) -> None:
+        owl_box.markdown(
+            owl_html(state, label=label, detail=detail, working=working), unsafe_allow_html=True
+        )
+
     if not synth_btn or not synth_query.strip():
+        _owl("idle", "Ready", "Waiting for a question")
         if not synth_btn:
             st.info("Enter a question above and click **Synthesize**.")
         return
 
     # ── Retrieve context ──────────────────────────────────────────────────
-    with st.spinner("Retrieving KG context…"):
-        try:
-            kinds = cfg["selected_kinds"] if cfg["selected_kinds"] else None
-            pack = kgrag.pack(synth_query.strip(), k=int(synth_k), context=5, kinds=kinds)
-            selected = cfg["selected_names"]
-            if selected:
-                pack.snippets = [s for s in pack.snippets if s.kg_name in selected]
-            pack.snippets = pack.snippets[: int(max_context)]
-        except Exception as exc:  # pylint: disable=broad-exception-caught
-            st.error(f"Context retrieval failed: {exc}")
-            return
+    _owl("retrieving", "Retrieving", f"Walking the KGs · top {int(synth_k)} per KG")
+    try:
+        kinds = cfg["selected_kinds"] if cfg["selected_kinds"] else None
+        pack = kgrag.pack(synth_query.strip(), k=int(synth_k), context=5, kinds=kinds)
+        selected = cfg["selected_names"]
+        if selected:
+            pack.snippets = [s for s in pack.snippets if s.kg_name in selected]
+        pack.snippets = pack.snippets[: int(max_context)]
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        _owl("idle", "Retrieval failed")
+        st.error(f"Context retrieval failed: {exc}")
+        return
 
     if not pack.snippets:
+        _owl("idle", "Nothing found", "No relevant content in the selected KGs")
         st.warning("No relevant content found in the selected KGs.")
         return
+
+    # The owl moves down to sit beside the answer it gives.
+    owl_box.empty()
 
     c1, c2 = st.columns(2)
     c1.metric("Snippets retrieved", len(pack.snippets))
@@ -967,6 +985,10 @@ def _tab_synthesize(cfg: dict) -> None:
     st.markdown("---")
     st.subheader(f"Answer · `{model}`")
 
+    owl_box = st.empty()
+    grounding = f"{len(pack.snippets)} snippets from {pack.kgs_queried} KGs"
+    _owl("answering", "Answering", f"Grounded in {grounding}", working=True)
+
     answer_box = st.empty()
     full_answer = ""
 
@@ -982,7 +1004,9 @@ def _tab_synthesize(cfg: dict) -> None:
             full_answer += token
             answer_box.markdown(full_answer + "▌")
         answer_box.markdown(full_answer)
+        _owl("answering", "Answered", f"Grounded in {grounding}", working=False)
     except RuntimeError as exc:
+        _owl("idle", "Model unreachable")
         st.error(str(exc))
         return
 
