@@ -8,18 +8,20 @@ Query, pack and stats are driven against a mocked ``_kg``: those tests are
 about how the adapter reshapes results into CrossHit/CrossSnippet, and a real
 KG would mean building a real graph to get results worth reshaping.
 
-The ``_load`` tests are the exception and use the **real** doc-kg, pycode-kg,
-memory-kg, diary-kg, ftree-kg and connectome-kg classes. A MagicMock accepts any call, so it validates the adapter's kwargs only
-against the test's own expectations, never against the actual constructor
-signature. Confirmed by mutation: adding a stale ``lancedb_uri=`` argument to
-DocKGAdapter._load leaves the mocked version green while the real class raises
-``TypeError: unexpected keyword argument``. Since upstream signature drift is
-precisely what breaks these adapters in production, the real class is the only
-thing worth asserting against.
+The ``_load`` tests are the exception and use the **real** class of every
+backed adapter: doc-kg, pycode-kg, memory-kg, diary-kg, ftree-kg,
+connectome-kg, genealogy-kg, metabo-kg, agent-kg, swift-kg, tscode-kg and
+vault-kg. A MagicMock accepts any call, so it validates the adapter's kwargs
+only against the test's own expectations, never against the actual
+constructor signature. Confirmed by mutation: adding a stale ``lancedb_uri=``
+argument to DocKGAdapter._load leaves the mocked version green while the real
+class raises ``TypeError: unexpected keyword argument``. Since upstream
+signature drift is precisely what breaks these adapters in production, the
+real class is the only thing worth asserting against.
 
-Both packages are optional at runtime (the ``kg`` extra) but are dev
-dependencies so the suite always has them. Constructing either is cheap — no
-model load, no graph build.
+The packages are optional at runtime (extras, or nothing for the kinds with
+no extra) but are dev dependencies so the suite always has them. Constructing
+any of them is cheap: no model load, no graph build.
 """
 
 from __future__ import annotations
@@ -387,13 +389,14 @@ class TestDocKGAdapterLoad:
 
 
 class TestOtherAdaptersLoadRealClass:
-    """_load against the real memory-kg, diary-kg, ftree-kg and connectome-kg classes.
+    """_load against the real class of every other backed adapter.
 
     The query/pack/stats tests for these adapters run against a mocked ``_kg``
     and never call the real constructor, which leaves the signature-drift gap
     :class:`TestCodeKGAdapterLoad` closes for pycode-kg (sweep item 4). Each
-    package is a dev dependency and constructs cheaply: no model load, no
-    graph build, nothing written.
+    package is a dev dependency (metabo-kg from git, the rest from PyPI) and
+    constructs cheaply: no model load, no graph build. Only AgentKG writes,
+    a ``.agentkg/`` under the temporary repo.
     """
 
     def _entry_with_vectors(self, tmp_path, kind: KGKind) -> KGEntry:
@@ -452,6 +455,69 @@ class TestOtherAdaptersLoadRealClass:
 
         kg = adapter._kg
         assert isinstance(kg, ConnectomeKG)
+        assert Path(kg.db_path).resolve() == entry.sqlite_path.resolve()
+        assert Path(kg.vectors_path).resolve() == entry.vectors_path.resolve()
+
+    def test_genealogy_adapter_builds_real_genealogykg(self, tmp_path):
+        from genealogy_kg import GenealogyKG
+
+        entry = self._entry_with_vectors(tmp_path, KGKind.GENEALOGY)
+        adapter = GenealogyKGAdapter(entry)
+        adapter._load()
+
+        kg = adapter._kg
+        assert isinstance(kg, GenealogyKG)
+        assert Path(kg.db_path).resolve() == entry.sqlite_path.resolve()
+        assert Path(kg.vectors_path).resolve() == entry.vectors_path.resolve()
+
+    def test_metakg_adapter_builds_real_metakg(self, tmp_path):
+        """The adapter whose stale ``lancedb_dir=`` once shipped as a TypeError."""
+        from metabokg.orchestrator import MetaKG
+
+        entry = self._entry_with_vectors(tmp_path, KGKind.META)
+        adapter = MetaKGAdapter(entry)
+        adapter._load()
+
+        kg = adapter._kg
+        assert isinstance(kg, MetaKG)
+        assert Path(kg.db_path).resolve() == entry.sqlite_path.resolve()
+        assert Path(kg.vectors_path).resolve() == entry.vectors_path.resolve()
+
+    def test_agent_adapter_builds_real_agentkg(self, tmp_path, monkeypatch):
+        import agent_kg.graph
+        from agent_kg.graph import AgentKG
+
+        # AgentKG keeps its user profile under ~/.kgrag/profiles/<person_id>;
+        # keep the test out of the real home directory.
+        monkeypatch.setattr(agent_kg.graph, "_PROFILE_BASE", tmp_path / "profiles")
+        entry = _entry(tmp_path, KGKind.AGENT)
+        entry.metadata.update(person_id="tester", session_id="s1")
+        adapter = AgentKGAdapter(entry)
+        adapter._load()
+
+        assert isinstance(adapter._kg, AgentKG)
+        assert (entry.repo_path / ".agentkg").is_dir()
+
+    @pytest.mark.parametrize(
+        ("adapter_cls", "kind", "module", "class_name"),
+        [
+            (SwiftKGAdapter, KGKind.SWIFT, "swift_kg", "SwiftKG"),
+            (TypeScriptKGAdapter, KGKind.TYPESCRIPT, "tscode_kg", "TypeScriptKG"),
+            (VaultKGAdapter, KGKind.VAULT, "vaultkg", "VaultKG"),
+        ],
+    )
+    def test_code_module_adapter_builds_real_class(
+        self, tmp_path, adapter_cls, kind, module, class_name
+    ):
+        import importlib
+
+        real_cls = getattr(importlib.import_module(module), class_name)
+        entry = self._entry_with_vectors(tmp_path, kind)
+        adapter = adapter_cls(entry)
+        adapter._load()
+
+        kg = adapter._kg
+        assert isinstance(kg, real_cls)
         assert Path(kg.db_path).resolve() == entry.sqlite_path.resolve()
         assert Path(kg.vectors_path).resolve() == entry.vectors_path.resolve()
 
@@ -2044,7 +2110,9 @@ class TestAgentKGAdapterSnapshotMetrics:
 
     def test_collect_snapshot_metrics_graceful_on_error(self, tmp_path):
         entry = _entry(tmp_path, KGKind.AGENT)
-        with patch.dict("sys.modules", {"agent_kg": None}):
+        # Both keys: once agent_kg.graph is imported (agent-kg is a dev
+        # dependency), blocking the parent alone no longer stops the import.
+        with patch.dict("sys.modules", {"agent_kg": None, "agent_kg.graph": None}):
             adapter = AgentKGAdapter(entry)
             metrics = adapter._collect_snapshot_metrics()
         assert metrics == {}

@@ -17,6 +17,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   added to the memory adapter fails the new test and leaves the 16 mocked
   ones green. `memory-kg`, `diary-kg`, `ftree-kg` and `connectome-kg` join
   the dev group, at their extras' floors, so CI has them.
+- **Every backed adapter is now tested against its real class.** The
+  genealogy, metabo, agent, swift, typescript and vault adapters join the
+  four above. `metabo-kg` is not on PyPI and comes from git at tag
+  `v0.17.0`; the rest come from PyPI. The metakg test fails on the stale
+  `lancedb_dir=` argument that once shipped as a `TypeError`. The agent
+  test points `agent_kg.graph._PROFILE_BASE` at a temporary directory, so
+  nothing touches `~/.kgrag/profiles`, and a mocked agent test now blocks
+  `agent_kg.graph` as well as `agent_kg`, which it needs once the package
+  is installed.
 - Relocked onto `doc-kg` 0.28.0, `pycode-kg` 0.28.2 and `vault-kg` 0.5.0.
   Floors are unchanged.
 
