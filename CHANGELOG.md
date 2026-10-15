@@ -7,8 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`kg-rag[ingest]` converts PDFs again under kgmodule-utils 0.27.0.** The
+  SDK moved PDF from anydoc to `pymupdf4llm`, and the `ingest` extra named
+  `firecrawl-anydoc` directly, so an install with `[ingest]` but not `[kg]`
+  recorded every PDF as failed ("pymupdf4llm is not installed"). The extra
+  is now `kgmodule-utils[ingest]>=0.27.0`, so the SDK decides which converter
+  owns each format. `[all]` names `firecrawl-anydoc` and `pymupdf4llm`
+  directly, because re-listing `kgmodule-utils[ingest]` there beside the core
+  `kgmodule-utils` makes poetry's solver fail. New
+  `tests/test_ingest_real_pdf.py` converts a real PDF through `kgrag ingest`
+  and checks the extra's metadata; every earlier ingest test mocked the
+  pipeline, which is how the gap went unseen.
+
 ### Changed
 
+- `kgmodule-utils` floor raised to `>=0.27.0` (one converter per format,
+  `KGModule.sync()`), and `vault-kg` to `>=0.3.0` (persistent build config).
+  `kgrag ingest` now also stages `.tex` and `.html` where `pandoc` is
+  installed. Help text, `docs/CLI_REFERENCE.md` and `docs/INGESTION.md`
+  describe the three converters.
 - Fleet dependency floors raised to each sibling's newest release and
   relocked: `kgmodule-utils` 0.26.0, `connectome-kg` 0.8.1, `vault-kg`
   0.2.0, `pycode-kg` 0.28.1, `memory-kg` 0.12.0, `diary-kg` 0.100.0,

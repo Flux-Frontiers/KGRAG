@@ -279,10 +279,11 @@ kgrag ingest ~/papers --into ~/corpora/papers --corpus research
 kgrag ingest ~/papers --into ~/corpora/papers --update
 ```
 
-Accepts `.md`, `.txt` and `.rst` directly. Converts Word (`.doc`, `.docx`,
-`.docm`), PowerPoint (`.ppt`, `.pptx`, `.pptm`, …), Excel (`.xls`, `.xlsx`,
-`.xlsm`, `.xlsb`), OpenDocument (`.odt`, `.ods`, `.odp`), `.rtf`, `.epub`,
-`.csv` and text-based `.pdf` via `anydoc`. Needs the extra:
+Accepts `.md`, `.txt` and `.rst` directly. Converts text-based `.pdf` via
+`pymupdf4llm`; Word (`.doc`, `.docx`, `.docm`), PowerPoint (`.ppt`, `.pptx`,
+`.pptm`, …), Excel (`.xls`, `.xlsx`, `.xlsm`, `.xlsb`), OpenDocument (`.odt`,
+`.ods`, `.odp`), `.rtf`, `.epub` and `.csv` via `anydoc`; and `.tex` and
+`.html` via `pandoc` when the `pandoc` binary is installed. Needs the extra:
 
 ```bash
 pip install 'kg-rag[ingest]'      # or: pip install 'kgmodule-utils[ingest]'

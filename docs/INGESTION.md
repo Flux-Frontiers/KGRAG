@@ -50,7 +50,7 @@ Sources: ~/Documents/specs/, report.pdf, notes.docx, …
 │   │                       and dotfiles pruned)          │
 │   ├─ For each file:                                     │
 │   │    ├─ sha256(source bytes)      → dedup key         │
-│   │    ├─ resolve converter         → passthrough|anydoc│
+│   │    ├─ resolve converter         → per-format        │
 │   │    ├─ convert                   → Markdown          │
 │   │    └─ write staged file         → collision-safe    │
 │   └─ Write manifest                 → .ingest/          │
@@ -60,7 +60,7 @@ Sources: ~/Documents/specs/, report.pdf, notes.docx, …
    Staging corpus/
      ├─ guide.md          (was guide.md      — passthrough)
      ├─ notes.txt         (was notes.txt     — suffix preserved)
-     ├─ paper.md          (was paper.pdf     — anydoc)
+     ├─ paper.md          (was paper.pdf     — pymupdf4llm)
      ├─ parts.md          (was parts.csv     — anydoc)
      └─ .ingest/manifest.json
         │
@@ -109,9 +109,21 @@ Undecodable bytes are replaced rather than raising: a mostly-readable document
 is worth more to a corpus than a dropped one, and the substitution is visible
 in the staged output.
 
+### `PdfConverter`
+
+PDF, via `pymupdf4llm` -- the same call `dockg build` makes, so a PDF stages
+as the same Markdown either way (kgmodule-utils 0.27.0 and later). Records the
+PDF's title, author, creation date and page count in the manifest record.
+
+### `PandocConverter`
+
+`.tex`, `.latex`, `.html` and `.htm`, via the `pandoc` command. Pandoc is a
+system binary, not a Python dependency; without it these files are recorded
+as `failed` with an install hint.
+
 ### `AnydocConverter`
 
-Everything else, via [anydoc](https://github.com/firecrawl/anydoc) (PyPI:
+Office and publishing formats, via [anydoc](https://github.com/firecrawl/anydoc) (PyPI:
 `firecrawl-anydoc`) — a Rust library with Python bindings that emits consistent
 GitHub-Flavored Markdown across formats.
 
@@ -121,10 +133,9 @@ GitHub-Flavored Markdown across formats.
 | PowerPoint | `.ppt` `.pps` `.pot` `.pptx` `.pptm` `.ppsx` `.ppsm` |
 | Excel | `.xls` `.xlsx` `.xlsm` `.xlsb` |
 | OpenDocument | `.odt` `.ods` `.odp` |
-| Other | `.rtf` `.epub` `.csv` `.pdf` |
+| Other | `.rtf` `.epub` `.csv` |
 
-21 extensions, all staged as `.md`.  Conversion is fast — a 40-page text PDF
-converts in roughly 20 ms.
+20 extensions, all staged as `.md`.
 
 The `anydoc` import is **lazy**, deferred to first use.  This keeps the
 `kgmodule-utils` core install dependency-free and lets
@@ -141,7 +152,8 @@ Nothing is dropped silently.  Every outcome produces a manifest record.
 | Conversion yields empty output | `failed` | `converted to empty output (likely a scanned/image-only document needing OCR)` |
 | Source unreadable | `failed` | `cannot read source: …` |
 | Staged file unwritable | `failed` | `cannot write staged file: …` |
-| `anydoc` not installed | `failed` | install hint for the `ingest` extra |
+| `anydoc` or `pymupdf4llm` not installed | `failed` | install hint for the `ingest` extra |
+| `pandoc` not on `PATH` (`.tex`, `.html`) | `failed` | `pandoc is not installed; …` |
 
 All five `anydoc` exception types (`UnsupportedError`, `MalformedError`,
 `EncryptedError`, `ResourceLimitError`, `MissingPartError`) are wrapped as

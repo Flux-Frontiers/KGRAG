@@ -24,7 +24,7 @@
 #   filetree filetree KGs (ftree-kg)
 #   connectome connectome KGs (connectome-kg)
 #   vault    Obsidian-style Markdown vaults (vault-kg)
-#   ingest   multi-format document ingestion, `kgrag ingest` (firecrawl-anydoc)
+#   ingest   multi-format document ingestion, `kgrag ingest` (kgmodule-utils[ingest])
 #   viz      2-D visualization (streamlit, pyvis, plotly)
 #   viz2d    Qt surface for `kgrag viz2d` (PyQt5)
 #   qt       alias for viz2d, kept for older install instructions
@@ -124,7 +124,7 @@ dependencies = [
     # a core (stdlib-only) module there, so this needs no extra. The floor sits
     # at the newest release because fleet floors are raised to latest on every
     # relock, not because kg_rag needs anything newer than 0.18.0.
-    "kgmodule-utils>=0.26.0",
+    "kgmodule-utils>=0.27.0",
     # Upper-bounded: mcp 2.0 removed the low-level Server decorator API
     # (`@server.list_tools()` / `@server.call_tool()`) that kg_rag.mcp_server
     # uses. The Server class itself still imports under 2.0, so the failure
@@ -188,14 +188,17 @@ vault = [
     # 0.1.0: the first release, and the one the vault adapter was written
     # against. VaultKG shares the code modules' KGModule constructor and node
     # shape, so VaultKGAdapter rides CodeModuleKGAdapter.
-    "vault-kg>=0.2.0",
+    "vault-kg>=0.3.0",
 ]
-# Multi-format document ingestion: `kgrag ingest`. Converts Word / PowerPoint /
-# Excel / OpenDocument / RTF / EPUB / CSV / PDF to Markdown. Optional because
-# staging .md/.txt/.rst needs nothing extra and kg_utils.ingest imports it
-# lazily.
+# Multi-format document ingestion: `kgrag ingest`. Takes the converters from
+# kgmodule-utils' own [ingest] extra (pymupdf4llm for PDF, anydoc for Word /
+# PowerPoint / Excel / OpenDocument / RTF / EPUB / CSV) rather than naming
+# them here, so the SDK alone decides which converter owns a format. Listing
+# firecrawl-anydoc directly left kg-rag[ingest] without pymupdf4llm once the
+# SDK moved PDF to it (0.27.0). Optional because staging .md/.txt/.rst needs
+# nothing extra and kg_utils.ingest imports the converters lazily.
 ingest = [
-    "firecrawl-anydoc>=0.1.9",
+    "kgmodule-utils[ingest]>=0.27.0",
 ]
 viz = [
     "plotly>=5.14.0",
@@ -243,8 +246,13 @@ all = [
     "ftree-kg>=0.17.0",
     "memory-kg>=0.12.0",
     "pycode-kg>=0.28.1",
-    "vault-kg>=0.2.0",
+    "vault-kg>=0.3.0",
+    # [ingest]'s converters, named directly: re-listing kgmodule-utils[ingest]
+    # here beside the core kgmodule-utils makes poetry's solver fail
+    # ("<empty>" constraint), and poetry refuses a self-reference
+    # (kg-rag[ingest]). Keep in step with kgmodule-utils' own [ingest] extra.
     "firecrawl-anydoc>=0.1.9",
+    "pymupdf4llm>=1.28.2",
     "plotly>=5.14.0",
     "pyvis>=0.3.2",
     "streamlit>=1.35.0",

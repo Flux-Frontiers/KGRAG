@@ -15,7 +15,9 @@ The pipeline runs in three stages, each independently skippable:
     build    — run ``dockg build`` over the staged corpus
     register — record the built KG in the KGRAG registry
 
-Conversion is provided by ``anydoc`` via the ``kgmodule-utils[ingest]`` extra.
+Conversion is provided by the ``kgmodule-utils[ingest]`` extra: ``pymupdf4llm``
+for PDF, ``anydoc`` for office formats, and ``pandoc`` (a system binary) for
+LaTeX and HTML.
 Documents it cannot convert — most often scanned PDFs, which need OCR — are
 recorded in the staging manifest with a reason rather than silently dropped,
 so a corpus always accounts for every file it was shown.
@@ -109,9 +111,10 @@ def ingest(  # noqa: PLR0913 — one option per pipeline stage; a config object 
 ):
     """Ingest documents into a staged corpus, build a KG, and register it.
 
-    Accepts Markdown, plain text and reStructuredText directly, and converts
-    Word, PowerPoint, Excel, OpenDocument, RTF, EPUB, CSV and text-based PDF
-    via anydoc.  Directories are walked recursively.
+    Accepts Markdown, plain text and reStructuredText directly. Converts
+    text-based PDF via pymupdf4llm; Word, PowerPoint, Excel, OpenDocument,
+    RTF, EPUB and CSV via anydoc; and LaTeX and HTML via pandoc, when it is
+    installed. Directories are walked recursively.
 
     A run rebuilds the staged corpus from nothing, matching ``dockg build`` and
     ``pycodekg build``: the corpus reflects exactly the sources given, so a
@@ -131,7 +134,7 @@ def ingest(  # noqa: PLR0913 — one option per pipeline stage; a config object 
         kgrag ingest ~/papers --into ~/corpora/papers --corpus research
         kgrag ingest ~/papers --into ~/corpora/papers --update
     """
-    # kg_utils.ingest imports anydoc lazily, so failing here means the installed
+    # kg_utils.ingest imports its converters lazily, so failing here means the installed
     # kgmodule-utils predates the module — not that the converter is missing.
     # A missing converter surfaces per-document, with its own install hint.
     try:
