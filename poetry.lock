@@ -976,6 +976,7 @@ nvidia-cuda-cupti = {version = "==13.0.85.*", optional = true, markers = "(sys_p
 nvidia-cuda-nvrtc = {version = "==13.0.88.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and (extra == \"cublas\" or extra == \"nvrtc\")"}
 nvidia-cuda-runtime = {version = "==13.0.96.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cudart\""}
 nvidia-cufft = {version = "==12.0.0.61.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cufft\""}
+nvidia-cufile = {version = "==1.15.1.6.*", optional = true, markers = "sys_platform == \"linux\" and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cufile\""}
 nvidia-curand = {version = "==10.4.0.35.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"curand\""}
 nvidia-cusolver = {version = "==12.0.4.66.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cusolver\""}
 nvidia-cusparse = {version = "==12.6.3.3.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and (extra == \"cusolver\" or extra == \"cusparse\")"}
@@ -1229,22 +1230,21 @@ files = [
 
 [[package]]
 name = "doc-kg"
-version = "0.27.0"
+version = "0.28.0"
 description = "A tool to build a semantically searchable knowledge graph from markdown and text documents"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "doc_kg-0.27.0-py3-none-any.whl", hash = "sha256:9dd5b43a18c888f993545bc1c34099929cdf702bc94a3006499bf397c6c0cd00"},
-    {file = "doc_kg-0.27.0.tar.gz", hash = "sha256:6cf9e8805fe768c936135cc7fd3b9efec7221167432375fc94839edfc55a868d"},
+    {file = "doc_kg-0.28.0-py3-none-any.whl", hash = "sha256:6aff8b095c5d51a37d4053ea65476b91f70af1fc72ef96d7601fe4365e58d2da"},
+    {file = "doc_kg-0.28.0.tar.gz", hash = "sha256:b108c55402497d7463593f3e48a08053951a14fd80b333679ea84b5aaff070f7"},
 ]
 markers = {main = "extra == \"kg\" or extra == \"all\" or extra == \"diary\""}
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = {version = ">=0.23.0", extras = ["semantic"]}
+kgmodule-utils = {version = ">=0.27.0", extras = ["pdf", "semantic"]}
 mcp = ">=1.3.0,<2"
-pymupdf4llm = ">=0.0.17"
 pyyaml = ">=6.0.0"
 rich = ">=14.3.3,<15"
 tqdm = ">=4.60"
@@ -1893,7 +1893,10 @@ files = [
 [package.dependencies]
 firecrawl-anydoc = {version = ">=0.1.9", optional = true, markers = "extra == \"ingest\""}
 numpy = {version = ">=1.24.0", optional = true, markers = "extra == \"semantic\" or extra == \"viz3d\""}
-pymupdf4llm = {version = ">=1.28.2", optional = true, markers = "extra == \"ingest\""}
+pymupdf4llm = [
+    {version = ">=1.28.2", optional = true, markers = "extra == \"pdf\""},
+    {version = ">=1.28.2", optional = true, markers = "extra == \"ingest\""},
+]
 rich = {version = ">=13.0.0,<15.0.0", optional = true, markers = "extra == \"semantic\""}
 sentence-transformers = {version = ">=5.4.1", optional = true, markers = "extra == \"semantic\""}
 sqlite-vec = {version = "0.1.9", optional = true, markers = "extra == \"semantic\" or extra == \"sqlite-vec\""}
@@ -2810,6 +2813,19 @@ files = [
 nvidia-nvjitlink = "*"
 
 [[package]]
+name = "nvidia-cufile"
+version = "1.15.1.6"
+description = "cuFile GPUDirect libraries"
+optional = false
+python-versions = ">=3"
+groups = ["main", "dev"]
+markers = "<empty>"
+files = [
+    {file = "nvidia_cufile-1.15.1.6-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:08a3ecefae5a01c7f5117351c64f17c7c62efa5fffdbe24fc7d298da19cd0b44"},
+    {file = "nvidia_cufile-1.15.1.6-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:bdc0deedc61f548bddf7733bdc216456c2fdb101d020e1ab4b88d232d5e2f6d1"},
+]
+
+[[package]]
 name = "nvidia-curand"
 version = "10.4.0.35"
 description = "CURAND native runtime libraries"
@@ -3709,20 +3725,20 @@ markers = {main = "extra == \"connectome\" or extra == \"all\" or extra == \"viz
 
 [[package]]
 name = "pycode-kg"
-version = "0.28.1"
+version = "0.28.2"
 description = "A tool to build a searchable knowledge graph from Python repositories"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "pycode_kg-0.28.1-py3-none-any.whl", hash = "sha256:ef9a4d98f36367184fd78c45f17469a104ec06a21593eee99c4f277cff458208"},
-    {file = "pycode_kg-0.28.1.tar.gz", hash = "sha256:2960e9e2db859899a23bc143ae3de13cb13a29a9d7aec71f34000dec84d31770"},
+    {file = "pycode_kg-0.28.2-py3-none-any.whl", hash = "sha256:71ecaad118fc665144925ae9cb6310caa22c3266c782ac16bb29f360dcb90bb0"},
+    {file = "pycode_kg-0.28.2.tar.gz", hash = "sha256:ba940f673d7f5529138d107bb0479209cfba1ba51016bfa28d24d41348f321f6"},
 ]
 markers = {main = "extra == \"kg\" or extra == \"all\""}
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = {version = ">=0.23.0", extras = ["semantic", "viz3d"]}
+kgmodule-utils = {version = ">=0.27.0", extras = ["semantic", "viz3d"]}
 mcp = ">=1.3.0,<2"
 networkx = ">=3.0"
 numpy = ">=1.24.0"
@@ -3734,9 +3750,9 @@ starlette = ">=0.49.1,<1.4.0"
 torch = ">=2.5.1"
 
 [package.extras]
-all = ["PyQt5 (>=5.15.0)", "markdown (>=3.6)", "param (>=2.0.0)", "plotly (>=5.14.0)", "pyvis (>=0.3.2)", "pyvista (>=0.44.0)", "pyvistaqt (>=0.11.0)", "quiltwright (>=0.15.0)", "streamlit (>=1.56.0)", "trame-vtk (>=2.0.0)"]
+all = ["PyQt5 (>=5.15.0)", "markdown (>=3.6)", "param (>=2.0.0)", "plotly (>=5.14.0)", "pyvis (>=0.3.2)", "pyvista (>=0.44.0)", "pyvistaqt (>=0.11.0)", "quiltwright (>=0.16.0)", "streamlit (>=1.56.0)", "trame-vtk (>=2.0.0)"]
 viz = ["plotly (>=5.14.0)", "pyvis (>=0.3.2)", "streamlit (>=1.56.0)"]
-viz3d = ["PyQt5 (>=5.15.0)", "kgmodule-utils[viz3d-qt,viz3d-render] (>=0.23.0)", "markdown (>=3.6)", "param (>=2.0.0)", "pyvistaqt (>=0.11.0)", "quiltwright (>=0.15.0)", "trame-vtk (>=2.0.0)"]
+viz3d = ["PyQt5 (>=5.15.0)", "kgmodule-utils[viz3d-qt,viz3d-render] (>=0.27.0)", "markdown (>=3.6)", "param (>=2.0.0)", "pyvistaqt (>=0.11.0)", "quiltwright (>=0.16.0)", "trame-vtk (>=2.0.0)"]
 
 [[package]]
 name = "pycparser"
@@ -6094,27 +6110,28 @@ standard = ["httptools (>=0.8.0)", "python-dotenv (>=0.13)", "pyyaml (>=5.1)", "
 
 [[package]]
 name = "vault-kg"
-version = "0.3.0"
+version = "0.5.0"
 description = "Obsidian-style Markdown vaults as KGModule knowledge graphs: wikilinks, typed links, tags and headings, no LLM extraction"
 optional = true
 python-versions = "<3.14,>=3.12"
 groups = ["main"]
 markers = "extra == \"vault\" or extra == \"all\""
 files = [
-    {file = "vault_kg-0.3.0-py3-none-any.whl", hash = "sha256:ce21fe4dff9b306efadf16325fd1019d4db765f1a47aca1cefd10f268b5c4f53"},
-    {file = "vault_kg-0.3.0.tar.gz", hash = "sha256:6882e0c7e7f10407e1387bd09122c350aee11dfc7051aef9be45312d08a548d9"},
+    {file = "vault_kg-0.5.0-py3-none-any.whl", hash = "sha256:c4b7a062602a33f6c479cace357aeb944d3727b892a50257ed777577d9e7a5bf"},
+    {file = "vault_kg-0.5.0.tar.gz", hash = "sha256:c4fe2cd872e86711baa45f1fef878b530d4628a8acb708bc18f28859cf97ebff"},
 ]
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = ">=0.26.0"
+kgmodule-utils = ">=0.27.0"
 mcp = ">=1.3.0,<2"
 pyyaml = ">=6.0"
 
 [package.extras]
-semantic = ["kgmodule-utils[semantic] (>=0.26.0)"]
-viz = ["kgmodule-utils[viz] (>=0.26.0)"]
-viz3d = ["kgmodule-utils[viz3d-qt,viz3d-render] (>=0.26.0)", "pyvistaqt (>=0.11.0)", "quiltwright (>=0.16.0)"]
+ingest = ["kgmodule-utils[ingest] (>=0.27.0)"]
+semantic = ["kgmodule-utils[semantic] (>=0.27.0)"]
+viz = ["kgmodule-utils[viz] (>=0.27.0)"]
+viz3d = ["kgmodule-utils[viz3d-qt,viz3d-render] (>=0.27.0)", "pyvistaqt (>=0.11.0)", "quiltwright (>=0.16.0)"]
 
 [[package]]
 name = "virtualenv"
