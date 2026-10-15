@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **The memory, diary, filetree and connectome adapters are tested against
+  the real upstream classes.** Their `_load()` had only mocked tests, which
+  accept any constructor arguments, so a signature change upstream could
+  ship unseen. Four tests in `tests/test_adapters.py` now build a real
+  `MemoryKG`, `DiaryKG`, `FileTreeKG` and `ConnectomeKG`; a stale argument
+  added to the memory adapter fails the new test and leaves the 16 mocked
+  ones green. `memory-kg`, `diary-kg`, `ftree-kg` and `connectome-kg` join
+  the dev group, at their extras' floors, so CI has them.
+- Relocked onto `doc-kg` 0.28.0, `pycode-kg` 0.28.2 and `vault-kg` 0.5.0.
+  Floors are unchanged.
+
 ## [0.17.1] - 2026-10-14
 
 ### Fixed
