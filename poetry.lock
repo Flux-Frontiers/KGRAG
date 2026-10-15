@@ -976,7 +976,6 @@ nvidia-cuda-cupti = {version = "==13.0.85.*", optional = true, markers = "(sys_p
 nvidia-cuda-nvrtc = {version = "==13.0.88.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and (extra == \"cublas\" or extra == \"nvrtc\")"}
 nvidia-cuda-runtime = {version = "==13.0.96.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cudart\""}
 nvidia-cufft = {version = "==12.0.0.61.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cufft\""}
-nvidia-cufile = {version = "==1.15.1.6.*", optional = true, markers = "sys_platform == \"linux\" and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cufile\""}
 nvidia-curand = {version = "==10.4.0.35.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"curand\""}
 nvidia-cusolver = {version = "==12.0.4.66.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cusolver\""}
 nvidia-cusparse = {version = "==12.6.3.3.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and (extra == \"cusolver\" or extra == \"cusparse\")"}
@@ -1330,7 +1329,7 @@ groups = ["main", "dev"]
 files = [
     {file = "flatbuffers-25.12.19-py2.py3-none-any.whl", hash = "sha256:7634f50c427838bb021c2d66a3d1168e9d199b0607e6329399f04846d42e20b4"},
 ]
-markers = {main = "extra == \"kg\" or extra == \"all\" or extra == \"diary\""}
+markers = {main = "extra == \"kg\" or extra == \"all\" or extra == \"diary\" or extra == \"ingest\""}
 
 [[package]]
 name = "fonttools"
@@ -1881,18 +1880,20 @@ referencing = ">=0.31.0"
 
 [[package]]
 name = "kgmodule-utils"
-version = "0.26.0"
+version = "0.27.0"
 description = "Shared types, graph store, semantic index, and pipeline base for the KGModule SDK"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "kgmodule_utils-0.26.0-py3-none-any.whl", hash = "sha256:4cacd27d38f8b1dd9fb9a0919bdd7c622c885286a1af047c478b669e91149491"},
-    {file = "kgmodule_utils-0.26.0.tar.gz", hash = "sha256:457dc1c55535233131bc8ef4536240bc8e69ab15e983ad9ae132f090c1d7c513"},
+    {file = "kgmodule_utils-0.27.0-py3-none-any.whl", hash = "sha256:39da894124aae271b669726545d29f3342b40c5569a2174648ee4e8366a7d2a1"},
+    {file = "kgmodule_utils-0.27.0.tar.gz", hash = "sha256:eb43fba63ce918697be2f1207a2b1e943859c457c6563067da39fe08a1e6db91"},
 ]
 
 [package.dependencies]
+firecrawl-anydoc = {version = ">=0.1.9", optional = true, markers = "extra == \"ingest\""}
 numpy = {version = ">=1.24.0", optional = true, markers = "extra == \"semantic\" or extra == \"viz3d\""}
+pymupdf4llm = {version = ">=1.28.2", optional = true, markers = "extra == \"ingest\""}
 rich = {version = ">=13.0.0,<15.0.0", optional = true, markers = "extra == \"semantic\""}
 sentence-transformers = {version = ">=5.4.1", optional = true, markers = "extra == \"semantic\""}
 sqlite-vec = {version = "0.1.9", optional = true, markers = "extra == \"semantic\" or extra == \"sqlite-vec\""}
@@ -1900,15 +1901,16 @@ torch = {version = ">=2.5.1", optional = true, markers = "extra == \"semantic\""
 transformers = {version = ">=5.5.0,<6", optional = true, markers = "extra == \"semantic\""}
 
 [package.extras]
-ingest = ["firecrawl-anydoc (>=0.1.9)"]
+ingest = ["firecrawl-anydoc (>=0.1.9)", "pymupdf4llm (>=1.28.2)"]
 lancedb = ["lancedb (>=0.19.0)"]
+pdf = ["pymupdf4llm (>=1.28.2)"]
 semantic = ["numpy (>=1.24.0)", "rich (>=13.0.0,<15.0.0)", "sentence-transformers (>=5.4.1)", "sqlite-vec (==0.1.9)", "torch (>=2.5.1)", "transformers (>=5.5.0,<6)"]
 sqlite-vec = ["sqlite-vec (==0.1.9)"]
 synthesis = ["httpx (>=0.27.0)", "openai (>=1.30.0)", "pillow (>=10.0.0)"]
 synthesis-mflux = ["httpx (>=0.27.0)", "mflux (>=0.9.0)", "openai (>=1.30.0)", "pillow (>=10.0.0)"]
 viz = ["pyvis (>=0.3.2)"]
 viz3d = ["numpy (>=1.24.0)"]
-viz3d-qt = ["PyQt5 (>=5.15.0)", "numpy (>=1.24.0)", "pyvista (>=0.44.0)", "quiltwright (>=0.15.0)"]
+viz3d-qt = ["PyQt5 (>=5.15.0)", "numpy (>=1.24.0)", "pyvista (>=0.44.0)", "quiltwright (>=0.16.0)"]
 viz3d-render = ["numpy (>=1.24.0)", "pyvista (>=0.44.0)"]
 
 [[package]]
@@ -2808,19 +2810,6 @@ files = [
 nvidia-nvjitlink = "*"
 
 [[package]]
-name = "nvidia-cufile"
-version = "1.15.1.6"
-description = "cuFile GPUDirect libraries"
-optional = false
-python-versions = ">=3"
-groups = ["main", "dev"]
-markers = "<empty>"
-files = [
-    {file = "nvidia_cufile-1.15.1.6-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:08a3ecefae5a01c7f5117351c64f17c7c62efa5fffdbe24fc7d298da19cd0b44"},
-    {file = "nvidia_cufile-1.15.1.6-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:bdc0deedc61f548bddf7733bdc216456c2fdb101d020e1ab4b88d232d5e2f6d1"},
-]
-
-[[package]]
 name = "nvidia-curand"
 version = "10.4.0.35"
 description = "CURAND native runtime libraries"
@@ -2988,7 +2977,7 @@ files = [
     {file = "onnxruntime-1.28.0-cp314-cp314t-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:e562d6e36a749f6764481c0ddb0f2af3d0b5a3c164291361d08803c557f369af"},
     {file = "onnxruntime-1.28.0-cp314-cp314t-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:4f6e92367ddce1e4d33cf295024f40192be6c6171a09208f515ba169ced06c8e"},
 ]
-markers = {main = "extra == \"kg\" or extra == \"all\" or extra == \"diary\""}
+markers = {main = "extra == \"kg\" or extra == \"all\" or extra == \"diary\" or extra == \"ingest\""}
 
 [package.dependencies]
 flatbuffers = "*"
@@ -3575,7 +3564,7 @@ files = [
     {file = "protobuf-7.35.1-py3-none-any.whl", hash = "sha256:4bc97768d8fe4ad6743c8a19403e314511ed9f6d13205b687e52421c023ac1b9"},
     {file = "protobuf-7.35.1.tar.gz", hash = "sha256:ce115a26fe0c39a2c29973d914d327e516a6455464489fe3cd1e51a1b354f81a"},
 ]
-markers = {main = "extra == \"kg\" or extra == \"all\" or extra == \"diary\" or extra == \"viz\""}
+markers = {main = "extra == \"kg\" or extra == \"all\" or extra == \"diary\" or extra == \"ingest\" or extra == \"viz\""}
 
 [[package]]
 name = "psutil"
@@ -3607,7 +3596,7 @@ files = [
     {file = "psutil-7.2.2-cp37-abi3-win_arm64.whl", hash = "sha256:8c233660f575a5a89e6d4cb65d9f938126312bca76d8fe087b947b3a1aaac9ee"},
     {file = "psutil-7.2.2.tar.gz", hash = "sha256:0746f5f8d406af344fd547f1c8daa5f5c33dbc293bb8d6a16d80b4bb88f59372"},
 ]
-markers = {main = "sys_platform == \"linux\" and (extra == \"viz\" or extra == \"all\" or extra == \"kg\" or extra == \"diary\") or (extra == \"kg\" or extra == \"all\" or extra == \"diary\" or extra == \"viz\") and sys_platform != \"emscripten\" and sys_platform != \"cygwin\" or extra == \"kg\" or extra == \"all\" or extra == \"diary\""}
+markers = {main = "sys_platform == \"linux\" and (extra == \"viz\" or extra == \"all\" or extra == \"kg\" or extra == \"diary\" or extra == \"ingest\") or (extra == \"kg\" or extra == \"all\" or extra == \"diary\" or extra == \"ingest\" or extra == \"viz\") and sys_platform != \"emscripten\" and sys_platform != \"cygwin\" or extra == \"kg\" or extra == \"all\" or extra == \"diary\" or extra == \"ingest\""}
 
 [package.extras]
 dev = ["abi3audit", "black", "check-manifest", "colorama ; os_name == \"nt\"", "coverage", "packaging", "psleak", "pylint", "pyperf", "pypinfo", "pyreadline3 ; os_name == \"nt\"", "pytest", "pytest-cov", "pytest-instafail", "pytest-xdist", "pywin32 ; os_name == \"nt\" and implementation_name != \"pypy\"", "requests", "rstcheck", "ruff", "setuptools", "sphinx", "sphinx_rtd_theme", "toml-sort", "twine", "validate-pyproject[all]", "virtualenv", "vulture", "wheel", "wheel ; os_name == \"nt\" and implementation_name != \"pypy\"", "wmi ; os_name == \"nt\" and implementation_name != \"pypy\""]
@@ -4015,7 +4004,7 @@ files = [
     {file = "pymupdf-1.28.2-cp314-cp314t-manylinux_2_28_x86_64.whl", hash = "sha256:fd481ed48bef56305c41fb7e05a055c03345c899c7b101dad086258b438f8168"},
     {file = "pymupdf-1.28.2.tar.gz", hash = "sha256:5e0be7908a715aa20333caddd73f1d6f01e4cd0c26e869fa2dd0b7f344da2249"},
 ]
-markers = {main = "extra == \"kg\" or extra == \"all\" or extra == \"diary\""}
+markers = {main = "extra == \"kg\" or extra == \"all\" or extra == \"diary\" or extra == \"ingest\""}
 
 [[package]]
 name = "pymupdf-layout"
@@ -4031,7 +4020,7 @@ files = [
     {file = "pymupdf_layout-1.28.2-cp310-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:4b44a1d8ebf897b0e862ee2d73e7df73099f1c047fc024d2dd24ef0632d2cb5f"},
     {file = "pymupdf_layout-1.28.2-cp310-abi3-win_amd64.whl", hash = "sha256:a765d3ba0b1622e8d5794772ad4303d824386f04b382a5d31c999a828ed4a089"},
 ]
-markers = {main = "extra == \"kg\" or extra == \"all\" or extra == \"diary\""}
+markers = {main = "extra == \"kg\" or extra == \"all\" or extra == \"diary\" or extra == \"ingest\""}
 
 [package.dependencies]
 networkx = "*"
@@ -4051,7 +4040,7 @@ files = [
     {file = "pymupdf4llm-1.28.2-py3-none-any.whl", hash = "sha256:55c06c07d128f94c4d9271bd427d16ee219779e7d796a7b9da4e110be3004d96"},
     {file = "pymupdf4llm-1.28.2.tar.gz", hash = "sha256:02681698ef67bda9a2acd5d9e1115d4e88be0eb9c5d68926e5e3cd98cd351874"},
 ]
-markers = {main = "extra == \"kg\" or extra == \"all\" or extra == \"diary\""}
+markers = {main = "extra == \"kg\" or extra == \"all\" or extra == \"diary\" or extra == \"ingest\""}
 
 [package.dependencies]
 psutil = "*"
@@ -5436,7 +5425,7 @@ files = [
     {file = "tabulate-0.10.0-py3-none-any.whl", hash = "sha256:f0b0622e567335c8fabaaa659f1b33bcb6ddfe2e496071b743aa113f8774f2d3"},
     {file = "tabulate-0.10.0.tar.gz", hash = "sha256:e2cfde8f79420f6deeffdeda9aaec3b6bc5abce947655d17ac662b126e48a60d"},
 ]
-markers = {main = "extra == \"kg\" or extra == \"all\" or extra == \"diary\""}
+markers = {main = "extra == \"kg\" or extra == \"all\" or extra == \"diary\" or extra == \"ingest\""}
 
 [package.extras]
 widechars = ["wcwidth"]
@@ -6105,27 +6094,27 @@ standard = ["httptools (>=0.8.0)", "python-dotenv (>=0.13)", "pyyaml (>=5.1)", "
 
 [[package]]
 name = "vault-kg"
-version = "0.2.0"
+version = "0.3.0"
 description = "Obsidian-style Markdown vaults as KGModule knowledge graphs: wikilinks, typed links, tags and headings, no LLM extraction"
 optional = true
 python-versions = "<3.14,>=3.12"
 groups = ["main"]
 markers = "extra == \"vault\" or extra == \"all\""
 files = [
-    {file = "vault_kg-0.2.0-py3-none-any.whl", hash = "sha256:12a7b41eb3009404ee8829d44fa5ad7ffcafa77c28cf0d812005ab131bc0f3cb"},
-    {file = "vault_kg-0.2.0.tar.gz", hash = "sha256:0e61aba6cef2cf854c1af95440759c212889c52a9a9198e5a728275007203647"},
+    {file = "vault_kg-0.3.0-py3-none-any.whl", hash = "sha256:ce21fe4dff9b306efadf16325fd1019d4db765f1a47aca1cefd10f268b5c4f53"},
+    {file = "vault_kg-0.3.0.tar.gz", hash = "sha256:6882e0c7e7f10407e1387bd09122c350aee11dfc7051aef9be45312d08a548d9"},
 ]
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = ">=0.24.0"
+kgmodule-utils = ">=0.26.0"
 mcp = ">=1.3.0,<2"
 pyyaml = ">=6.0"
 
 [package.extras]
-semantic = ["kgmodule-utils[semantic] (>=0.24.0)"]
-viz = ["kgmodule-utils[viz] (>=0.24.0)"]
-viz3d = ["kgmodule-utils[viz3d-qt,viz3d-render] (>=0.24.0)", "pyvistaqt (>=0.11.0)", "quiltwright (>=0.15.0)"]
+semantic = ["kgmodule-utils[semantic] (>=0.26.0)"]
+viz = ["kgmodule-utils[viz] (>=0.26.0)"]
+viz3d = ["kgmodule-utils[viz3d-qt,viz3d-render] (>=0.26.0)", "pyvistaqt (>=0.11.0)", "quiltwright (>=0.16.0)"]
 
 [[package]]
 name = "virtualenv"
@@ -6517,11 +6506,11 @@ files = [
 dev = ["pytest", "setuptools"]
 
 [extras]
-all = ["PyQt5", "connectome-kg", "diary-kg", "doc-kg", "firecrawl-anydoc", "ftree-kg", "markdown", "memory-kg", "param", "plotly", "pycode-kg", "pyvis", "pyvista", "pyvistaqt", "streamlit", "trame-vtk", "vault-kg"]
+all = ["PyQt5", "connectome-kg", "diary-kg", "doc-kg", "firecrawl-anydoc", "ftree-kg", "markdown", "memory-kg", "param", "plotly", "pycode-kg", "pymupdf4llm", "pyvis", "pyvista", "pyvistaqt", "streamlit", "trame-vtk", "vault-kg"]
 connectome = ["connectome-kg"]
 diary = ["diary-kg"]
 filetree = ["ftree-kg"]
-ingest = ["firecrawl-anydoc"]
+ingest = ["kgmodule-utils"]
 kg = ["doc-kg", "memory-kg", "pycode-kg"]
 qt = ["PyQt5"]
 vault = ["vault-kg"]
@@ -6532,4 +6521,4 @@ viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "7881b0bfff93317aff840492af65ac2278432be4f2546c9f4576b4c3af35ac7b"
+content-hash = "4d59e96186796cb52ff3724a21b7e8233aa23fee091b932126d85a26d9a163a7"
