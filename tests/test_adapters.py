@@ -8,8 +8,8 @@ Query, pack and stats are driven against a mocked ``_kg``: those tests are
 about how the adapter reshapes results into CrossHit/CrossSnippet, and a real
 KG would mean building a real graph to get results worth reshaping.
 
-The ``_load`` tests are the exception and use the **real** doc-kg and pycode-kg
-classes. A MagicMock accepts any call, so it validates the adapter's kwargs only
+The ``_load`` tests are the exception and use the **real** doc-kg, pycode-kg,
+memory-kg, diary-kg, ftree-kg and connectome-kg classes. A MagicMock accepts any call, so it validates the adapter's kwargs only
 against the test's own expectations, never against the actual constructor
 signature. Confirmed by mutation: adding a stale ``lancedb_uri=`` argument to
 DocKGAdapter._load leaves the mocked version green while the real class raises
@@ -384,6 +384,76 @@ class TestDocKGAdapterLoad:
 
         kg = self._loaded_kg(GutenbergKGAdapter(entry))
         assert Path(kg.vectors_path) == tmp_path / "books" / "vectors.sqlite"
+
+
+class TestOtherAdaptersLoadRealClass:
+    """_load against the real memory-kg, diary-kg, ftree-kg and connectome-kg classes.
+
+    The query/pack/stats tests for these adapters run against a mocked ``_kg``
+    and never call the real constructor, which leaves the signature-drift gap
+    :class:`TestCodeKGAdapterLoad` closes for pycode-kg (sweep item 4). Each
+    package is a dev dependency and constructs cheaply: no model load, no
+    graph build, nothing written.
+    """
+
+    def _entry_with_vectors(self, tmp_path, kind: KGKind) -> KGEntry:
+        """Build an entry with a graph and an off-layout vectors path.
+
+        :param tmp_path: Pytest temporary directory.
+        :param kind: KG kind for the entry.
+        :return: The registry entry.
+        """
+        entry = _entry(tmp_path, kind, with_sqlite=True)
+        entry.vectors_path = tmp_path / "elsewhere" / "vectors.sqlite"
+        return entry
+
+    def test_memory_adapter_builds_real_memorykg(self, tmp_path):
+        from memory_kg.kg import MemoryKG
+
+        entry = self._entry_with_vectors(tmp_path, KGKind.MEMORY)
+        adapter = MemoryKGAdapter(entry)
+        adapter._load()
+
+        kg = adapter._kg
+        assert isinstance(kg, MemoryKG)
+        assert Path(kg.db_path).resolve() == entry.sqlite_path.resolve()
+        assert Path(kg.vectors_path).resolve() == entry.vectors_path.resolve()
+
+    def test_diary_adapter_builds_real_diarykg(self, tmp_path):
+        from diary_kg.kg import DiaryKG
+
+        entry = _entry(tmp_path, KGKind.DIARY, with_sqlite=True)
+        entry.metadata["source_file"] = "pepys.txt"
+        adapter = DiaryKGAdapter(entry)
+        adapter._load()
+
+        kg = adapter._kg
+        assert isinstance(kg, DiaryKG)
+        assert Path(kg.root).resolve() == entry.repo_path.resolve()
+
+    def test_ftree_adapter_builds_real_filetreekg(self, tmp_path):
+        from ftree_kg import FileTreeKG
+
+        entry = self._entry_with_vectors(tmp_path, KGKind.FILETREE)
+        adapter = FTreeKGAdapter(entry)
+        adapter._load()
+
+        kg = adapter._kg
+        assert isinstance(kg, FileTreeKG)
+        assert Path(kg.db_path).resolve() == entry.sqlite_path.resolve()
+        assert Path(kg.vectors_path).resolve() == entry.vectors_path.resolve()
+
+    def test_connectome_adapter_builds_real_connectomekg(self, tmp_path):
+        from connectomekg import ConnectomeKG
+
+        entry = self._entry_with_vectors(tmp_path, KGKind.CONNECTOME)
+        adapter = ConnectomeKGAdapter(entry)
+        adapter._load()
+
+        kg = adapter._kg
+        assert isinstance(kg, ConnectomeKG)
+        assert Path(kg.db_path).resolve() == entry.sqlite_path.resolve()
+        assert Path(kg.vectors_path).resolve() == entry.vectors_path.resolve()
 
 
 class TestDocKGAdapterIsAvailable:

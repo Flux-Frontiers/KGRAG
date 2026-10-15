@@ -348,17 +348,22 @@ pre-commit = "^4.5.1"
 detect-secrets = "^1.5.0"
 pdoc = ">=14.0.0"
 pip-audit = "^2.10.0"
-# The adapters are optional at runtime (the `kg` extra) but not optional to
-# test: an adapter's whole job is constructing a real DocKG/PyCodeKG with the
-# right arguments, and a mocked-out import cannot show that it does. Installed
-# here so the suite exercises the real classes. The marginal cost is small --
-# sentence-transformers already pulls the torch/transformers stack.
+# The adapters are optional at runtime (the `kg`, `diary`, `filetree` and
+# `connectome` extras) but not optional to test: an adapter's whole job is
+# constructing a real KG class with the right arguments, and a mocked-out
+# import cannot show that it does. Installed here so the suite exercises the
+# real classes. The marginal cost is small -- sentence-transformers already
+# pulls the torch/transformers stack; diary-kg adds spaCy.
 #
-# Kept in step with the kg/all extras' floors above -- a dev-dep floor lagging
+# Kept in step with the extras' floors above -- a dev-dep floor lagging
 # behind them would test against an older real class than the one the extras
 # actually ship, defeating the point of installing the real class at all.
 pycode-kg = ">=0.28.1"
 doc-kg = ">=0.27.0"
+memory-kg = ">=0.12.0"
+diary-kg = ">=0.100.0"
+ftree-kg = ">=0.17.0"
+connectome-kg = ">=0.8.1"
 
 # ---------------------------------------------------------------------------
 # Tool configuration
