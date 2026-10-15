@@ -1,45 +1,41 @@
-# Release Notes -- v0.17.0
+# Release Notes -- v0.17.1
 
-> Released: 2026-09-22
+> Released: 2026-10-14
 
-KGRAG can now federate Obsidian-style Markdown vaults. A vault registered as
-kind `vault` is searched alongside code, documents, diaries and every other
-registered knowledge graph, and its hits carry the note's path, line span
-and frontmatter dates like any other.
+A dependency fix that keeps `kgrag ingest` converting PDFs. kgmodule-utils
+0.27.0, released the same day, made `pymupdf4llm` the fleet's one PDF
+converter. kg-rag's `ingest` extra still named anydoc directly, so an install
+with `kg-rag[ingest]` but not `[kg]` recorded every PDF as failed. This
+release takes the converters from the SDK's own `[ingest]` extra instead.
 
 ## What changed
 
-**A new kind: `vault`.** VaultKG builds a graph from the links a vault's
-author wrote -- wikilinks, embeds, tags and typed links such as
-`supports:: [[X]]` -- with no model extraction. KGRAG reaches it through a
-`VaultKGAdapter`, finds `.vaultkg/` stores with `kgrag scan`, and lists the
-kind in the app and the MCP tools' kind filters. Notes with a frontmatter
-`date` or `created` carry the fleet's time keys, so time-scoped queries
-filter them with everything else.
+**Ingest dependencies come from the SDK.** `kg-rag[ingest]` now installs
+`kgmodule-utils[ingest]`, so whichever converter the SDK assigns to a format
+is installed with it. `kg-rag[all]` names `pymupdf4llm` and anydoc directly,
+because Poetry cannot resolve a second `kgmodule-utils[ingest]` declaration
+beside the core dependency.
 
-**A `vault` extra.** `pip install "kg-rag[vault]"` installs VaultKG with
-KGRAG; it is also part of `all`. Without it the kind reports unavailable
-rather than failing.
+**Three converters.** `kgrag ingest` converts PDF with `pymupdf4llm` (the
+same call `dockg build` makes), office formats with anydoc, and `.tex` and
+`.html` with `pandoc` when the `pandoc` program is installed. The help text
+and the CLI and ingestion guides say so.
 
-**Current fleet dependencies.** The lock moves to connectome-kg 0.7.1,
-diary-kg 0.100.0, ftree-kg 0.17.0 and memory-kg 0.12.0. The `pi` extra is
-gone: it pulled `llama-cpp-python`, which nothing configured, and made
-`--all-extras` need a compiler on some platforms. The `llama` embedding
-backend still works if you install that package yourself.
+**A test that converts a real PDF.** Every earlier ingest test mocked the
+pipeline, which is how the gap went unseen. A new test runs `kgrag ingest`
+on a generated PDF, and another checks that the `ingest` extra comes from
+the SDK.
 
-**Docs that match the fleet.** The adapter table and sister-project list now
-include GenealogyKG, SwiftKG, TypeScriptKG and VaultKG, the usage guide
-counts 19 KG types, and the install instructions list every per-kind extra.
+**Newer floors.** kgmodule-utils 0.27.0 and vault-kg 0.3.0.
 
 ## Upgrading
 
 ```bash
-uv tool install --force 'kg-rag[all]'
-kgrag register my-brain vault ~/brain     # after: vaultkg build --vault ~/brain
+pip install -U "kg-rag[ingest]"
 ```
 
-Nothing else changes for existing registries. If you installed the `pi`
-extra, install `llama-cpp-python` directly instead.
+Re-run `kgrag ingest` on any corpus whose PDFs were recorded as failed with
+"pymupdf4llm is not installed". Install `pandoc` to ingest LaTeX and HTML.
 
 ---
 
