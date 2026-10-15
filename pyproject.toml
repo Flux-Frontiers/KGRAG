@@ -364,6 +364,17 @@ memory-kg = ">=0.12.0"
 diary-kg = ">=0.100.0"
 ftree-kg = ">=0.17.0"
 connectome-kg = ">=0.8.1"
+vault-kg = ">=0.3.0"
+# No extra declares these four, so there is no floor to keep in step with;
+# each is floored at the release its adapter test was first run against.
+agent-kg = ">=0.12.1"
+genealogy-kg = ">=0.2.2"
+swift-kg = ">=0.4.0"
+tscode-kg = ">=0.7.0"
+# metabo-kg is not on PyPI. A git dependency is fine in this group: dev
+# dependencies never reach the wheel's metadata. Pinned to a tag so the lock
+# is reproducible; move the tag when Metabo_kg releases.
+metabo-kg = { git = "https://github.com/Flux-Frontiers/Metabo_kg.git", tag = "v0.17.0" }
 
 # ---------------------------------------------------------------------------
 # Tool configuration
