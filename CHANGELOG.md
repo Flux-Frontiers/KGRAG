@@ -28,6 +28,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   is installed.
 - Relocked onto `doc-kg` 0.28.0, `pycode-kg` 0.28.2 and `vault-kg` 0.5.0.
   Floors are unchanged.
+- Dependencies refreshed to clear 22 Dependabot alerts (#63): pyjwt 2.15.1,
+  urllib3 2.8.0, mcp 1.30.0 and virtualenv 21.14.11 (dev), all transitive.
+
+### Fixed
+
+- **PDF support in `[all]` and `[ingest]` on a fresh install.** pymupdf4llm
+  2.0 (2026-10-16) is an empty placeholder: its code now ships inside the
+  pymupdf 2.0 wheel. `[all]` named `pymupdf4llm>=1.28.2` directly, and
+  `[ingest]` floored `kgmodule-utils[ingest]>=0.27.0`, whose own extra
+  declared the same; both resolved to no PDF code. `[all]` now declares
+  `pymupdf>=2.0` and `[ingest]` floors `kgmodule-utils[ingest]>=0.27.1`.
+  The lock moves to kgmodule-utils 0.27.1, doc-kg 0.28.1, diary-kg 0.100.1
+  and pymupdf 2.0.
 
 ## [0.17.1] - 2026-10-14
 

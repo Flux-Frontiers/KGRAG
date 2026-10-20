@@ -196,9 +196,11 @@ vault = [
 # them here, so the SDK alone decides which converter owns a format. Listing
 # firecrawl-anydoc directly left kg-rag[ingest] without pymupdf4llm once the
 # SDK moved PDF to it (0.27.0). Optional because staging .md/.txt/.rst needs
-# nothing extra and kg_utils.ingest imports the converters lazily.
+# nothing extra and kg_utils.ingest imports the converters lazily. 0.27.1 is
+# the floor because 0.27.0's [ingest] declared pymupdf4llm>=1.28.2, which
+# now resolves to the empty pymupdf4llm 2.0 placeholder (no PDF code).
 ingest = [
-    "kgmodule-utils[ingest]>=0.27.0",
+    "kgmodule-utils[ingest]>=0.27.1",
 ]
 viz = [
     "plotly>=5.14.0",
@@ -251,8 +253,10 @@ all = [
     # here beside the core kgmodule-utils makes poetry's solver fail
     # ("<empty>" constraint), and poetry refuses a self-reference
     # (kg-rag[ingest]). Keep in step with kgmodule-utils' own [ingest] extra.
+    # pymupdf, not pymupdf4llm: since 2.0 the pymupdf wheel ships the
+    # pymupdf4llm module, and pymupdf4llm 2.0 alone is an empty placeholder.
     "firecrawl-anydoc>=0.1.9",
-    "pymupdf4llm>=1.28.2",
+    "pymupdf>=2.0",
     "plotly>=5.14.0",
     "pyvis>=0.3.2",
     "streamlit>=1.35.0",
