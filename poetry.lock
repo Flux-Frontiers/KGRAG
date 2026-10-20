@@ -1253,14 +1253,14 @@ word-list = ["pyahocorasick"]
 
 [[package]]
 name = "diary-kg"
-version = "0.100.0"
+version = "0.100.1"
 description = "A knowledge graph builder and semantic search engine for diaries and journals"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "diary_kg-0.100.0-py3-none-any.whl", hash = "sha256:aa4ce8bc4088f97d793c6beea73b04a2607a620abc0417581345599a59bed877"},
-    {file = "diary_kg-0.100.0.tar.gz", hash = "sha256:47966a28ae61e802ca06b90a748374249391a205edb9e88faccd0100259321cf"},
+    {file = "diary_kg-0.100.1-py3-none-any.whl", hash = "sha256:e788a1257f3971cedd85ccd83d372b0ba085f1c10abee212c7b0f2ffd170c5e0"},
+    {file = "diary_kg-0.100.1.tar.gz", hash = "sha256:7f7af6fd16dd9bb95ab5cacd15ed4a59644a051ee2fc479d58ded36e0999eb97"},
 ]
 markers = {main = "extra == \"diary\" or extra == \"all\""}
 
@@ -1293,20 +1293,20 @@ files = [
 
 [[package]]
 name = "doc-kg"
-version = "0.28.0"
+version = "0.28.1"
 description = "A tool to build a semantically searchable knowledge graph from markdown and text documents"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "doc_kg-0.28.0-py3-none-any.whl", hash = "sha256:6aff8b095c5d51a37d4053ea65476b91f70af1fc72ef96d7601fe4365e58d2da"},
-    {file = "doc_kg-0.28.0.tar.gz", hash = "sha256:b108c55402497d7463593f3e48a08053951a14fd80b333679ea84b5aaff070f7"},
+    {file = "doc_kg-0.28.1-py3-none-any.whl", hash = "sha256:3b7c6051adb398ca5a696116052a1e9858cbb3c79ad668d9ab3b21a5fe1f5cc7"},
+    {file = "doc_kg-0.28.1.tar.gz", hash = "sha256:8ec4a34abcbb2b137fc5644663540ee39fcbc9c33ab829beec3e1329c0fd5916"},
 ]
 markers = {main = "extra == \"kg\" or extra == \"all\" or extra == \"diary\""}
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = {version = ">=0.27.0", extras = ["pdf", "semantic"]}
+kgmodule-utils = {version = ">=0.27.1", extras = ["pdf", "semantic"]}
 mcp = ">=1.3.0,<2"
 pyyaml = ">=6.0.0"
 rich = ">=14.3.3,<15"
@@ -1985,22 +1985,22 @@ referencing = ">=0.31.0"
 
 [[package]]
 name = "kgmodule-utils"
-version = "0.27.0"
+version = "0.27.1"
 description = "Shared types, graph store, semantic index, and pipeline base for the KGModule SDK"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "kgmodule_utils-0.27.0-py3-none-any.whl", hash = "sha256:39da894124aae271b669726545d29f3342b40c5569a2174648ee4e8366a7d2a1"},
-    {file = "kgmodule_utils-0.27.0.tar.gz", hash = "sha256:eb43fba63ce918697be2f1207a2b1e943859c457c6563067da39fe08a1e6db91"},
+    {file = "kgmodule_utils-0.27.1-py3-none-any.whl", hash = "sha256:176342750f52d539e0491e2fcf04afcc35460244bc4b5a7f1f4e562e6f5de3d7"},
+    {file = "kgmodule_utils-0.27.1.tar.gz", hash = "sha256:573119f13a2bcf4eba9e9a18911dbbb7e516d6913fa73603683eeb0fd71840de"},
 ]
 
 [package.dependencies]
 firecrawl-anydoc = {version = ">=0.1.9", optional = true, markers = "extra == \"ingest\""}
 numpy = {version = ">=1.24.0", optional = true, markers = "extra == \"semantic\" or extra == \"viz3d\""}
-pymupdf4llm = [
-    {version = ">=1.28.2", optional = true, markers = "extra == \"pdf\""},
-    {version = ">=1.28.2", optional = true, markers = "extra == \"ingest\""},
+pymupdf = [
+    {version = ">=2.0", optional = true, markers = "extra == \"ingest\""},
+    {version = ">=2.0", optional = true, markers = "extra == \"pdf\""},
 ]
 rich = {version = ">=13.0.0,<15.0.0", optional = true, markers = "extra == \"semantic\""}
 sentence-transformers = {version = ">=5.4.1", optional = true, markers = "extra == \"semantic\""}
@@ -2009,9 +2009,9 @@ torch = {version = ">=2.5.1", optional = true, markers = "extra == \"semantic\""
 transformers = {version = ">=5.5.0,<6", optional = true, markers = "extra == \"semantic\""}
 
 [package.extras]
-ingest = ["firecrawl-anydoc (>=0.1.9)", "pymupdf4llm (>=1.28.2)"]
+ingest = ["firecrawl-anydoc (>=0.1.9)", "pymupdf (>=2.0)"]
 lancedb = ["lancedb (>=0.19.0)"]
-pdf = ["pymupdf4llm (>=1.28.2)"]
+pdf = ["pymupdf (>=2.0)"]
 semantic = ["numpy (>=1.24.0)", "rich (>=13.0.0,<15.0.0)", "sentence-transformers (>=5.4.1)", "sqlite-vec (==0.1.9)", "torch (>=2.5.1)", "transformers (>=5.5.0,<6)"]
 sqlite-vec = ["sqlite-vec (==0.1.9)"]
 synthesis = ["httpx (>=0.27.0)", "openai (>=1.30.0)", "pillow (>=10.0.0)"]
@@ -4134,39 +4134,17 @@ files = [
 
 [[package]]
 name = "pymupdf"
-version = "1.28.2"
+version = "2.0"
 description = "A high performance Python library for data extraction, analysis, conversion & manipulation of PDF (and other) documents."
 optional = false
-python-versions = ">=3.10"
+python-versions = ">=3.11"
 groups = ["main", "dev"]
 files = [
-    {file = "pymupdf-1.28.2-cp310-abi3-macosx_10_15_x86_64.whl", hash = "sha256:5fc315b425ff1f7afdd1ea2f348205cb19b806767daae7ce4d64115799c2bae1"},
-    {file = "pymupdf-1.28.2-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:7113846b35dbf0a033f088e4f4fb543dabeb4b0b12c112966a1ca1ee2d5eacae"},
-    {file = "pymupdf-1.28.2-cp310-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:3050a233dde1211efe89ada74e2add6238436434159f46097a1423aad2842545"},
-    {file = "pymupdf-1.28.2-cp310-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:397d6715c1f0df7548a92d0afd8ce370fc48fa47aeefac16be2bc04a16a8227f"},
-    {file = "pymupdf-1.28.2-cp310-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:f89fb2d86d07d643a269f17a093105057e20c79c1d06c103b53600067b6d2b01"},
-    {file = "pymupdf-1.28.2-cp310-abi3-win32.whl", hash = "sha256:530ef543a3885b3b81cb72a854e7c5a625a9233201221132bb6c31698c6a2bdb"},
-    {file = "pymupdf-1.28.2-cp310-abi3-win_amd64.whl", hash = "sha256:ebd244918798502d7b4504c90410d1711a4d7675a32584ca30f1bab419ecbffe"},
-    {file = "pymupdf-1.28.2-cp310-abi3-win_arm64.whl", hash = "sha256:ffe91a24edc75c80da2a4b62f50fc0f54632d34fc8fe4cbc48e5c7ff07cf8fb4"},
-    {file = "pymupdf-1.28.2-cp313-abi3-pyemscripten_2025_0_wasm32.whl", hash = "sha256:2e1b574c0fd2cb238021033fd3c0f9c4388816638df064e4bfb56d9d81736dc8"},
-    {file = "pymupdf-1.28.2-cp314-cp314t-manylinux_2_28_x86_64.whl", hash = "sha256:fd481ed48bef56305c41fb7e05a055c03345c899c7b101dad086258b438f8168"},
-    {file = "pymupdf-1.28.2.tar.gz", hash = "sha256:5e0be7908a715aa20333caddd73f1d6f01e4cd0c26e869fa2dd0b7f344da2249"},
-]
-markers = {main = "extra == \"kg\" or extra == \"all\" or extra == \"diary\" or extra == \"ingest\""}
-
-[[package]]
-name = "pymupdf-layout"
-version = "1.28.2"
-description = "PyMuPDF Layout turns PDFs into structured data 10× faster than vision-based tools using AI trained on PDF internals, not images. CPU-only. No GPU required."
-optional = false
-python-versions = ">=3.10"
-groups = ["main", "dev"]
-files = [
-    {file = "pymupdf_layout-1.28.2-cp310-abi3-macosx_10_9_x86_64.whl", hash = "sha256:2a7368b5b0d75acb0835fae40a4d6e6c30ba457b388fedc75f06619a581ba17f"},
-    {file = "pymupdf_layout-1.28.2-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:d55e9b9150e1e9f182063b93092f0ba2c2475b51ea6da656e9d6edad0dd4054d"},
-    {file = "pymupdf_layout-1.28.2-cp310-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:fc7716682bfde26c002a7309cda0c520f3d2466dce368054d4fc2b653a74e8bc"},
-    {file = "pymupdf_layout-1.28.2-cp310-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:4b44a1d8ebf897b0e862ee2d73e7df73099f1c047fc024d2dd24ef0632d2cb5f"},
-    {file = "pymupdf_layout-1.28.2-cp310-abi3-win_amd64.whl", hash = "sha256:a765d3ba0b1622e8d5794772ad4303d824386f04b382a5d31c999a828ed4a089"},
+    {file = "pymupdf-2.0-cp311-abi3-macosx_11_0_arm64.whl", hash = "sha256:707594e8de4946445489ca3274943911a505a5cb665adf8751a4edfc4c0fff58"},
+    {file = "pymupdf-2.0-cp311-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:c9faff6d6ec5882e934a21893917f2c460bbc79f3645318e1f8d726990ab4580"},
+    {file = "pymupdf-2.0-cp311-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:f92e8a7ae92c7b1cbffcbe8764166ab1234e0a37b07549f5951e7739241d34f0"},
+    {file = "pymupdf-2.0-cp311-abi3-win_amd64.whl", hash = "sha256:f59f009b1586d56882739189cd3a4f0240efbfae28ebf268a3763ed9a2006270"},
+    {file = "pymupdf-2.0.tar.gz", hash = "sha256:7733136f626fffe98677daa53c906eb45f2eb486a6450dbcfd652cbbd760f1e2"},
 ]
 markers = {main = "extra == \"kg\" or extra == \"all\" or extra == \"diary\" or extra == \"ingest\""}
 
@@ -4174,27 +4152,35 @@ markers = {main = "extra == \"kg\" or extra == \"all\" or extra == \"diary\" or 
 networkx = "*"
 numpy = "*"
 onnxruntime = "*"
-PyMuPDF = "1.28.2"
+psutil = "*"
+pymupdf-layout = "2.0"
+pymupdf4llm = "2.0"
 pyyaml = "*"
+tabulate = "*"
 
 [[package]]
-name = "pymupdf4llm"
-version = "1.28.2"
-description = "PyMuPDF Utilities for LLM/RAG"
+name = "pymupdf-layout"
+version = "2.0"
+description = ""
 optional = false
-python-versions = ">=3.10"
+python-versions = "*"
 groups = ["main", "dev"]
 files = [
-    {file = "pymupdf4llm-1.28.2-py3-none-any.whl", hash = "sha256:55c06c07d128f94c4d9271bd427d16ee219779e7d796a7b9da4e110be3004d96"},
-    {file = "pymupdf4llm-1.28.2.tar.gz", hash = "sha256:02681698ef67bda9a2acd5d9e1115d4e88be0eb9c5d68926e5e3cd98cd351874"},
+    {file = "pymupdf_layout-2.0-py3-none-any.whl", hash = "sha256:03ac486c796839eae5c46e910364ad524fb1e83c7dc34553e8e704939d0236a7"},
 ]
 markers = {main = "extra == \"kg\" or extra == \"all\" or extra == \"diary\" or extra == \"ingest\""}
 
-[package.dependencies]
-psutil = "*"
-pymupdf = "1.28.2"
-pymupdf_layout = "1.28.2"
-tabulate = "*"
+[[package]]
+name = "pymupdf4llm"
+version = "2.0"
+description = ""
+optional = false
+python-versions = "*"
+groups = ["main", "dev"]
+files = [
+    {file = "pymupdf4llm-2.0-py3-none-any.whl", hash = "sha256:43d4b4a2d0bf8b9b4d7f21a48875ef0016018dbad6677ef6b01ef2b0f6e392dd"},
+]
+markers = {main = "extra == \"kg\" or extra == \"all\" or extra == \"diary\" or extra == \"ingest\""}
 
 [[package]]
 name = "pyparsing"
@@ -6800,7 +6786,7 @@ markers = {main = "extra == \"diary\" or extra == \"all\""}
 dev = ["pytest", "setuptools"]
 
 [extras]
-all = ["PyQt5", "connectome-kg", "diary-kg", "doc-kg", "firecrawl-anydoc", "ftree-kg", "markdown", "memory-kg", "param", "plotly", "pycode-kg", "pymupdf4llm", "pyvis", "pyvista", "pyvistaqt", "streamlit", "trame-vtk", "vault-kg"]
+all = ["PyQt5", "connectome-kg", "diary-kg", "doc-kg", "firecrawl-anydoc", "ftree-kg", "markdown", "memory-kg", "param", "plotly", "pycode-kg", "pymupdf", "pyvis", "pyvista", "pyvistaqt", "streamlit", "trame-vtk", "vault-kg"]
 connectome = ["connectome-kg"]
 diary = ["diary-kg"]
 filetree = ["ftree-kg"]
@@ -6815,4 +6801,4 @@ viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "74dc1ff591be1380df8759d92176b1e81e275ede7cb868998562e08466ad4c8c"
+content-hash = "39c9813c527ab6fcbf17e68cd8c9e9640c4cb46b82da000eaa6739d483c51740"
