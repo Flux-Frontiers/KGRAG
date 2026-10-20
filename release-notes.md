@@ -1,41 +1,41 @@
-# Release Notes -- v0.17.1
+# Release Notes -- v0.17.2
 
-> Released: 2026-10-14
+> Released: 2026-10-20
 
-A dependency fix that keeps `kgrag ingest` converting PDFs. kgmodule-utils
-0.27.0, released the same day, made `pymupdf4llm` the fleet's one PDF
-converter. kg-rag's `ingest` extra still named anydoc directly, so an install
-with `kg-rag[ingest]` but not `[kg]` recorded every PDF as failed. This
-release takes the converters from the SDK's own `[ingest]` extra instead.
+### Changed
 
-## What changed
+- **The memory, diary, filetree and connectome adapters are tested against
+  the real upstream classes.** Their `_load()` had only mocked tests, which
+  accept any constructor arguments, so a signature change upstream could
+  ship unseen. Four tests in `tests/test_adapters.py` now build a real
+  `MemoryKG`, `DiaryKG`, `FileTreeKG` and `ConnectomeKG`; a stale argument
+  added to the memory adapter fails the new test and leaves the 16 mocked
+  ones green. `memory-kg`, `diary-kg`, `ftree-kg` and `connectome-kg` join
+  the dev group, at their extras' floors, so CI has them.
+- **Every backed adapter is now tested against its real class.** The
+  genealogy, metabo, agent, swift, typescript and vault adapters join the
+  four above. `metabo-kg` is not on PyPI and comes from git at tag
+  `v0.17.0`; the rest come from PyPI. The metakg test fails on the stale
+  `lancedb_dir=` argument that once shipped as a `TypeError`. The agent
+  test points `agent_kg.graph._PROFILE_BASE` at a temporary directory, so
+  nothing touches `~/.kgrag/profiles`, and a mocked agent test now blocks
+  `agent_kg.graph` as well as `agent_kg`, which it needs once the package
+  is installed.
+- Relocked onto `doc-kg` 0.28.0, `pycode-kg` 0.28.2 and `vault-kg` 0.5.0.
+  Floors are unchanged.
+- Dependencies refreshed to clear 22 Dependabot alerts (#63): pyjwt 2.15.1,
+  urllib3 2.8.0, mcp 1.30.0 and virtualenv 21.14.11 (dev), all transitive.
 
-**Ingest dependencies come from the SDK.** `kg-rag[ingest]` now installs
-`kgmodule-utils[ingest]`, so whichever converter the SDK assigns to a format
-is installed with it. `kg-rag[all]` names `pymupdf4llm` and anydoc directly,
-because Poetry cannot resolve a second `kgmodule-utils[ingest]` declaration
-beside the core dependency.
+### Fixed
 
-**Three converters.** `kgrag ingest` converts PDF with `pymupdf4llm` (the
-same call `dockg build` makes), office formats with anydoc, and `.tex` and
-`.html` with `pandoc` when the `pandoc` program is installed. The help text
-and the CLI and ingestion guides say so.
-
-**A test that converts a real PDF.** Every earlier ingest test mocked the
-pipeline, which is how the gap went unseen. A new test runs `kgrag ingest`
-on a generated PDF, and another checks that the `ingest` extra comes from
-the SDK.
-
-**Newer floors.** kgmodule-utils 0.27.0 and vault-kg 0.3.0.
-
-## Upgrading
-
-```bash
-pip install -U "kg-rag[ingest]"
-```
-
-Re-run `kgrag ingest` on any corpus whose PDFs were recorded as failed with
-"pymupdf4llm is not installed". Install `pandoc` to ingest LaTeX and HTML.
+- **PDF support in `[all]` and `[ingest]` on a fresh install.** pymupdf4llm
+  2.0 (2026-10-16) is an empty placeholder: its code now ships inside the
+  pymupdf 2.0 wheel. `[all]` named `pymupdf4llm>=1.28.2` directly, and
+  `[ingest]` floored `kgmodule-utils[ingest]>=0.27.0`, whose own extra
+  declared the same; both resolved to no PDF code. `[all]` now declares
+  `pymupdf>=2.0` and `[ingest]` floors `kgmodule-utils[ingest]>=0.27.1`.
+  The lock moves to kgmodule-utils 0.27.1, doc-kg 0.28.1, diary-kg 0.100.1
+  and pymupdf 2.0.
 
 ---
 
