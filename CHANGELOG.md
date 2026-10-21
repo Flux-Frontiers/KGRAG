@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`agent-kg` dev floor raised to `>=0.13.0`, and the lock moved to it.**
+  agent-kg 0.13.0 removed the private `agent_kg.graph._PROFILE_BASE`
+  constant the real-class agent adapter test patched, and added the
+  `AGENTKG_PROFILE_ROOT` variable that replaces it. The test now sets the
+  variable, so it still keeps the profile out of `~/.kgrag/profiles`; older
+  agent-kg releases ignore the variable, hence the floor.
+
 ## [0.17.2] - 2026-10-20
 
 ### Changed
