@@ -484,12 +484,12 @@ class TestOtherAdaptersLoadRealClass:
         assert Path(kg.vectors_path).resolve() == entry.vectors_path.resolve()
 
     def test_agent_adapter_builds_real_agentkg(self, tmp_path, monkeypatch):
-        import agent_kg.graph
         from agent_kg.graph import AgentKG
 
-        # AgentKG keeps its user profile under ~/.kgrag/profiles/<person_id>;
-        # keep the test out of the real home directory.
-        monkeypatch.setattr(agent_kg.graph, "_PROFILE_BASE", tmp_path / "profiles")
+        # AgentKG keeps its user profile under ~/.kgrag/profiles/<person_id>
+        # unless AGENTKG_PROFILE_ROOT moves it; keep the test out of the real
+        # home directory.
+        monkeypatch.setenv("AGENTKG_PROFILE_ROOT", str(tmp_path / "profiles"))
         entry = _entry(tmp_path, KGKind.AGENT)
         entry.metadata.update(person_id="tester", session_id="s1")
         adapter = AgentKGAdapter(entry)

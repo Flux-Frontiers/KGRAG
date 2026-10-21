@@ -2,19 +2,19 @@
 
 [[package]]
 name = "agent-kg"
-version = "0.12.1"
+version = "0.13.0"
 description = "Conversational memory as a knowledge graph"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["dev"]
 files = [
-    {file = "agent_kg-0.12.1-py3-none-any.whl", hash = "sha256:76e134526b84856d6d5d0232b48a2afec9f7fbd9a90d850e2c8b9ef1bdb813fc"},
-    {file = "agent_kg-0.12.1.tar.gz", hash = "sha256:6364e5c3783348c714c19f25c3e80ebb90c69ceb6328faced111993587d1e585"},
+    {file = "agent_kg-0.13.0-py3-none-any.whl", hash = "sha256:62956373898ec4dc00a2607c729ff6f33fd2040ade684097a14af4f58cd8d2c7"},
+    {file = "agent_kg-0.13.0.tar.gz", hash = "sha256:60eb223e7cf2ae975522e2866be8f920e43e0422d41c9b962218761584c6812c"},
 ]
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = {version = ">=0.22.0", extras = ["semantic", "sqlite-vec"]}
+kgmodule-utils = {version = ">=0.23.0", extras = ["semantic", "sqlite-vec"]}
 mcp = ">=1.0.0,<2"
 numpy = ">=1.24.0"
 rich = ">=14.0.0"
@@ -1040,6 +1040,7 @@ nvidia-cuda-cupti = {version = "==13.0.85.*", optional = true, markers = "(sys_p
 nvidia-cuda-nvrtc = {version = "==13.0.88.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and (extra == \"cublas\" or extra == \"nvrtc\")"}
 nvidia-cuda-runtime = {version = "==13.0.96.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cudart\""}
 nvidia-cufft = {version = "==12.0.0.61.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cufft\""}
+nvidia-cufile = {version = "==1.15.1.6.*", optional = true, markers = "sys_platform == \"linux\" and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cufile\""}
 nvidia-curand = {version = "==10.4.0.35.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"curand\""}
 nvidia-cusolver = {version = "==12.0.4.66.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cusolver\""}
 nvidia-cusparse = {version = "==12.6.3.3.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and (extra == \"cusolver\" or extra == \"cusparse\")"}
@@ -1999,8 +2000,8 @@ files = [
 firecrawl-anydoc = {version = ">=0.1.9", optional = true, markers = "extra == \"ingest\""}
 numpy = {version = ">=1.24.0", optional = true, markers = "extra == \"semantic\" or extra == \"viz3d\""}
 pymupdf = [
-    {version = ">=2.0", optional = true, markers = "extra == \"ingest\""},
     {version = ">=2.0", optional = true, markers = "extra == \"pdf\""},
+    {version = ">=2.0", optional = true, markers = "extra == \"ingest\""},
 ]
 rich = {version = ">=13.0.0,<15.0.0", optional = true, markers = "extra == \"semantic\""}
 sentence-transformers = {version = ">=5.4.1", optional = true, markers = "extra == \"semantic\""}
@@ -2945,6 +2946,19 @@ files = [
 
 [package.dependencies]
 nvidia-nvjitlink = "*"
+
+[[package]]
+name = "nvidia-cufile"
+version = "1.15.1.6"
+description = "cuFile GPUDirect libraries"
+optional = false
+python-versions = ">=3"
+groups = ["main", "dev"]
+markers = "<empty>"
+files = [
+    {file = "nvidia_cufile-1.15.1.6-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:08a3ecefae5a01c7f5117351c64f17c7c62efa5fffdbe24fc7d298da19cd0b44"},
+    {file = "nvidia_cufile-1.15.1.6-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:bdc0deedc61f548bddf7733bdc216456c2fdb101d020e1ab4b88d232d5e2f6d1"},
+]
 
 [[package]]
 name = "nvidia-curand"
@@ -6801,4 +6815,4 @@ viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "39c9813c527ab6fcbf17e68cd8c9e9640c4cb46b82da000eaa6739d483c51740"
+content-hash = "f8437a5c5382e7a1863841b0bfbb7296d606eb40be00f29f978899482f8ffb35"

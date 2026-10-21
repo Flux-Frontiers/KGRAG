@@ -371,7 +371,9 @@ connectome-kg = ">=0.8.1"
 vault-kg = ">=0.3.0"
 # No extra declares these four, so there is no floor to keep in step with;
 # each is floored at the release its adapter test was first run against.
-agent-kg = ">=0.12.1"
+# agent-kg 0.13.0: the adapter test moves the profile root with
+# AGENTKG_PROFILE_ROOT, which older releases ignore.
+agent-kg = ">=0.13.0"
 genealogy-kg = ">=0.2.2"
 swift-kg = ">=0.4.0"
 tscode-kg = ">=0.7.0"
