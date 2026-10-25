@@ -8,9 +8,10 @@ bundle that pair plus a manifest into a ``.kgrag.tar.gz`` archive that can
 be copied to another machine, mirrored, or shipped to long-term storage,
 and re-registered with a single command.
 
-The vector index is a single ``vectors.sqlite`` file for sqlite-vec builders,
-or a ``lancedb/`` directory for the kinds that still ship LanceDB.  Both are
-carried so archives round-trip either backend.
+The vector index is a single ``vectors.sqlite`` file.  An archive exported by
+kgrag <0.18.0 may also carry a ``lancedb/`` directory; LanceDB support is gone,
+so import skips it and warns that the KG needs a rebuild.  The graph and
+the vector store are both carried, so an archive round-trips.
 
 Archive layout::
 
@@ -18,7 +19,6 @@ Archive layout::
         manifest.json          # KG metadata (name, kind, versions, tags)
         graph.sqlite           # structural KG (if present)
         vectors.sqlite         # sqlite-vec vector store (if present)
-        lancedb/               # LanceDB vector index (if present)
 """
 
 from __future__ import annotations
@@ -62,7 +62,6 @@ def _build_manifest(entry: KGEntry) -> dict:
         "metadata": dict(entry.metadata),
         "has_sqlite": entry.sqlite_path is not None and entry.sqlite_path.exists(),
         "has_vectors": entry.vectors_path is not None and entry.vectors_path.exists(),
-        "has_lancedb": entry.lancedb_path is not None and entry.lancedb_path.exists(),
     }
 
 
@@ -141,11 +140,6 @@ def export_corpus(name_or_id: str, output_path: str | None, force: bool, registr
         if manifest["has_vectors"] and vectors_path is not None:
             console.print(f"  + vectors.sqlite ({vectors_path})")
             tar.add(vectors_path, arcname="vectors.sqlite")
-
-        lancedb_path = entry.lancedb_path
-        if manifest["has_lancedb"] and lancedb_path is not None:
-            console.print(f"  + lancedb/       ({lancedb_path})")
-            tar.add(lancedb_path, arcname="lancedb")
 
     size_mb = out.stat().st_size / (1024 * 1024)
     console.print(f"[green]Wrote[/green] {out}  [dim]({size_mb:.1f} MB)[/dim]")
@@ -247,12 +241,18 @@ def import_corpus(
         for member in tar.getmembers():
             if member.name == MANIFEST_NAME:
                 continue
+            if member.name == "lancedb" or member.name.startswith("lancedb/"):
+                continue  # a pre-0.18.0 export's LanceDB store: nothing reads it
             tar.extract(member, dest, filter="data")
 
     # Resolve unpacked artifact paths
     sqlite_path = (dest / "graph.sqlite") if manifest.get("has_sqlite") else None
     vectors_path = (dest / "vectors.sqlite") if manifest.get("has_vectors") else None
-    lancedb_path = (dest / "lancedb") if manifest.get("has_lancedb") else None
+    if manifest.get("has_lancedb"):
+        console.print(
+            "[yellow]Warning[/yellow]: this archive's LanceDB store was not imported "
+            "(LanceDB support was removed in kgrag 0.18.0); rebuild the KG's vectors."
+        )
 
     if sqlite_path and not sqlite_path.exists():
         console.print("[yellow]Warning[/yellow]: manifest claimed SQLite but file is missing.")
@@ -260,17 +260,12 @@ def import_corpus(
     if vectors_path and not vectors_path.exists():
         console.print("[yellow]Warning[/yellow]: manifest claimed vectors but file is missing.")
         vectors_path = None
-    if lancedb_path and not lancedb_path.exists():
-        console.print("[yellow]Warning[/yellow]: manifest claimed LanceDB but dir is missing.")
-        lancedb_path = None
 
     console.print(f"  ✓ unpacked to {dest}")
     if sqlite_path:
         console.print(f"  ✓ graph.sqlite   ({sqlite_path.stat().st_size / 1024 / 1024:.1f} MB)")
     if vectors_path:
         console.print(f"  ✓ vectors.sqlite ({vectors_path.stat().st_size / 1024 / 1024:.1f} MB)")
-    if lancedb_path:
-        console.print("  ✓ lancedb/")
 
     if no_register:
         console.print("[dim]Skipping registration (--no-register).[/dim]")
@@ -283,7 +278,6 @@ def import_corpus(
         repo_path=dest,
         venv_path=dest / ".venv",  # may not exist; that's fine
         sqlite_path=sqlite_path,
-        lancedb_path=lancedb_path,
         vectors_path=vectors_path,
         version=manifest.get("version", "unknown"),
         builder_version=manifest.get("builder_version", "unknown"),

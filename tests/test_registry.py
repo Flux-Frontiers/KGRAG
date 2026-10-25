@@ -112,8 +112,8 @@ class TestKGRegistryRegister:
         venv.mkdir()
         sqlite = tmp_path / "graph.sqlite"
         sqlite.touch()
-        lancedb = tmp_path / "lancedb"
-        lancedb.mkdir()
+        vectors = tmp_path / "vectors.sqlite"
+        vectors.touch()
 
         entry = KGEntry(
             name="full-entry",
@@ -121,7 +121,7 @@ class TestKGRegistryRegister:
             repo_path=repo,
             venv_path=venv,
             sqlite_path=sqlite,
-            lancedb_path=lancedb,
+            vectors_path=vectors,
             version="1.2.3",
             tags=["a", "b"],
             metadata={"key": "val"},
@@ -129,7 +129,7 @@ class TestKGRegistryRegister:
         tmp_registry.register(entry)
         fetched = tmp_registry.get("full-entry")
         assert fetched.sqlite_path is not None
-        assert fetched.lancedb_path is not None
+        assert fetched.vectors_path is not None
         assert fetched.tags == ["a", "b"]
         assert fetched.metadata == {"key": "val"}
         assert fetched.version == "1.2.3"
@@ -153,7 +153,6 @@ class TestKGRegistryRegister:
         )
         fetched = tmp_registry.get("vec-entry")
         assert fetched.vectors_path == vectors.resolve()
-        assert fetched.lancedb_path is None
         assert fetched.is_built is True
 
     def test_vectors_path_survives_name_collision_replace(self, tmp_path, tmp_registry):
@@ -263,7 +262,7 @@ class TestVectorsPathMigration:
             entry = reg.get("legacy-kg")
             assert entry is not None
             assert entry.vectors_path is None
-            assert entry.lancedb_path is not None
+            assert not hasattr(entry, "lancedb_path")  # the column is read by nothing
 
     def test_legacy_row_can_be_updated_with_vectors(self, tmp_path):
         db = self._legacy_db(tmp_path)
@@ -483,3 +482,60 @@ class TestUnknownKinds:
             "SELECT count(*) FROM kg_entries WHERE kind = 'hologram'"
         ).fetchone()[0]
         assert n == 1
+
+
+class TestDeadLanceDBColumn:
+    """``lancedb_path`` is retired but its column stays (kgrag 0.18.0).
+
+    A released kgrag sharing ``~/.kgrag/registry.sqlite`` during the fleet's
+    0.29 lap still names the column in its INSERT, so it is kept, unread and
+    unwritten, until the whole fleet has moved.
+    """
+
+    def _cols(self, reg: KGRegistry) -> set[str]:
+        return {r["name"] for r in reg._conn.execute("PRAGMA table_info(kg_entries)")}
+
+    def test_a_fresh_registry_keeps_the_column(self, tmp_path):
+        with KGRegistry(db_path=tmp_path / "r.sqlite") as reg:
+            assert "lancedb_path" in self._cols(reg)
+
+    def test_register_leaves_the_column_null(self, tmp_path):
+        with KGRegistry(db_path=tmp_path / "r.sqlite") as reg:
+            reg.register(KGEntry(name="n", kind=KGKind.DOC, repo_path=tmp_path, venv_path=tmp_path))
+            row = reg._conn.execute("SELECT lancedb_path FROM kg_entries WHERE name='n'").fetchone()
+            assert row["lancedb_path"] is None
+
+    def test_an_older_kgrag_can_still_insert_and_its_row_loads(self, tmp_path):
+        """The released kgrag's INSERT names lancedb_path; it must not fail, and
+        its row must load here with the value ignored."""
+        from datetime import UTC, datetime
+
+        db = tmp_path / "r.sqlite"
+        with KGRegistry(db_path=db) as reg:
+            now = datetime.now(UTC).isoformat()
+            reg._conn.execute(
+                "INSERT INTO kg_entries (id, name, kind, repo_path, venv_path, sqlite_path,"
+                " lancedb_path, vectors_path, version, builder_version, tags, metadata,"
+                " created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (
+                    "old-id",
+                    "old-kg",
+                    "doc",
+                    str(tmp_path),
+                    str(tmp_path),
+                    None,
+                    str(tmp_path / "lancedb"),
+                    None,
+                    "1.0",
+                    "0.17.2",
+                    "[]",
+                    "{}",
+                    now,
+                    now,
+                ),
+            )
+            reg._conn.commit()
+        with KGRegistry(db_path=db) as reg:
+            entry = reg.get("old-kg")
+        assert entry is not None and entry.vectors_path is None
+        assert not hasattr(entry, "lancedb_path")

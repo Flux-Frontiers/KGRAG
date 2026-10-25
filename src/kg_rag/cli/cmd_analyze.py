@@ -11,6 +11,7 @@ from pathlib import Path
 from rich import box
 from rich.console import Console
 
+from kg_rag.adapters.base import stat_totals
 from kg_rag.cli.group import cli
 from kg_rag.cli.options import kind_option, registry_option
 from kg_rag.orchestrator import KGRAG
@@ -51,13 +52,12 @@ def analyze(kind, registry):
     for e in entries:
         s = stats_map.get(e.name, {})
         avail = "[green]yes[/green]" if s.get("available") else "[red]no[/red]"
-        nodes = str(s.get("node_count", "-"))
-        edges = str(s.get("edge_count", "-"))
+        n, e_count = stat_totals(s)
+        nodes = "-" if n is None else str(n)
+        edges = "-" if e_count is None else str(e_count)
         table.add_row(e.name, e.kind.value, avail, nodes, edges, str(e.repo_path))
 
     console.print(table)
 
-    total_nodes = sum(
-        v.get("node_count", 0) for v in stats_map.values() if isinstance(v.get("node_count"), int)
-    )
+    total_nodes = sum(stat_totals(v)[0] or 0 for v in stats_map.values())
     console.print(f"\n[bold]Total indexed nodes across all KGs:[/bold] {total_nodes}")

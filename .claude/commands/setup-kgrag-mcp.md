@@ -173,11 +173,11 @@ no `--repo` or `--db` flag is needed unless a non-default registry path is used.
    poetry env info --path
    ```
 
-4. To use a non-default registry, add `--registry`:
+4. To use a non-default registry, add `--db`:
    ```json
    "kgrag": {
      "command": "<venv_path>/bin/kgrag",
-     "args": ["mcp", "--registry", "/abs/path/to/registry.sqlite"]
+     "args": ["mcp", "--db", "/abs/path/to/registry.sqlite"]
    }
    ```
 
@@ -250,14 +250,14 @@ Present a summary of everything that was done:
 Restart Claude Code / Claude Desktop to activate the kgrag MCP server.
 
 Available tools once active:
-  • kgrag_stats()              — registry summary (total KGs, built status)
-  • kgrag_list([kind])         — list registered KGs, optionally filtered by kind
-  • kgrag_info(name)           — full detail for a single registered KG
-  • kgrag_query(q, [k, kinds]) — federated semantic query across all registered KGs
-  • kgrag_pack(q, [k, kinds])  — federated snippet pack for LLM context
+  • stats()              — registry summary (total KGs, built status)
+  • list_kgs([kind])         — list registered KGs, optionally filtered by kind
+  • kg_info(name)           — full detail for a single registered KG
+  • query(q, [k, kinds]) — federated semantic query across all registered KGs
+  • pack(q, [k, kinds])  — federated snippet pack for LLM context
 
 Suggested first query after restart:
-  kgrag_stats()
+  stats()
 ```
 
 ---
@@ -284,7 +284,7 @@ Suggested first query after restart:
 ## Re-registering After Rebuilding KGs
 
 When the underlying CodeKG or DocKG databases are rebuilt, re-run `kgrag init` to
-refresh the registry entries (sqlite/lancedb paths are re-verified):
+refresh the registry entries (sqlite/vectors paths are re-verified):
 
 ```bash
 $RUNNER kgrag init "$REPO_ROOT"   # or $REPO_ROOT/.venv/bin/kgrag init "$REPO_ROOT"

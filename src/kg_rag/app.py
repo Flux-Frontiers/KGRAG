@@ -344,10 +344,6 @@ def _tab_registry(cfg: dict) -> None:
                     exists = entry.vectors_path.exists()
                     icon_db = "✅" if exists else "❌"
                     st.caption(f"{icon_db} Vectors: `{entry.vectors_path}`")
-                if entry.lancedb_path:
-                    exists = entry.lancedb_path.exists()
-                    icon_db = "✅" if exists else "❌"
-                    st.caption(f"{icon_db} LanceDB: `{entry.lancedb_path}`")
 
                 if entry.tags:
                     st.caption("🏷️ Tags: " + ", ".join(f"`{t}`" for t in entry.tags))
@@ -400,7 +396,6 @@ def _tab_registry(cfg: dict) -> None:
                 "repo_path": str(e.repo_path),
                 "sqlite": str(e.sqlite_path) if e.sqlite_path else "—",
                 "vectors": str(e.vectors_path) if e.vectors_path else "—",
-                "lancedb": str(e.lancedb_path) if e.lancedb_path else "—",
                 "updated": e.updated_at.strftime("%Y-%m-%d %H:%M"),
             }
             for e in entries

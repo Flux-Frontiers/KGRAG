@@ -7,9 +7,8 @@ Tests for ``kgrag ingest`` — the document-ingestion pipeline command
 The CLI tests mock ``kg_utils.ingest.IngestPipeline`` and ``subprocess.run``
 so no real document conversion or ``dockg`` invocation happens. The
 ``_register`` / ``_add_to_corpus`` / ``_print_problems`` / ``_print_summary``
-helpers are also exercised directly, the same way ``test_cmd_audit.py``
-tests ``audit_entry`` directly, since going through the CLI for every branch
-of those helpers would mean re-mocking the whole pipeline for each case.
+helpers are also exercised directly, since going through the CLI for every
+branch of those helpers would mean re-mocking the whole pipeline for each case.
 """
 
 from __future__ import annotations
@@ -374,7 +373,7 @@ class TestRegisterHelper:
         assert entry.kind == KGKind.DOC
         assert entry.sqlite_path == kg_dir / "graph.sqlite"
         assert entry.vectors_path == kg_dir / "vectors.sqlite"
-        assert entry.lancedb_path is None  # not created
+        assert not hasattr(entry, "lancedb_path")  # retired in 0.18.0
         assert "ingested" in entry.tags
 
         with KGRegistry(db_path=tmp_path / "registry.sqlite") as reg:
@@ -388,7 +387,6 @@ class TestRegisterHelper:
 
         assert entry.sqlite_path is None
         assert entry.vectors_path is None
-        assert entry.lancedb_path is None
 
     def test_default_registry_path_when_none(self, tmp_path):
         """registry=None must pass db_path=None so KGRegistry picks its own

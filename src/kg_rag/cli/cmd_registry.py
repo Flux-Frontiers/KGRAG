@@ -16,6 +16,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from kg_rag.adapters.base import stat_totals
 from kg_rag.cli.group import cli
 from kg_rag.cli.options import _KIND_CHOICES, kind_option, registry_option
 from kg_rag.config import read_builder_version, read_pyproject_version
@@ -60,8 +61,7 @@ def _find_kg_dirs(root: Path) -> list[dict]:
     into ``.git``, ``.venv``, or a neighbour repo's own KG dirs.
 
     :param root: Directory to walk.
-    :return: List of dicts with keys ``kind``, ``repo``, ``sqlite``, ``vectors``,
-        ``lancedb``.
+    :return: List of dicts with keys ``kind``, ``repo``, ``sqlite``, ``vectors``.
     """
     found: list[dict] = []
     for dirpath, dirnames, _ in os.walk(root):
@@ -71,14 +71,12 @@ def _find_kg_dirs(root: Path) -> list[dict]:
             if kg_dir.is_dir():
                 sqlite = kg_dir / "graph.sqlite"
                 vectors = kg_dir / "vectors.sqlite"
-                lancedb_dir = kg_dir / "lancedb"
                 found.append(
                     {
                         "kind": kind,
                         "repo": current,
                         "sqlite": sqlite if sqlite.exists() else None,
                         "vectors": vectors if vectors.exists() else None,
-                        "lancedb": lancedb_dir if lancedb_dir.exists() else None,
                     }
                 )
         # Prune hidden directories so we never recurse into them
@@ -98,12 +96,6 @@ def _find_kg_dirs(root: Path) -> list[dict]:
     default=None,
     help="Path to the sqlite-vec vector store file (e.g. .pycodekg/vectors.sqlite).",
 )
-@click.option(
-    "--lancedb",
-    "lancedb_path",
-    default=None,
-    help="Path to LanceDB directory (deprecated — use --vectors).",
-)
 @click.option("--version", "version", default="unknown", help="Version string.")
 @click.option("--tag", "tags", multiple=True, help="Tags (repeatable: --tag foo --tag bar).")
 @registry_option
@@ -114,7 +106,6 @@ def register(
     venv_path,
     sqlite_path,
     vectors_path,
-    lancedb_path,
     version,
     tags,
     registry,
@@ -145,17 +136,6 @@ def register(
         candidate = repo / db_dir / "vectors.sqlite"
         vectors_path = str(candidate) if candidate.exists() else None
 
-    # Only kinds still shipping a LanceDB index auto-detect one; code KGs are
-    # sqlite-vec only from pycode-kg 0.20.0 onward.
-    if lancedb_path is None and kind != "code":
-        candidate = repo / db_dir / "lancedb"
-        lancedb_path = str(candidate) if candidate.exists() else None
-    elif lancedb_path is not None:
-        console.print(
-            "[yellow]--lancedb is deprecated[/yellow]; "
-            "prefer [bold]--vectors[/bold] for sqlite-vec stores."
-        )
-
     # Auto-read version from pyproject.toml when not explicitly supplied
     if version == "unknown":
         version = read_pyproject_version(repo)
@@ -169,7 +149,6 @@ def register(
         repo_path=repo,
         venv_path=venv,
         sqlite_path=Path(sqlite_path) if sqlite_path else None,
-        lancedb_path=Path(lancedb_path) if lancedb_path else None,
         vectors_path=Path(vectors_path) if vectors_path else None,
         version=version,
         builder_version=read_builder_version(sqlite_path),
@@ -184,8 +163,6 @@ def register(
         console.print(f"  SQLite  : {entry.sqlite_path}")
     if entry.vectors_path:
         console.print(f"  Vectors : {entry.vectors_path}")
-    if entry.lancedb_path:
-        console.print(f"  LanceDB : {entry.lancedb_path}")
     console.print(f"  venv    : {entry.venv_path}")
 
 
@@ -279,7 +256,6 @@ def info(name_or_id, registry):
         f"[bold]Venv[/bold]     : {entry.venv_path}",
         f"[bold]SQLite[/bold]   : {entry.sqlite_path or '(not set)'}",
         f"[bold]Vectors[/bold]  : {entry.vectors_path or '(not set)'}",
-        f"[bold]LanceDB[/bold]  : {entry.lancedb_path or '(not set)'}",
         f"[bold]Tags[/bold]     : {', '.join(entry.tags) or '(none)'}",
         f"[bold]Created[/bold]  : {entry.created_at.strftime('%Y-%m-%d %H:%M UTC')}",
         f"[bold]Updated[/bold]  : {entry.updated_at.strftime('%Y-%m-%d %H:%M UTC')}",
@@ -291,55 +267,19 @@ def info(name_or_id, registry):
 
 
 def _fmt_domain(s: dict) -> str:
-    """Format domain-specific stats into a compact display string."""
-    kind = s.get("kind", "")
-    if kind == "doc":
-        parts = []
-        if s.get("document_count"):
-            parts.append(f"docs:{s['document_count']}")
-        if s.get("chunk_count"):
-            parts.append(f"chunks:{s['chunk_count']}")
-        if s.get("topic_count"):
-            parts.append(f"topics:{s['topic_count']}")
-        if s.get("entity_count"):
-            parts.append(f"entities:{s['entity_count']}")
-        return "  ".join(parts) or "—"
-    if kind == "code":
-        cov = s.get("docstring_coverage", 0)
-        parts = [
-            f"mod:{s.get('module_count', 0)}",
-            f"cls:{s.get('class_count', 0)}",
-            f"fn:{s.get('function_count', 0)}",
-            f"meth:{s.get('method_count', 0)}",
-            f"cov:{int(cov * 100)}%",
-        ]
-        return "  ".join(parts)
-    if kind == "meta":
-        parts = []
-        if s.get("pathway_count"):
-            parts.append(f"paths:{s['pathway_count']}")
-        if s.get("compound_count"):
-            parts.append(f"cpds:{s['compound_count']}")
-        if s.get("reaction_count"):
-            parts.append(f"rxns:{s['reaction_count']}")
-        return "  ".join(parts) or "—"
-    if kind == "gutenberg":
-        parts = []
-        if s.get("document_count"):
-            parts.append(f"docs:{s['document_count']}")
-        if s.get("chunk_count"):
-            parts.append(f"chunks:{s['chunk_count']}")
-        if s.get("topic_count"):
-            parts.append(f"topics:{s['topic_count']}")
-        if s.get("entity_count"):
-            parts.append(f"entities:{s['entity_count']}")
-        return "  ".join(parts) or "—"
-    if kind in ("diary", "memory", "verse"):
-        ec = s.get("entry_count", 0)
-        return f"entries:{ec}"
-    if kind == "agent":
-        return f"turns:{s.get('turn_count', 0)}"
-    return "—"
+    """Format a KG's stats (the fleet shape) into a compact display string.
+
+    The five largest node kinds from ``nodes.by_kind``, then the measures a
+    kind reports beside them (docstring coverage, turns, entries) when present.
+    """
+    by_kind = (s.get("nodes") or {}).get("by_kind") or {}
+    parts = [f"{k}:{v}" for k, v in sorted(by_kind.items(), key=lambda kv: (-kv[1], kv[0]))[:5]]
+    if isinstance(s.get("docstring_coverage"), (int, float)):
+        parts.append(f"cov:{int(s['docstring_coverage'] * 100)}%")
+    for key, label in (("turn_count", "turns"), ("entry_count", "entries")):
+        if s.get(key):
+            parts.append(f"{label}:{s[key]}")
+    return "  ".join(parts) or "—"
 
 
 @cli.command("status")
@@ -512,8 +452,7 @@ def status(name_or_id, show_stats, kind_filter, as_json, registry):
                 continue
 
             bver = s.get("builder_version", "?")
-            nodes = s.get("node_count")
-            edges = s.get("edge_count")
+            nodes, edges = stat_totals(s)
             mb = s.get("db_size_mb")
             err = s.get("error")
 
@@ -615,7 +554,6 @@ def scan(root_path, auto_register, registry):
     table.add_column("Repo")
     table.add_column("SQLite", justify="center")
     table.add_column("Vectors", justify="center")
-    table.add_column("LanceDB", justify="center")
 
     for i, f in enumerate(found, 1):
         table.add_row(
@@ -624,7 +562,6 @@ def scan(root_path, auto_register, registry):
             str(f["repo"]),
             "[green]yes[/green]" if f["sqlite"] else "-",
             "[green]yes[/green]" if f["vectors"] else "-",
-            "[green]yes[/green]" if f["lancedb"] else "-",
         )
     console.print(table)
 
@@ -639,7 +576,6 @@ def scan(root_path, auto_register, registry):
                     repo_path=repo_dir,
                     venv_path=repo_dir / ".venv",
                     sqlite_path=f["sqlite"],
-                    lancedb_path=None if f["kind"] == "code" else f["lancedb"],
                     vectors_path=f["vectors"],
                     version=read_pyproject_version(repo_dir),
                     builder_version=read_builder_version(f["sqlite"]),

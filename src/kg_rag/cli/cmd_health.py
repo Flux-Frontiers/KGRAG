@@ -36,7 +36,6 @@ from rich.text import Text
 from kg_rag.cli.group import cli
 from kg_rag.cli.options import registry_option
 from kg_rag.corpus_registry import CorpusRegistry
-from kg_rag.primitives import KGEntry
 from kg_rag.registry import KGRegistry
 
 console = Console()
@@ -81,97 +80,6 @@ def _build_cmd(kind: str, repo: Path) -> str:
     """
     tpl = _BUILD_CMD_TPL.get(kind, "# {kind}kg build --repo {repo}  (check docs)")
     return tpl.format(repo=repo, kind=kind)
-
-
-# ---------------------------------------------------------------------------
-# KG liveness probe
-# ---------------------------------------------------------------------------
-
-_PROBE_CMD_TPL: dict[str, str] = {
-    "code": "pycodekg query --sqlite {sqlite} {vec} --k 1 health",
-    "doc": "dockg query --sqlite {sqlite} {vec} --k 1 health",
-    "memory": "memorykg query --sqlite {sqlite} {vec} --k 1 health",
-    "diary": "diarykg status {repo}",
-}
-
-# Vector-store flag per kind — each module's CLI names it differently, and not
-# every module has migrated:
-#   * pycode-kg >=0.20 is sqlite-vec only — ``--lancedb`` no longer exists.
-#   * doc-kg >=0.18.2 accepts either and resolves with ``--vector-backend auto``.
-#   * memory-kg 0.6.2 (current) is LanceDB *only* — no ``--vectors-path``, no
-#     ``--vector-backend``, and it hard-requires ``lancedb>=0.29.0``. A memory KG
-#     whose vectors were converted to sqlite-vec cannot be read by its own CLI,
-#     so the probe passes no vector flag and the resulting failure is real
-#     signal, not a malformed command. Revisit when memory-kg gains sqlite-vec.
-_VEC_FLAGS: dict[str, tuple[str | None, str | None]] = {
-    # kind: (flag for vectors_path, flag for lancedb_path)
-    "code": ("--vectors", None),
-    "doc": ("--vectors-path", "--lancedb"),
-    "memory": (None, "--lancedb"),
-}
-
-
-def _vec_arg(kind: str, entry: KGEntry) -> str:
-    """Return the vector-store CLI argument for *entry*, or ``""`` if unrecorded.
-
-    Never returns a bare flag.  An empty value collapses under
-    :func:`shlex.split`, which makes the flag swallow the *next* token — the
-    old ``--lancedb {lancedb} -k 1`` template consumed ``-k`` exactly that way
-    for every migrated KG.  Omitting the flag instead lets each CLI apply its
-    own default layout.
-
-    :param kind: KG kind string (e.g. ``"code"``).
-    :param entry: Registry entry supplying the recorded store paths.
-    :return: Shell-quoted ``"--flag /path"``, or an empty string.
-    """
-    vec_flag, lance_flag = _VEC_FLAGS.get(kind, (None, None))
-    if vec_flag and entry.vectors_path:
-        return f"{vec_flag} {shlex.quote(str(entry.vectors_path))}"
-    if lance_flag and entry.lancedb_path:
-        return f"{lance_flag} {shlex.quote(str(entry.lancedb_path))}"
-    return ""
-
-
-def _probe_kg(entry: KGEntry) -> str | None:
-    """Run the module's own status/query command to verify the index is live.
-
-    Uses each module's CLI rather than importing lancedb directly, so the
-    probe is always consistent with how the module itself reads the index.
-
-    LanceDB holds **exclusive file handles** on the current data files.  If a
-    build has replaced those files since the MCP server started, the server
-    will return ``Not found`` errors.  When this probe *fails*, rebuild and
-    restart the MCP server.  When this probe *passes* but MCP queries still
-    fail, only the MCP server restart is needed.
-
-    :param entry: KGEntry with ``kind``, ``repo_path``, ``sqlite_path``, and
-        ``vectors_path`` / ``lancedb_path`` attributes.
-    :return: Error description string, or ``None`` if the probe passes.
-    """
-    kind = entry.kind.value
-    tpl = _PROBE_CMD_TPL.get(kind)
-    if tpl is None:
-        return None  # no probe available for this kind
-    if "{sqlite}" in tpl and not entry.sqlite_path:
-        return None  # no graph recorded — nothing to probe against
-
-    cmd = tpl.format(
-        sqlite=shlex.quote(str(entry.sqlite_path)) if entry.sqlite_path else "",
-        vec=_vec_arg(kind, entry),
-        repo=shlex.quote(str(entry.repo_path)),
-    )
-    try:
-        result = subprocess.run(shlex.split(cmd), capture_output=True, timeout=30)
-        if result.returncode != 0:
-            stderr = result.stderr.decode(errors="replace").strip() if result.stderr else ""
-            return stderr[:200] or f"probe exited with code {result.returncode}"
-        return None
-    except subprocess.TimeoutExpired:
-        return "probe timed out after 30 s"
-    except FileNotFoundError:
-        return f"command not found: {shlex.split(cmd)[0]}"
-    except OSError as exc:
-        return str(exc)[:200]
 
 
 # ---------------------------------------------------------------------------
@@ -316,38 +224,30 @@ def _check_kgs(entries: list, issues: list[HealthIssue]) -> None:
                 )
             )
 
-        # --- LanceDB registered but directory missing ---
-        if e.lancedb_path and not Path(e.lancedb_path).exists():
+        # --- Only a LanceDB store, which nothing reads any more ---
+        # LanceDB support was removed fleet-wide (kgrag 0.18.0, kgmodule-utils
+        # and doc-kg 0.29.0): a KG whose store dir holds a lancedb/ directory
+        # but no vectors.sqlite has no semantic search until it is rebuilt.
+        store_dir = Path(e.sqlite_path).parent if e.sqlite_path else None
+        if (
+            store_dir is not None
+            and (store_dir / "lancedb").is_dir()
+            and not (e.vectors_path and Path(e.vectors_path).exists())
+            and not (store_dir / "vectors.sqlite").exists()
+        ):
             issues.append(
                 HealthIssue(
                     severity="warning",
-                    check="stale_lancedb",
+                    check="lancedb_only",
                     target=e.name,
-                    message=f"LanceDB registered but directory missing: {e.lancedb_path}",
+                    message=(
+                        f"Only a LanceDB store ({store_dir / 'lancedb'}), which is no "
+                        "longer read: rebuild for semantic search"
+                    ),
                     fix_cmd=_build_cmd(e.kind.value, e.repo_path),
                     auto_fixable=False,
                 )
             )
-
-        # --- LanceDB directory exists but index is unreadable ---
-        # Catches: corrupted indices, partial builds, and data-file deletions.
-        # Note: if this probe *passes* but MCP semantic queries still fail,
-        # the MCP server has stale open handles — restart it.
-        elif e.lancedb_path and Path(e.lancedb_path).exists():
-            probe_err = _probe_kg(e)
-            if probe_err:
-                issues.append(
-                    HealthIssue(
-                        severity="critical",
-                        check="stale_lancedb_probe",
-                        target=e.name,
-                        message=(
-                            f"LanceDB unreadable — rebuild then restart MCP server: {probe_err}"
-                        ),
-                        fix_cmd=_build_cmd(e.kind.value, e.repo_path),
-                        auto_fixable=False,
-                    )
-                )
 
 
 def _check_corpora(

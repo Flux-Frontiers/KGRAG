@@ -160,7 +160,7 @@ Return basic statistics about this KG instance. The dict must include:
 
 **Must not raise** — return `{"kind": "...", "error": "..."}` on failure.
 
-Called by the orchestrator's `kgrag_stats` MCP tool and the `kgrag status` CLI.
+Called by the orchestrator's `stats` MCP tool and the `kgrag status` CLI.
 
 ---
 
@@ -492,42 +492,33 @@ The KGRAG MCP server (`kgrag mcp`) federates across all registered KGs:
 
 | Tool | Description |
 |------|-------------|
-| `kgrag_stats` | Registry summary: total KGs, per-kind counts, built status |
-| `kgrag_list` | List all registered KG instances with paths and build status |
-| `kgrag_info` | Full detail for a single registered KG |
-| `kgrag_query` | Federated semantic query across all KGs — one query, all results |
-| `kgrag_pack` | Federated snippet pack — code + docs + domain in one context window |
+| `stats` | Registry summary: total KGs, per-kind counts, built status |
+| `list_kgs` | List all registered KG instances with paths and build status |
+| `kg_info` | Full detail for a single registered KG |
+| `query` | Federated semantic query across all KGs — one query, all results |
+| `pack` | Federated snippet pack — code + docs + domain in one context window |
 
 ---
 
 ## `.mcp.json` Configuration
 
-All three servers use absolute paths. The canonical configuration for this
-repository:
+Every fleet server takes the same standard flags (`--repo`, `--db`,
+`--vectors`, `--model`, `--transport`, `--manifest`) and is a global tool
+resolved from `PATH`. The canonical configuration for this repository:
 
 ```json
 {
   "mcpServers": {
-    "codekg": {
-      "command": "/home/user/KGRAG/.venv/bin/codekg",
-      "args": [
-        "mcp",
-        "--repo",    "/home/user/KGRAG",
-        "--db",      "/home/user/KGRAG/.codekg/graph.sqlite",
-        "--lancedb", "/home/user/KGRAG/.codekg/lancedb"
-      ]
+    "pycodekg": {
+      "command": "pycodekg",
+      "args": ["mcp", "--repo", "/abs/path/to/KGRAG"]
     },
     "dockg": {
-      "command": "/home/user/KGRAG/.venv/bin/dockg",
-      "args": [
-        "mcp",
-        "--repo",    "/home/user/KGRAG",
-        "--db",      "/home/user/KGRAG/.dockg/graph.sqlite",
-        "--lancedb", "/home/user/KGRAG/.dockg/lancedb"
-      ]
+      "command": "dockg",
+      "args": ["mcp", "--repo", "/abs/path/to/KGRAG"]
     },
     "kgrag": {
-      "command": "/home/user/KGRAG/.venv/bin/kgrag",
+      "command": "kgrag",
       "args": ["mcp"]
     }
   }
@@ -535,11 +526,11 @@ repository:
 ```
 
 **Rules:**
-- Always use absolute paths — relative paths break when MCP clients change CWD
-- Specify `--db` and `--lancedb` explicitly — don't rely on defaults when running
-  from an agent context
+- Give `--repo` as an absolute path — relative paths break when MCP clients change CWD
+- `--db` and `--vectors` default to the module's files under `--repo`; name them
+  only when the store lives elsewhere
 - The `kgrag` server reads `~/.kgrag/registry.sqlite` by default; override with
-  `--registry /abs/path/to/registry.sqlite` for non-default locations
+  `--db /abs/path/to/registry.sqlite`
 
 ---
 
@@ -556,7 +547,7 @@ class KGEntry:
     repo_path: Path            # repository / corpus root
     venv_path: Path            # Python virtual environment
     sqlite_path: Path | None   # SQLite database file
-    lancedb_path: Path | None  # LanceDB directory
+    vectors_path: Path | None  # sqlite-vec store file
     version: str               # KG library version
     tags: list[str]            # grouping/filtering labels
     created_at: datetime

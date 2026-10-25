@@ -86,7 +86,7 @@ class CodeKGAdapter(KGAdapter):
         nodes = result.nodes[:k]
         if semantic_floor > 0.0 and nodes:
             best = nodes[0].get("relevance") or {}
-            # Use the raw LanceDB cosine similarity ("semantic") rather than
+            # Use the raw vector cosine similarity ("semantic") rather than
             # the reranked "score", which is normalized so the top result in
             # each query always reaches 1.0 regardless of actual relevance.
             # "semantic" is 1-dist, directly comparable to DocKG's score.
@@ -155,41 +155,6 @@ class CodeKGAdapter(KGAdapter):
                 )
             )
         return snippets
-
-    def stats(self) -> dict[str, Any]:
-        """Return live statistics about this PyCodeKG instance.
-
-        :return: Standard envelope plus code-specific counts (modules, classes, coverage).
-        """
-        self._load()
-        db_size = 0.0
-        if self.entry.sqlite_path and self.entry.sqlite_path.exists():
-            db_size = round(self.entry.sqlite_path.stat().st_size / 1_048_576, 2)
-        try:
-            s = self._kg.store.stats()
-            return {
-                "kind": "code",
-                "kg_name": self.entry.name,
-                "builder_version": self.entry.builder_version,
-                "available": True,
-                "db_size_mb": db_size,
-                "node_count": s.get("meaningful_nodes", s.get("total_nodes", "n/a")),
-                "edge_count": s.get("total_edges", "n/a"),
-                "module_count": s.get("module_count", 0),
-                "class_count": s.get("class_count", 0),
-                "function_count": s.get("function_count", 0),
-                "method_count": s.get("method_count", 0),
-                "docstring_coverage": s.get("docstring_coverage", 0.0),
-                "snapshot_count": s.get("snapshot_count", 0),
-            }
-        except Exception as exc:  # pylint: disable=broad-exception-caught
-            return {
-                "kind": "code",
-                "kg_name": self.entry.name,
-                "available": True,
-                "db_size_mb": db_size,
-                "error": str(exc),
-            }
 
     def analyze(self) -> str:
         """Run full architectural analysis on this PyCodeKG.

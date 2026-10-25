@@ -9,7 +9,7 @@ Storage layout (auto-created on first use)::
 
     <repo>/.agentkg/
         graph.sqlite       # conversation tree (Turn, Topic, Task, Summary nodes)
-        lancedb/           # semantic embeddings
+        vectors.sqlite     # semantic embeddings (sqlite-vec)
         snapshots/         # temporal snapshots
 
     ~/.kgrag/profiles/<person_id>/
@@ -168,24 +168,6 @@ class AgentKGAdapter(KGAdapter):
                 )
             )
         return snippets
-
-    def stats(self) -> dict[str, Any]:
-        """Return node + edge counts and session info.
-
-        :return: Dict with ``node_count``, ``edge_count``, ``kind``, ``session_id``.
-        """
-        self._load()
-        try:
-            s = self._kg.stats()
-            return {
-                "node_count": s.get("node_count", 0),
-                "edge_count": s.get("edge_count", 0),
-                "kind": "agent",
-                "session_id": s.get("session_id", ""),
-                "turn_count": s.get("turn_count", 0),
-            }
-        except Exception:  # pylint: disable=broad-exception-caught
-            return {"node_count": 0, "edge_count": 0, "kind": "agent"}
 
     def analyze(self) -> str:
         """Return a Markdown analysis report for this AgentKG instance.

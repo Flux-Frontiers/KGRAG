@@ -334,7 +334,7 @@ kgrag info myproject-code
 2. **Check if databases exist:**
    ```bash
    ls ~/.codekg/graph.sqlite
-   ls ~/.codekg/lancedb
+   ls .codekg/vectors.sqlite
    ```
 
 3. **Rebuild the KG:**
@@ -374,7 +374,7 @@ kgrag info myproject-code
 ### ❌ "MCP tools not appearing" in Claude Code
 
 **Symptoms:**
-- `kgrag_query`, `kgrag_pack` don't autocomplete
+- `query`, `pack` don't autocomplete
 - Tools don't show in menu
 
 **Solutions:**
@@ -395,7 +395,7 @@ kgrag info myproject-code
      "mcpServers": {
        "kgrag": {
          "command": "kgrag",
-         "args": ["mcp", "--registry", "/ABSOLUTE/PATH/to/registry.sqlite"]
+         "args": ["mcp", "--db", "/ABSOLUTE/PATH/to/registry.sqlite"]
        }
      }
    }

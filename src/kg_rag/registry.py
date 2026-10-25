@@ -52,6 +52,10 @@ class KGRegistry:
         repo_path   TEXT NOT NULL,
         venv_path   TEXT NOT NULL,
         sqlite_path TEXT,
+        -- Dead since 0.18.0: LanceDB support is gone and nothing reads or
+        -- writes this column. Kept only because a released kgrag sharing the
+        -- same registry during the fleet's 0.29 lap still names it in its
+        -- INSERT; drop it once the fleet is on kgmodule-utils 0.29.
         lancedb_path TEXT,
         vectors_path TEXT,
         version     TEXT NOT NULL DEFAULT 'unknown',
@@ -122,7 +126,6 @@ class KGRegistry:
                 repo_path=entry.repo_path,
                 venv_path=entry.venv_path,
                 sqlite_path=entry.sqlite_path,
-                lancedb_path=entry.lancedb_path,
                 vectors_path=entry.vectors_path,
                 version=entry.version,
                 builder_version=entry.builder_version,
@@ -134,10 +137,10 @@ class KGRegistry:
         self._conn.execute(
             """
             INSERT OR REPLACE INTO kg_entries
-                (id, name, kind, repo_path, venv_path, sqlite_path, lancedb_path,
+                (id, name, kind, repo_path, venv_path, sqlite_path,
                  vectors_path, version, builder_version, tags, metadata,
                  created_at, updated_at)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
             """,
             (
                 entry.id,
@@ -146,7 +149,6 @@ class KGRegistry:
                 str(entry.repo_path),
                 str(entry.venv_path),
                 str(entry.sqlite_path) if entry.sqlite_path else None,
-                str(entry.lancedb_path) if entry.lancedb_path else None,
                 str(entry.vectors_path) if entry.vectors_path else None,
                 entry.version,
                 entry.builder_version,
@@ -177,7 +179,7 @@ class KGRegistry:
 
         :param name_or_id: The entry name or UUID.
         :param kwargs: Fields to update (repo_path, venv_path, sqlite_path,
-            lancedb_path, vectors_path, version, tags, metadata).
+            vectors_path, version, tags, metadata).
         :return: Updated entry, or None if not found.
         """
         entry = self.get(name_or_id)
@@ -305,7 +307,6 @@ class KGRegistry:
             repo_path=Path(row["repo_path"]),
             venv_path=Path(row["venv_path"]),
             sqlite_path=Path(row["sqlite_path"]) if row["sqlite_path"] else None,
-            lancedb_path=Path(row["lancedb_path"]) if row["lancedb_path"] else None,
             vectors_path=Path(row["vectors_path"])
             if "vectors_path" in row.keys() and row["vectors_path"]
             else None,

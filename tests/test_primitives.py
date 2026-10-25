@@ -96,16 +96,6 @@ class TestKGEntry:
         assert isinstance(entry.sqlite_path, Path)
         assert entry.sqlite_path.is_absolute()
 
-    def test_lancedb_path_normalization(self, tmp_path):
-        entry = KGEntry(
-            name="n",
-            kind=KGKind.CODE,
-            repo_path=tmp_path,
-            venv_path=tmp_path,
-            lancedb_path=str(tmp_path / "lancedb"),
-        )
-        assert isinstance(entry.lancedb_path, Path)
-
     def test_vectors_path_normalization(self, tmp_path):
         entry = KGEntry(
             name="n",
@@ -151,17 +141,11 @@ class TestKGEntry:
         )
         assert entry.is_built is True
 
-    def test_is_built_true_lancedb_exists(self, tmp_path):
-        ldb = tmp_path / "lancedb"
-        ldb.mkdir()
-        entry = KGEntry(
-            name="n",
-            kind=KGKind.CODE,
-            repo_path=tmp_path,
-            venv_path=tmp_path,
-            lancedb_path=ldb,
-        )
-        assert entry.is_built is True
+    def test_a_lancedb_directory_is_not_a_built_kg(self, tmp_path):
+        """LanceDB is no longer read, so a lancedb/ alone does not make a KG built."""
+        (tmp_path / "lancedb").mkdir()
+        entry = KGEntry(name="n", kind=KGKind.DOC, repo_path=tmp_path, venv_path=tmp_path)
+        assert entry.is_built is False
 
     def test_is_built_true_vectors_exists(self, tmp_path):
         """A sqlite-vec store alone is evidence of a built KG."""
@@ -201,7 +185,7 @@ class TestKGEntry:
         assert entry.tags == []
         assert entry.metadata == {}
         assert entry.sqlite_path is None
-        assert entry.lancedb_path is None
+        assert entry.vectors_path is None
 
 
 # ---------------------------------------------------------------------------

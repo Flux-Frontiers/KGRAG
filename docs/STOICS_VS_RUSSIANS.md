@@ -19,8 +19,8 @@ the synthesizer; they were *held* in the graph.
 - `gutenberg-russian-literature` (12 KGs, incl. Dostoevsky, Tolstoy, Gogol)
 - `gutenberg-philosophy` (16 KGs, incl. Nietzsche)
 
-**Tools invoked:** `kgrag_corpus_pack` (federated snippet pack scoped to a
-named corpus); `kgrag_corpus_query` (federated semantic query for
+**Tools invoked:** `corpus_pack` (federated snippet pack scoped to a
+named corpus); `corpus_query` (federated semantic query for
 disambiguation).
 
 ---

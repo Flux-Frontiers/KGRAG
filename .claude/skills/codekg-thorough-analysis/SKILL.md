@@ -219,7 +219,7 @@ pycodekg analyze /path/to/repo --json /tmp/analysis.json
 pycodekg analyze /path/to/repo -o /tmp/report.md -j /tmp/metrics.json
 
 # Non-default SQLite / LanceDB paths
-pycodekg analyze /path/to/repo --db /path/to/graph.sqlite --lancedb /path/to/lancedb
+pycodekg analyze /path/to/repo --db /path/to/graph.sqlite --vectors /path/to/vectors.sqlite
 
 # Suppress Rich console table (CI / pipe use)
 pycodekg analyze /path/to/repo --quiet

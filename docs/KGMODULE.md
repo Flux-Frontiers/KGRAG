@@ -74,7 +74,7 @@ class MyKG(KGModule):
 kg = MyKG(
     repo_root=Path("/path/to/data"),
     db_path=Path(".mykg/graph.sqlite"),
-    lancedb_path=Path(".mykg/lancedb"),
+    vectors_path=Path(".mykg/vectors.sqlite"),
 )
 kg.build(wipe=True)
 
@@ -162,7 +162,7 @@ from pycode_kg.module import KGModule
 KGModule(
     repo_root: Path,
     db_path: Path,
-    lancedb_path: Path,
+    vectors_path: Path,
     embed_model: str = "all-MiniLM-L6-v2",
     config: dict | None = None,
 )
@@ -257,7 +257,7 @@ class MyKGAdapter(KGAdapter):
         self._kg = MyKG(
             repo_root=self.entry.repo_path,
             db_path=self.entry.sqlite_path,
-            lancedb_path=self.entry.lancedb_path,
+            vectors_path=self.entry.vectors_path,
         )
 
     def is_available(self) -> bool:

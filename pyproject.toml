@@ -125,13 +125,10 @@ dependencies = [
     # at the newest release because fleet floors are raised to latest on every
     # relock, not because kg_rag needs anything newer than 0.18.0.
     "kgmodule-utils>=0.27.0",
-    # Upper-bounded: mcp 2.0 removed the low-level Server decorator API
-    # (`@server.list_tools()` / `@server.call_tool()`) that kg_rag.mcp_server
-    # uses. The Server class itself still imports under 2.0, so the failure
-    # surfaces as an AttributeError when _make_server() runs -- not at import --
-    # which makes it easy to miss. Lift this only alongside a port to the 2.x
-    # handler API.
-    "mcp>=1.0.0,<2",
+    # The server is built on kg_utils.mcp (FastMCP), which needs mcp>=1.23;
+    # the upper bound follows kgmodule-utils[mcp]. At the 0.29.0 release this
+    # pin is replaced by "kgmodule-utils[mcp]>=0.29.0".
+    "mcp>=1.23.0,<2",
     "numpy>=1.24.0",
     "pandas>=2.0.0",
     "rich>=14.3.3,<15",

@@ -12,12 +12,12 @@ Volume layout (KG_VOLUME)
         <book>/
           .dockg/
             graph.sqlite
-            lancedb/
+            vectors.sqlite
   metabo_kg/
     data/
-      hsa_pathways/.metabokg/{hsa.sqlite,lancedb/}
-      cge_pathways/.metabokg/{cge.sqlite,lancedb/}
-      icho_model/.metabokg/{icho.sqlite,lancedb/}
+      hsa_pathways/.metabokg/{hsa.sqlite,vectors.sqlite}
+      cge_pathways/.metabokg/{cge.sqlite,vectors.sqlite}
+      icho_model/.metabokg/{icho.sqlite,vectors.sqlite}
 
 Environment variables
 ---------------------
@@ -73,25 +73,25 @@ S3_BUCKET = os.environ.get("S3_BUCKET", "")
 S3_ENDPOINT_URL = os.environ.get("S3_ENDPOINT_URL", "")
 S3_REGION = os.environ.get("S3_REGION", "us-il-1")
 
-# Static MetaboKG entries: name → (kind_str, repo_path, sqlite_path, lancedb_path)
+# Static MetaboKG entries: name → (kind_str, repo_path, sqlite_path, vectors_path)
 _METABO_MAP = {
     "metabo_hsa": (
         "meta",
         VOLUME / "metabo_kg",
         VOLUME / "metabo_kg" / "data" / "hsa_pathways" / ".metabokg" / "hsa.sqlite",
-        VOLUME / "metabo_kg" / "data" / "hsa_pathways" / ".metabokg" / "lancedb",
+        VOLUME / "metabo_kg" / "data" / "hsa_pathways" / ".metabokg" / "vectors.sqlite",
     ),
     "metabo_cge": (
         "meta",
         VOLUME / "metabo_kg",
         VOLUME / "metabo_kg" / "data" / "cge_pathways" / ".metabokg" / "cge.sqlite",
-        VOLUME / "metabo_kg" / "data" / "cge_pathways" / ".metabokg" / "lancedb",
+        VOLUME / "metabo_kg" / "data" / "cge_pathways" / ".metabokg" / "vectors.sqlite",
     ),
     "metabo_icho": (
         "meta",
         VOLUME / "metabo_kg",
         VOLUME / "metabo_kg" / "data" / "icho_model" / ".metabokg" / "icho.sqlite",
-        VOLUME / "metabo_kg" / "data" / "icho_model" / ".metabokg" / "lancedb",
+        VOLUME / "metabo_kg" / "data" / "icho_model" / ".metabokg" / "vectors.sqlite",
     ),
 }
 
@@ -123,7 +123,7 @@ def _bootstrap_registry():
                 # diary pipeline uses .diarykg/; standard uses .dockg/
                 for kg_subdir in (".diarykg", ".dockg"):
                     sqlite = book_dir / kg_subdir / "graph.sqlite"
-                    lancedb = book_dir / kg_subdir / "lancedb"
+                    vectors = book_dir / kg_subdir / "vectors.sqlite"
                     if sqlite.exists():
                         break
                 else:
@@ -137,7 +137,7 @@ def _bootstrap_registry():
                     repo_path=book_dir,
                     venv_path=Path("/usr"),
                     sqlite_path=sqlite,
-                    lancedb_path=lancedb,
+                    vectors_path=vectors if vectors.exists() else None,
                     created_at=datetime.now(UTC),
                     updated_at=datetime.now(UTC),
                 )
@@ -146,7 +146,7 @@ def _bootstrap_registry():
     print(f"[bootstrap] registered {gb_count} gutenberg book indices")
 
     # --- MetaboKG: static entries ---
-    for name, (kind_str, repo_path, sqlite_path, lancedb_path) in _METABO_MAP.items():
+    for name, (kind_str, repo_path, sqlite_path, vectors_path) in _METABO_MAP.items():
         if not sqlite_path.exists():
             print(f"[bootstrap] {name}: index not found at {sqlite_path}, skipping")
             continue
@@ -157,7 +157,7 @@ def _bootstrap_registry():
             repo_path=repo_path,
             venv_path=Path("/usr"),
             sqlite_path=sqlite_path,
-            lancedb_path=lancedb_path,
+            vectors_path=vectors_path if vectors_path.exists() else None,
             created_at=datetime.now(UTC),
             updated_at=datetime.now(UTC),
         )

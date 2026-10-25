@@ -269,7 +269,6 @@ def _register(staging: Path, name: str, registry: str | None) -> KGEntry:
     kg_dir = staging / _DOCKG_DIR
     sqlite_path = kg_dir / "graph.sqlite"
     vectors_path = kg_dir / "vectors.sqlite"
-    lancedb_path = kg_dir / "lancedb"
 
     entry = KGEntry(
         name=name,
@@ -278,7 +277,6 @@ def _register(staging: Path, name: str, registry: str | None) -> KGEntry:
         venv_path=staging / ".venv",
         sqlite_path=sqlite_path if sqlite_path.exists() else None,
         vectors_path=vectors_path if vectors_path.exists() else None,
-        lancedb_path=lancedb_path if lancedb_path.exists() else None,
         version=read_pyproject_version(staging),
         tags=["ingested", date.today().isoformat()],
     )

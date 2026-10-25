@@ -133,17 +133,6 @@ class DiaryKGAdapter(KGAdapter):
             )
         return snippets
 
-    def stats(self) -> dict[str, Any]:
-        """Return KG storage statistics (node + edge counts).
-
-        Matches the cross-KG contract so KGRAG can aggregate total indexed
-        size across all registered KGs.
-
-        :return: Dict with node_count, edge_count, kind.
-        """
-        self._load()
-        return self._kg.stats()
-
     def info(self) -> dict[str, Any]:
         """Return diary-specific corpus information.
 

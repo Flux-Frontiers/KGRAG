@@ -42,13 +42,13 @@ Commands become globally available: `dockg`, `pycodekg`, `gutenkg`, `metabokg`, 
 
 | Query Type | Primary Tool | Never Use Instead |
 |---|---|---|
-| Code structure, callers, imports | `mcp__pycodekg__*` | grep, Read |
-| Unstructured doc content | `mcp__dockg__*` | Grep, Read |
-| Claude_T self-knowledge / stack | `mcp__memorykg__*` (corpus: `claude_t_self`) | weights, memory |
-| Diary / Pepys narrative | `mcp__diarykg__*` | Read, Grep |
-| Session history / self-memory | `mcp__agent-kg__*` | context window |
-| Metabolic pathways | `mcp__metabokg__*` | inference |
-| Cross-domain / "any" | `mcp__kgrag__kgrag_corpus_query` | multiple separate queries |
+| Code structure, callers, imports | the `pycodekg` server | grep, Read |
+| Unstructured doc content | the `dockg` server | Grep, Read |
+| Claude_T self-knowledge / stack | the `memorykg` server (corpus: `claude_t_self`) | weights, memory |
+| Diary / Pepys narrative | the `diarykg` server | Read, Grep |
+| Session history / self-memory | the `agentkg` server | context window |
+| Metabolic pathways | the `metabokg` server | inference |
+| Cross-domain / "any" | `corpus_query` on the `kgrag` server | multiple separate queries |
 
 ---
 
@@ -56,12 +56,12 @@ Commands become globally available: `dockg`, `pycodekg`, `gutenkg`, `metabokg`, 
 
 **Repo:** `../pycode_kg` | **Index:** `.pycodekg/` | **Command:** `pycodekg`
 
-### MCP tools — `mcp__pycodekg__*`
+### MCP tools — the `pycodekg` server
 
 ```
-graph_stats()                              ← start every session
-pack_snippets(q, k=8, hop=1, context=5)   ← returns source code
-query_codebase(q, k=8, hop=1)             ← returns ranked node list
+stats()                              ← start every session
+pack(q, k=8, hop=1, context=5)   ← returns source code
+query(q, k=8, hop=1)             ← returns ranked node list
 callers(node_id)                           ← who calls this?  NEVER grep
 get_node(node_id, include_edges=True)      ← node detail
 list_nodes(module_path, kind)              ← all nodes in a module
@@ -85,7 +85,7 @@ pycodekg init --repo .
 pycodekg build --repo .                       # full wipe-and-rebuild
 pycodekg update --repo .                      # incremental upsert
 pycodekg build-sqlite --repo .                # SQLite only
-pycodekg build-lancedb --repo .               # LanceDB only
+pycodekg build-index --repo .                 # vector index only
 
 # Query
 pycodekg query "authentication flow" --k 8 --hop 1
@@ -123,12 +123,12 @@ pycodekg mcp --repo .
 
 **Repo:** `../doc_kg` | **Index:** `.dockg/` | **Command:** `dockg`
 
-### MCP tools — `mcp__dockg__*`
+### MCP tools — the `dockg` server
 
 ```
-graph_stats()
-query_docs(q, k=8, hop=1)                  ← find sections/chunks
-pack_docs(q, k=8, hop=1)                   ← markdown text for LLM
+stats()
+query(q, k=8, hop=1)                  ← find sections/chunks
+pack(q, k=8, hop=1)                   ← markdown text for LLM
 get_node(node_id)
 ```
 
@@ -162,7 +162,7 @@ dockg snapshot diff <a> <b>
 
 # Visualization + MCP
 dockg viz
-dockg mcp --repo . --db .dockg/graph.sqlite --lancedb .dockg/lancedb
+dockg mcp --repo .
 ```
 
 ---
@@ -173,12 +173,12 @@ dockg mcp --repo . --db .dockg/graph.sqlite --lancedb .dockg/lancedb
 
 Claude_T's self-knowledge corpus (`claude_t_self`). Query for stack architecture, tool surfaces, identity, CLI reference.
 
-### MCP tools — `mcp__memorykg__*`
+### MCP tools — the `memorykg` server
 
 ```
-graph_stats()
-query_docs(q)                              ← search claude_t_self
-pack_docs(q)                               ← get grounded text
+stats()
+query(q)                              ← search claude_t_self
+pack(q)                               ← get grounded text
 get_node(node_id)
 ```
 
@@ -211,7 +211,7 @@ memorykg snapshot diff <a> <b>
 memorykg viz
 
 # MCP server
-memorykg mcp --repo . --db .memorykg/graph.sqlite --lancedb .memorykg/lancedb
+memorykg mcp --repo .
 ```
 
 **Rebuild after any `docs/` or identity doc change:**
@@ -231,12 +231,12 @@ memorykg-build --repo /Users/egs/repos/kgrag \
 
 Samuel Pepys diary, 1660–1669. 41,544 nodes, 581,630 edges.
 
-### MCP tools — `mcp__diarykg__*`
+### MCP tools — the `diarykg` server
 
 ```
-diary_stats()                              ← corpus overview
-query_diary(q, k=8)                        ← semantic search
-pack_diary(q, k=8)                         ← passage text
+stats()                              ← corpus overview
+query(q, k=8)                        ← semantic search
+pack(q, k=8)                         ← passage text
 ```
 
 ### CLI
@@ -304,7 +304,7 @@ ftreekg snapshot prune                     # remove vestigial snapshots
 ftreekg install-hooks
 ```
 
-**Key options:** `--repo DIR`, `--db PATH`, `--lancedb PATH`, `--model TEXT`, `--include-dir` / `--exclude-dir` (repeatable), `--no-wipe`
+**Key options:** `--repo DIR`, `--db PATH`, `--vectors PATH`, `--model TEXT`, `--include-dir` / `--exclude-dir` (repeatable), `--no-wipe`
 
 ---
 
@@ -314,15 +314,15 @@ ftreekg install-hooks
 
 Session history and self-memory. Answer "what have I worked on?" by traversal.
 
-### MCP tools — `mcp__agent-kg__*`
+### MCP tools — the `agentkg` server
 
 ```
-agent_kg_stats()                           ← session count, entity graph
-agent_kg_topics()                          ← topic distribution
-agent_kg_profile()                         ← evolving identity
-agent_kg_query(q)                          ← semantic search over history
-agent_kg_analyze()
-agent_kg_pack()
+stats()                           ← session count, entity graph
+topics()                          ← topic distribution
+profile()                         ← evolving identity
+query(q)                          ← semantic search over history
+analyze()
+pack()
 ```
 
 ### CLI
@@ -368,7 +368,7 @@ agent-kg install-hooks
 
 **Repo:** `../metabo_kg` | **Index:** `.metabokg/` | **Commands:** `metabokg`, `metabokg-*`
 
-### MCP tools — `mcp__metabokg__*`
+### MCP tools — the `metabokg` server
 
 ```
 query_pathway(q)                           ← find pathways
@@ -511,22 +511,22 @@ iakg ingest --list-genres
 
 ---
 
-## KGRAG Federated — `mcp__kgrag__*`
+## KGRAG Federated — the `kgrag` server
 
 Cross-domain queries spanning multiple KGs simultaneously.
 
 ### MCP tools
 
 ```
-kgrag_query(q)                             ← all registered KGs
-kgrag_pack(q)                              ← code + doc snippets
-kgrag_corpus_query(corpus, q)             ← named corpus
-kgrag_stats() / kgrag_list() / kgrag_info(name)
+query(q)                             ← all registered KGs
+pack(q)                              ← code + doc snippets
+corpus_query(corpus, q)             ← named corpus
+stats() / list_kgs() / kg_info(name)
 ```
 
 **Corpus management:**
 ```
-kgrag_corpus_create / add / remove / delete / info / list / query / pack
+corpus_create / add / remove / delete / info / list / query / pack
 ```
 
 ### CLI
@@ -551,7 +551,7 @@ kgrag corpus query <name> "query"
 2. **Inference is optional** — graph results ARE the answer; synthesis only when narration needed
 3. **Cite nodes** — every fact traces to a node ID and file path
 4. **Report gaps** — missing nodes → "graph has no coverage here", never fill with inference
-5. **Self-knowledge via AgentKG** — "what have I worked on?" goes to `agent_kg_query`, not context
+5. **Self-knowledge via AgentKG** — "what have I worked on?" goes to `query` on the `agentkg` server, not context
 
 ---
 
@@ -559,10 +559,10 @@ kgrag corpus query <name> "query"
 
 ```
 ❌ grep for callers             →  ✓ callers(node_id)
-❌ Read file for understanding  →  ✓ pack_snippets(q) first
+❌ Read file for understanding  →  ✓ pack(q) first
 ❌ Infer answer when tool exists →  ✓ traverse first
 ❌ Fill graph gap with inference →  ✓ report the gap
-❌ Reconstruct history from context → ✓ agent_kg_query(q)
+❌ Reconstruct history from context → ✓ query(q)
 ❌ Web search for metabolic data →  ✓ metabokg query/pack first
 ```
 

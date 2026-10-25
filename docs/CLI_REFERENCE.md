@@ -35,7 +35,7 @@ codekg build --model BAAI/bge-small-en-v1.5 --batch 256
 #   --include-dir TEXT   top-level dirs to index (repeatable)
 #   --exclude-dir TEXT   dirs to skip at every depth (repeatable)
 #   --db PATH            SQLite path [default: <repo>/.codekg/graph.sqlite]
-#   --lancedb PATH       LanceDB path [default: <repo>/.codekg/lancedb]
+#   --vectors PATH       sqlite-vec store [default: <repo>/.codekg/vectors.sqlite]
 #   --model TEXT         embedding model [default: BAAI/bge-small-en-v1.5]
 #   --batch INTEGER      embedding batch size [default: 256]
 #   --kinds TEXT         node kinds [default: module,class,function,method]
@@ -50,12 +50,14 @@ codekg update --repo .
 **MCP server:**
 ```bash
 codekg mcp --repo . --transport stdio
-# Key options:
+# Key options (the fleet's standard MCP flags, from kg_utils.mcp):
 #   --repo DIRECTORY
 #   --db PATH
-#   --lancedb PATH
+#   --vectors PATH
 #   --model TEXT
-#   --transport [stdio|sse]  [default: stdio]
+#   --transport [stdio|streamable-http]  [default: stdio]
+#   --host / --port      (streamable-http)
+#   --manifest           print the tool list as JSON and exit
 ```
 
 **Query / Pack:**
@@ -90,7 +92,7 @@ dockg build --repo . --exclude-dir bundles --exclude-dir dist
 # Key options:
 #   --repo DIRECTORY     corpus root [default: .]
 #   --sqlite PATH        [default: <repo>/.dockg/graph.sqlite]
-#   --lancedb PATH       [default: <repo>/.dockg/lancedb]
+#   --vectors-path PATH  [default: <repo>/.dockg/vectors.sqlite]
 #   --model TEXT         [default: all-mpnet-base-v2]
 #   --chunk-size INTEGER [default: 512]
 #   --chunk-overlap INTEGER [default: 64]
@@ -180,12 +182,15 @@ diarykg snapshot list --repo /Users/egs/repos/diary_kg
 **Build:**
 ```bash
 metabokg build --help   # (check for pathway source path args)
-metabokg mcp --db /path/to/.metabokg/meta.sqlite --lancedb /path/to/.metabokg/lancedb
-# Key MCP options:
-#   --db TEXT        [default: .metabokg/meta.sqlite]
-#   --lancedb TEXT   [default: .metabokg/lancedb]
-#   --model TEXT     [default: all-MiniLM-L6-v2]
-#   --transport [stdio|sse]
+metabokg mcp --repo /path/to/Metabo_kg --db .metabokg/meta.sqlite
+# Key options (the fleet's standard MCP flags, from kg_utils.mcp):
+#   --repo DIRECTORY
+#   --db PATH
+#   --vectors PATH
+#   --model TEXT
+#   --transport [stdio|streamable-http]  [default: stdio]
+#   --host / --port      (streamable-http)
+#   --manifest           print the tool list as JSON and exit
 ```
 
 **Simulate:**
@@ -203,7 +208,7 @@ metabokg snapshot diff <key_a> <key_b>
 
 **Active corpus:**
 - DB: `/Users/egs/repos/Metabo_kg/.metabokg/meta.sqlite`
-- LanceDB: `/Users/egs/repos/Metabo_kg/.metabokg/lancedb`
+- Vectors: `/Users/egs/repos/Metabo_kg/.metabokg/vectors.sqlite`
 - No snapshots yet (baseline needed)
 
 **MCP tools exposed (11):**
@@ -227,7 +232,7 @@ kgrag scan <directory>                  # auto-discover KG databases
 # kgrag-register shorthand:
 kgrag-register my_docs doc /path/to/repo \
   --sqlite .dockg/graph.sqlite \
-  --lancedb .dockg/lancedb \
+  --vectors .dockg/vectors.sqlite \
   --tag docs
 ```
 
@@ -303,13 +308,13 @@ cat ~/corpora/specs/.ingest/manifest.json    # source, sha256, converter, status
 ```
 
 **MCP tools exposed (19):**
-`kgrag_query`, `kgrag_pack`, `kgrag_stats`, `kgrag_list`, `kgrag_info`,
-`kgrag_corpus_query`, `kgrag_corpus_pack`, `kgrag_corpus_create`,
-`kgrag_corpus_add`, `kgrag_corpus_remove`, `kgrag_corpus_delete`,
-`kgrag_corpus_info`, `kgrag_corpus_list`,
-`kgrag_person_create`, `kgrag_person_add`, `kgrag_person_remove`,
-`kgrag_person_delete`, `kgrag_person_info`, `kgrag_person_list`,
-`kgrag_person_query`, `kgrag_person_pack`, `kgrag_person_update`
+`query`, `pack`, `stats`, `list_kgs`, `kg_info`,
+`corpus_query`, `corpus_pack`, `corpus_create`,
+`corpus_add`, `corpus_remove`, `corpus_delete`,
+`corpus_info`, `corpus_list`,
+`person_create`, `person_add`, `person_remove`,
+`person_delete`, `person_info`, `person_list`,
+`person_query`, `person_pack`, `person_update`
 
 ---
 
@@ -345,12 +350,12 @@ agent-kg-mcp
 
 ## Default Index Paths (Convention)
 
-| KG | SQLite | LanceDB |
+| KG | SQLite | Vectors (sqlite-vec) |
 |---|---|---|
-| codekg | `<repo>/.codekg/graph.sqlite` | `<repo>/.codekg/lancedb` |
-| dockg | `<repo>/.dockg/graph.sqlite` | `<repo>/.dockg/lancedb` |
-| diarykg | `<repo>/.diarykg/graph.sqlite` | `<repo>/.diarykg/lancedb` |
-| metabokg | `<repo>/.metabokg/meta.sqlite` | `<repo>/.metabokg/lancedb` |
+| codekg | `<repo>/.codekg/graph.sqlite` | `<repo>/.codekg/vectors.sqlite` |
+| dockg | `<repo>/.dockg/graph.sqlite` | `<repo>/.dockg/vectors.sqlite` |
+| diarykg | `<repo>/.diarykg/graph.sqlite` | `<repo>/.diarykg/vectors.sqlite` |
+| metabokg | `<repo>/.metabokg/meta.sqlite` | `<repo>/.metabokg/vectors.sqlite` |
 | agentkg | `<repo>/.agentkg/` | (internal) |
 
 All dot-directories are gitignored (built artifacts). Snapshots under
