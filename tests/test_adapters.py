@@ -2117,6 +2117,27 @@ class TestAgentKGAdapterSnapshotMetrics:
             "session_id": "s1",
         }
 
+    def test_collect_snapshot_metrics_reads_the_fleet_shape(self, tmp_path):
+        """agent-kg's stats() is in the fleet shape from its next release."""
+        entry = _entry(tmp_path, KGKind.AGENT)
+        mock_kg = MagicMock()
+        mock_kg.stats.return_value = {
+            "kind": "agent",
+            "nodes": {"total": 10, "by_kind": {"turn": 6, "topic": 4}},
+            "edges": {"total": 20, "by_rel": {"NEXT": 20}},
+            "turn_count": 5,
+            "session_id": "s1",
+        }
+        adapter = AgentKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        assert adapter._collect_snapshot_metrics() == {
+            "total_nodes": 10,
+            "total_edges": 20,
+            "turn_count": 5,
+            "session_id": "s1",
+        }
+
     def test_collect_snapshot_metrics_graceful_on_error(self, tmp_path):
         entry = _entry(tmp_path, KGKind.AGENT)
         # Both keys: once agent_kg.graph is imported (agent-kg is a dev
@@ -2333,10 +2354,24 @@ class TestDiaryKGAdapterSnapshotMetrics:
 
     def test_collect_snapshot_metrics_graceful_on_error(self, tmp_path):
         entry = _entry(tmp_path, KGKind.DIARY)
-        with patch.dict("sys.modules", {"diary_kg": None}):
+        with patch.dict("sys.modules", {"diary_kg": None, "diary_kg.kg": None}):
             adapter = DiaryKGAdapter(entry)
             metrics = adapter._collect_snapshot_metrics()
         assert metrics == {}
+
+    def test_collect_snapshot_metrics_empty_when_stats_reports_an_error(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.DIARY)
+        mock_kg = MagicMock()
+        mock_kg.stats.return_value = {
+            "kind": "diary",
+            "nodes": {"total": 0, "by_kind": {}},
+            "edges": {"total": 0, "by_rel": {}},
+            "error": "no graph",
+        }
+        adapter = DiaryKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        assert adapter._collect_snapshot_metrics() == {}
 
 
 # ---------------------------------------------------------------------------

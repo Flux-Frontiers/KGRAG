@@ -18,6 +18,8 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from kg_utils.stats import flat_stats
+
 from kg_rag.adapters.base import KGAdapter
 from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry, KGKind, QueryScope
 
@@ -207,12 +209,12 @@ class StubKGAdapter(KGAdapter):
             return {"status": "unavailable"}
         try:
             self._load()
-            raw = self._kg.stats() if callable(getattr(self._kg, "stats", None)) else {}
-            if isinstance(raw, dict):
+            if callable(getattr(self._kg, "stats", None)):
+                s = flat_stats(self.fleet_stats())
                 return {
                     "status": "available",
-                    "total_nodes": raw.get("total_nodes", raw.get("node_count", 0)),
-                    "total_edges": raw.get("total_edges", raw.get("edge_count", 0)),
+                    "total_nodes": s["total_nodes"],
+                    "total_edges": s["total_edges"],
                 }
         except Exception:  # pylint: disable=broad-exception-caught
             pass

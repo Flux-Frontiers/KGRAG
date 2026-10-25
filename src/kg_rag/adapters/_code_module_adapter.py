@@ -16,6 +16,8 @@ from __future__ import annotations
 import importlib
 from typing import Any, ClassVar
 
+from kg_utils.stats import flat_stats
+
 from kg_rag.adapters.base import KGAdapter, node_metadata
 from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry, KGKind, QueryScope
 
@@ -178,7 +180,7 @@ class CodeModuleKGAdapter(KGAdapter):
         """Return node and edge counts for the snapshot."""
         try:
             self._load()
-            s = self._kg.stats()
+            s = flat_stats(self.fleet_stats())
             return {
                 "total_nodes": s.get("total_nodes", 0),
                 "total_edges": s.get("total_edges", 0),

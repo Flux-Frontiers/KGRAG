@@ -41,6 +41,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   read totals through the new `stat_totals()`, and the per-domain status
   line lists each KG's top node kinds rather than a hand-written field per
   kind.
+  Snapshot metrics read the same shape (flattened back to `total_nodes` /
+  `node_counts`), so the code, agent, diary, connectome and stub adapters
+  keep recording real counts against modules whose `stats()` has moved to
+  the shape, rather than zeros.
 - **`docs/MCP.md`'s tool reference is generated.** `scripts/gen_mcp_reference.py`
   renders it from `kgrag mcp --manifest`; `--check` fails when the file has
   drifted, and a test runs it. `Claude.mcp.json`, `CLAUDE.md`, `AGENTS.md`,

@@ -25,6 +25,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from kg_utils.stats import flat_stats
+
 from kg_rag.adapters.base import KGAdapter
 from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry, KGKind, QueryScope
 
@@ -244,10 +246,10 @@ class AgentKGAdapter(KGAdapter):
         """Return AgentKG-specific metrics for the snapshot."""
         try:
             self._load()
-            s = self._kg.stats()
+            s = flat_stats(self.fleet_stats())
             return {
-                "total_nodes": s.get("node_count", 0),
-                "total_edges": s.get("edge_count", 0),
+                "total_nodes": s.get("total_nodes", 0),
+                "total_edges": s.get("total_edges", 0),
                 "turn_count": s.get("turn_count", 0),
                 "session_id": s.get("session_id", ""),
             }

@@ -19,6 +19,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from kg_utils.stats import flat_stats
+
 from kg_rag.adapters.base import KGAdapter, node_metadata
 from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry, KGKind, QueryScope
 
@@ -175,7 +177,7 @@ class ConnectomeKGAdapter(KGAdapter):
         """Return connectome-specific metrics for the snapshot."""
         try:
             self._load()
-            s = self._kg.stats()
+            s = flat_stats(self.fleet_stats())
             nodes = s.get("node_counts", {})
             return {
                 "total_nodes": s.get("total_nodes", 0),

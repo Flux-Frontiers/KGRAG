@@ -157,10 +157,9 @@ class DiaryKGAdapter(KGAdapter):
         """Return diary-specific metrics for the snapshot."""
         try:
             self._load()
-            s = self._kg.stats()
-            return {
-                "total_nodes": s.get("node_count", 0),
-                "total_edges": s.get("edge_count", 0),
-            }
+            s = self.fleet_stats()
+            if "error" in s:  # diary-kg reports a failure rather than raising
+                return {}
+            return {"total_nodes": s["nodes"]["total"], "total_edges": s["edges"]["total"]}
         except Exception:  # pylint: disable=broad-exception-caught
             return {}
