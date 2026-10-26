@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-10-26
+
 ### Changed
 
 - **The KGRAG MCP server is built on `kg_utils.mcp`, and its tools drop the
@@ -25,8 +27,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   seed's neighbourhood ranked after the seeds. `--db` is the registry;
   `--registry`, its old spelling, is accepted with a warning until 0.19.
   `--vectors` and `--model` are refused: each registered KG uses its own.
-  The `mcp` pin moves to `>=1.23.0,<2`, the FastMCP floor; at the 0.29.0
-  release it becomes `kgmodule-utils[mcp]>=0.29.0`.
+  The direct `mcp` pin is replaced by `kgmodule-utils[mcp]>=0.29.0`, whose
+  extra brings `mcp>=1.23.0,<2`.
+- **Floors onto the 0.29.0 fleet releases**, whose `stats()` the adapters
+  read in the fleet shape: doc-kg 0.29.0, memory-kg 0.13.0, pycode-kg 0.29.0,
+  diary-kg 0.101.0, ftree-kg 0.18.0, connectome-kg 0.9.0 and vault-kg 0.6.0
+  (the extras and the dev group), plus agent-kg 0.14.0, genealogy-kg 0.4.0,
+  swift-kg 0.5.0, tscode-kg 0.8.0 and metabo-kg v0.18.0 (dev group).
 - **Every adapter reports stats in the fleet shape.** `KGAdapter.stats()`
   is concrete and returns `{"kind", "nodes": {"total", "by_kind"},
   "edges": {"total", "by_rel"}, ...}` (FLEET_STANDARDS, "KG stats shape"),
