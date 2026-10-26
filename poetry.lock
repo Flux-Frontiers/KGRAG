@@ -2,20 +2,19 @@
 
 [[package]]
 name = "agent-kg"
-version = "0.13.0"
+version = "0.14.0"
 description = "Conversational memory as a knowledge graph"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["dev"]
 files = [
-    {file = "agent_kg-0.13.0-py3-none-any.whl", hash = "sha256:62956373898ec4dc00a2607c729ff6f33fd2040ade684097a14af4f58cd8d2c7"},
-    {file = "agent_kg-0.13.0.tar.gz", hash = "sha256:60eb223e7cf2ae975522e2866be8f920e43e0422d41c9b962218761584c6812c"},
+    {file = "agent_kg-0.14.0-py3-none-any.whl", hash = "sha256:22652eb4e64a913e77345e5d9b9db9dbe098a9a328e0533e59a83d8174fb04fb"},
+    {file = "agent_kg-0.14.0.tar.gz", hash = "sha256:dd9a4c2fc2528c9d13697cdb209c38ba09e085450dab6a708076b242252e0e73"},
 ]
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = {version = ">=0.23.0", extras = ["semantic", "sqlite-vec"]}
-mcp = ">=1.0.0,<2"
+kgmodule-utils = {version = ">=0.29.0", extras = ["mcp", "semantic", "sqlite-vec"]}
 numpy = ">=1.24.0"
 rich = ">=14.0.0"
 safetensors = ">=0.5.0"
@@ -641,20 +640,20 @@ markers = {main = "extra == \"diary\" or extra == \"all\""}
 
 [[package]]
 name = "connectome-kg"
-version = "0.8.1"
+version = "0.9.0"
 description = "Connectomes (FlyWire, hemibrain, MaleCNS) as KGModule knowledge graphs"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "connectome_kg-0.8.1-py3-none-any.whl", hash = "sha256:12697616675f46d27534f33704a0e5a66d028d48f2ca64e6450c4a2b260a2207"},
-    {file = "connectome_kg-0.8.1.tar.gz", hash = "sha256:807147dfd77315b1cb223e4df08ca5d58d985dd33f2d27da539a9c1a30140183"},
+    {file = "connectome_kg-0.9.0-py3-none-any.whl", hash = "sha256:7c46189edb1f24faea7f4269c5b6476800795aa889a4631d131889c855c6ca50"},
+    {file = "connectome_kg-0.9.0.tar.gz", hash = "sha256:178acca65f34142075e297bf004577750b23134cfbe289b555a49d4ef258e973"},
 ]
 markers = {main = "extra == \"connectome\" or extra == \"all\""}
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = ">=0.26.0"
+kgmodule-utils = ">=0.29.0"
 mcp = ">=1.3.0,<2"
 numpy = ">=1.26.0"
 pandas = ">=2.2.0"
@@ -662,9 +661,9 @@ pyarrow = ">=15.0.0"
 scipy = ">=1.12.0"
 
 [package.extras]
-semantic = ["kgmodule-utils[semantic] (>=0.26.0)"]
-viz = ["kgmodule-utils[viz] (>=0.26.0)", "plotly (>=5.14.0)"]
-viz3d = ["kgmodule-utils[viz3d-qt,viz3d-render] (>=0.26.0)", "pyvistaqt (>=0.11.0)", "quiltwright (>=0.16.0)"]
+semantic = ["kgmodule-utils[semantic] (>=0.29.0)"]
+viz = ["kgmodule-utils[viz] (>=0.29.0)", "plotly (>=5.14.0)"]
+viz3d = ["kgmodule-utils[viz3d-qt,viz3d-render] (>=0.29.0)", "pyvistaqt (>=0.11.0)", "quiltwright (>=0.16.0)"]
 
 [[package]]
 name = "contourpy"
@@ -1040,7 +1039,6 @@ nvidia-cuda-cupti = {version = "==13.0.85.*", optional = true, markers = "(sys_p
 nvidia-cuda-nvrtc = {version = "==13.0.88.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and (extra == \"cublas\" or extra == \"nvrtc\")"}
 nvidia-cuda-runtime = {version = "==13.0.96.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cudart\""}
 nvidia-cufft = {version = "==12.0.0.61.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cufft\""}
-nvidia-cufile = {version = "==1.15.1.6.*", optional = true, markers = "sys_platform == \"linux\" and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cufile\""}
 nvidia-curand = {version = "==10.4.0.35.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"curand\""}
 nvidia-cusolver = {version = "==12.0.4.66.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cusolver\""}
 nvidia-cusparse = {version = "==12.6.3.3.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and (extra == \"cusolver\" or extra == \"cusparse\")"}
@@ -1254,22 +1252,21 @@ word-list = ["pyahocorasick"]
 
 [[package]]
 name = "diary-kg"
-version = "0.100.1"
+version = "0.101.0"
 description = "A knowledge graph builder and semantic search engine for diaries and journals"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "diary_kg-0.100.1-py3-none-any.whl", hash = "sha256:e788a1257f3971cedd85ccd83d372b0ba085f1c10abee212c7b0f2ffd170c5e0"},
-    {file = "diary_kg-0.100.1.tar.gz", hash = "sha256:7f7af6fd16dd9bb95ab5cacd15ed4a59644a051ee2fc479d58ded36e0999eb97"},
+    {file = "diary_kg-0.101.0-py3-none-any.whl", hash = "sha256:a9b411f7d89c8b28d47b6a857df93981e978261577f0c24d26cdcd5819df1275"},
+    {file = "diary_kg-0.101.0.tar.gz", hash = "sha256:cd3cd64b6f4ea6014bf0ff86665b34305c6aa4b3711f655bdf596ccdbcdd794c"},
 ]
 markers = {main = "extra == \"diary\" or extra == \"all\""}
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-doc-kg = ">=0.27.0"
-kgmodule-utils = ">=0.23.0"
-mcp = ">=1.3.0,<2"
+doc-kg = ">=0.29.0"
+kgmodule-utils = {version = ">=0.29.0", extras = ["mcp"]}
 numpy = ">=1.24.0"
 pandas = ">=2.0.0"
 rich = ">=14.3.3,<15"
@@ -1294,28 +1291,26 @@ files = [
 
 [[package]]
 name = "doc-kg"
-version = "0.28.1"
+version = "0.29.0"
 description = "A tool to build a semantically searchable knowledge graph from markdown and text documents"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "doc_kg-0.28.1-py3-none-any.whl", hash = "sha256:3b7c6051adb398ca5a696116052a1e9858cbb3c79ad668d9ab3b21a5fe1f5cc7"},
-    {file = "doc_kg-0.28.1.tar.gz", hash = "sha256:8ec4a34abcbb2b137fc5644663540ee39fcbc9c33ab829beec3e1329c0fd5916"},
+    {file = "doc_kg-0.29.0-py3-none-any.whl", hash = "sha256:f82a3309eb1f3a8fd2287f970195742d808b5df9c1496e96f927650c3b07e539"},
+    {file = "doc_kg-0.29.0.tar.gz", hash = "sha256:4155fae3276d6f7df0062f4dea7ca026f30bb2fca8e3cec43b36299815eb7753"},
 ]
 markers = {main = "extra == \"kg\" or extra == \"all\" or extra == \"diary\""}
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = {version = ">=0.27.1", extras = ["pdf", "semantic"]}
-mcp = ">=1.3.0,<2"
+kgmodule-utils = {version = ">=0.29.0", extras = ["mcp", "pdf", "semantic"]}
 pyyaml = ">=6.0.0"
 rich = ">=14.3.3,<15"
 tqdm = ">=4.60"
 
 [package.extras]
 analysis = ["joblib (>=1.4.0)", "scikit-learn (>=1.3.0)"]
-lancedb = ["lancedb (>=0.29.0)"]
 viz = ["pyvis (>=0.3.2)", "streamlit (>=1.35.0)"]
 
 [[package]]
@@ -1511,21 +1506,20 @@ tqdm = ["tqdm"]
 
 [[package]]
 name = "ftree-kg"
-version = "0.17.0"
+version = "0.18.0"
 description = "KGModule for file tree knowledge graphs"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "ftree_kg-0.17.0-py3-none-any.whl", hash = "sha256:b7f5f7bd75ffc57dec3d24f42f8bdca013a3e9008db46ed2072ea966ea957f84"},
-    {file = "ftree_kg-0.17.0.tar.gz", hash = "sha256:e12cfe0411f37ac22196822095ebf00585e7edd58c87d682e11fdaeeab7314de"},
+    {file = "ftree_kg-0.18.0-py3-none-any.whl", hash = "sha256:a039f89076dab4a9abec389c466ae8d7de5c2df1e6d3735ec8b738066640eb49"},
+    {file = "ftree_kg-0.18.0.tar.gz", hash = "sha256:ba0048a62a386a89c3abde0a938bad1ae8ac80ba0b9ae5b4aebce246925e2392"},
 ]
 markers = {main = "extra == \"filetree\" or extra == \"all\""}
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = {version = ">=0.23.0", extras = ["semantic", "sqlite-vec"]}
-mcp = ">=1.3.0,<2"
+kgmodule-utils = {version = ">=0.29.0", extras = ["mcp", "semantic", "sqlite-vec"]}
 pillow = ">=10.0.0"
 rich = ">=13.0.0,<15.0.0"
 
@@ -1553,26 +1547,25 @@ dev = ["coverage", "mypy", "pytest", "ruff"]
 
 [[package]]
 name = "genealogy-kg"
-version = "0.2.2"
+version = "0.4.0"
 description = "KGModule for genealogical knowledge graphs built from GEDCOM files"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["dev"]
 files = [
-    {file = "genealogy_kg-0.2.2-py3-none-any.whl", hash = "sha256:b924cbc1eb01df629b7c3815618edb27ca5984612167aba58e3fd2a5f6ab0d20"},
-    {file = "genealogy_kg-0.2.2.tar.gz", hash = "sha256:c0c864049753a046880c1a3e24c775acee5e7deab0d14baeb10800413f13c6ec"},
+    {file = "genealogy_kg-0.4.0-py3-none-any.whl", hash = "sha256:2817f5270c799d3e7a7038daefe9723c53d1cc8f3a2cdc017959ffdecbd79b28"},
+    {file = "genealogy_kg-0.4.0.tar.gz", hash = "sha256:08091f4fbe83089343c578d02d37fd83ffaf35ceb5e3246696fe4d6c4fa61aca"},
 ]
 
 [package.dependencies]
 click = ">=8.1.0,<9"
 ged4py = ">=0.5.2"
-kgmodule-utils = {version = ">=0.26.0", extras = ["semantic", "sqlite-vec"]}
-mcp = ">=1.3.0,<2"
+kgmodule-utils = {version = ">=0.29.0", extras = ["mcp", "semantic", "sqlite-vec"]}
 
 [package.extras]
 adapter = ["kg-rag (>=0.17.0)"]
-viz = ["kgmodule-utils[viz] (>=0.26.0)", "plotly (>=5.14.0)", "streamlit (>=1.35.0)"]
-viz3d = ["PyQt5 (>=5.15.0)", "kgmodule-utils[viz3d-qt,viz3d-render] (>=0.26.0)", "markdown (>=3.6)", "param (>=2.0.0)", "pyvistaqt (>=0.11.0)", "quiltwright (>=0.16.0)"]
+viz = ["kgmodule-utils[viz] (>=0.29.0)", "plotly (>=5.14.0)", "streamlit (>=1.35.0)"]
+viz3d = ["PyQt5 (>=5.15.0)", "kgmodule-utils[viz3d-qt,viz3d-render] (>=0.29.0)", "markdown (>=3.6)", "param (>=2.0.0)", "pyvistaqt (>=0.11.0)", "quiltwright (>=0.16.0)"]
 
 [[package]]
 name = "h11"
@@ -1986,18 +1979,20 @@ referencing = ">=0.31.0"
 
 [[package]]
 name = "kgmodule-utils"
-version = "0.27.1"
+version = "0.29.0"
 description = "Shared types, graph store, semantic index, and pipeline base for the KGModule SDK"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "kgmodule_utils-0.27.1-py3-none-any.whl", hash = "sha256:176342750f52d539e0491e2fcf04afcc35460244bc4b5a7f1f4e562e6f5de3d7"},
-    {file = "kgmodule_utils-0.27.1.tar.gz", hash = "sha256:573119f13a2bcf4eba9e9a18911dbbb7e516d6913fa73603683eeb0fd71840de"},
+    {file = "kgmodule_utils-0.29.0-py3-none-any.whl", hash = "sha256:0f81eab4c16ddca303d251e0d0db1d75e7eba6dd7df749899f8d9735f021a955"},
+    {file = "kgmodule_utils-0.29.0.tar.gz", hash = "sha256:012f37819602c43eef57a5b33f2d2075147d70e2663912c41b71402c8768006a"},
 ]
 
 [package.dependencies]
+click = {version = ">=8.1.0", optional = true, markers = "extra == \"mcp\""}
 firecrawl-anydoc = {version = ">=0.1.9", optional = true, markers = "extra == \"ingest\""}
+mcp = {version = ">=1.23.0,<2", optional = true, markers = "extra == \"mcp\""}
 numpy = {version = ">=1.24.0", optional = true, markers = "extra == \"semantic\" or extra == \"viz3d\""}
 pymupdf = [
     {version = ">=2.0", optional = true, markers = "extra == \"pdf\""},
@@ -2011,7 +2006,7 @@ transformers = {version = ">=5.5.0,<6", optional = true, markers = "extra == \"s
 
 [package.extras]
 ingest = ["firecrawl-anydoc (>=0.1.9)", "pymupdf (>=2.0)"]
-lancedb = ["lancedb (>=0.19.0)"]
+mcp = ["click (>=8.1.0)", "mcp (>=1.23.0,<2)"]
 pdf = ["pymupdf (>=2.0)"]
 semantic = ["numpy (>=1.24.0)", "rich (>=13.0.0,<15.0.0)", "sentence-transformers (>=5.4.1)", "sqlite-vec (==0.1.9)", "torch (>=2.5.1)", "transformers (>=5.5.0,<6)"]
 sqlite-vec = ["sqlite-vec (==0.1.9)"]
@@ -2460,22 +2455,21 @@ files = [
 
 [[package]]
 name = "memory-kg"
-version = "0.12.0"
+version = "0.13.0"
 description = "A tool to build a semantically searchable knowledge graph from memories"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "memory_kg-0.12.0-py3-none-any.whl", hash = "sha256:d405a40ea71441d229b3034be5cf0ccf105e1d500798e793f0035cdbdd23ffa9"},
-    {file = "memory_kg-0.12.0.tar.gz", hash = "sha256:72e9e6b5f6d153e3a3dac9ac0827eefea939059daee024ddab9446500fdec4c6"},
+    {file = "memory_kg-0.13.0-py3-none-any.whl", hash = "sha256:40ab12b892f150eede52b28f9653abbdb42b2199f1b1483a1be0362de602434b"},
+    {file = "memory_kg-0.13.0.tar.gz", hash = "sha256:76b1dee29d31bc7b0ec4746697f1d96c6a2d048eef44604255850c5573d9d982"},
 ]
 markers = {main = "extra == \"kg\" or extra == \"all\""}
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = {version = ">=0.23.0", extras = ["sqlite-vec"]}
+kgmodule-utils = {version = ">=0.29.0", extras = ["mcp", "sqlite-vec"]}
 markdown-it-py = ">=3.0.0"
-mcp = ">=1.3.0,<2"
 numpy = ">=1.24.0"
 pandas = ">=2.0.0"
 pyyaml = ">=6.0.0"
@@ -2490,7 +2484,7 @@ viz = ["plotly (>=5.14.0)", "pyvis (>=0.3.2)", "streamlit (>=1.35.0)"]
 
 [[package]]
 name = "metabo-kg"
-version = "0.17.0"
+version = "0.18.0"
 description = "Metabolic pathway parser and semantic knowledge graph with MCP support"
 optional = false
 python-versions = ">=3.12,<3.14"
@@ -2500,8 +2494,7 @@ develop = false
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = {version = ">=0.24.0", extras = ["semantic", "sqlite-vec"]}
-mcp = ">=1.3.0,<2"
+kgmodule-utils = {version = ">=0.29.0", extras = ["mcp", "semantic", "sqlite-vec"]}
 numpy = ">=1.24.0"
 sentence-transformers = ">=5.4.1"
 
@@ -2514,8 +2507,8 @@ viz3d = ["PyQt5 (>=5.15.0)", "param (>=2.0.0)", "pyvista (>=0.44.0)", "pyvistaqt
 [package.source]
 type = "git"
 url = "https://github.com/Flux-Frontiers/Metabo_kg.git"
-reference = "v0.17.0"
-resolved_reference = "03cac0645b2f6b6ac3c6d38a6175271906677518"
+reference = "6cc5e8294737ef9035532edaba19f58486ecf539"
+resolved_reference = "6cc5e8294737ef9035532edaba19f58486ecf539"
 
 [[package]]
 name = "mpmath"
@@ -2946,19 +2939,6 @@ files = [
 
 [package.dependencies]
 nvidia-nvjitlink = "*"
-
-[[package]]
-name = "nvidia-cufile"
-version = "1.15.1.6"
-description = "cuFile GPUDirect libraries"
-optional = false
-python-versions = ">=3"
-groups = ["main", "dev"]
-markers = "<empty>"
-files = [
-    {file = "nvidia_cufile-1.15.1.6-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:08a3ecefae5a01c7f5117351c64f17c7c62efa5fffdbe24fc7d298da19cd0b44"},
-    {file = "nvidia_cufile-1.15.1.6-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:bdc0deedc61f548bddf7733bdc216456c2fdb101d020e1ab4b88d232d5e2f6d1"},
-]
 
 [[package]]
 name = "nvidia-curand"
@@ -3860,21 +3840,20 @@ markers = {main = "extra == \"connectome\" or extra == \"all\" or extra == \"viz
 
 [[package]]
 name = "pycode-kg"
-version = "0.28.2"
+version = "0.29.0"
 description = "A tool to build a searchable knowledge graph from Python repositories"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "pycode_kg-0.28.2-py3-none-any.whl", hash = "sha256:71ecaad118fc665144925ae9cb6310caa22c3266c782ac16bb29f360dcb90bb0"},
-    {file = "pycode_kg-0.28.2.tar.gz", hash = "sha256:ba940f673d7f5529138d107bb0479209cfba1ba51016bfa28d24d41348f321f6"},
+    {file = "pycode_kg-0.29.0-py3-none-any.whl", hash = "sha256:a4e95aa4739d4982080b9ec3145776f8e80ae9e2a565311def83ca4b34d4bdd0"},
+    {file = "pycode_kg-0.29.0.tar.gz", hash = "sha256:41b702ae877016edf986979ed5240e02748039e321d57050ba29e36053a33d10"},
 ]
 markers = {main = "extra == \"kg\" or extra == \"all\""}
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = {version = ">=0.27.0", extras = ["semantic", "viz3d"]}
-mcp = ">=1.3.0,<2"
+kgmodule-utils = {version = ">=0.29.0", extras = ["mcp", "semantic", "viz3d"]}
 networkx = ">=3.0"
 numpy = ">=1.24.0"
 pandas = ">=2.0.0"
@@ -5546,20 +5525,19 @@ sql = ["SQLAlchemy (>=2.0.0)"]
 
 [[package]]
 name = "swift-kg"
-version = "0.4.0"
+version = "0.5.0"
 description = "Knowledge graph for Swift codebases -- AST extraction, hybrid semantic+structural search"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["dev"]
 files = [
-    {file = "swift_kg-0.4.0-py3-none-any.whl", hash = "sha256:0e1a2113af7c941a9b3df14f6c359f64e1bf106c3da1c229b91359e3f7b1fa52"},
-    {file = "swift_kg-0.4.0.tar.gz", hash = "sha256:6b084d211d7be0fbf8941744398ceb86ede70c620e6eecf3e5a23f2059a3b0fc"},
+    {file = "swift_kg-0.5.0-py3-none-any.whl", hash = "sha256:a24e0b0f4054d83dd53b9ea99598d7cee0812fbcac44b86bbb81df6d5732ce45"},
+    {file = "swift_kg-0.5.0.tar.gz", hash = "sha256:6d5fecebce1b25721de93a60a014b27cfea92dbf53a3ef55ab53d99848fceb0d"},
 ]
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = {version = ">=0.26.0", extras = ["semantic", "sqlite-vec"]}
-mcp = ">=1.3.0,<2"
+kgmodule-utils = {version = ">=0.29.0", extras = ["mcp", "semantic", "sqlite-vec"]}
 networkx = ">=3.0"
 rich = ">=14.3.3,<15"
 tree-sitter = ">=0.25.0"
@@ -6236,20 +6214,19 @@ tutorials = ["matplotlib", "pandas", "tabulate"]
 
 [[package]]
 name = "tscode-kg"
-version = "0.7.0"
+version = "0.8.0"
 description = "Knowledge graph for TypeScript/JavaScript codebases — AST extraction, hybrid semantic+structural search"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["dev"]
 files = [
-    {file = "tscode_kg-0.7.0-py3-none-any.whl", hash = "sha256:461db65d064410dfb7f5da5add3a6c2694079bfb1d09e7463afdf43984dee957"},
-    {file = "tscode_kg-0.7.0.tar.gz", hash = "sha256:cafd4ffdfa4bbbbaf795b1555067017934e0087e1e93a4bc0f9544fda5d0ffe9"},
+    {file = "tscode_kg-0.8.0-py3-none-any.whl", hash = "sha256:ac5cd10028b819cad15851f148458cfee8309a4997ec5e66a323a067e660def8"},
+    {file = "tscode_kg-0.8.0.tar.gz", hash = "sha256:7dcbcea7fafb174aee849e986428178e0b69a7569264a24033f058639bf5e74c"},
 ]
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = {version = ">=0.23.0", extras = ["semantic", "sqlite-vec"]}
-mcp = ">=1.3.0,<2"
+kgmodule-utils = {version = ">=0.29.0", extras = ["mcp", "semantic", "sqlite-vec"]}
 networkx = ">=3.0"
 rich = ">=14.3.3,<15"
 tree-sitter = ">=0.25.0"
@@ -6386,21 +6363,20 @@ standard = ["httptools (>=0.8.0)", "python-dotenv (>=0.13)", "pyyaml (>=5.1)", "
 
 [[package]]
 name = "vault-kg"
-version = "0.5.0"
+version = "0.6.0"
 description = "Obsidian-style Markdown vaults as KGModule knowledge graphs: wikilinks, typed links, tags and headings, no LLM extraction"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "vault_kg-0.5.0-py3-none-any.whl", hash = "sha256:c4b7a062602a33f6c479cace357aeb944d3727b892a50257ed777577d9e7a5bf"},
-    {file = "vault_kg-0.5.0.tar.gz", hash = "sha256:c4fe2cd872e86711baa45f1fef878b530d4628a8acb708bc18f28859cf97ebff"},
+    {file = "vault_kg-0.6.0-py3-none-any.whl", hash = "sha256:63aa19c2b1150ae22425437885900a586a3f4eb2906a8ffdfd1cf1ebfccf660a"},
+    {file = "vault_kg-0.6.0.tar.gz", hash = "sha256:7d088901d7de1bf2d15843907b13b25f22ab24b4103fa20db6d6b31471b5919a"},
 ]
 markers = {main = "extra == \"vault\" or extra == \"all\""}
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = ">=0.27.0"
-mcp = ">=1.3.0,<2"
+kgmodule-utils = {version = ">=0.29.0", extras = ["mcp"]}
 pyyaml = ">=6.0"
 
 [package.extras]
@@ -6815,4 +6791,4 @@ viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "f8437a5c5382e7a1863841b0bfbb7296d606eb40be00f29f978899482f8ffb35"
+content-hash = "d5d5e4a094fd0cfb1586f8a30624d578d1b03711c879e527a7faa0b011fc478f"

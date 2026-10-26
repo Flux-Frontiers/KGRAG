@@ -280,40 +280,34 @@ class TestCLIRegister:
             entry = reg.get("custom-vec")
         assert entry.vectors_path == vectors.resolve()
 
-    def test_register_code_kind_ignores_stale_lancedb_dir(self, tmp_path):
-        """Code KGs are sqlite-vec only; a leftover lancedb/ must not be recorded."""
+    def test_register_never_records_a_lancedb_dir(self, tmp_path):
+        """LanceDB is gone: a leftover lancedb/ is ignored for every kind."""
+        for kind, marker in (("code", ".pycodekg"), ("doc", ".dockg")):
+            repo = tmp_path / f"{kind}-repo"
+            kg_dir = repo / marker
+            kg_dir.mkdir(parents=True)
+            (kg_dir / "lancedb").mkdir()
+            (kg_dir / "vectors.sqlite").touch()
+
+            result = _runner().invoke(
+                cli, ["register", f"{kind}kg", kind, str(repo)] + _reg_opt(tmp_path)
+            )
+            assert result.exit_code == 0, result.output
+            assert "LanceDB" not in result.output
+
+            with KGRegistry(db_path=tmp_path / "registry.sqlite") as reg:
+                entry = reg.get(f"{kind}kg")
+            assert entry.vectors_path == (kg_dir / "vectors.sqlite").resolve()
+
+    def test_register_has_no_lancedb_option(self, tmp_path):
         repo = tmp_path / "repo"
-        kg_dir = repo / ".pycodekg"
-        kg_dir.mkdir(parents=True)
-        (kg_dir / "lancedb").mkdir()
-        (kg_dir / "vectors.sqlite").touch()
-
+        repo.mkdir()
         result = _runner().invoke(
-            cli, ["register", "codekg", "code", str(repo)] + _reg_opt(tmp_path)
+            cli,
+            ["register", "x", "doc", str(repo), "--lancedb", str(repo)] + _reg_opt(tmp_path),
         )
-        assert result.exit_code == 0, result.output
-
-        with KGRegistry(db_path=tmp_path / "registry.sqlite") as reg:
-            entry = reg.get("codekg")
-        assert entry.lancedb_path is None
-        assert entry.vectors_path is not None
-
-    def test_register_doc_kind_still_detects_lancedb(self, tmp_path):
-        """Doc corpora still ship LanceDB, so detection must remain for them."""
-        repo = tmp_path / "docrepo"
-        kg_dir = repo / ".dockg"
-        kg_dir.mkdir(parents=True)
-        lancedb = kg_dir / "lancedb"
-        lancedb.mkdir()
-
-        result = _runner().invoke(
-            cli, ["register", "docskg", "doc", str(repo)] + _reg_opt(tmp_path)
-        )
-        assert result.exit_code == 0, result.output
-
-        with KGRegistry(db_path=tmp_path / "registry.sqlite") as reg:
-            entry = reg.get("docskg")
-        assert entry.lancedb_path == lancedb.resolve()
+        assert result.exit_code == 2
+        assert "No such option" in result.output
 
     def test_register_nonexistent_repo_fails(self, tmp_path):
         result = _runner().invoke(

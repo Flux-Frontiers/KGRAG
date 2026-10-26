@@ -18,6 +18,8 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from kg_utils.stats import flat_stats
+
 from kg_rag.adapters.base import KGAdapter
 from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry, KGKind, QueryScope
 
@@ -165,27 +167,6 @@ class StubKGAdapter(KGAdapter):
         except Exception:  # pylint: disable=broad-exception-caught
             return []
 
-    def stats(self) -> dict[str, Any]:
-        """Return availability and basic stats for this KG instance.
-
-        :return: Dict with kind, status, and optional node/edge counts.
-        """
-        base: dict[str, Any] = {
-            "kind": self._kind.value,
-            "status": "available" if self.is_available() else "unavailable",
-        }
-        if not self.is_available():
-            return base
-        try:
-            self._load()
-            raw = self._kg.stats() if callable(getattr(self._kg, "stats", None)) else {}
-            if isinstance(raw, dict):
-                base["node_count"] = raw.get("node_count") or raw.get("total_nodes", "n/a")
-                base["edge_count"] = raw.get("edge_count") or raw.get("total_edges", "n/a")
-        except Exception:  # pylint: disable=broad-exception-caught
-            pass
-        return base
-
     def analyze(self) -> str:
         """Return a Markdown analysis report for this KG instance.
 
@@ -212,9 +193,9 @@ class StubKGAdapter(KGAdapter):
             return (
                 header
                 + "\n## Summary\n\n"
-                + f"- **Status:** {s.get('status', 'unknown')}\n"
-                + f"- **Node count:** {s.get('node_count', 'n/a')}\n"
-                + f"- **Edge count:** {s.get('edge_count', 'n/a')}\n"
+                + f"- **Status:** {'available' if s['available'] else 'unavailable'}\n"
+                + f"- **Node count:** {s['nodes']['total']}\n"
+                + f"- **Edge count:** {s['edges']['total']}\n"
             )
         except Exception as exc:  # pylint: disable=broad-exception-caught
             return header + f"\nAnalysis failed: {exc}\n"
@@ -228,12 +209,12 @@ class StubKGAdapter(KGAdapter):
             return {"status": "unavailable"}
         try:
             self._load()
-            raw = self._kg.stats() if callable(getattr(self._kg, "stats", None)) else {}
-            if isinstance(raw, dict):
+            if callable(getattr(self._kg, "stats", None)):
+                s = flat_stats(self.fleet_stats())
                 return {
                     "status": "available",
-                    "total_nodes": raw.get("total_nodes", raw.get("node_count", 0)),
-                    "total_edges": raw.get("total_edges", raw.get("edge_count", 0)),
+                    "total_nodes": s["total_nodes"],
+                    "total_edges": s["total_edges"],
                 }
         except Exception:  # pylint: disable=broad-exception-caught
             pass

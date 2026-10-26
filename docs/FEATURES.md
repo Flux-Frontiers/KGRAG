@@ -116,17 +116,17 @@ Options: `--layer code|doc`, `--name`, `--wipe` (rebuild from scratch), `--corpu
 
 Exposes **30+ tools** to AI agents via Model Context Protocol (stdio transport):
 
-**Registry tools:** `kgrag_stats`, `kgrag_list`, `kgrag_info`
+**Registry tools:** `stats`, `list_kgs`, `kg_info`
 
-**Query tools:** `kgrag_query`, `kgrag_pack`
+**Query tools:** `query`, `pack`
 
-**Corpus tools:** `kgrag_corpus_list`, `kgrag_corpus_info`, `kgrag_corpus_create`,
-`kgrag_corpus_delete`, `kgrag_corpus_add`, `kgrag_corpus_remove`,
-`kgrag_corpus_query`, `kgrag_corpus_pack`
+**Corpus tools:** `corpus_list`, `corpus_info`, `corpus_create`,
+`corpus_delete`, `corpus_add`, `corpus_remove`,
+`corpus_query`, `corpus_pack`
 
-**Person tools:** `kgrag_person_list`, `kgrag_person_info`, `kgrag_person_create`,
-`kgrag_person_delete`, `kgrag_person_add`, `kgrag_person_remove`,
-`kgrag_person_update`, `kgrag_person_query`, `kgrag_person_pack`
+**Person tools:** `person_list`, `person_info`, `person_create`,
+`person_delete`, `person_add`, `person_remove`,
+`person_update`, `person_query`, `person_pack`
 
 Compatible with **Claude Code**, **Claude Desktop**, **Cursor**, **GitHub Copilot (Kilo Code / Cline)**.
 

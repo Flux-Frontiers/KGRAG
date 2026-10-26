@@ -26,6 +26,7 @@ any of them is cheap: no model load, no graph build.
 
 from __future__ import annotations
 
+import dataclasses
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -188,14 +189,18 @@ class TestCodeKGAdapterLoad:
         kg = self._loaded_kg(entry)
         assert Path(kg.vectors_path) == entry.repo_path / ".pycodekg" / "vectors.sqlite"
 
-    def test_lancedb_path_does_not_influence_vectors(self, tmp_path):
-        """A legacy lancedb_path must no longer be used to derive the store."""
+    def test_kgentry_has_no_lancedb_path(self, tmp_path):
+        """LanceDB support is gone: KGEntry no longer carries a lancedb_path."""
         entry = _entry(tmp_path, KGKind.CODE, with_sqlite=True)
-        entry.lancedb_path = tmp_path / "stale" / "lancedb"
-
-        kg = self._loaded_kg(entry)
-        assert "stale" not in str(kg.vectors_path)
-        assert Path(kg.vectors_path) == entry.repo_path / ".pycodekg" / "vectors.sqlite"
+        assert "lancedb_path" not in {f.name for f in dataclasses.fields(entry)}
+        with pytest.raises(TypeError):
+            KGEntry(  # ty: ignore[unknown-argument]
+                name="x",
+                kind=KGKind.CODE,
+                repo_path=tmp_path,
+                venv_path=tmp_path,
+                lancedb_path=tmp_path / "lancedb",
+            )
 
 
 class TestCodeKGAdapterQuery:
@@ -319,30 +324,34 @@ class TestCodeKGAdapterPack:
 class TestCodeKGAdapterStats:
     def test_stats_returns_dict(self, tmp_path):
         entry = _entry(tmp_path, KGKind.CODE, with_sqlite=True)
-        mock_store = MagicMock()
-        mock_store.stats.return_value = {"meaningful_nodes": 42, "total_edges": 99}
         mock_kg = MagicMock()
-        mock_kg.store = mock_store
+        mock_kg.stats.return_value = {
+            "kind": "code",
+            "nodes": {"total": 50, "by_kind": {"function": 42, "module": 8}},
+            "edges": {"total": 99, "by_rel": {"CALLS": 99}},
+            "meaningful_nodes": 42,
+        }
 
         adapter = CodeKGAdapter(entry)
         adapter._kg = mock_kg
 
         stats = adapter.stats()
-        assert stats["node_count"] == 42
-        assert stats["edge_count"] == 99
-        assert stats["kind"] == "code"
+        # Every row counts; a narrower measure stays an extra, never the total.
+        assert stats["nodes"]["total"] == 50 and stats["meaningful_nodes"] == 42
+        assert stats["edges"]["total"] == 99
+        assert stats["kind"] == "code" and stats["kg_name"] == "test-kg"
 
     def test_stats_graceful_on_error(self, tmp_path):
         entry = _entry(tmp_path, KGKind.CODE, with_sqlite=True)
         mock_kg = MagicMock()
-        mock_kg.store.stats.side_effect = RuntimeError("db error")
+        mock_kg.stats.side_effect = RuntimeError("db error")
 
         adapter = CodeKGAdapter(entry)
         adapter._kg = mock_kg
 
         stats = adapter.stats()
         assert stats["kind"] == "code"
-        assert "error" in stats
+        assert stats["error"] == "db error" and stats["nodes"]["total"] == 0
 
 
 # ---------------------------------------------------------------------------
@@ -378,7 +387,8 @@ class TestDocKGAdapterLoad:
         entry = _entry(tmp_path, KGKind.DOC, with_sqlite=True)
         assert entry.vectors_path is None
 
-        assert self._loaded_kg(DocKGAdapter(entry)).vectors_path is None
+        kg = self._loaded_kg(DocKGAdapter(entry))
+        assert Path(kg.vectors_path) == entry.repo_path / ".dockg" / "vectors.sqlite"
 
     def test_gutenberg_adapter_forwards_vectors_path(self, tmp_path):
         entry = _entry(tmp_path, KGKind.GUTENBERG, with_sqlite=True)
@@ -754,8 +764,9 @@ class TestMetaKGAdapterStats:
         with patch.dict("sys.modules", {"metabokg": mock_metakg}):
             s = adapter.stats()
 
-        assert s["node_count"] == 55
-        assert s["edge_count"] == 120
+        # A pre-shape backend with totals only: kept, the breakdown unreported.
+        assert s["nodes"] == {"total": 55, "by_kind": {"(unreported)": 55}}
+        assert s["edges"]["total"] == 120
 
 
 # ---------------------------------------------------------------------------
@@ -981,9 +992,8 @@ class TestMemoryKGAdapterStats:
 
         s = adapter.stats()
         assert s["kind"] == "memory"
-        assert s["node_count"] == 120
-        assert s["edge_count"] == 300
-        assert s["node_counts"]["chunk"] == 100
+        assert s["nodes"] == {"total": 120, "by_kind": {"chunk": 100, "section": 20}}
+        assert s["edges"]["total"] == 300
 
     def test_stats_graceful_on_error(self, tmp_path):
         entry = _entry(tmp_path, KGKind.MEMORY, with_sqlite=True)
@@ -1344,10 +1354,9 @@ class TestGenealogyKGAdapterStats:
 
         stats = adapter.stats()
         assert stats["kind"] == "genealogy"
-        assert stats["node_count"] == 42
-        assert stats["edge_count"] == 55
-        assert stats["person_count"] == 12
-        assert stats["family_count"] == 4
+        assert stats["nodes"]["total"] == 42
+        assert stats["nodes"]["by_kind"]["person"] == 12
+        assert stats["nodes"]["by_kind"]["family"] == 4
 
     def test_stats_graceful_on_error(self, tmp_path):
         entry = _entry(tmp_path, KGKind.GENEALOGY, with_sqlite=True)
@@ -1572,18 +1581,16 @@ class TestConnectomeKGAdapterStats:
         adapter = ConnectomeKGAdapter(_connectome_entry(tmp_path))
         adapter._kg = MagicMock()
         adapter._kg.stats.return_value = {
-            "total_nodes": 157698,
-            "total_edges": 5072285,
+            "total_nodes": 148106,
+            "total_edges": 3732460,
             "node_counts": {"neuron": 139255, "cell_type": 8772, "neuropil": 79},
             "edge_counts": {"SYNAPSES_TO": 3732460},
         }
         stats = adapter.stats()
         assert stats["kind"] == "connectome"
-        assert stats["node_count"] == 157698
-        assert stats["neuron_count"] == 139255
-        assert stats["cell_type_count"] == 8772
-        assert stats["neuropil_count"] == 79
-        assert stats["synapse_pair_count"] == 3732460
+        assert stats["nodes"]["total"] == 148106
+        assert stats["nodes"]["by_kind"] == {"neuron": 139255, "cell_type": 8772, "neuropil": 79}
+        assert stats["edges"]["by_rel"]["SYNAPSES_TO"] == 3732460
 
     def test_stats_graceful_on_error(self, tmp_path):
         adapter = ConnectomeKGAdapter(_connectome_entry(tmp_path))
@@ -1700,12 +1707,13 @@ class TestCodeModuleKGAdapter:
             "total_nodes": 4112,
             "meaningful_nodes": 3528,
             "total_edges": 12837,
-            "node_counts": {"class": 180},
+            "node_counts": {"class": 180, "function": 3932},
+            "edge_counts": {"CALLS": 12837},
         }
         stats = adapter.stats()
         assert stats["kind"] == kind.value
-        assert stats["node_count"] == 3528
-        assert stats["edge_count"] == 12837
+        assert stats["nodes"]["total"] == 4112 and stats["meaningful_nodes"] == 3528
+        assert stats["edges"]["total"] == 12837
 
     def test_analyze_graceful_on_error(self, tmp_path, cls, kind, module, class_name, store):
         adapter = cls(_entry(tmp_path, kind, with_sqlite=True))
@@ -1987,7 +1995,7 @@ class TestAgentKGAdapterStats:
 
         stats = adapter.stats()
         assert stats["kind"] == "agent"
-        assert stats["node_count"] == 10
+        assert stats["nodes"]["total"] == 10 and stats["edges"]["total"] == 20
         assert stats["turn_count"] == 5
 
     def test_stats_graceful_on_error(self, tmp_path):
@@ -1998,7 +2006,8 @@ class TestAgentKGAdapterStats:
         adapter._kg = mock_kg
 
         stats = adapter.stats()
-        assert stats == {"node_count": 0, "edge_count": 0, "kind": "agent"}
+        assert stats["kind"] == "agent" and stats["error"] == "boom"
+        assert stats["nodes"] == {"total": 0, "by_kind": {}}
 
 
 class TestAgentKGAdapterAnalyze:
@@ -2102,6 +2111,27 @@ class TestAgentKGAdapterSnapshotMetrics:
 
         metrics = adapter._collect_snapshot_metrics()
         assert metrics == {
+            "total_nodes": 10,
+            "total_edges": 20,
+            "turn_count": 5,
+            "session_id": "s1",
+        }
+
+    def test_collect_snapshot_metrics_reads_the_fleet_shape(self, tmp_path):
+        """agent-kg's stats() is in the fleet shape from its next release."""
+        entry = _entry(tmp_path, KGKind.AGENT)
+        mock_kg = MagicMock()
+        mock_kg.stats.return_value = {
+            "kind": "agent",
+            "nodes": {"total": 10, "by_kind": {"turn": 6, "topic": 4}},
+            "edges": {"total": 20, "by_rel": {"NEXT": 20}},
+            "turn_count": 5,
+            "session_id": "s1",
+        }
+        adapter = AgentKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        assert adapter._collect_snapshot_metrics() == {
             "total_nodes": 10,
             "total_edges": 20,
             "turn_count": 5,
@@ -2289,7 +2319,9 @@ class TestDiaryKGAdapterStatsInfoAnalyze:
         adapter = DiaryKGAdapter(entry)
         adapter._kg = mock_kg
 
-        assert adapter.stats() == {"node_count": 5, "edge_count": 9}
+        s = adapter.stats()
+        assert (s["nodes"]["total"], s["edges"]["total"]) == (5, 9)
+        assert s["kind"] == "diary" and s["kg_name"] == "test-kg"
 
     def test_info_delegates_to_kg(self, tmp_path):
         entry = _entry(tmp_path, KGKind.DIARY)
@@ -2322,10 +2354,24 @@ class TestDiaryKGAdapterSnapshotMetrics:
 
     def test_collect_snapshot_metrics_graceful_on_error(self, tmp_path):
         entry = _entry(tmp_path, KGKind.DIARY)
-        with patch.dict("sys.modules", {"diary_kg": None}):
+        with patch.dict("sys.modules", {"diary_kg": None, "diary_kg.kg": None}):
             adapter = DiaryKGAdapter(entry)
             metrics = adapter._collect_snapshot_metrics()
         assert metrics == {}
+
+    def test_collect_snapshot_metrics_empty_when_stats_reports_an_error(self, tmp_path):
+        entry = _entry(tmp_path, KGKind.DIARY)
+        mock_kg = MagicMock()
+        mock_kg.stats.return_value = {
+            "kind": "diary",
+            "nodes": {"total": 0, "by_kind": {}},
+            "edges": {"total": 0, "by_rel": {}},
+            "error": "no graph",
+        }
+        adapter = DiaryKGAdapter(entry)
+        adapter._kg = mock_kg
+
+        assert adapter._collect_snapshot_metrics() == {}
 
 
 # ---------------------------------------------------------------------------
@@ -2503,8 +2549,8 @@ class TestGutenbergKGAdapterStats:
         stats = adapter.stats()
         assert stats["kind"] == "gutenberg"
         assert stats["available"] is True
-        assert stats["node_count"] == 100
-        assert stats["document_count"] == 3
+        assert stats["nodes"]["total"] == 100
+        assert stats["document_count"] == 3  # a backend extra rides along
 
     def test_stats_graceful_on_error(self, tmp_path):
         entry = _entry(tmp_path, KGKind.GUTENBERG, with_sqlite=True)
@@ -2928,6 +2974,8 @@ class TestStubKGAdapterPack:
 
 
 class TestStubKGAdapterStats:
+    """Stub adapters report through the base class, in the fleet shape."""
+
     def test_stats_maps_node_and_edge_counts(self, tmp_path):
         mock_kg = MagicMock()
         mock_kg.stats.return_value = {"node_count": 12, "edge_count": 30}
@@ -2936,12 +2984,8 @@ class TestStubKGAdapterStats:
         with patch.dict("sys.modules", {"person_kg": MagicMock()}):
             stats = adapter.stats()
 
-        assert stats == {
-            "kind": "person",
-            "status": "available",
-            "node_count": 12,
-            "edge_count": 30,
-        }
+        assert stats["kind"] == "person" and stats["available"] is True
+        assert (stats["nodes"]["total"], stats["edges"]["total"]) == (12, 30)
 
     def test_stats_falls_back_to_total_nodes_and_edges(self, tmp_path):
         mock_kg = MagicMock()
@@ -2951,8 +2995,7 @@ class TestStubKGAdapterStats:
         with patch.dict("sys.modules", {"person_kg": MagicMock()}):
             stats = adapter.stats()
 
-        assert stats["node_count"] == 5
-        assert stats["edge_count"] == 9
+        assert (stats["nodes"]["total"], stats["edges"]["total"]) == (5, 9)
 
     def test_stats_graceful_on_backend_exception(self, tmp_path):
         mock_kg = MagicMock()
@@ -2962,7 +3005,8 @@ class TestStubKGAdapterStats:
         with patch.dict("sys.modules", {"person_kg": MagicMock()}):
             stats = adapter.stats()
 
-        assert stats == {"kind": "person", "status": "available"}
+        assert stats["kind"] == "person" and stats["error"] == "boom"
+        assert (stats["nodes"]["total"], stats["edges"]["total"]) == (0, 0)
 
 
 class TestStubKGAdapterAnalyze:
@@ -3056,7 +3100,7 @@ class TestVaultKGAdapterStats:
         }
         stats = adapter.stats()
         assert stats["kind"] == "vault"
-        assert stats["node_count"] == 1167
+        assert stats["nodes"]["total"] == 1168
         assert (stats["notes"], stats["headings"], stats["unresolved"]) == (250, 917, 1)
         assert "docstring_coverage" not in stats
 
@@ -3065,3 +3109,69 @@ class TestVaultKGAdapterStats:
         adapter._kg = MagicMock()
         adapter._kg.stats.side_effect = RuntimeError("locked")
         assert adapter.stats()["error"] == "locked"
+
+
+# ---------------------------------------------------------------------------
+# The fleet stats shape and the canonical graph surface, in the base adapter
+# ---------------------------------------------------------------------------
+
+
+class TestFleetStatsInTheBase:
+    """One reader for every backend: the shape passes through, older dicts are read once."""
+
+    def _adapter(self, tmp_path, raw):
+        adapter = MemoryKGAdapter(_entry(tmp_path, KGKind.MEMORY, with_sqlite=True))
+        adapter._kg = MagicMock()
+        adapter._kg.stats.return_value = raw
+        return adapter
+
+    def test_the_shape_passes_through_with_the_registry_kind(self, tmp_path):
+        from kg_utils.stats import kg_stats, stats_problems
+
+        fs = self._adapter(
+            tmp_path, kg_stats("doc", {"chunk": 3}, {"NEXT": 2}, extra=1)
+        ).fleet_stats()
+        assert fs["kind"] == "memory" and fs["nodes"]["total"] == 3 and fs["extra"] == 1
+        assert stats_problems(fs) == []
+
+    def test_a_partial_breakdown_files_the_rest_as_unreported(self, tmp_path):
+        fs = self._adapter(
+            tmp_path, {"total_nodes": 10, "node_counts": {"chunk": 7}, "edge_count": 4}
+        ).fleet_stats()
+        assert fs["nodes"]["by_kind"] == {"chunk": 7, "(unreported)": 3}
+        assert fs["edges"] == {"total": 4, "by_rel": {"(unreported)": 4}}
+
+    def test_a_narrower_measure_is_never_the_total(self, tmp_path):
+        fs = self._adapter(tmp_path, {"total_nodes": 9, "meaningful_nodes": 5}).fleet_stats()
+        assert fs["nodes"]["total"] == 9 and fs["meaningful_nodes"] == 5
+
+    def test_stat_totals_reads_only_the_shape(self, tmp_path):
+        from kg_rag.adapters.base import stat_totals
+
+        assert stat_totals(self._adapter(tmp_path, {"total_nodes": 2}).stats()) == (2, 0)
+        assert stat_totals({"node_count": 5}) == (None, None)
+
+    def test_an_unloaded_unavailable_kg_reports_without_loading(self, tmp_path):
+        adapter = MemoryKGAdapter(_entry(tmp_path, KGKind.MEMORY))
+        with patch.object(adapter, "_load", side_effect=AssertionError("loaded")):
+            s = adapter.stats()
+        assert s["available"] is False and s["nodes"]["total"] == 0
+
+
+class TestNodeAndNeighborsInTheBase:
+    def test_they_delegate_to_the_backend(self, tmp_path):
+        adapter = MemoryKGAdapter(_entry(tmp_path, KGKind.MEMORY, with_sqlite=True))
+        adapter._kg = MagicMock()
+        adapter._kg.node.return_value = {"id": "n"}
+        adapter._kg.neighbors.return_value = {"node": {"id": "n"}, "edges": [], "nodes": []}
+        assert adapter.node("n") == {"id": "n"}
+        adapter.neighbors("n", rels=["NEXT"], direction="out", limit=3)
+        adapter._kg.neighbors.assert_called_once_with("n", rels=["NEXT"], direction="out", limit=3)
+
+    def test_a_backend_without_them_says_so(self, tmp_path):
+        adapter = MemoryKGAdapter(_entry(tmp_path, KGKind.MEMORY, with_sqlite=True))
+        adapter._kg = object()
+        with pytest.raises(NotImplementedError, match="memory"):
+            adapter.node("n")
+        with pytest.raises(NotImplementedError, match="memory"):
+            adapter.neighbors("n")

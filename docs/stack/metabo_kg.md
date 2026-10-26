@@ -2,7 +2,7 @@
 **Domain:** Metabolic pathways
 **Package:** `metabo-kg` | `Flux-Frontiers/metabo_kg`
 **CLI binary:** `metabokg`
-**MCP server:** `metabokg mcp --db <path> --lancedb <path>`
+**MCP server:** `metabokg mcp --repo <path> [--db <path>]`
 **Index location:** `<repo>/.metabokg/`
 
 ## What It Does
@@ -31,17 +31,17 @@ stack via Flux Frontiers.
 
 ## Active Corpus
 - **DB:** `/Users/egs/repos/Metabo_kg/.metabokg/meta.sqlite`
-- **LanceDB:** `/Users/egs/repos/Metabo_kg/.metabokg/lancedb`
+- **Vectors:** `/Users/egs/repos/Metabo_kg/.metabokg/vectors.sqlite`
 - No snapshots recorded yet — run `metabokg snapshot save` for baseline
 
 ## MCP Launch
 ```json
 {
-  "command": "/Users/egs/repos/kgrag/.venv/bin/metabokg",
+  "command": "metabokg",
   "args": [
     "mcp",
-    "--db", "/Users/egs/repos/Metabo_kg/.metabokg/meta.sqlite",
-    "--lancedb", "/Users/egs/repos/Metabo_kg/.metabokg/lancedb"
+    "--repo", "/Users/egs/repos/Metabo_kg",
+    "--db", ".metabokg/meta.sqlite"
   ]
 }
 ```

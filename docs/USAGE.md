@@ -225,7 +225,7 @@ kgrag register my-diary  diary  ~/data/journal
 kgrag register case-law  legal  ~/data/legal
 ```
 
-Options: `--venv`, `--sqlite`, `--lancedb`, `--version`, `--tag`
+Options: `--venv`, `--sqlite`, `--vectors`, `--version`, `--tag`
 
 #### `kgrag scan`
 

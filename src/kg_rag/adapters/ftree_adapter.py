@@ -36,10 +36,8 @@ class FTreeKGAdapter(KGAdapter):
                 "ftree-kg is not installed. Install it with: pip install ftree-kg"
             ) from exc
         entry = self.entry
-        # ftree-kg 0.9.0 migrated to sqlite-vec: `lancedb_path` (a directory)
-        # became `vectors_path` (a file). Prefer the registry's vectors_path;
-        # fall back to None so FileTreeKG derives its own default, rather than
-        # handing it a stale lancedb/ directory that no longer exists.
+        # ftree-kg 0.9.0 migrated to sqlite-vec. Prefer the registry's
+        # vectors_path; fall back to None so FileTreeKG derives its own default.
         self._kg = FileTreeKG(
             repo_root=str(entry.repo_path),
             db_path=str(entry.sqlite_path) if entry.sqlite_path else None,
@@ -141,35 +139,6 @@ class FTreeKGAdapter(KGAdapter):
             )
             for s in snippets
         ]
-
-    def stats(self) -> dict[str, Any]:
-        """Return live statistics about this FileTreeKG instance.
-
-        :return: Dict with kind, node/edge counts, and metadata.
-        """
-        self._load()
-        db_size = 0.0
-        if self.entry.sqlite_path and self.entry.sqlite_path.exists():
-            db_size = round(self.entry.sqlite_path.stat().st_size / 1_048_576, 2)
-        try:
-            s = self._kg.stats()
-            return {
-                "kind": "filetree",
-                "kg_name": self.entry.name,
-                "builder_version": self.entry.builder_version,
-                "available": True,
-                "db_size_mb": db_size,
-                "node_count": s.get("total_nodes", s.get("node_count", 0)),
-                "edge_count": s.get("total_edges", s.get("edge_count", 0)),
-            }
-        except Exception as exc:  # pylint: disable=broad-exception-caught
-            return {
-                "kind": "filetree",
-                "kg_name": self.entry.name,
-                "available": True,
-                "db_size_mb": db_size,
-                "error": str(exc),
-            }
 
     def analyze(self) -> str:
         """Run analysis on this FileTreeKG instance.

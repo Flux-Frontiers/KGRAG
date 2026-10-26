@@ -158,7 +158,6 @@ def init(repo_path, wipe, name_prefix, layers, corpus_name, registry):
         kg_dir = repo / marker
         sqlite_path = kg_dir / "graph.sqlite"
         vectors_path = kg_dir / "vectors.sqlite"
-        lancedb_path = kg_dir / "lancedb"
 
         # Build
         console.rule(f"[bold]{kind} layer[/bold]")
@@ -186,7 +185,6 @@ def init(repo_path, wipe, name_prefix, layers, corpus_name, registry):
             venv_path=repo / ".venv",
             sqlite_path=sqlite_path if sqlite_path.exists() else None,
             vectors_path=vectors_path if vectors_path.exists() else None,
-            lancedb_path=(lancedb_path if kind != "code" and lancedb_path.exists() else None),
             version=version,
             tags=[date.today().isoformat()],
         )
@@ -213,14 +211,11 @@ def init(repo_path, wipe, name_prefix, layers, corpus_name, registry):
     }
 
     def _fmt_size(path: Path | None) -> str:
-        """Return human-readable file/dir size, or '-' if absent."""
+        """Return a human-readable file size, or '-' if absent."""
         if path is None or not path.exists():
             return "-"
         try:
-            if path.is_file():
-                size: float = path.stat().st_size
-            else:
-                size = float(sum(f.stat().st_size for f in path.rglob("*") if f.is_file()))
+            size: float = path.stat().st_size
             for unit in ("B", "KB", "MB", "GB"):
                 if size < 1024:
                     return f"[green]{size:.0f} {unit}[/green]"
@@ -236,7 +231,7 @@ def init(repo_path, wipe, name_prefix, layers, corpus_name, registry):
             r["name"],
             _STATUS_FMT.get(r["status"], r["status"]),
             _fmt_size(e.sqlite_path if e else None),
-            _fmt_size((e.vectors_path or e.lancedb_path) if e else None),
+            _fmt_size(e.vectors_path if e else None),
         )
 
     console.print(table)

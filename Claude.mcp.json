@@ -1,43 +1,32 @@
 {
   "mcpServers": {
     "kgrag": {
-      "command": "/home/user/KGRAG/.venv/bin/kgrag",
+      "command": "kgrag",
       "args": ["mcp"]
     },
     "pycodekg": {
-      "command": "/home/user/KGRAG/.venv/bin/pycodekg",
-      "args": ["mcp"]
+      "command": "pycodekg",
+      "args": ["mcp", "--repo", "."]
     },
     "dockg": {
-      "command": "/home/user/KGRAG/.venv/bin/dockg",
-      "args": ["mcp"]
+      "command": "dockg",
+      "args": ["mcp", "--repo", "."]
     },
-        "kgrag": {
-      "command": "/home/user/KGRAG/.venv/bin/kgrag",
-      "args": ["mcp"]
+    "memorykg": {
+      "command": "memorykg",
+      "args": ["mcp", "--repo", ".memorykg"]
     },
-    "agent-kg": {
-      "type": "stdio",
-      "command": "agent-kg-mcp",
+    "agentkg": {
+      "command": "agentkg",
+      "args": ["mcp"],
       "env": {
         "AGENTKG_REPO": ".",
         "AGENTKG_PERSON": "egs"
       }
     },
-    "memorykg": {
-      "command": "/home/user/KGRAG/.venv/bin/memorykg",
-      "args": [
-        "mcp",
-        "--repo", "/home/user/KGRAG/.memorykg"
-      ]
-    },
     "metabokg": {
-      "command": "/home/user/Metabo_kg/.venv/bin/metabokg",
-      "args": [
-        "mcp",
-        "--db", "/home/user/Metabo_kg/.metabokg/meta.sqlite",
-        "--lancedb", "/home/user/Metabo_kg/.metabokg/lancedb"
-      ]
+      "command": "metabokg",
+      "args": ["mcp", "--repo", "../Metabo_kg", "--db", ".metabokg/meta.sqlite"]
     }
   }
 }

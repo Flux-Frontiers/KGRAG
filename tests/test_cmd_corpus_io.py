@@ -46,8 +46,9 @@ def _make_built_kg(
     vectors_bytes: bytes = b"FAKE-SQLITE-VEC-CONTENT\n",
     lancedb_files: dict[str, bytes] | None = None,
 ) -> KGEntry:
-    """Create a repo layout with optional sqlite/vectors/lancedb artifacts and
-    return a corresponding KGEntry."""
+    """Create a repo layout with optional sqlite/vectors artifacts and return a
+    corresponding KGEntry. ``with_lancedb`` leaves a stale pre-0.18 ``lancedb/``
+    directory on disk; nothing registers or exports it."""
     repo = tmp_path / name
     repo.mkdir(parents=True, exist_ok=True)
     venv = repo / ".venv"
@@ -67,7 +68,6 @@ def _make_built_kg(
         vectors_path = kg_dir / "vectors.sqlite"
         vectors_path.write_bytes(vectors_bytes)
 
-    lancedb_path = None
     if with_lancedb:
         kg_dir = repo / ".pycodekg"
         kg_dir.mkdir(exist_ok=True)
@@ -83,7 +83,6 @@ def _make_built_kg(
         repo_path=repo,
         venv_path=venv,
         sqlite_path=sqlite_path,
-        lancedb_path=lancedb_path,
         vectors_path=vectors_path,
         version="1.2.3",
         builder_version="9.9.9",
@@ -105,7 +104,7 @@ def _register(tmp_path: Path, entry: KGEntry) -> None:
 
 class TestBuildManifest:
     def test_built_with_sqlite_only(self, tmp_path):
-        entry = _make_built_kg(tmp_path, "code-only", with_sqlite=True, with_lancedb=False)
+        entry = _make_built_kg(tmp_path, "code-only", with_sqlite=True)
         m = _build_manifest(entry)
 
         assert m["manifest_version"] == MANIFEST_VERSION
@@ -116,15 +115,15 @@ class TestBuildManifest:
         assert m["tags"] == ["alpha", "beta"]
         assert m["metadata"] == {"description": "fixture KG"}
         assert m["has_sqlite"] is True
-        assert m["has_lancedb"] is False
+        assert "has_lancedb" not in m
         # exported_at must round-trip as ISO 8601
         assert "T" in m["exported_at"]
 
     def test_built_with_both(self, tmp_path):
-        entry = _make_built_kg(tmp_path, "both", with_sqlite=True, with_lancedb=True)
+        entry = _make_built_kg(tmp_path, "both", with_sqlite=True, with_vectors=True)
         m = _build_manifest(entry)
         assert m["has_sqlite"] is True
-        assert m["has_lancedb"] is True
+        assert m["has_vectors"] is True
 
     def test_unbuilt_marks_both_false(self, tmp_path):
         # Construct an entry whose paths point nowhere.
@@ -137,11 +136,11 @@ class TestBuildManifest:
             repo_path=repo,
             venv_path=repo / ".venv",
             sqlite_path=repo / "does_not_exist.sqlite",
-            lancedb_path=repo / "missing_lancedb",
+            vectors_path=repo / "missing_vectors.sqlite",
         )
         m = _build_manifest(entry)
         assert m["has_sqlite"] is False
-        assert m["has_lancedb"] is False
+        assert m["has_vectors"] is False
 
     def test_manifest_is_json_serializable(self, tmp_path):
         entry = _make_built_kg(tmp_path)
@@ -175,16 +174,10 @@ class TestCLIExport:
         # No lancedb member when source didn't have one.
         assert not any(n.startswith("lancedb") for n in names)
 
-    def test_export_includes_lancedb(self, tmp_path):
+    def test_export_never_ships_a_stale_lancedb(self, tmp_path):
+        """LanceDB is no longer read, so a leftover lancedb/ is never exported."""
         entry = _make_built_kg(
-            tmp_path,
-            "exp-both",
-            with_sqlite=True,
-            with_lancedb=True,
-            lancedb_files={
-                "a.lance": b"a",
-                "b.lance": b"b",
-            },
+            tmp_path, "exp-both", with_sqlite=True, with_vectors=True, with_lancedb=True
         )
         _register(tmp_path, entry)
 
@@ -196,11 +189,8 @@ class TestCLIExport:
 
         with tarfile.open(out, "r:gz") as tar:
             names = set(tar.getnames())
-        assert "graph.sqlite" in names
-        # lancedb is added as a directory; its files appear as lancedb/<name>
-        assert any(n == "lancedb" or n.startswith("lancedb/") for n in names)
-        assert "lancedb/a.lance" in names
-        assert "lancedb/b.lance" in names
+        assert {"graph.sqlite", "vectors.sqlite"} <= names
+        assert not any(n == "lancedb" or n.startswith("lancedb/") for n in names)
 
     def test_export_includes_vectors(self, tmp_path):
         """A sqlite-vec store is a single file — it must be bundled, not skipped."""
@@ -248,7 +238,7 @@ class TestCLIExport:
         assert "vectors.sqlite" not in names
 
     def test_export_manifest_content(self, tmp_path):
-        entry = _make_built_kg(tmp_path, "manifest-kg", with_sqlite=True, with_lancedb=True)
+        entry = _make_built_kg(tmp_path, "manifest-kg", with_sqlite=True, with_vectors=True)
         _register(tmp_path, entry)
 
         out = tmp_path / "manifest-kg.kgrag.tar.gz"
@@ -268,7 +258,8 @@ class TestCLIExport:
         assert manifest["builder_version"] == "9.9.9"
         assert manifest["tags"] == ["alpha", "beta"]
         assert manifest["has_sqlite"] is True
-        assert manifest["has_lancedb"] is True
+        assert manifest["has_vectors"] is True
+        assert "has_lancedb" not in manifest
 
     def test_export_default_output_path(self, tmp_path, monkeypatch):
         entry = _make_built_kg(tmp_path, "default-out", with_sqlite=True)
@@ -348,7 +339,7 @@ def _export_to(tmp_path: Path, name: str, **kg_kwargs) -> Path:
 
 class TestCLIImport:
     def test_import_unpacks_and_registers(self, tmp_path):
-        archive = _export_to(tmp_path, "src-kg", with_sqlite=True, with_lancedb=True)
+        archive = _export_to(tmp_path, "src-kg", with_sqlite=True, with_vectors=True)
 
         # Fresh registry in a separate path so we exercise true registration.
         dest_root = tmp_path / "imported"
@@ -366,21 +357,21 @@ class TestCLIImport:
         )
         assert result.exit_code == 0, result.output
         assert (dest_root / "graph.sqlite").exists()
-        assert (dest_root / "lancedb").is_dir()
+        assert (dest_root / "vectors.sqlite").is_file()
 
         with KGRegistry(db_path=reg2) as reg:
             entry = reg.get("src-kg")
         assert entry is not None
         assert entry.kind == KGKind.CODE
         assert entry.sqlite_path == (dest_root / "graph.sqlite").resolve()
-        assert entry.lancedb_path == (dest_root / "lancedb").resolve()
+        assert entry.vectors_path == (dest_root / "vectors.sqlite").resolve()
         assert "imported" in entry.tags
         assert "imported_from" in entry.metadata
         assert "imported_at" in entry.metadata
 
     def test_import_restores_vectors_path(self, tmp_path):
         """Round trip: a code KG's sqlite-vec store survives export → import and
-        is re-registered under vectors_path (not lancedb_path)."""
+        is re-registered under vectors_path."""
         archive = _export_to(tmp_path, "vec-kg", with_sqlite=True, with_vectors=True)
 
         dest_root = tmp_path / "vec-imported"
@@ -399,7 +390,6 @@ class TestCLIImport:
             entry = reg.get("vec-kg")
         assert entry is not None
         assert entry.vectors_path == unpacked.resolve()
-        assert entry.lancedb_path is None
         assert entry.is_built is True
 
     def test_import_vectors_only_archive_is_built(self, tmp_path):
@@ -551,7 +541,6 @@ class TestCLIImport:
             "tags": [],
             "metadata": {},
             "has_sqlite": True,
-            "has_lancedb": False,
         }
         mf_path = tmp_path / "manifest.json"
         mf_path.write_text(json.dumps(manifest))
@@ -576,6 +565,46 @@ class TestCLIImport:
         assert "Warning" in result.output
         assert (dest_root / "graph.sqlite").exists()
 
+    def test_import_skips_a_legacy_lancedb_store(self, tmp_path):
+        """A pre-0.18 archive's lancedb/ is not unpacked, and the import says why."""
+        archive = tmp_path / "legacy.kgrag.tar.gz"
+        sqlite_src = tmp_path / "graph.sqlite"
+        sqlite_src.write_bytes(b"FAKE")
+        lance_src = tmp_path / "lancedb"
+        lance_src.mkdir()
+        (lance_src / "chunks.lance").write_bytes(b"LANCE")
+        manifest = {
+            "manifest_version": MANIFEST_VERSION,
+            "exported_at": "2026-01-01T00:00:00+00:00",
+            "name": "legacy-kg",
+            "kind": "doc",
+            "version": "x",
+            "builder_version": "y",
+            "tags": [],
+            "metadata": {},
+            "has_sqlite": True,
+            "has_lancedb": True,
+        }
+        mf_path = tmp_path / "manifest.json"
+        mf_path.write_text(json.dumps(manifest))
+        with tarfile.open(archive, "w:gz") as tar:
+            tar.add(mf_path, arcname=MANIFEST_NAME)
+            tar.add(sqlite_src, arcname="graph.sqlite")
+            tar.add(lance_src, arcname="lancedb")
+
+        dest_root = tmp_path / "legacy-out"
+        reg2 = tmp_path / "registry2.sqlite"
+        result = CliRunner().invoke(
+            cli, ["import", str(archive), "--dest", str(dest_root), "--registry", str(reg2)]
+        )
+        assert result.exit_code == 0, result.output
+        assert "LanceDB store was not imported" in result.output
+        assert (dest_root / "graph.sqlite").exists()
+        assert not (dest_root / "lancedb").exists()
+        with KGRegistry(db_path=reg2) as reg:
+            entry = reg.get("legacy-kg")
+        assert entry is not None and entry.vectors_path is None
+
 
 # ---------------------------------------------------------------------------
 # Round-trip
@@ -586,14 +615,14 @@ class TestRoundTrip:
     def test_export_then_import_preserves_data(self, tmp_path):
         # Source: build, register, export
         sqlite_payload = b"the original bits\n"
-        lance_payload = b"vectors here\n"
+        vectors_payload = b"vectors here\n"
         entry = _make_built_kg(
             tmp_path,
             "round",
             with_sqlite=True,
-            with_lancedb=True,
+            with_vectors=True,
             sqlite_bytes=sqlite_payload,
-            lancedb_files={"chunks.lance": lance_payload},
+            vectors_bytes=vectors_payload,
         )
         _register(tmp_path, entry)
 
@@ -618,7 +647,7 @@ class TestRoundTrip:
         assert r2.exit_code == 0, r2.output
 
         assert (dest_root / "graph.sqlite").read_bytes() == sqlite_payload
-        assert (dest_root / "lancedb" / "chunks.lance").read_bytes() == lance_payload
+        assert (dest_root / "vectors.sqlite").read_bytes() == vectors_payload
 
         with KGRegistry(db_path=reg_dest) as reg:
             imported = reg.get("round")

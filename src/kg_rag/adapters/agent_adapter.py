@@ -9,7 +9,7 @@ Storage layout (auto-created on first use)::
 
     <repo>/.agentkg/
         graph.sqlite       # conversation tree (Turn, Topic, Task, Summary nodes)
-        lancedb/           # semantic embeddings
+        vectors.sqlite     # semantic embeddings (sqlite-vec)
         snapshots/         # temporal snapshots
 
     ~/.kgrag/profiles/<person_id>/
@@ -24,6 +24,8 @@ License: Elastic 2.0
 from __future__ import annotations
 
 from typing import Any
+
+from kg_utils.stats import flat_stats
 
 from kg_rag.adapters.base import KGAdapter
 from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry, KGKind, QueryScope
@@ -169,24 +171,6 @@ class AgentKGAdapter(KGAdapter):
             )
         return snippets
 
-    def stats(self) -> dict[str, Any]:
-        """Return node + edge counts and session info.
-
-        :return: Dict with ``node_count``, ``edge_count``, ``kind``, ``session_id``.
-        """
-        self._load()
-        try:
-            s = self._kg.stats()
-            return {
-                "node_count": s.get("node_count", 0),
-                "edge_count": s.get("edge_count", 0),
-                "kind": "agent",
-                "session_id": s.get("session_id", ""),
-                "turn_count": s.get("turn_count", 0),
-            }
-        except Exception:  # pylint: disable=broad-exception-caught
-            return {"node_count": 0, "edge_count": 0, "kind": "agent"}
-
     def analyze(self) -> str:
         """Return a Markdown analysis report for this AgentKG instance.
 
@@ -262,10 +246,10 @@ class AgentKGAdapter(KGAdapter):
         """Return AgentKG-specific metrics for the snapshot."""
         try:
             self._load()
-            s = self._kg.stats()
+            s = flat_stats(self.fleet_stats())
             return {
-                "total_nodes": s.get("node_count", 0),
-                "total_edges": s.get("edge_count", 0),
+                "total_nodes": s.get("total_nodes", 0),
+                "total_edges": s.get("total_edges", 0),
                 "turn_count": s.get("turn_count", 0),
                 "session_id": s.get("session_id", ""),
             }

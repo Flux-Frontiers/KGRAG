@@ -133,17 +133,6 @@ class DiaryKGAdapter(KGAdapter):
             )
         return snippets
 
-    def stats(self) -> dict[str, Any]:
-        """Return KG storage statistics (node + edge counts).
-
-        Matches the cross-KG contract so KGRAG can aggregate total indexed
-        size across all registered KGs.
-
-        :return: Dict with node_count, edge_count, kind.
-        """
-        self._load()
-        return self._kg.stats()
-
     def info(self) -> dict[str, Any]:
         """Return diary-specific corpus information.
 
@@ -168,10 +157,9 @@ class DiaryKGAdapter(KGAdapter):
         """Return diary-specific metrics for the snapshot."""
         try:
             self._load()
-            s = self._kg.stats()
-            return {
-                "total_nodes": s.get("node_count", 0),
-                "total_edges": s.get("edge_count", 0),
-            }
+            s = self.fleet_stats()
+            if "error" in s:  # diary-kg reports a failure rather than raising
+                return {}
+            return {"total_nodes": s["nodes"]["total"], "total_edges": s["edges"]["total"]}
         except Exception:  # pylint: disable=broad-exception-caught
             return {}

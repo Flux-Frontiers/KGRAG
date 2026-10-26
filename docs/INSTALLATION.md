@@ -182,7 +182,7 @@ MCP exposes KGRAG tools to Claude Code and other MCP clients.
   "mcpServers": {
     "kgrag": {
       "command": "kgrag",
-      "args": ["mcp", "--registry", "/absolute/path/to/registry.sqlite"]
+      "args": ["mcp", "--db", "/absolute/path/to/registry.sqlite"]
     }
   }
 }
@@ -196,11 +196,11 @@ echo ${KGRAG_REGISTRY:-~/.kgrag/registry.sqlite}
 ### Restart Claude Code
 
 MCP tools should appear after restart:
-- `kgrag_query(q, k, kinds)`
-- `kgrag_pack(q, k, context, kinds)`
-- `kgrag_list()`
-- `kgrag_info(name)`
-- `kgrag_stats()`
+- `query(q, k, kinds)`
+- `pack(q, k, context, kinds)`
+- `list_kgs()`
+- `kg_info(name)`
+- `stats()`
 
 ---
 

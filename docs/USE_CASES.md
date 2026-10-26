@@ -323,7 +323,7 @@ dockg query "MCP server agent integration"
 [entity]   MCP
 [topic]    topic:registry_mcp      — registry, mcp
 [chunk]    docs/MCP.md             — Starting the Server
-[chunk]    docs/MCP.md             — kgrag_stats (tool documentation)
+[chunk]    docs/MCP.md             — stats (tool documentation)
 [chunk]    docs/INSTALLATION.md    — MCP configuration section
 [chunk]    docs/TROUBLESHOOTING.md — "MCP tools fail" with errors
 
@@ -392,7 +392,7 @@ kgrag query "MCP server tool registration"
 [code] src/kg_rag/mcp_server.py     — list_tools() — registers available tools
 [code] src/kg_rag/mcp_server.py     — call_tool() — dispatches tool calls
 [doc]  docs/MCP.md                  — Starting the Server
-[doc]  docs/MCP.md                  — kgrag_stats tool documentation
+[doc]  docs/MCP.md                  — stats tool documentation
 [doc]  docs/INSTALLATION.md         — MCP configuration section
 ```
 

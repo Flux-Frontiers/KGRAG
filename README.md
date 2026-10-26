@@ -1,6 +1,6 @@
 [![Python](https://img.shields.io/badge/python-3.12%20%7C%203.13-blue.svg)](https://www.python.org/)
 [![License: Elastic-2.0](https://img.shields.io/badge/License-Elastic%202.0-blue.svg)](https://www.elastic.co/licensing/elastic-license)
-[![Version](https://img.shields.io/badge/version-0.17.2-blue.svg)](https://github.com/Flux-Frontiers/KGRAG/releases)
+[![Version](https://img.shields.io/badge/version-0.18.0-blue.svg)](https://github.com/Flux-Frontiers/KGRAG/releases)
 [![CI](https://github.com/Flux-Frontiers/KGRAG/actions/workflows/ci.yml/badge.svg)](https://github.com/Flux-Frontiers/KGRAG/actions/workflows/ci.yml)
 [![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.20018524-blue.svg)](https://doi.org/10.5281/zenodo.20018524)
@@ -81,7 +81,7 @@ RAG embeds text chunks and retrieves by approximate similarity — no structure,
 - **Person corpus** — Model individuals with personal metadata and their associated KG collections
 - **Hybrid querying** — Semantic seeding via sqlite-vec (legacy LanceDB stores still readable) + structural BFS traversal
 - **Context packing** — Extract source-grounded snippets with line numbers for direct LLM ingestion
-- **MCP server** — 22 tools exposing registry, corpus, and person operations to any MCP-compatible agent
+- **MCP server** — the fleet's five canonical tools across every registered KG, plus registry, corpus and person tools (24 in all), for any MCP-compatible agent
 - **CLI tooling** — Full CRUD for KGs, corpora, and person corpora; query, pack, analyze, synthesize
 - **Streamlit dashboard** — Interactive browser for exploring and querying registered knowledge graphs
 - **Deterministic retrieval** — Auditable, source-grounded results; zero hallucination at the knowledge layer
@@ -137,7 +137,7 @@ kgrag viz
 
 ## MCP Integration
 
-KGRAG ships a built-in MCP server exposing **22 tools** to any MCP-compatible agent (Claude Code, Cursor, GitHub Copilot, Claude Desktop):
+KGRAG ships a built-in MCP server, on the fleet's shared base `kg_utils.mcp`, for any MCP-compatible agent (Claude Code, Cursor, GitHub Copilot, Claude Desktop):
 
 ```bash
 kgrag mcp
@@ -147,14 +147,14 @@ kgrag mcp
 {
   "mcpServers": {
     "kgrag": {
-      "command": "/path/to/venv/bin/kgrag",
+      "command": "kgrag",
       "args": ["mcp"]
     }
   }
 }
 ```
 
-Tools span three groups: **core KG** (`kgrag_stats`, `kgrag_list`, `kgrag_info`, `kgrag_query`, `kgrag_pack`), **corpus** (8 tools), and **person corpus** (9 tools).
+It answers the fleet's five canonical tools (`stats`, `query`, `pack`, `get_node`, `neighbors`) across every registered KG, with node ids of the form `<kg>::<node id>`, plus `list_kgs` and `kg_info`, 8 corpus tools and 9 person-corpus tools: 24 in all. `kgrag mcp --manifest` prints them.
 
 → [Full MCP reference](docs/MCP.md)
 
@@ -209,13 +209,13 @@ If you use KGRAG in your research or project, please cite it:
 
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.20018524-blue.svg)](https://doi.org/10.5281/zenodo.20018524)
 
-> Suchanek, E. G. (2026). *KGRAG: Knowledge Compiler and Federated Retrieval Layer* (Version 0.17.2) [Software]. Flux-Frontiers. https://doi.org/10.5281/zenodo.20018524
+> Suchanek, E. G. (2026). *KGRAG: Knowledge Compiler and Federated Retrieval Layer* (Version 0.18.0) [Software]. Flux-Frontiers. https://doi.org/10.5281/zenodo.20018524
 
 ```bibtex
 @software{suchanek_kgrag,
   author    = {Suchanek, Eric G.},
   title     = {{KGRAG}: Knowledge Compiler and Federated Retrieval Layer},
-  version   = {0.17.2},
+  version   = {0.18.0},
   year      = {2026},
   publisher = {Flux-Frontiers},
   url       = {https://github.com/Flux-Frontiers/KGRAG},

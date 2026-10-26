@@ -10,6 +10,7 @@ from abc import ABC, abstractmethod
 from datetime import UTC, datetime
 from typing import Any
 
+from kg_utils.stats import kg_stats, stats_problems
 from kg_utils.temporal import TEMPORAL_KEYS
 
 from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry, QueryScope
@@ -120,12 +121,37 @@ class KGAdapter(ABC):
             kwargs["node_kinds"] = scope.node_kinds
         return kwargs
 
-    @abstractmethod
     def stats(self) -> dict[str, Any]:
-        """Return basic statistics about this KG instance.
+        """Return this KG's statistics: the fleet shape plus the adapter's envelope.
 
-        :return: Dict with node_count, edge_count, or equivalent metrics.
+        ``{"kind", "nodes": {"total", "by_kind"}, "edges": {"total", "by_rel"}}``
+        and the backend's own measures, from :meth:`fleet_stats`, with
+        ``kg_name``, ``available``, ``builder_version`` and ``db_size_mb``
+        added. ``kind`` is the registry kind. On failure the counts are empty
+        and ``error`` says why. Adapters for backends without a ``stats()`` of
+        their own override this.
+
+        :return: The statistics dict.
         """
+        kind = self.entry.kind.value
+        if getattr(self, "_kg", None) is None and not self.is_available():
+            return {**kg_stats(kind, {}, {}), **self._envelope(), "available": False}
+        try:
+            out = self.fleet_stats()
+        except Exception as exc:  # pylint: disable=broad-exception-caught  # noqa: BLE001
+            out = kg_stats(kind, {}, {}, error=str(exc))
+        return {**out, **self._envelope(), "kind": kind}
+
+    def _envelope(self) -> dict[str, Any]:
+        """The registry-side facts every adapter's :meth:`stats` reports."""
+        path = self.entry.sqlite_path
+        size = round(path.stat().st_size / 1_048_576, 2) if path and path.exists() else 0.0
+        return {
+            "kg_name": self.entry.name,
+            "available": True,
+            "builder_version": self.entry.builder_version,
+            "db_size_mb": size,
+        }
 
     @abstractmethod
     def analyze(self) -> str:
@@ -324,35 +350,150 @@ class KGAdapter(ABC):
         )
 
     # ------------------------------------------------------------------
+    # The canonical graph surface: the backend's own stats, node, neighbors
+    # ------------------------------------------------------------------
+
+    def _backend(self) -> Any:
+        """Return the loaded backend KG, or ``None`` if this adapter has none.
+
+        Every module-backed adapter follows one convention: ``_load()`` builds
+        the backend and stores it as ``self._kg``.
+
+        :return: The backend object, or ``None``.
+        """
+        load = getattr(self, "_load", None)
+        if load is not None:
+            load()
+        return getattr(self, "_kg", None)
+
+    def fleet_stats(self) -> dict[str, Any]:
+        """Return the backend's statistics in the fleet shape (``kg_utils.stats``).
+
+        ``{"kind", "nodes": {"total", "by_kind"}, "edges": {"total", "by_rel"}}``
+        plus the backend's own keys. A backend already in the shape is passed
+        through; one released before the shape (settled 2026-10-25) is read
+        here, once, for every adapter, so no adapter translates on its own:
+
+        * ``node_counts`` / ``edge_counts`` become ``by_kind`` / ``by_rel``;
+        * the total is ``total_nodes``, ``node_count`` or an integer ``nodes``
+          (likewise for edges), and whatever part of it the breakdown does not
+          cover is filed under ``"(unreported)"``, so the two always agree.
+
+        A domain measure such as ``meaningful_nodes`` is never taken for the
+        total.
+
+        :return: The statistics in the fleet shape.
+        """
+        kind = self.entry.kind.value
+        backend = self._backend()
+        if backend is not None and hasattr(backend, "stats"):
+            raw = backend.stats()
+        elif type(self).stats is not KGAdapter.stats:
+            raw = self.stats()  # an adapter with its own stats() and no backend
+        else:
+            return kg_stats(kind, {}, {})
+        if not stats_problems(raw):
+            return {**raw, "kind": kind}
+        if not isinstance(raw, dict):
+            raise TypeError(f"{kind} backend stats() returned {type(raw).__name__}, not a dict")
+
+        def breakdown(counts_key: str, *total_keys: str) -> dict[str, int]:
+            counts = raw.get(counts_key)
+            by = (
+                {str(k): v for k, v in counts.items() if isinstance(v, int)}
+                if isinstance(counts, dict)
+                else {}
+            )
+            total = next(
+                (
+                    raw[k]
+                    for k in total_keys
+                    if isinstance(raw.get(k), int) and not isinstance(raw.get(k), bool)
+                ),
+                sum(by.values()),
+            )
+            if total > sum(by.values()):
+                by["(unreported)"] = total - sum(by.values())
+            return by
+
+        legacy = {
+            "kind", "nodes", "edges", "node_count", "edge_count",
+            "total_nodes", "total_edges", "node_counts", "edge_counts",
+        }  # fmt: skip
+        return kg_stats(
+            kind,
+            breakdown("node_counts", "total_nodes", "node_count", "nodes"),
+            breakdown("edge_counts", "total_edges", "edge_count", "edges"),
+            **{k: v for k, v in raw.items() if k not in legacy},
+        )
+
+    def node(self, node_id: str) -> dict[str, Any] | None:
+        """Fetch one node from the backend by its own (unqualified) ID.
+
+        :param node_id: The node's ID inside this KG.
+        :return: The node dict, or ``None`` if the KG has no such node.
+        :raises NotImplementedError: If the backend has no ``node()``.
+        """
+        backend = self._backend()
+        if backend is None or not hasattr(backend, "node"):
+            raise NotImplementedError(f"{self.entry.kind.value} KGs cannot fetch a node by id")
+        return backend.node(node_id)
+
+    def neighbors(
+        self,
+        node_id: str,
+        *,
+        rels: list[str] | None = None,
+        direction: str = "both",
+        limit: int = 50,
+    ) -> dict[str, Any] | None:
+        """Return a node's one-hop neighbourhood from the backend.
+
+        :param node_id: The node's ID inside this KG.
+        :param rels: Relation types to follow, or ``None`` for all.
+        :param direction: ``"out"``, ``"in"`` or ``"both"``.
+        :param limit: Maximum number of edges.
+        :return: ``{"node", "edges", "nodes"}``, or ``None`` for an unknown node.
+        :raises NotImplementedError: If the backend has no ``neighbors()``.
+        """
+        backend = self._backend()
+        if backend is None or not hasattr(backend, "neighbors"):
+            raise NotImplementedError(f"{self.entry.kind.value} KGs cannot walk neighbours yet")
+        return backend.neighbors(node_id, rels=rels, direction=direction, limit=limit)
+
+    # ------------------------------------------------------------------
     # Internal helpers — used by the orchestrator, not part of the public API
     # ------------------------------------------------------------------
 
     def _graph_stats(self) -> dict[str, int]:
-        """Return raw graph topology counts for this KG instance.
+        """Return this KG's total node and edge counts, from :meth:`fleet_stats`.
 
-        Unlike :meth:`stats`, this method strips all KG-kind-specific or
-        semantic fields and always returns a plain ``{node_count, edge_count}``
-        mapping with integer values.  Unavailable or non-integer counts are
-        normalised to ``0``.
-
-        This is an internal helper called by the orchestrator when it needs to
-        aggregate graph-size metrics uniformly across heterogeneous KG kinds
-        without being confused by domain-specific keys.
+        Every row counts: a backend's narrower measure (``meaningful_nodes``)
+        no longer stands in for the total, so totals compare across KGs.
+        Failures normalise to ``0``.
 
         :return: Dict with integer ``node_count`` and ``edge_count``.
         """
-        raw = self.stats()
+        try:
+            fs = self.fleet_stats()
+            return {"node_count": fs["nodes"]["total"], "edge_count": fs["edges"]["total"]}
+        except Exception:  # pylint: disable=broad-exception-caught  # noqa: BLE001
+            return {"node_count": 0, "edge_count": 0}
 
-        def _to_int(val: Any) -> int:
-            try:
-                return int(val)
-            except (TypeError, ValueError):
-                return 0
 
-        return {
-            "node_count": _to_int(raw.get("node_count")),
-            "edge_count": _to_int(raw.get("edge_count")),
-        }
+def stat_totals(stats: dict[str, Any]) -> tuple[int | None, int | None]:
+    """Return ``(nodes, edges)`` totals from a stats dict in the fleet shape.
+
+    :param stats: An adapter's :meth:`KGAdapter.stats`.
+    :return: The totals, or ``None`` for each one the dict does not report
+        (an unavailable KG, or a backend with no graph counts).
+    """
+    out: list[int | None] = []
+    for section in ("nodes", "edges"):
+        part = stats.get(section)
+        total = part.get("total") if isinstance(part, dict) else None
+        out.append(total if isinstance(total, int) else None)
+    return out[0], out[1]
 
 
 def node_metadata(node: dict[str, Any]) -> dict[str, Any]:

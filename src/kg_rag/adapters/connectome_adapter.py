@@ -19,6 +19,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from kg_utils.stats import flat_stats
+
 from kg_rag.adapters.base import KGAdapter, node_metadata
 from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry, KGKind, QueryScope
 
@@ -160,40 +162,6 @@ class ConnectomeKGAdapter(KGAdapter):
             for n in nodes
         ]
 
-    def stats(self) -> dict[str, Any]:
-        """Return live statistics about this ConnectomeKG instance.
-
-        :return: Dict with kind, node/edge counts, and connectome counts.
-        """
-        self._load()
-        db_size = 0.0
-        if self.entry.sqlite_path and self.entry.sqlite_path.exists():
-            db_size = round(self.entry.sqlite_path.stat().st_size / 1_048_576, 2)
-        try:
-            s = self._kg.stats()
-            nodes = s.get("node_counts", {})
-            return {
-                "kind": "connectome",
-                "kg_name": self.entry.name,
-                "builder_version": self.entry.builder_version,
-                "available": True,
-                "db_size_mb": db_size,
-                "node_count": s.get("total_nodes", 0),
-                "edge_count": s.get("total_edges", 0),
-                "neuron_count": nodes.get("neuron", 0),
-                "cell_type_count": nodes.get("cell_type", 0),
-                "neuropil_count": nodes.get("neuropil", 0),
-                "synapse_pair_count": s.get("edge_counts", {}).get("SYNAPSES_TO", 0),
-            }
-        except Exception as exc:  # pylint: disable=broad-exception-caught
-            return {
-                "kind": "connectome",
-                "kg_name": self.entry.name,
-                "available": True,
-                "db_size_mb": db_size,
-                "error": str(exc),
-            }
-
     def analyze(self) -> str:
         """Run analysis on this ConnectomeKG instance.
 
@@ -209,7 +177,7 @@ class ConnectomeKGAdapter(KGAdapter):
         """Return connectome-specific metrics for the snapshot."""
         try:
             self._load()
-            s = self._kg.stats()
+            s = flat_stats(self.fleet_stats())
             nodes = s.get("node_counts", {})
             return {
                 "total_nodes": s.get("total_nodes", 0),

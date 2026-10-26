@@ -16,6 +16,8 @@ from __future__ import annotations
 import importlib
 from typing import Any, ClassVar
 
+from kg_utils.stats import flat_stats
+
 from kg_rag.adapters.base import KGAdapter, node_metadata
 from kg_rag.primitives import CrossHit, CrossSnippet, KGEntry, KGKind, QueryScope
 
@@ -163,37 +165,6 @@ class CodeModuleKGAdapter(KGAdapter):
             for n in nodes
         ]
 
-    def stats(self) -> dict[str, Any]:
-        """Return live statistics about this code graph.
-
-        :return: Standard envelope plus node and edge counts by kind.
-        """
-        self._load()
-        db_size = 0.0
-        if self.entry.sqlite_path and self.entry.sqlite_path.exists():
-            db_size = round(self.entry.sqlite_path.stat().st_size / 1_048_576, 2)
-        try:
-            s = self._kg.stats()
-            return {
-                "kind": self.kg_kind.value,
-                "kg_name": self.entry.name,
-                "builder_version": self.entry.builder_version,
-                "available": True,
-                "db_size_mb": db_size,
-                "node_count": s.get("meaningful_nodes", s.get("total_nodes", 0)),
-                "edge_count": s.get("total_edges", 0),
-                "node_counts": s.get("node_counts", {}),
-                "docstring_coverage": s.get("docstring_coverage", 0.0),
-            }
-        except Exception as exc:  # pylint: disable=broad-exception-caught
-            return {
-                "kind": self.kg_kind.value,
-                "kg_name": self.entry.name,
-                "available": True,
-                "db_size_mb": db_size,
-                "error": str(exc),
-            }
-
     def analyze(self) -> str:
         """Run the module's own analysis.
 
@@ -209,7 +180,7 @@ class CodeModuleKGAdapter(KGAdapter):
         """Return node and edge counts for the snapshot."""
         try:
             self._load()
-            s = self._kg.stats()
+            s = flat_stats(self.fleet_stats())
             return {
                 "total_nodes": s.get("total_nodes", 0),
                 "total_edges": s.get("total_edges", 0),

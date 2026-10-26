@@ -344,10 +344,9 @@ class TestInitCorpus:
 
 
 class TestInitSummaryTable:
-    def test_doc_layer_lancedb_dir_size_summed(self, tmp_path):
-        """Non-code layers report a lancedb *directory* -- exercise the
-        directory-size-summing branch of the table's size formatter, not just
-        the single-file branch the other tests hit via graph.sqlite."""
+    def test_doc_layer_vectors_size_reported(self, tmp_path):
+        """The vector store column reports vectors.sqlite's size. A leftover
+        lancedb/ directory is not a store any more and is never sized."""
         repo = tmp_path / "doc-size-repo"
         repo.mkdir()
 
@@ -357,9 +356,10 @@ class TestInitSummaryTable:
             kg_dir = r / ".dockg"
             kg_dir.mkdir(parents=True, exist_ok=True)
             (kg_dir / "graph.sqlite").touch()
+            (kg_dir / "vectors.sqlite").write_bytes(b"x" * 100)
             lancedb = kg_dir / "lancedb"
             lancedb.mkdir()
-            (lancedb / "data.lance").write_bytes(b"x" * 100)
+            (lancedb / "data.lance").write_bytes(b"y" * 5000)
             return MagicMock(returncode=0)
 
         with (
@@ -373,6 +373,7 @@ class TestInitSummaryTable:
             )
         assert result.exit_code == 0, result.output
         assert "100 B" in result.output
+        assert "5 KB" not in result.output
 
     def test_mixed_results_all_shown_in_summary(self, tmp_path):
         """One layer builds fine (registered) and one has no tool on PATH

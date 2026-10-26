@@ -1,45 +1,44 @@
-"""tests/test_mcp_server.py
+"""
+test_mcp_server.py
 
-Regression tests for kg_rag.mcp_server against the installed ``mcp`` release.
+The KGRAG MCP server on the fleet's shared base, ``kg_utils.mcp``.
 
-KGRAG uses the **low-level** MCP API — ``Server`` plus the
-``@server.list_tools()`` / ``@server.call_tool()`` decorators. mcp 2.0 kept the
-``Server`` class importable but removed those decorators, so the break shows up
-as an ``AttributeError`` when :func:`_make_server` runs rather than at import
-time. A plain "does the module import" test would pass while ``kgrag-mcp``
-remained completely broken, so these tests build the server for real.
+What step 5 of kgrag_priv's MCP centralization plan promises: off the
+low-level ``Server``; the five canonical tools first, then the federation's
+own, with the ``kgrag_`` prefix gone; ``stats`` in the fleet stats shape;
+federated node ids that ``get_node`` and ``neighbors`` take straight from a
+``query`` hit; ``--transport streamable-http`` instead of a ``--host`` /
+``--port`` that did nothing; the manifest answering without a registry; and a
+real stdio subprocess serving.
 
-That distinction matters across the fleet: sibling packages using ``FastMCP``
-fail at *import* under mcp 2.0 (the ``mcp.server.fastmcp`` module was unbundled
-into the standalone ``fastmcp`` package), while KGRAG fails at *call* time.
-`pyproject.toml` pins ``mcp<2`` for this reason.
-
-The tool-handler tests below invoke the registered ``CallToolRequest`` handler
-directly (never a live stdio/socket transport), which round-trips arguments
-through the real ``inputSchema`` validation exactly as a live MCP client would.
-Registry-backed tools (kgrag_list/info, corpus_*, person_*) run against a real
-``KGRegistry``/``CorpusRegistry``/``PersonCorpusRegistry`` on a temp SQLite
-file — that's cheap and exercises the real read/write paths. The federated
-query/pack tools (kgrag_query, kgrag_corpus_query, kgrag_person_query, and
-their *_pack siblings) mock ``kg_rag.mcp_server.KGRAG`` itself, since a real
-federation run requires installed adapter libraries and a built vector index;
-the mock returns real ``CrossQueryResult``/``CrossSnippetPack`` dataclasses so
-the response-shaping code in mcp_server.py still runs for real.
+Registry tools run against a real temp registry. ``query``/``pack`` run
+against a real doc KG built with a keyword embedder (no download), and the
+corpus/person searches against a stubbed orchestrator.
 """
 
 from __future__ import annotations
 
-import asyncio
-import importlib
 import json
-from contextlib import asynccontextmanager
+import os
+import subprocess
+import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from typing import Any
+from unittest.mock import MagicMock
 
+import anyio
 import pytest
-from mcp.types import CallToolRequest, CallToolRequestParams
+from click.testing import CliRunner
+from kg_utils.mcp import CANONICAL_TOOLS, manifest
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+from mcp.shared.memory import create_connected_server_and_client_session
 
+import kg_rag
+from kg_rag.cli.main import cli
 from kg_rag.corpus_registry import CorpusRegistry
+from kg_rag.federation import SEP, join_id, split_id
+from kg_rag.mcp_server import build_server
 from kg_rag.person_registry import PersonCorpusRegistry
 from kg_rag.primitives import (
     CorpusEntry,
@@ -47,70 +46,33 @@ from kg_rag.primitives import (
     CrossQueryResult,
     CrossSnippet,
     CrossSnippetPack,
-    KGEntry,
     KGKind,
     PersonCorpusEntry,
 )
 from kg_rag.registry import KGRegistry
 
-
-def test_server_module_imports():
-    """The module must import cleanly against the installed mcp release."""
-    importlib.import_module("kg_rag.mcp_server")
-
-
-def test_lowlevel_decorator_api_exists():
-    """``Server`` must still expose the decorators mcp 2.0 removed.
-
-    Asserted directly so a future incompatibility names the missing API instead
-    of surfacing as an opaque AttributeError from inside _make_server().
-    """
-    from mcp.server import Server
-
-    server = Server("probe")
-    for attr in ("list_tools", "call_tool"):
-        assert hasattr(server, attr), (
-            f"mcp.server.Server has no {attr!r} — the low-level decorator API "
-            "was removed in mcp 2.0; kg_rag.mcp_server cannot register handlers"
-        )
-
-
-def test_make_server_registers_handlers(tmp_path: Path):
-    """Building the server must run both decorators and register handlers.
-
-    This is the test that actually catches mcp 2.0: the decorators execute here,
-    not at import.
-    """
-    mcp_server = importlib.import_module("kg_rag.mcp_server")
-    server = mcp_server._make_server(tmp_path / "registry.sqlite")
-    assert server.request_handlers, "no request handlers registered"
-
-
-def test_entry_point_target_exists():
-    """``kgrag-mcp`` resolves to kg_rag.mcp_server:main."""
-    mcp_server = importlib.import_module("kg_rag.mcp_server")
-    assert callable(mcp_server.main)
-
-
-def test_tools_are_registered(tmp_path: Path):
-    """The advertised tool list survives registration and is non-empty."""
-    import asyncio
-
-    from mcp.types import ListToolsRequest
-
-    mcp_server = importlib.import_module("kg_rag.mcp_server")
-    server = mcp_server._make_server(tmp_path / "registry.sqlite")
-
-    handler = server.request_handlers[ListToolsRequest]
-    result = asyncio.run(handler(ListToolsRequest(method="tools/list")))
-    names = {t.name for t in result.root.tools}
-    assert names, "no tools registered"
-    assert "kgrag_stats" in names
-
-
-# ---------------------------------------------------------------------------
-# call_tool() handler tests
-# ---------------------------------------------------------------------------
+_SRC = str(Path(kg_rag.__file__).resolve().parents[1])
+_EXTRAS = [
+    "list_kgs",
+    "kg_info",
+    "corpus_list",
+    "corpus_info",
+    "corpus_create",
+    "corpus_delete",
+    "corpus_add",
+    "corpus_remove",
+    "corpus_query",
+    "corpus_pack",
+    "person_list",
+    "person_info",
+    "person_create",
+    "person_delete",
+    "person_add",
+    "person_remove",
+    "person_update",
+    "person_query",
+    "person_pack",
+]
 
 
 @pytest.fixture
@@ -118,116 +80,266 @@ def registry_path(tmp_path: Path) -> Path:
     return tmp_path / "registry.sqlite"
 
 
-@pytest.fixture
-def server(registry_path: Path):
-    mcp_server = importlib.import_module("kg_rag.mcp_server")
-    return mcp_server._make_server(registry_path)
+def _session(server, fn):
+    async def main():
+        async with create_connected_server_and_client_session(server) as client:
+            return await fn(client)
+
+    return anyio.run(main)
 
 
-def call_tool(server, name: str, arguments: dict | None = None):
-    """Invoke the registered CallToolRequest handler directly.
-
-    Round-trips through the same jsonschema ``inputSchema`` validation a live
-    MCP client would hit, then returns the raw ``CallToolResult``.
-    """
-    handler = server.request_handlers[CallToolRequest]
-    req = CallToolRequest(params=CallToolRequestParams(name=name, arguments=arguments or {}))
-    return asyncio.run(handler(req)).root
+def call(registry_path: Path, tool: str, args: dict | None = None) -> Any:
+    return _session(build_server(registry_path), lambda c: c.call_tool(tool, args or {}))
 
 
-def call_tool_json(server, name: str, arguments: dict | None = None):
-    """Like :func:`call_tool` but parses the single TextContent as JSON."""
-    result = call_tool(server, name, arguments)
-    assert not result.isError, result.content[0].text
-    return json.loads(result.content[0].text)
+def data(registry_path: Path, tool: str, args: dict | None = None) -> Any:
+    """The structured result of a call that must succeed."""
+    out = call(registry_path, tool, args)
+    assert not out.isError, out.content[0].text
+    sc = out.structuredContent
+    return sc["result"] if set(sc) == {"result"} else sc
 
 
-def register_kg(registry_path: Path, entry: KGEntry) -> KGEntry:
-    """Register a KGEntry directly against the server's registry file."""
+def error(registry_path: Path, tool: str, args: dict | None = None) -> str:
+    out = call(registry_path, tool, args)
+    assert out.isError, out.content
+    return out.content[0].text
+
+
+def register(registry_path: Path, entry):
     with KGRegistry(db_path=registry_path) as reg:
         return reg.register(entry)
 
 
-def create_corpus(registry_path: Path, entry: CorpusEntry) -> CorpusEntry:
+# ---------------------------------------------------------------------------
+# A real doc KG: graph built from a corpus with a deterministic keyword embedder
+# ---------------------------------------------------------------------------
+
+
+class _KeywordEmbedder:
+    _words = ("whale", "rocket", "song", "fuel")
+    dim = len(_words) + 1
+    model_name = "keyword-test"
+
+    def embed_texts(self, texts, encode_batch_size: int = 128):
+        return [[float(w in t.lower()) for w in self._words] + [0.01] for t in texts]
+
+    def embed_query(self, query: str):
+        return self.embed_texts([query])[0]
+
+
+@pytest.fixture
+def doc_kg(tmp_path: Path, registry_path: Path, monkeypatch):
+    """A built doc KG registered as ``notes``."""
+    from doc_kg import DocKG
+
+    from kg_rag.primitives import KGEntry
+
+    monkeypatch.setattr("doc_kg.kg.make_embedder", lambda *_a, **_k: _KeywordEmbedder())
+    repo = tmp_path / "notes"
+    repo.mkdir()
+    # Long enough to chunk: tiny files become a lone document node with no edges.
+    whales = " ".join(["Humpback whales sing long songs across the cold sea."] * 12)
+    rockets = " ".join(["Rockets burn fuel to climb past the clouds."] * 12)
+    (repo / "whales.md").write_text(f"# Whales\n\n{whales}\n\n## Songs\n\n{whales}\n")
+    (repo / "rockets.md").write_text(f"# Rockets\n\n{rockets}\n\n## Fuel\n\n{rockets}\n")
+    kg = DocKG(
+        repo,
+        chunk_strategy="fixed",
+        enable_topics=False,
+        enable_entities=False,
+        enable_keywords=False,
+    )
+    kg.build(wipe=True, discover_similar=False)
+    kg.close()
+    return register(
+        registry_path,
+        KGEntry(
+            name="notes",
+            kind=KGKind.DOC,
+            repo_path=repo,
+            venv_path=repo,
+            sqlite_path=repo / ".dockg" / "graph.sqlite",
+            vectors_path=repo / ".dockg" / "vectors.sqlite",
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# The tool surface
+# ---------------------------------------------------------------------------
+
+
+def test_canonical_tools_then_the_federation_tools(registry_path):
+    names = [t["name"] for t in manifest(build_server(registry_path))["tools"]]
+    assert names == [*CANONICAL_TOOLS, *_EXTRAS]
+    assert not any(n.startswith("kgrag") for n in names)
+
+
+def test_no_low_level_server():
+    source = Path(_SRC, "kg_rag", "mcp_server.py").read_text(encoding="utf-8")
+    assert "from mcp.server import Server" not in source and "call_tool()" not in source
+
+
+def test_federated_ids_round_trip():
+    assert split_id(join_id("notes", "chunk:a.md:0000")) == ("notes", "chunk:a.md:0000")
+    for bad in ("chunk:a.md:0000", f"{SEP}x", f"kg{SEP}"):
+        with pytest.raises(ValueError, match="node_id must be"):
+            split_id(bad)
+
+
+# ---------------------------------------------------------------------------
+# stats: the fleet shape, across the federation
+# ---------------------------------------------------------------------------
+
+
+def test_stats_on_an_empty_registry(registry_path):
+    s = data(registry_path, "stats")
+    assert s["kind"] == "kgrag"
+    assert s["nodes"] == {"total": 0, "by_kind": {}} and s["edges"] == {"total": 0, "by_rel": {}}
+    assert s["registry"] == {
+        "total": 0,
+        "by_kind": {},
+        "built": 0,
+        "registry_path": str(registry_path),
+    }
+
+
+def test_stats_sums_each_kg_and_reports_the_unavailable(registry_path, doc_kg, sample_entry):
+    register(registry_path, sample_entry)  # a code KG with nothing built
+    s = data(registry_path, "stats")
+    assert s["kgs"]["notes"]["available"] is True
+    assert s["nodes"]["total"] == s["kgs"]["notes"]["nodes"] > 0
+    assert s["nodes"]["by_kind"]["document"] == 2
+    assert s["kgs"]["my-code"] == {"kind": "code", "available": False}
+    assert s["registry"]["by_kind"] == {"code": 1, "doc": 1}
+
+
+# ---------------------------------------------------------------------------
+# query / pack / get_node / neighbors against a real doc KG
+# ---------------------------------------------------------------------------
+
+
+def test_query_hits_carry_federated_ids_that_get_node_and_neighbors_take(registry_path, doc_kg):
+    found = data(registry_path, "query", {"q": "whale songs", "k": 3})
+    top = found["hits"][0]
+    assert (
+        top["kg"] == "notes" and top["id"] == join_id("notes", top["node_id"]) and top["hop"] == 0
+    )
+    node = data(registry_path, "get_node", {"node_id": top["id"]})
+    assert node["id"] == top["id"] and node["kg"] == "notes"
+    near = data(registry_path, "neighbors", {"node_id": top["id"]})
+    assert near["edges"] and all(top["id"] in (e["src"], e["dst"]) for e in near["edges"])
+    assert all(n["id"].startswith(f"notes{SEP}") for n in near["nodes"])
+
+
+def test_query_hop_brings_each_hits_neighbourhood(registry_path, doc_kg):
+    seeds = data(registry_path, "query", {"q": "whale", "k": 1})["hits"]
+    grown = data(registry_path, "query", {"q": "whale", "k": 1, "hop": 1})["hits"]
+    assert grown[: len(seeds)] == seeds
+    assert grown[len(seeds) :] and all(h["hop"] == 1 for h in grown[len(seeds) :])
+    assert (
+        len(data(registry_path, "query", {"q": "whale", "k": 1, "hop": 2, "max_nodes": 2})["hits"])
+        == 2
+    )
+
+
+def test_pack_renders_and_hop_lists_the_neighbourhood(registry_path, doc_kg):
+    plain = call(registry_path, "pack", {"q": "whale songs", "k": 2})
+    assert not plain.isError and "Cross-KG Pack" in plain.content[0].text
+    grown = call(registry_path, "pack", {"q": "whale songs", "k": 2, "hop": 1})
+    assert "## Graph neighbourhood" in grown.content[0].text
+
+
+def test_graph_tools_reject_unfederated_or_unknown_ids(registry_path, doc_kg):
+    assert "node_id must be" in error(registry_path, "get_node", {"node_id": "chunk:x"})
+    assert "no node with id" in error(registry_path, "get_node", {"node_id": "nokg::chunk:x"})
+    assert "no node with id" in error(registry_path, "get_node", {"node_id": "notes::chunk:nope"})
+
+
+def test_bad_kind_and_hop_are_tool_errors(registry_path):
+    assert "Unknown KG kind" in error(registry_path, "query", {"q": "x", "kinds": ["bogus"]})
+    assert "hop" in error(registry_path, "query", {"q": "x", "hop": 9})
+
+
+# ---------------------------------------------------------------------------
+# The registry tools
+# ---------------------------------------------------------------------------
+
+
+def test_list_kgs_and_kg_info(registry_path, sample_entry):
+    assert data(registry_path, "list_kgs") == []
+    register(registry_path, sample_entry)
+    [row] = data(registry_path, "list_kgs")
+    assert row["name"] == "my-code" and row["kind"] == "code" and "lancedb_path" not in row
+    assert data(registry_path, "list_kgs", {"kind": "doc"}) == []
+    info = data(registry_path, "kg_info", {"name": "my-code"})
+    assert info["name"] == "my-code" and "created_at" in info
+    assert "no KG named 'nope'" in error(registry_path, "kg_info", {"name": "nope"})
+
+
+def test_corpus_lifecycle(registry_path, sample_entry):
+    kg = register(registry_path, sample_entry)
+    assert data(registry_path, "corpus_list")["total"] == 0
+    assert data(registry_path, "corpus_create", {"name": "c1", "kg_names": ["my-code"]}) == {
+        "created": "c1",
+        "size": 1,
+    }
+    assert "KGs not found" in error(
+        registry_path, "corpus_create", {"name": "c2", "kg_names": ["ghost"]}
+    )
+    info = data(registry_path, "corpus_info", {"name": "c1"})
+    assert info["kgs"] == [{"id": kg.id, "name": "my-code", "kind": "code", "built": False}]
+    assert data(registry_path, "corpus_remove", {"corpus": "c1", "kg": "my-code"})["size"] == 0
+    assert data(registry_path, "corpus_add", {"corpus": "c1", "kg": "my-code"})["size"] == 1
+    assert "no KG named" in error(registry_path, "corpus_add", {"corpus": "c1", "kg": "ghost"})
+    assert "no corpus named" in error(
+        registry_path, "corpus_add", {"corpus": "zz", "kg": "my-code"}
+    )
+    assert data(registry_path, "corpus_delete", {"name": "c1"}) == {"deleted": "c1"}
+    assert "no corpus named" in error(registry_path, "corpus_delete", {"name": "c1"})
+    assert "no corpus named" in error(registry_path, "corpus_info", {"name": "c1"})
+
+
+def test_corpus_info_names_a_missing_member(registry_path):
     with CorpusRegistry(db_path=registry_path) as reg:
-        return reg.create(entry)
+        reg.create(CorpusEntry(name="c1", kg_ids=["gone"]))
+    assert data(registry_path, "corpus_info", {"name": "c1"})["kgs"] == [
+        {"id": "gone", "name": None, "kind": None, "built": False}
+    ]
 
 
-def create_person(registry_path: Path, entry: PersonCorpusEntry) -> PersonCorpusEntry:
-    with PersonCorpusRegistry(db_path=registry_path) as reg:
-        return reg.create(entry)
+def test_person_lifecycle(registry_path, sample_entry):
+    register(registry_path, sample_entry)
+    assert data(registry_path, "person_list")["total"] == 0
+    assert data(
+        registry_path, "person_create", {"name": "Ada", "kg_names": ["my-code"], "birth_year": 1815}
+    ) == {"created": "Ada", "size": 1}
+    assert "KGs not found" in error(
+        registry_path, "person_create", {"name": "B", "kg_names": ["x"]}
+    )
+    assert data(registry_path, "person_info", {"name": "Ada"})["birth_year"] == 1815
+    assert data(registry_path, "person_update", {"name": "Ada", "email": "a@b.c"}) == {
+        "updated": "Ada",
+        "fields": ["email"],
+    }
+    assert data(registry_path, "person_list")["persons"][0]["email"] == "a@b.c"
+    assert data(registry_path, "person_remove", {"person": "Ada", "kg": "my-code"})["size"] == 0
+    assert data(registry_path, "person_add", {"person": "Ada", "kg": "my-code"})["size"] == 1
+    assert "no person named" in error(registry_path, "person_add", {"person": "Z", "kg": "my-code"})
+    assert "no person named" in error(registry_path, "person_update", {"name": "Z"})
+    assert data(registry_path, "person_delete", {"name": "Ada"}) == {"deleted": "Ada"}
+    assert "no person named" in error(registry_path, "person_info", {"name": "Ada"})
 
 
-# ------ kgrag_stats ------
+# ---------------------------------------------------------------------------
+# Corpus / person searches, against a stubbed orchestrator
+# ---------------------------------------------------------------------------
 
 
-def test_kgrag_stats_empty_registry(server, registry_path):
-    data = call_tool_json(server, "kgrag_stats")
-    assert data["total"] == 0
-    assert data["by_kind"] == {}
-    assert data["built"] == 0
-    assert data["registry_path"] == str(registry_path)
-
-
-def test_kgrag_stats_with_entries(server, registry_path, sample_entry):
-    register_kg(registry_path, sample_entry)
-    data = call_tool_json(server, "kgrag_stats")
-    assert data["total"] == 1
-    assert data["by_kind"] == {"code": 1}
-
-
-# ------ kgrag_list ------
-
-
-def test_kgrag_list_empty(server):
-    data = call_tool_json(server, "kgrag_list")
-    assert data == []
-
-
-def test_kgrag_list_no_filter_returns_entry(server, registry_path, sample_entry):
-    register_kg(registry_path, sample_entry)
-    data = call_tool_json(server, "kgrag_list")
-    assert len(data) == 1
-    assert data[0]["name"] == "my-code"
-    assert data[0]["kind"] == "code"
-    assert data[0]["built"] is False
-
-
-def test_kgrag_list_kind_filter_matches(server, registry_path, sample_entry):
-    register_kg(registry_path, sample_entry)
-    data = call_tool_json(server, "kgrag_list", {"kind": "code"})
-    assert len(data) == 1
-
-
-def test_kgrag_list_kind_filter_excludes(server, registry_path, sample_entry):
-    register_kg(registry_path, sample_entry)
-    data = call_tool_json(server, "kgrag_list", {"kind": "doc"})
-    assert data == []
-
-
-# ------ kgrag_info ------
-
-
-def test_kgrag_info_not_found(server):
-    data = call_tool_json(server, "kgrag_info", {"name": "nope"})
-    assert data["error"] == "Not found: nope"
-
-
-def test_kgrag_info_found(server, registry_path, sample_entry):
-    entry = register_kg(registry_path, sample_entry)
-    data = call_tool_json(server, "kgrag_info", {"name": "my-code"})
-    assert data["id"] == entry.id
-    assert data["name"] == "my-code"
-    assert data["kind"] == "code"
-    assert data["sqlite_path"] is None
-
-
-# ------ kgrag_query / kgrag_pack (mocked KGRAG) ------
-
-
-def _fake_hit(kg_name="my-code") -> CrossHit:
+def _hit() -> CrossHit:
     return CrossHit(
-        kg_name=kg_name,
+        kg_name="my-code",
         kg_kind=KGKind.CODE,
         node_id="n1",
         name="do_thing",
@@ -238,55 +350,7 @@ def _fake_hit(kg_name="my-code") -> CrossHit:
     )
 
 
-def test_kgrag_query_empty_registry(server):
-    """No KGs registered: federation runs but finds nothing to query."""
-    data = call_tool_json(server, "kgrag_query", {"q": "hello"})
-    assert data["query"] == "hello"
-    assert data["total_hits"] == 0
-    assert data["kgs_queried"] == 0
-    assert data["hits"] == []
-
-
-def test_kgrag_query_with_hits(server):
-    hit = _fake_hit()
-    fake_result = CrossQueryResult(
-        query="hello", hits=[hit], by_kg={"my-code": [hit]}, total_hits=1, kgs_queried=1
-    )
-    fake_kgrag = MagicMock()
-    fake_kgrag.__enter__.return_value = fake_kgrag
-    fake_kgrag.__exit__.return_value = False
-    fake_kgrag.query.return_value = fake_result
-    with patch("kg_rag.mcp_server.KGRAG", return_value=fake_kgrag):
-        data = call_tool_json(server, "kgrag_query", {"q": "hello", "k": 3})
-    assert data["total_hits"] == 1
-    assert data["hits"][0]["kg"] == "my-code"
-    assert data["hits"][0]["kind"] == "code"
-    assert data["hits"][0]["node_kind"] == "function"
-    assert data["hits"][0]["score"] == 0.8765  # rounded to 4 places
-    fake_kgrag.query.assert_called_once()
-    _, kwargs = fake_kgrag.query.call_args
-    assert kwargs["k"] == 3
-
-
-def test_kgrag_query_with_kinds_filter(server):
-    fake_result = CrossQueryResult(query="q", hits=[], by_kg={}, total_hits=0, kgs_queried=0)
-    fake_kgrag = MagicMock()
-    fake_kgrag.__enter__.return_value = fake_kgrag
-    fake_kgrag.__exit__.return_value = False
-    fake_kgrag.query.return_value = fake_result
-    with patch("kg_rag.mcp_server.KGRAG", return_value=fake_kgrag):
-        call_tool_json(server, "kgrag_query", {"q": "q", "kinds": ["code", "doc"]})
-    _, kwargs = fake_kgrag.query.call_args
-    assert kwargs["kinds"] == [KGKind.CODE, KGKind.DOC]
-
-
-def test_kgrag_pack_empty_registry(server):
-    result = call_tool(server, "kgrag_pack", {"q": "hello"})
-    assert not result.isError
-    assert "Cross-KG Pack" in result.content[0].text
-
-
-def test_kgrag_pack_with_snippets(server):
+def _pack() -> CrossSnippetPack:
     snippet = CrossSnippet(
         kg_name="my-code",
         kg_kind=KGKind.CODE,
@@ -297,379 +361,121 @@ def test_kgrag_pack_with_snippets(server):
         lineno=1,
         end_lineno=3,
     )
-    fake_pack = CrossSnippetPack(
-        query="hello", snippets=[snippet], total_tokens_approx=10, kgs_queried=1
+    return CrossSnippetPack(query="hi", snippets=[snippet], total_tokens_approx=5, kgs_queried=1)
+
+
+@pytest.fixture
+def stub_kgrag(monkeypatch):
+    fake = MagicMock()
+    fake._adapters = {}
+    result = CrossQueryResult(query="hi", hits=[_hit()], by_kg={}, total_hits=1, kgs_queried=1)
+    fake.query_corpus.return_value = fake.query_person.return_value = result
+    fake.pack_corpus.return_value = fake.pack_person.return_value = _pack()
+    monkeypatch.setattr("kg_rag.federation.KGRAG", lambda **_kw: fake)
+    return fake
+
+
+@pytest.mark.parametrize("scope", ["corpus", "person"])
+def test_scoped_query_and_pack(registry_path, stub_kgrag, scope):
+    found = data(registry_path, f"{scope}_query", {scope: "c1", "q": "hi", "k": 3})
+    assert found[scope] == "c1" and found["total_hits"] == 1
+    assert (
+        found["hits"][0]["id"] == join_id("my-code", "n1") and found["hits"][0]["score"] == 0.8765
     )
-    fake_kgrag = MagicMock()
-    fake_kgrag.__enter__.return_value = fake_kgrag
-    fake_kgrag.__exit__.return_value = False
-    fake_kgrag.pack.return_value = fake_pack
-    with patch("kg_rag.mcp_server.KGRAG", return_value=fake_kgrag):
-        result = call_tool(server, "kgrag_pack", {"q": "hello", "context": 2})
-    assert "src/thing.py:1-3" in result.content[0].text
-    _, kwargs = fake_kgrag.pack.call_args
+    packed = call(registry_path, f"{scope}_pack", {scope: "c1", "q": "hi", "context": 2})
+    assert "src/thing.py:1-3" in packed.content[0].text
+    _, kwargs = getattr(stub_kgrag, f"pack_{scope}").call_args
     assert kwargs["context"] == 2
 
 
-# ------ kgrag_corpus_* ------
-
-
-def test_kgrag_corpus_list_empty(server):
-    data = call_tool_json(server, "kgrag_corpus_list")
-    assert data["total"] == 0
-    assert data["corpora"] == []
-
-
-def test_kgrag_corpus_list_with_entry(server, registry_path):
-    create_corpus(registry_path, CorpusEntry(name="my-corpus", kg_ids=["a", "b"]))
-    data = call_tool_json(server, "kgrag_corpus_list")
-    assert data["total"] == 1
-    assert data["total_kg_refs"] == 2
-    assert data["corpora"][0]["name"] == "my-corpus"
-
-
-def test_kgrag_corpus_info_not_found(server):
-    data = call_tool_json(server, "kgrag_corpus_info", {"name": "nope"})
-    assert data["error"] == "Corpus not found: nope"
-
-
-def test_kgrag_corpus_info_found_with_missing_and_present_kg(server, registry_path, sample_entry):
-    kg = register_kg(registry_path, sample_entry)
-    create_corpus(registry_path, CorpusEntry(name="c1", kg_ids=[kg.id, "ghost-id"]))
-    data = call_tool_json(server, "kgrag_corpus_info", {"name": "c1"})
-    assert data["name"] == "c1"
-    assert len(data["kgs"]) == 2
-    present = next(k for k in data["kgs"] if k["id"] == kg.id)
-    assert present["name"] == "my-code"
-    ghost = next(k for k in data["kgs"] if k["id"] == "ghost-id")
-    assert ghost["name"] is None
-    assert ghost["built"] is False
-
-
-def test_kgrag_corpus_create_success(server, registry_path, sample_entry):
-    kg = register_kg(registry_path, sample_entry)
-    data = call_tool_json(server, "kgrag_corpus_create", {"name": "c1", "kg_names": [kg.id]})
-    assert data == {"created": "c1", "size": 1}
-
-
-def test_kgrag_corpus_create_missing_kg(server):
-    data = call_tool_json(server, "kgrag_corpus_create", {"name": "c1", "kg_names": ["ghost"]})
-    assert data["error"] == "KGs not found: ['ghost']"
-
-
-def test_kgrag_corpus_delete_success(server, registry_path):
-    create_corpus(registry_path, CorpusEntry(name="c1"))
-    data = call_tool_json(server, "kgrag_corpus_delete", {"name": "c1"})
-    assert data == {"deleted": "c1"}
-
-
-def test_kgrag_corpus_delete_not_found(server):
-    data = call_tool_json(server, "kgrag_corpus_delete", {"name": "nope"})
-    assert data["error"] == "Corpus not found: nope"
-
-
-def test_kgrag_corpus_add_kg_not_found(server, registry_path):
-    create_corpus(registry_path, CorpusEntry(name="c1"))
-    data = call_tool_json(server, "kgrag_corpus_add", {"corpus": "c1", "kg": "ghost"})
-    assert data["error"] == "KG not found: ghost"
-
-
-def test_kgrag_corpus_add_corpus_not_found(server, registry_path, sample_entry):
-    kg = register_kg(registry_path, sample_entry)
-    data = call_tool_json(server, "kgrag_corpus_add", {"corpus": "nope", "kg": kg.id})
-    assert data["error"] == "Corpus not found: nope"
-
-
-def test_kgrag_corpus_add_success(server, registry_path, sample_entry):
-    kg = register_kg(registry_path, sample_entry)
-    create_corpus(registry_path, CorpusEntry(name="c1"))
-    data = call_tool_json(server, "kgrag_corpus_add", {"corpus": "c1", "kg": kg.id})
-    assert data == {"corpus": "c1", "added": kg.id, "size": 1}
-
-
-def test_kgrag_corpus_remove_kg_not_found(server, registry_path):
-    create_corpus(registry_path, CorpusEntry(name="c1"))
-    data = call_tool_json(server, "kgrag_corpus_remove", {"corpus": "c1", "kg": "ghost"})
-    assert data["error"] == "KG not found: ghost"
-
-
-def test_kgrag_corpus_remove_corpus_not_found(server, registry_path, sample_entry):
-    kg = register_kg(registry_path, sample_entry)
-    data = call_tool_json(server, "kgrag_corpus_remove", {"corpus": "nope", "kg": kg.id})
-    assert data["error"] == "Corpus not found: nope"
-
-
-def test_kgrag_corpus_remove_success(server, registry_path, sample_entry):
-    kg = register_kg(registry_path, sample_entry)
-    create_corpus(registry_path, CorpusEntry(name="c1", kg_ids=[kg.id]))
-    data = call_tool_json(server, "kgrag_corpus_remove", {"corpus": "c1", "kg": kg.id})
-    assert data == {"corpus": "c1", "removed": kg.id, "size": 0}
-
-
-def test_kgrag_corpus_query_not_found(server):
-    fake_kgrag = MagicMock()
-    fake_kgrag.__enter__.return_value = fake_kgrag
-    fake_kgrag.__exit__.return_value = False
-    fake_kgrag.query_corpus.side_effect = KeyError("Corpus 'nope' not found.")
-    with patch("kg_rag.mcp_server.KGRAG", return_value=fake_kgrag):
-        data = call_tool_json(server, "kgrag_corpus_query", {"corpus": "nope", "q": "hi"})
-    assert "not found" in data["error"]
-
-
-def test_kgrag_corpus_query_success(server):
-    hit = _fake_hit()
-    fake_result = CrossQueryResult(
-        query="hi", hits=[hit], by_kg={"my-code": [hit]}, total_hits=1, kgs_queried=1
-    )
-    fake_kgrag = MagicMock()
-    fake_kgrag.__enter__.return_value = fake_kgrag
-    fake_kgrag.__exit__.return_value = False
-    fake_kgrag.query_corpus.return_value = fake_result
-    with patch("kg_rag.mcp_server.KGRAG", return_value=fake_kgrag):
-        data = call_tool_json(server, "kgrag_corpus_query", {"corpus": "c1", "q": "hi"})
-    assert data["corpus"] == "c1"
-    assert data["total_hits"] == 1
-    assert data["hits"][0]["name"] == "do_thing"
-
-
-def test_kgrag_corpus_pack_not_found(server):
-    fake_kgrag = MagicMock()
-    fake_kgrag.__enter__.return_value = fake_kgrag
-    fake_kgrag.__exit__.return_value = False
-    fake_kgrag.pack_corpus.side_effect = KeyError("Corpus 'nope' not found.")
-    with patch("kg_rag.mcp_server.KGRAG", return_value=fake_kgrag):
-        data = call_tool_json(server, "kgrag_corpus_pack", {"corpus": "nope", "q": "hi"})
-    assert "not found" in data["error"]
-
-
-def test_kgrag_corpus_pack_success(server):
-    snippet = CrossSnippet(
-        kg_name="my-code",
-        kg_kind=KGKind.CODE,
-        node_id="n1",
-        source_path="src/thing.py",
-        content="def do_thing():\n    return 42\n    # padding to pass the 30-char filter\n",
-        score=0.5,
-    )
-    fake_pack = CrossSnippetPack(
-        query="hi", snippets=[snippet], total_tokens_approx=5, kgs_queried=1
-    )
-    fake_kgrag = MagicMock()
-    fake_kgrag.__enter__.return_value = fake_kgrag
-    fake_kgrag.__exit__.return_value = False
-    fake_kgrag.pack_corpus.return_value = fake_pack
-    with patch("kg_rag.mcp_server.KGRAG", return_value=fake_kgrag):
-        result = call_tool(server, "kgrag_corpus_pack", {"corpus": "c1", "q": "hi"})
-    assert "src/thing.py" in result.content[0].text
-
-
-# ------ kgrag_person_* ------
-
-
-def test_kgrag_person_list_empty(server):
-    data = call_tool_json(server, "kgrag_person_list")
-    assert data["total"] == 0
-    assert data["persons"] == []
-
-
-def test_kgrag_person_list_with_entry(server, registry_path):
-    create_person(
-        registry_path, PersonCorpusEntry(name="Ada", kg_ids=["a"], email="ada@example.com")
-    )
-    data = call_tool_json(server, "kgrag_person_list")
-    assert data["total"] == 1
-    assert data["persons"][0]["name"] == "Ada"
-    assert data["persons"][0]["email"] == "ada@example.com"
-
-
-def test_kgrag_person_info_not_found(server):
-    data = call_tool_json(server, "kgrag_person_info", {"name": "nope"})
-    assert data["error"] == "Person not found: nope"
-
-
-def test_kgrag_person_info_found(server, registry_path, sample_entry):
-    kg = register_kg(registry_path, sample_entry)
-    create_person(registry_path, PersonCorpusEntry(name="Ada", kg_ids=[kg.id, "ghost"]))
-    data = call_tool_json(server, "kgrag_person_info", {"name": "Ada"})
-    assert data["name"] == "Ada"
-    present = next(k for k in data["kgs"] if k["id"] == kg.id)
-    assert present["name"] == "my-code"
-    ghost = next(k for k in data["kgs"] if k["id"] == "ghost")
-    assert ghost["name"] is None
-
-
-def test_kgrag_person_create_success(server, registry_path, sample_entry):
-    kg = register_kg(registry_path, sample_entry)
-    data = call_tool_json(
-        server, "kgrag_person_create", {"name": "Ada", "kg_names": [kg.id], "birth_year": 1815}
-    )
-    assert data == {"created": "Ada", "size": 1}
-
-
-def test_kgrag_person_create_missing_kg(server):
-    data = call_tool_json(server, "kgrag_person_create", {"name": "Ada", "kg_names": ["ghost"]})
-    assert data["error"] == "KGs not found: ['ghost']"
-
-
-def test_kgrag_person_delete_success(server, registry_path):
-    create_person(registry_path, PersonCorpusEntry(name="Ada"))
-    data = call_tool_json(server, "kgrag_person_delete", {"name": "Ada"})
-    assert data == {"deleted": "Ada"}
-
-
-def test_kgrag_person_delete_not_found(server):
-    data = call_tool_json(server, "kgrag_person_delete", {"name": "nope"})
-    assert data["error"] == "Person not found: nope"
-
-
-def test_kgrag_person_add_kg_not_found(server, registry_path):
-    create_person(registry_path, PersonCorpusEntry(name="Ada"))
-    data = call_tool_json(server, "kgrag_person_add", {"person": "Ada", "kg": "ghost"})
-    assert data["error"] == "KG not found: ghost"
-
-
-def test_kgrag_person_add_person_not_found(server, registry_path, sample_entry):
-    kg = register_kg(registry_path, sample_entry)
-    data = call_tool_json(server, "kgrag_person_add", {"person": "nope", "kg": kg.id})
-    assert data["error"] == "Person not found: nope"
-
-
-def test_kgrag_person_add_success(server, registry_path, sample_entry):
-    kg = register_kg(registry_path, sample_entry)
-    create_person(registry_path, PersonCorpusEntry(name="Ada"))
-    data = call_tool_json(server, "kgrag_person_add", {"person": "Ada", "kg": kg.id})
-    assert data == {"person": "Ada", "added": kg.id, "size": 1}
-
-
-def test_kgrag_person_remove_kg_not_found(server, registry_path):
-    create_person(registry_path, PersonCorpusEntry(name="Ada"))
-    data = call_tool_json(server, "kgrag_person_remove", {"person": "Ada", "kg": "ghost"})
-    assert data["error"] == "KG not found: ghost"
-
-
-def test_kgrag_person_remove_person_not_found(server, registry_path, sample_entry):
-    kg = register_kg(registry_path, sample_entry)
-    data = call_tool_json(server, "kgrag_person_remove", {"person": "nope", "kg": kg.id})
-    assert data["error"] == "Person not found: nope"
-
-
-def test_kgrag_person_remove_success(server, registry_path, sample_entry):
-    kg = register_kg(registry_path, sample_entry)
-    create_person(registry_path, PersonCorpusEntry(name="Ada", kg_ids=[kg.id]))
-    data = call_tool_json(server, "kgrag_person_remove", {"person": "Ada", "kg": kg.id})
-    assert data == {"person": "Ada", "removed": kg.id, "size": 0}
-
-
-def test_kgrag_person_update_not_found(server):
-    data = call_tool_json(server, "kgrag_person_update", {"name": "nope", "email": "x@y.com"})
-    assert data["error"] == "Person not found: nope"
-
-
-def test_kgrag_person_update_success(server, registry_path):
-    create_person(registry_path, PersonCorpusEntry(name="Ada"))
-    data = call_tool_json(
-        server, "kgrag_person_update", {"name": "Ada", "email": "ada@example.com"}
-    )
-    assert data["updated"] == "Ada"
-    assert data["fields"] == ["email"]
+@pytest.mark.parametrize("scope", ["corpus", "person"])
+def test_scoped_search_of_an_unknown_scope_is_a_tool_error(registry_path, stub_kgrag, scope):
+    getattr(stub_kgrag, f"query_{scope}").side_effect = KeyError(f"{scope} 'nope' not found.")
+    getattr(stub_kgrag, f"pack_{scope}").side_effect = KeyError(f"{scope} 'nope' not found.")
+    assert "not found" in error(registry_path, f"{scope}_query", {scope: "nope", "q": "hi"})
+    assert "not found" in error(registry_path, f"{scope}_pack", {scope: "nope", "q": "hi"})
+
+
+def test_person_create_round_trips_metadata(registry_path):
     with PersonCorpusRegistry(db_path=registry_path) as reg:
-        assert reg.get("Ada").email == "ada@example.com"
+        reg.create(PersonCorpusEntry(name="Ada", notes="first programmer"))
+    assert data(registry_path, "person_info", {"name": "Ada"})["notes"] == "first programmer"
 
 
-def test_kgrag_person_query_not_found(server):
-    fake_kgrag = MagicMock()
-    fake_kgrag.__enter__.return_value = fake_kgrag
-    fake_kgrag.__exit__.return_value = False
-    fake_kgrag.query_person.side_effect = KeyError("Person corpus 'nope' not found.")
-    with patch("kg_rag.mcp_server.KGRAG", return_value=fake_kgrag):
-        data = call_tool_json(server, "kgrag_person_query", {"person": "nope", "q": "hi"})
-    assert "not found" in data["error"]
+# ---------------------------------------------------------------------------
+# The command
+# ---------------------------------------------------------------------------
 
 
-def test_kgrag_person_query_success(server):
-    hit = _fake_hit()
-    fake_result = CrossQueryResult(
-        query="hi", hits=[hit], by_kg={"my-code": [hit]}, total_hits=1, kgs_queried=1
+def test_manifest_answers_and_opens_no_registry(tmp_path):
+    reg = tmp_path / "never.sqlite"
+    result = CliRunner().invoke(cli, ["mcp", "--db", str(reg), "--manifest"])
+    assert result.exit_code == 0, result.output
+    assert json.loads(result.output)["canonical"] == list(CANONICAL_TOOLS)
+    assert not reg.exists()
+
+
+def test_standard_transport_flags(tmp_path):
+    for flags in (["--transport", "sse"], ["--vectors", "x.sqlite"], ["--model", "m"]):
+        result = CliRunner().invoke(cli, ["mcp", *flags, "--manifest"])
+        assert result.exit_code == 2, (flags, result.output)
+
+
+def test_old_registry_flag_is_mapped_to_db(tmp_path, monkeypatch):
+    seen: list = []
+    monkeypatch.setattr(
+        "kg_rag.mcp_server.build_server",
+        lambda reg, root: seen.append(reg) or build_server(reg, root),
     )
-    fake_kgrag = MagicMock()
-    fake_kgrag.__enter__.return_value = fake_kgrag
-    fake_kgrag.__exit__.return_value = False
-    fake_kgrag.query_person.return_value = fake_result
-    with patch("kg_rag.mcp_server.KGRAG", return_value=fake_kgrag):
-        data = call_tool_json(server, "kgrag_person_query", {"person": "Ada", "q": "hi"})
-    assert data["person"] == "Ada"
-    assert data["total_hits"] == 1
-
-
-def test_kgrag_person_pack_not_found(server):
-    fake_kgrag = MagicMock()
-    fake_kgrag.__enter__.return_value = fake_kgrag
-    fake_kgrag.__exit__.return_value = False
-    fake_kgrag.pack_person.side_effect = KeyError("Person corpus 'nope' not found.")
-    with patch("kg_rag.mcp_server.KGRAG", return_value=fake_kgrag):
-        data = call_tool_json(server, "kgrag_person_pack", {"person": "nope", "q": "hi"})
-    assert "not found" in data["error"]
-
-
-def test_kgrag_person_pack_success(server):
-    snippet = CrossSnippet(
-        kg_name="my-code",
-        kg_kind=KGKind.CODE,
-        node_id="n1",
-        source_path="src/thing.py",
-        content="def do_thing():\n    return 42\n    # padding to pass the 30-char filter\n",
-        score=0.5,
+    result = CliRunner().invoke(
+        cli, ["mcp", "--registry", str(tmp_path / "r.sqlite"), "--manifest"]
     )
-    fake_pack = CrossSnippetPack(
-        query="hi", snippets=[snippet], total_tokens_approx=5, kgs_queried=1
+    assert result.exit_code == 0, result.output
+    assert seen == [tmp_path / "r.sqlite"]
+
+
+def test_other_commands_do_not_import_mcp():
+    out = subprocess.run(
+        [sys.executable, "-c", "import sys, kg_rag.cli.main; print('mcp' in sys.modules)"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert out == "False"
+
+
+def test_stdio_subprocess_serves(registry_path, sample_entry, tmp_path):
+    register(registry_path, sample_entry)
+    params = StdioServerParameters(
+        command=sys.executable,
+        args=["-c", "from kg_rag.mcp_server import main; main()", "--db", str(registry_path)],
+        env={**os.environ, "PYTHONPATH": _SRC},
     )
-    fake_kgrag = MagicMock()
-    fake_kgrag.__enter__.return_value = fake_kgrag
-    fake_kgrag.__exit__.return_value = False
-    fake_kgrag.pack_person.return_value = fake_pack
-    with patch("kg_rag.mcp_server.KGRAG", return_value=fake_kgrag):
-        result = call_tool(server, "kgrag_person_pack", {"person": "Ada", "q": "hi"})
-    assert "src/thing.py" in result.content[0].text
+
+    async def run():
+        with open(tmp_path / "stderr.log", "w", encoding="utf-8") as errlog:
+            async with stdio_client(params, errlog=errlog) as (read, write):
+                async with ClientSession(read, write) as client:
+                    init = await client.initialize()
+                    tools = await client.list_tools()
+                    listed = await client.call_tool("list_kgs", {})
+                    return init, tools, listed
+
+    init, tools, listed = anyio.run(run)
+    assert (init.serverInfo.name, init.serverInfo.version) == ("kgrag", kg_rag.__version__)
+    assert [t.name for t in tools.tools] == [*CANONICAL_TOOLS, *_EXTRAS]
+    assert listed.structuredContent["result"][0]["name"] == "my-code"
+    err = (tmp_path / "stderr.log").read_text(encoding="utf-8")
+    assert "kgrag MCP server starting (stdio)" in err and str(registry_path) in err
 
 
-# ------ unknown tool ------
-
-
-def test_unknown_tool_name_bypasses_schema_validation(server):
-    """An unrecognized tool name falls through to the final catch-all branch.
-
-    ``call_tool()`` only validates against a *known* tool's inputSchema (see
-    ``mcp.server.lowlevel.server.Server.call_tool``), so an unregistered name
-    reaches the handler body directly and hits the ``Unknown tool`` branch at
-    the end of the if/elif chain rather than being rejected by the framework.
-    """
-    result = call_tool(server, "totally_bogus_tool", {})
-    assert not result.isError
-    data = json.loads(result.content[0].text)
-    assert data["error"] == "Unknown tool: totally_bogus_tool"
-
-
-# ------ main() lifecycle ------
-
-
-def test_main_runs_server_lifecycle(tmp_path: Path, monkeypatch):
-    """main() must build the server and drive it through the stdio transport.
-
-    The real ``stdio_server()`` blocks on stdin/stdout, so both it and
-    ``Server.run`` (which loops reading requests until EOF) are replaced with
-    lightweight stand-ins; ``asyncio.run`` itself runs for real so the
-    ``async with`` / ``await`` lines in ``main()`` actually execute.
-    """
-    from mcp.server import Server
-
-    import kg_rag.mcp_server as mcp_server
-
-    @asynccontextmanager
-    async def fake_stdio_server():
-        yield (None, None)
-
-    monkeypatch.setattr(mcp_server, "stdio_server", fake_stdio_server)
-    monkeypatch.setattr(Server, "run", AsyncMock(return_value=None))
-
-    mcp_server.main(registry_path=tmp_path / "registry.sqlite")
-    Server.run.assert_awaited_once()
+def test_the_documented_tool_reference_matches_the_manifest():
+    """docs/MCP.md's tool reference is generated, never hand-kept (FLEET_STANDARDS)."""
+    script = Path(_SRC).parent / "scripts" / "gen_mcp_reference.py"
+    result = subprocess.run(
+        [sys.executable, str(script), "--check"],
+        capture_output=True,
+        text=True,
+        env={**os.environ, "PYTHONPATH": _SRC},
+    )
+    assert result.returncode == 0, result.stdout + result.stderr

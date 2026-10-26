@@ -48,13 +48,12 @@ class GutenbergKGAdapter(KGAdapter):
             raise ImportError("doc-kg is not installed. Install it with: pip install doc-kg") from e
         entry = self.entry
         sqlite = str(entry.sqlite_path) if entry.sqlite_path else None
-        lancedb = str(entry.lancedb_path) if entry.lancedb_path else None
-        # None lets doc-kg derive the sidecar next to the graph. Needs doc-kg >=0.18.2.
+        # None lets doc-kg derive the sidecar. doc-kg 0.29.0 refuses the old
+        # lancedb_dir argument.
         vectors = str(entry.vectors_path) if entry.vectors_path else None
         self._kg = DocKG(
             corpus_root=str(entry.repo_path),
             db_path=sqlite or str(entry.repo_path / ".gutenbergkg" / "graph.sqlite"),
-            lancedb_dir=lancedb or str(entry.repo_path / ".gutenbergkg" / "lancedb"),
             vectors_path=vectors,
             embedder=self._embedder,
         )
@@ -163,43 +162,6 @@ class GutenbergKGAdapter(KGAdapter):
                 )
             )
         return snippets
-
-    def stats(self) -> dict[str, Any]:
-        """Return live statistics about this Gutenberg corpus instance.
-
-        :return: Standard envelope plus doc-style counts.
-        """
-        if not self.is_available():
-            return {"kind": "gutenberg", "status": "unavailable", "available": False}
-        self._load()
-        db_size = 0.0
-        if self.entry.sqlite_path and self.entry.sqlite_path.exists():
-            db_size = round(self.entry.sqlite_path.stat().st_size / 1_048_576, 2)
-        try:
-            s = self._kg.stats()
-            return {
-                "kind": "gutenberg",
-                "kg_name": self.entry.name,
-                "builder_version": self.entry.builder_version,
-                "available": True,
-                "db_size_mb": db_size,
-                "node_count": s.get("node_count", "n/a"),
-                "edge_count": s.get("edge_count", "n/a"),
-                "document_count": s.get("document_count", 0),
-                "chunk_count": s.get("chunk_count", 0),
-                "section_count": s.get("section_count", 0),
-                "topic_count": s.get("topic_count", 0),
-                "entity_count": s.get("entity_count", 0),
-                "keyword_count": s.get("keyword_count", 0),
-            }
-        except Exception as exc:  # pylint: disable=broad-exception-caught
-            return {
-                "kind": "gutenberg",
-                "kg_name": self.entry.name,
-                "available": True,
-                "db_size_mb": db_size,
-                "error": str(exc),
-            }
 
     def analyze(self) -> str:
         """Run full corpus analysis on this Gutenberg index.

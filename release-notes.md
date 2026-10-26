@@ -1,41 +1,70 @@
-# Release Notes -- v0.17.2
+# Release Notes - v0.18.0
 
-> Released: 2026-10-20
+> Released: 2026-10-26
 
 ### Changed
 
-- **The memory, diary, filetree and connectome adapters are tested against
-  the real upstream classes.** Their `_load()` had only mocked tests, which
-  accept any constructor arguments, so a signature change upstream could
-  ship unseen. Four tests in `tests/test_adapters.py` now build a real
-  `MemoryKG`, `DiaryKG`, `FileTreeKG` and `ConnectomeKG`; a stale argument
-  added to the memory adapter fails the new test and leaves the 16 mocked
-  ones green. `memory-kg`, `diary-kg`, `ftree-kg` and `connectome-kg` join
-  the dev group, at their extras' floors, so CI has them.
-- **Every backed adapter is now tested against its real class.** The
-  genealogy, metabo, agent, swift, typescript and vault adapters join the
-  four above. `metabo-kg` is not on PyPI and comes from git at tag
-  `v0.17.0`; the rest come from PyPI. The metakg test fails on the stale
-  `lancedb_dir=` argument that once shipped as a `TypeError`. The agent
-  test points `agent_kg.graph._PROFILE_BASE` at a temporary directory, so
-  nothing touches `~/.kgrag/profiles`, and a mocked agent test now blocks
-  `agent_kg.graph` as well as `agent_kg`, which it needs once the package
-  is installed.
-- Relocked onto `doc-kg` 0.28.0, `pycode-kg` 0.28.2 and `vault-kg` 0.5.0.
-  Floors are unchanged.
-- Dependencies refreshed to clear 22 Dependabot alerts (#63): pyjwt 2.15.1,
-  urllib3 2.8.0, mcp 1.30.0 and virtualenv 21.14.11 (dev), all transitive.
+- **The KGRAG MCP server is built on `kg_utils.mcp`, and its tools drop the
+  `kgrag_` prefix.** `kg_rag.mcp_server` no longer hand-rolls the low-level
+  `Server` API: `build_server()` serves a new `kg_rag.federation.Federation`
+  through `make_server()`, so `kgrag mcp` takes the fleet's standard flags
+  (`--db`, `--repo`, `--transport stdio|streamable-http`, `--host`, `--port`,
+  `--manifest`) and answers the five canonical tools -- `stats`, `query`,
+  `pack`, `get_node`, `neighbors` -- like every other fleet server, plus 19
+  extras (`list_kgs`, `kg_info`, `corpus_*`, `person_*`): 24 tools. Renamed
+  with no aliases, per the centralization plan: `kgrag_query` is `query`,
+  `kgrag_corpus_query` is `corpus_query`, and so on. Federated node ids are
+  `<kg>::<node id>`, and `get_node` / `neighbors` take them unchanged.
+  `query` and `pack` take `hop`, `max_nodes` and `rels`; `hop=0`, the
+  default, returns what the old tools returned, and `hop>0` appends each
+  seed's neighbourhood ranked after the seeds. `--db` is the registry;
+  `--registry`, its old spelling, is accepted with a warning until 0.19.
+  `--vectors` and `--model` are refused: each registered KG uses its own.
+  The direct `mcp` pin is replaced by `kgmodule-utils[mcp]>=0.29.0`, whose
+  extra brings `mcp>=1.23.0,<2`.
+- **Floors onto the 0.29.0 fleet releases**, whose `stats()` the adapters
+  read in the fleet shape: doc-kg 0.29.0, memory-kg 0.13.0, pycode-kg 0.29.0,
+  diary-kg 0.101.0, ftree-kg 0.18.0, connectome-kg 0.9.0 and vault-kg 0.6.0
+  (the extras and the dev group), plus agent-kg 0.14.0, genealogy-kg 0.4.0,
+  swift-kg 0.5.0, tscode-kg 0.8.0 and metabo-kg v0.18.0 (dev group).
+- **Every adapter reports stats in the fleet shape.** `KGAdapter.stats()`
+  is concrete and returns `{"kind", "nodes": {"total", "by_kind"},
+  "edges": {"total", "by_rel"}, ...}` (FLEET_STANDARDS, "KG stats shape"),
+  with `kind` set to the registry kind and the envelope (`kg_name`,
+  `available`, `builder_version`, `db_size_mb`) as extras. Eleven adapter
+  overrides and the stub adapters' flat `stats()` are gone; the vault
+  adapter builds on `super().stats()`.
+  Modules not yet on the shape are read through `fleet_stats()`, which maps
+  the old flat keys and files any uncounted remainder under
+  `"(unreported)"`, so the pycodekg adapter no longer reports
+  `meaningful_nodes` as its node count. `kgrag status` and `kgrag analyze`
+  read totals through the new `stat_totals()`, and the per-domain status
+  line lists each KG's top node kinds rather than a hand-written field per
+  kind.
+  Snapshot metrics read the same shape (flattened back to `total_nodes` /
+  `node_counts`), so the code, agent, diary, connectome and stub adapters
+  keep recording real counts against modules whose `stats()` has moved to
+  the shape, rather than zeros.
+- **`docs/MCP.md`'s tool reference is generated.** `scripts/gen_mcp_reference.py`
+  renders it from `kgrag mcp --manifest`; `--check` fails when the file has
+  drifted, and a test runs it. `Claude.mcp.json`, `CLAUDE.md`, `AGENTS.md`,
+  the skills and the docs use the canonical tool names.
 
-### Fixed
+### Removed
 
-- **PDF support in `[all]` and `[ingest]` on a fresh install.** pymupdf4llm
-  2.0 (2026-10-16) is an empty placeholder: its code now ships inside the
-  pymupdf 2.0 wheel. `[all]` named `pymupdf4llm>=1.28.2` directly, and
-  `[ingest]` floored `kgmodule-utils[ingest]>=0.27.0`, whose own extra
-  declared the same; both resolved to no PDF code. `[all]` now declares
-  `pymupdf>=2.0` and `[ingest]` floors `kgmodule-utils[ingest]>=0.27.1`.
-  The lock moves to kgmodule-utils 0.27.1, doc-kg 0.28.1, diary-kg 0.100.1
-  and pymupdf 2.0.
+- **LanceDB is retired.** `kgrag audit-lancedb` is deleted, `kgrag register
+  --lancedb` is gone, `KGEntry` loses `lancedb_path`, and the doc and
+  gutenberg adapters pass `vectors_path`. The registry keeps its
+  `lancedb_path` column, unused, because a released kgrag still writes it;
+  corpus import skips the field with a warning, and `kgrag health` reports
+  a KG with only a LanceDB store as `lancedb_only`.
+
+- **`agent-kg` dev floor raised to `>=0.13.0`, and the lock moved to it.**
+  agent-kg 0.13.0 removed the private `agent_kg.graph._PROFILE_BASE`
+  constant the real-class agent adapter test patched, and added the
+  `AGENTKG_PROFILE_ROOT` variable that replaces it. The test now sets the
+  variable, so it still keeps the profile out of `~/.kgrag/profiles`; older
+  agent-kg releases ignore the variable, hence the floor.
 
 ---
 

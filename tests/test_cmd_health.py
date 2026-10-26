@@ -15,7 +15,7 @@ from unittest.mock import MagicMock, patch
 
 from click.testing import CliRunner
 
-from kg_rag.cli.cmd_health import _build_cmd, _probe_kg
+from kg_rag.cli.cmd_health import _build_cmd
 from kg_rag.cli.main import cli
 from kg_rag.corpus_registry import CorpusRegistry
 from kg_rag.primitives import CorpusEntry, KGEntry, KGKind
@@ -239,29 +239,43 @@ class TestHealthStalePaths:
         assert "stale_sqlite" in result.output
         assert "stale-sqlite" in result.output
 
-    def test_detects_stale_lancedb(self, tmp_path):
-        db = _reg_db(tmp_path)
-        repo = tmp_path / "myrepo"
-        repo.mkdir()
-        # SQLite exists so is_built=True; LanceDB dir is absent
-        db_dir = repo / ".pycodekg"
-        db_dir.mkdir()
+    def _doc_entry(self, tmp_path, *, lancedb: bool, vectors: bool) -> KGEntry:
+        repo = tmp_path / "corpus"
+        db_dir = repo / ".dockg"
+        db_dir.mkdir(parents=True)
         sqlite = db_dir / "graph.sqlite"
         sqlite.touch()
-        entry = KGEntry(
-            name="stale-lance",
-            kind=KGKind.CODE,
+        if lancedb:
+            (db_dir / "lancedb").mkdir()
+        if vectors:
+            (db_dir / "vectors.sqlite").touch()
+        return KGEntry(
+            name="old-docs",
+            kind=KGKind.DOC,
             repo_path=repo,
             venv_path=repo / ".venv",
             sqlite_path=sqlite,
-            lancedb_path=db_dir / "lancedb",  # doesn't exist
         )
+
+    def test_detects_a_lancedb_only_store(self, tmp_path):
+        """LanceDB is no longer read: a store holding only lancedb/ needs a rebuild."""
+        db = _reg_db(tmp_path)
         with KGRegistry(db_path=db) as reg:
-            reg.register(entry)
+            reg.register(self._doc_entry(tmp_path, lancedb=True, vectors=False))
+
+        result = _runner().invoke(cli, ["health", "--json"] + _reg_args(db))
+        assert result.exit_code == 0
+        issue = next(i for i in json.loads(result.output)["issues"] if i["check"] == "lancedb_only")
+        assert issue["target"] == "old-docs" and "dockg build" in (issue["fix_cmd"] or "")
+
+    def test_a_stale_lancedb_beside_vectors_is_not_a_finding(self, tmp_path):
+        db = _reg_db(tmp_path)
+        with KGRegistry(db_path=db) as reg:
+            reg.register(self._doc_entry(tmp_path, lancedb=True, vectors=True))
 
         result = _runner().invoke(cli, ["health"] + _reg_args(db))
         assert result.exit_code == 0
-        assert "stale_lancedb" in result.output
+        assert "lancedb_only" not in result.output
 
 
 # ---------------------------------------------------------------------------
@@ -462,7 +476,7 @@ class TestHealthFixSubprocess:
         repo = tmp_path / "myrepo"
         repo.mkdir()
         # SQLite path registered but missing → stale_sqlite
-        # LanceDB path registered but missing → stale_lancedb
+        # Vector store registered but missing → stale_vectors
         # Both map to the same "pycodekg build --repo ..." command.
         db_dir = repo / ".pycodekg"
         db_dir.mkdir()
@@ -474,7 +488,7 @@ class TestHealthFixSubprocess:
             repo_path=repo,
             venv_path=repo / ".venv",
             sqlite_path=repo / ".pycodekg" / "nope.sqlite",  # missing
-            lancedb_path=db_dir / "lancedb",  # missing
+            vectors_path=db_dir / "vectors.sqlite",  # missing
         )
         with KGRegistry(db_path=db) as reg:
             reg.register(entry)
@@ -501,263 +515,10 @@ class TestHealthFixSubprocess:
 
 
 # ---------------------------------------------------------------------------
-# LanceDB liveness probe
+# Build command
 # ---------------------------------------------------------------------------
 
 
-def _make_lancedb_entry(tmp_path: Path, name: str, kind: KGKind = KGKind.CODE) -> KGEntry:
-    """Create a built KGEntry with a real lancedb directory present."""
-    repo = tmp_path / name
-    repo.mkdir(exist_ok=True)
-    db_dir = repo / f".{kind.value}kg"
-    db_dir.mkdir(exist_ok=True)
-    sqlite = db_dir / "graph.sqlite"
-    sqlite.touch()
-    lancedb_dir = db_dir / "lancedb"
-    lancedb_dir.mkdir(exist_ok=True)
-    return KGEntry(
-        name=name,
-        kind=kind,
-        repo_path=repo,
-        venv_path=repo / ".venv",
-        sqlite_path=sqlite,
-        lancedb_path=lancedb_dir,
-    )
-
-
-class TestHealthLanceDBProbe:
-    def test_probe_code_entry_flagged_when_command_fails(self, tmp_path):
-        """A CODE entry with an existing lancedb dir is probed; failure surfaces an issue."""
-        db = _reg_db(tmp_path)
-        entry = _make_lancedb_entry(tmp_path, "my-code", kind=KGKind.CODE)
-        with KGRegistry(db_path=db) as reg:
-            reg.register(entry)
-
-        fake_err = "fatal: table not found"
-        with patch("kg_rag.cli.cmd_health._probe_kg", return_value=fake_err):
-            result = _runner().invoke(cli, ["health", "--json"] + _reg_args(db))
-
-        assert result.exit_code == 0
-        data = json.loads(result.output)
-        issue = next((i for i in data["issues"] if i["check"] == "stale_lancedb_probe"), None)
-        assert issue is not None, "expected stale_lancedb_probe for code entry with failing probe"
-        assert fake_err in issue["message"]
-
-    def test_probe_healthy_lancedb_no_issue(self, tmp_path):
-        """A passing probe should not produce any stale_lancedb_probe issue."""
-        db = _reg_db(tmp_path)
-        entry = _make_lancedb_entry(tmp_path, "good-code", kind=KGKind.CODE)
-        with KGRegistry(db_path=db) as reg:
-            reg.register(entry)
-
-        with patch("kg_rag.cli.cmd_health._probe_kg", return_value=None):
-            result = _runner().invoke(cli, ["health"] + _reg_args(db))
-
-        assert result.exit_code == 0
-        assert "stale_lancedb_probe" not in result.output
-        assert "passed" in result.output.lower() or "healthy" in result.output.lower()
-
-    def test_probe_failure_surfaces_critical_issue(self, tmp_path):
-        """A failing probe should produce a stale_lancedb_probe critical issue."""
-        db = _reg_db(tmp_path)
-        entry = _make_lancedb_entry(tmp_path, "broken-code", kind=KGKind.CODE)
-        with KGRegistry(db_path=db) as reg:
-            reg.register(entry)
-
-        fake_err = "Not found: codekg_nodes.lance/data/deadbeef.lance"
-        with patch("kg_rag.cli.cmd_health._probe_kg", return_value=fake_err):
-            result = _runner().invoke(cli, ["health"] + _reg_args(db))
-
-        assert result.exit_code == 0
-        assert "stale_lancedb_probe" in result.output
-        assert "broken-code" in result.output
-
-    def test_probe_failure_severity_is_critical(self, tmp_path):
-        """stale_lancedb_probe must be reported as critical."""
-        db = _reg_db(tmp_path)
-        entry = _make_lancedb_entry(tmp_path, "broken-code", kind=KGKind.CODE)
-        with KGRegistry(db_path=db) as reg:
-            reg.register(entry)
-
-        with patch("kg_rag.cli.cmd_health._probe_kg", return_value="lance error"):
-            result = _runner().invoke(cli, ["health", "--json"] + _reg_args(db))
-
-        assert result.exit_code == 0
-        data = json.loads(result.output)
-        issue = next(i for i in data["issues"] if i["check"] == "stale_lancedb_probe")
-        assert issue["severity"] == "critical"
-        assert issue["target"] == "broken-code"
-
-    def test_probe_failure_suggests_rebuild(self, tmp_path):
-        """fix_cmd for stale_lancedb_probe should be the build command."""
-        db = _reg_db(tmp_path)
-        entry = _make_lancedb_entry(tmp_path, "broken-code", kind=KGKind.CODE)
-        with KGRegistry(db_path=db) as reg:
-            reg.register(entry)
-
-        with patch("kg_rag.cli.cmd_health._probe_kg", return_value="lance error"):
-            result = _runner().invoke(cli, ["health", "--json"] + _reg_args(db))
-
-        data = json.loads(result.output)
-        issue = next(i for i in data["issues"] if i["check"] == "stale_lancedb_probe")
-        assert "pycodekg build" in (issue["fix_cmd"] or "")
-
-    def test_probe_command_not_found_surfaces_issue(self, tmp_path):
-        """If the module binary is not on PATH, probe surfaces a critical issue."""
-        db = _reg_db(tmp_path)
-        entry = _make_lancedb_entry(tmp_path, "good-code", kind=KGKind.CODE)
-        with KGRegistry(db_path=db) as reg:
-            reg.register(entry)
-
-        with patch("subprocess.run", side_effect=FileNotFoundError):
-            result = _runner().invoke(cli, ["health", "--json"] + _reg_args(db))
-
-        data = json.loads(result.output)
-        assert any(i["check"] == "stale_lancedb_probe" for i in data["issues"])
-        issue = next(i for i in data["issues"] if i["check"] == "stale_lancedb_probe")
-        assert "not found" in issue["message"]
-
-    def test_probe_message_includes_restart_hint(self, tmp_path):
-        """The issue message should mention restarting the MCP server."""
-        db = _reg_db(tmp_path)
-        entry = _make_lancedb_entry(tmp_path, "broken-code", kind=KGKind.CODE)
-        with KGRegistry(db_path=db) as reg:
-            reg.register(entry)
-
-        with patch("kg_rag.cli.cmd_health._probe_kg", return_value="lance error"):
-            result = _runner().invoke(cli, ["health", "--json"] + _reg_args(db))
-
-        data = json.loads(result.output)
-        issue = next(i for i in data["issues"] if i["check"] == "stale_lancedb_probe")
-        msg = issue["message"].lower()
-        assert "mcp" in msg or "restart" in msg
-
-
-# ---------------------------------------------------------------------------
-# Probe command construction
-#
-# The tests above all patch _probe_kg, so none of them ever exercised the
-# command templates themselves — which is how a stale binary name (`codekg`),
-# a nonexistent flag (`--lancedb` on pycode-kg >=0.20), and a wrong short
-# option (`-k`, rejected by every module's Click CLI) survived unnoticed.
-# These assert the argv the probe would actually run.
-# ---------------------------------------------------------------------------
-
-
-class TestProbeCommandConstruction:
-    def _argv(self, entry: KGEntry) -> list[str]:
-        """Return the argv _probe_kg would execute for *entry*."""
-        with patch("subprocess.run") as run:
-            run.return_value = MagicMock(returncode=0, stderr=b"")
-            _probe_kg(entry)
-            assert run.called, "probe did not run a command"
-            return run.call_args[0][0]
-
-    def _entry(self, tmp_path: Path, kind: KGKind, **paths) -> KGEntry:
-        repo = tmp_path / f"{kind.value}-repo"
-        repo.mkdir(exist_ok=True)
-        sqlite = repo / "graph.sqlite"
-        sqlite.touch()
-        return KGEntry(
-            name=f"{kind.value}-kg",
-            kind=kind,
-            repo_path=repo,
-            venv_path=repo / ".venv",
-            sqlite_path=sqlite,
-            **paths,
-        )
-
-    # ── binary names ────────────────────────────────────────────────────────
-
-    def test_code_probe_uses_pycodekg_binary(self, tmp_path):
-        """pycode-kg ships `pycodekg`; there has been no `codekg` binary since 0.14."""
-        entry = self._entry(tmp_path, KGKind.CODE)
-        assert self._argv(entry)[0] == "pycodekg"
-
-    def test_code_build_cmd_uses_pycodekg_binary(self, tmp_path):
-        assert _build_cmd("code", tmp_path).startswith("pycodekg build")
-
-    # ── option spelling ─────────────────────────────────────────────────────
-
-    def test_no_probe_uses_short_k_option(self, tmp_path):
-        """`-k` is rejected by these Click CLIs — the long `--k` is required."""
-        for kind in (KGKind.CODE, KGKind.DOC, KGKind.MEMORY):
-            argv = self._argv(self._entry(tmp_path, kind))
-            assert "-k" not in argv, f"{kind.value}: bare -k is not a valid option"
-            assert "--k" in argv, f"{kind.value}: expected --k"
-
-    def test_code_probe_never_passes_lancedb_flag(self, tmp_path):
-        """pycode-kg >=0.20 has no --lancedb; passing it aborts the probe."""
-        entry = self._entry(tmp_path, KGKind.CODE, lancedb_path=tmp_path / "code-repo" / "lancedb")
-        assert "--lancedb" not in self._argv(entry)
-
-    # ── vector store selection ──────────────────────────────────────────────
-
-    def test_code_probe_passes_vectors_path(self, tmp_path):
-        vectors = tmp_path / "code-repo" / "vectors.sqlite"
-        entry = self._entry(tmp_path, KGKind.CODE, vectors_path=vectors)
-        argv = self._argv(entry)
-        assert "--vectors" in argv
-        assert str(vectors.resolve()) in argv
-
-    def test_doc_probe_prefers_vectors_path_over_lancedb(self, tmp_path):
-        repo = tmp_path / "doc-repo"
-        repo.mkdir(exist_ok=True)
-        vectors = repo / "vectors.sqlite"
-        entry = self._entry(
-            tmp_path, KGKind.DOC, vectors_path=vectors, lancedb_path=repo / "lancedb"
-        )
-        argv = self._argv(entry)
-        assert "--vectors-path" in argv
-        assert "--lancedb" not in argv
-
-    def test_doc_probe_falls_back_to_lancedb_when_unmigrated(self, tmp_path):
-        repo = tmp_path / "doc-repo"
-        repo.mkdir(exist_ok=True)
-        lancedb_dir = repo / "lancedb"
-        entry = self._entry(tmp_path, KGKind.DOC, lancedb_path=lancedb_dir)
-        argv = self._argv(entry)
-        assert "--lancedb" in argv
-        assert str(lancedb_dir.resolve()) in argv
-
-    def test_memory_probe_never_passes_vectors_path(self, tmp_path):
-        """memory-kg 0.6.2 is LanceDB-only — it has no --vectors-path option.
-
-        Passing one aborts the probe on "No such option". A migrated memory KG
-        gets no vector flag at all; the ensuing failure is real signal, because
-        memory-kg genuinely cannot read a sqlite-vec store.
-        """
-        repo = tmp_path / "memory-repo"
-        repo.mkdir(exist_ok=True)
-        entry = self._entry(tmp_path, KGKind.MEMORY, vectors_path=repo / "vectors.sqlite")
-        argv = self._argv(entry)
-        assert "--vectors-path" not in argv
-        assert "--vectors" not in argv
-
-    # ── the empty-value bug ─────────────────────────────────────────────────
-
-    def test_no_flag_emitted_without_a_recorded_store(self, tmp_path):
-        """A bare flag would swallow the following token under shlex.split."""
-        argv = self._argv(self._entry(tmp_path, KGKind.DOC))
-        assert "--lancedb" not in argv
-        assert "--vectors-path" not in argv
-
-    def test_every_flag_has_a_value(self, tmp_path):
-        """No flag may be followed by another flag or sit at the end of argv."""
-        for kind in (KGKind.CODE, KGKind.DOC, KGKind.MEMORY):
-            argv = self._argv(self._entry(tmp_path, kind))
-            for i, tok in enumerate(argv):
-                if tok.startswith("--") and tok != "--include-symbols":
-                    assert i + 1 < len(argv), f"{kind.value}: {tok} has no value"
-                    assert not argv[i + 1].startswith("-"), (
-                        f"{kind.value}: {tok} swallowed {argv[i + 1]}"
-                    )
-
-    def test_probe_skipped_without_sqlite_path(self, tmp_path):
-        """Nothing to probe against — must not build a command with an empty path."""
-        repo = tmp_path / "no-graph"
-        repo.mkdir(exist_ok=True)
-        entry = KGEntry(name="no-graph", kind=KGKind.DOC, repo_path=repo, venv_path=repo / ".venv")
-        with patch("subprocess.run") as run:
-            assert _probe_kg(entry) is None
-            assert not run.called
+def test_code_build_cmd_uses_pycodekg_binary(tmp_path):
+    """pycode-kg ships `pycodekg`; there has been no `codekg` binary since 0.14."""
+    assert _build_cmd("code", tmp_path).startswith("pycodekg build")

@@ -59,13 +59,10 @@ class KGEntry:
     :param repo_path: Absolute path to the repository/project root.
     :param venv_path: Absolute path to the Python virtual environment.
     :param sqlite_path: Absolute path to the SQLite database file (if any).
-    :param lancedb_path: Absolute path to the LanceDB directory (if any).
-        **Deprecated** for builders that have migrated to sqlite-vec — use
-        ``vectors_path``.  Still written for kinds that ship a LanceDB index
-        (doc/memory/gutenberg corpora built by pre-sqlite-vec builders).
     :param vectors_path: Absolute path to the sqlite-vec vector store *file*
-        (if any), e.g. ``<repo>/.pycodekg/vectors.sqlite``.  This is the
-        vector backend for pycode-kg >=0.20.0 and supersedes ``lancedb_path``.
+        (if any), e.g. ``<repo>/.pycodekg/vectors.sqlite``.  The fleet's only
+        vector backend; ``lancedb_path`` was removed in 0.18.0 with LanceDB
+        support (the registry keeps a dead column for older kgrag releases).
     :param version: Version of the source repository (from its pyproject.toml).
         Meaningful for code-like KGs where the repo is the source of truth;
         often ``"unknown"`` for doc/memory/diary corpora assembled from loose
@@ -87,7 +84,6 @@ class KGEntry:
     venv_path: Path
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     sqlite_path: Path | None = None
-    lancedb_path: Path | None = None
     vectors_path: Path | None = None
     version: str = "unknown"
     builder_version: str = "unknown"
@@ -102,8 +98,6 @@ class KGEntry:
         self.venv_path = Path(self.venv_path).resolve()
         if self.sqlite_path is not None:
             self.sqlite_path = Path(self.sqlite_path).resolve()
-        if self.lancedb_path is not None:
-            self.lancedb_path = Path(self.lancedb_path).resolve()
         if self.vectors_path is not None:
             self.vectors_path = Path(self.vectors_path).resolve()
         if isinstance(self.kind, str):
@@ -115,8 +109,6 @@ class KGEntry:
         if self.sqlite_path and self.sqlite_path.exists():
             return True
         if self.vectors_path and self.vectors_path.exists():
-            return True
-        if self.lancedb_path and self.lancedb_path.exists():
             return True
         return False
 

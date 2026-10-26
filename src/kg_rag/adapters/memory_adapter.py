@@ -142,37 +142,6 @@ class MemoryKGAdapter(KGAdapter):
             )
         return snippets
 
-    def stats(self) -> dict[str, Any]:
-        """Return live statistics about this MemoryKG instance.
-
-        :return: Standard envelope plus memory-specific counts (nodes by kind).
-        """
-        self._load()
-        db_size = 0.0
-        if self.entry.sqlite_path and self.entry.sqlite_path.exists():
-            db_size = round(self.entry.sqlite_path.stat().st_size / 1_048_576, 2)
-        try:
-            s = self._kg.stats()
-            return {
-                "kind": "memory",
-                "kg_name": self.entry.name,
-                "builder_version": self.entry.builder_version,
-                "available": True,
-                "db_size_mb": db_size,
-                "node_count": s.get("total_nodes", "n/a"),
-                "edge_count": s.get("total_edges", "n/a"),
-                "node_counts": s.get("node_counts", {}),
-                "edge_counts": s.get("edge_counts", {}),
-            }
-        except Exception as exc:  # pylint: disable=broad-exception-caught
-            return {
-                "kind": "memory",
-                "kg_name": self.entry.name,
-                "available": True,
-                "db_size_mb": db_size,
-                "error": str(exc),
-            }
-
     def analyze(self) -> str:
         """Run full corpus analysis on this MemoryKG.
 
