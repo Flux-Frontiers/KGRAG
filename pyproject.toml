@@ -124,11 +124,9 @@ dependencies = [
     # a core (stdlib-only) module there, so this needs no extra. The floor sits
     # at the newest release because fleet floors are raised to latest on every
     # relock, not because kg_rag needs anything newer than 0.18.0.
-    "kgmodule-utils>=0.27.0",
-    # The server is built on kg_utils.mcp (FastMCP), which needs mcp>=1.23;
-    # the upper bound follows kgmodule-utils[mcp]. At the 0.29.0 release this
-    # pin is replaced by "kgmodule-utils[mcp]>=0.29.0".
-    "mcp>=1.23.0,<2",
+    # 0.29.0: the server is built on kg_utils.mcp ([mcp] brings mcp itself),
+    # and the adapters read every module's stats() in the fleet stats shape.
+    "kgmodule-utils[mcp]>=0.29.0",
     "numpy>=1.24.0",
     "pandas>=2.0.0",
     "rich>=14.3.3,<15",
@@ -163,29 +161,29 @@ dependencies = [
 # a memory-kg corpus -- below it, a federated time-scoped query against one was
 # structurally impossible, not just untested.
 kg = [
-    "doc-kg>=0.27.0",
-    "memory-kg>=0.12.0",
-    "pycode-kg>=0.28.1",
+    "doc-kg>=0.29.0",
+    "memory-kg>=0.13.0",
+    "pycode-kg>=0.29.0",
 ]
 diary = [
     # 0.98.0: DiaryKG gained close()/__enter__/__exit__. kg_rag's own adapter
     # holds a DiaryKG for its lifetime with no way to release it before this.
-    "diary-kg>=0.100.0",
+    "diary-kg>=0.101.0",
 ]
 filetree = [
-    "ftree-kg>=0.17.0",
+    "ftree-kg>=0.18.0",
 ]
 connectome = [
     # 0.3.1: the first release on PyPI. It carries 0.3.0's two changes the
     # adapter relies on: a built store queries without the raw Codex release,
     # and each dataset is its own store under connectomes/<id>/.connectomekg/.
-    "connectome-kg>=0.8.1",
+    "connectome-kg>=0.9.0",
 ]
 vault = [
     # 0.1.0: the first release, and the one the vault adapter was written
     # against. VaultKG shares the code modules' KGModule constructor and node
     # shape, so VaultKGAdapter rides CodeModuleKGAdapter.
-    "vault-kg>=0.3.0",
+    "vault-kg>=0.6.0",
 ]
 # Multi-format document ingestion: `kgrag ingest`. Takes the converters from
 # kgmodule-utils' own [ingest] extra (pymupdf4llm for PDF, anydoc for Word /
@@ -197,7 +195,7 @@ vault = [
 # the floor because 0.27.0's [ingest] declared pymupdf4llm>=1.28.2, which
 # now resolves to the empty pymupdf4llm 2.0 placeholder (no PDF code).
 ingest = [
-    "kgmodule-utils[ingest]>=0.27.1",
+    "kgmodule-utils[ingest]>=0.29.0",
 ]
 viz = [
     "plotly>=5.14.0",
@@ -239,13 +237,13 @@ viz3d = [
 # dependencies ... Different requirements found" and resolves by restarting the
 # whole lock with an override -- pathologically slow once a few packages do it.
 all = [
-    "connectome-kg>=0.8.1",
-    "diary-kg>=0.100.0",
-    "doc-kg>=0.27.0",
-    "ftree-kg>=0.17.0",
-    "memory-kg>=0.12.0",
-    "pycode-kg>=0.28.1",
-    "vault-kg>=0.3.0",
+    "connectome-kg>=0.9.0",
+    "diary-kg>=0.101.0",
+    "doc-kg>=0.29.0",
+    "ftree-kg>=0.18.0",
+    "memory-kg>=0.13.0",
+    "pycode-kg>=0.29.0",
+    "vault-kg>=0.6.0",
     # [ingest]'s converters, named directly: re-listing kgmodule-utils[ingest]
     # here beside the core kgmodule-utils makes poetry's solver fail
     # ("<empty>" constraint), and poetry refuses a self-reference
@@ -359,25 +357,27 @@ pip-audit = "^2.10.0"
 # Kept in step with the extras' floors above -- a dev-dep floor lagging
 # behind them would test against an older real class than the one the extras
 # actually ship, defeating the point of installing the real class at all.
-pycode-kg = ">=0.28.1"
-doc-kg = ">=0.27.0"
-memory-kg = ">=0.12.0"
-diary-kg = ">=0.100.0"
-ftree-kg = ">=0.17.0"
-connectome-kg = ">=0.8.1"
-vault-kg = ">=0.3.0"
+pycode-kg = ">=0.29.0"
+doc-kg = ">=0.29.0"
+memory-kg = ">=0.13.0"
+diary-kg = ">=0.101.0"
+ftree-kg = ">=0.18.0"
+connectome-kg = ">=0.9.0"
+vault-kg = ">=0.6.0"
 # No extra declares these four, so there is no floor to keep in step with;
 # each is floored at the release its adapter test was first run against.
 # agent-kg 0.13.0: the adapter test moves the profile root with
 # AGENTKG_PROFILE_ROOT, which older releases ignore.
-agent-kg = ">=0.13.0"
-genealogy-kg = ">=0.2.2"
-swift-kg = ">=0.4.0"
-tscode-kg = ">=0.7.0"
+agent-kg = ">=0.14.0"
+genealogy-kg = ">=0.4.0"
+swift-kg = ">=0.5.0"
+tscode-kg = ">=0.8.0"
 # metabo-kg is not on PyPI. A git dependency is fine in this group: dev
 # dependencies never reach the wheel's metadata. Pinned to a tag so the lock
-# is reproducible; move the tag when Metabo_kg releases.
-metabo-kg = { git = "https://github.com/Flux-Frontiers/Metabo_kg.git", tag = "v0.17.0" }
+# is reproducible; move it when Metabo_kg releases. Relock with
+# POETRY_SYSTEM_GIT_CLIENT=true: Poetry 2.4's built-in git client (dulwich)
+# fails on this repo's annotated tags ("Expected Commit object ... got Tag").
+metabo-kg = { git = "https://github.com/Flux-Frontiers/Metabo_kg.git", tag = "v0.18.0" }
 
 # ---------------------------------------------------------------------------
 # Tool configuration
