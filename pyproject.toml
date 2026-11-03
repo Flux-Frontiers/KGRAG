@@ -94,7 +94,7 @@ packages = [{ include = "kg_rag", from = "src" }]
 # ---------------------------------------------------------------------------
 [project]
 name = "kg-rag"
-version = "0.18.0"
+version = "0.18.1"
 description = "Orchestration layer for the KGRAG(tm) components."
 readme = "README.md"
 license = "Elastic-2.0"
@@ -171,7 +171,7 @@ diary = [
     "diary-kg>=0.101.0",
 ]
 filetree = [
-    "ftree-kg>=0.18.0",
+    "ftree-kg>=0.18.1",
 ]
 connectome = [
     # 0.3.1: the first release on PyPI. It carries 0.3.0's two changes the
@@ -240,7 +240,7 @@ all = [
     "connectome-kg>=0.9.0",
     "diary-kg>=0.101.0",
     "doc-kg>=0.29.0",
-    "ftree-kg>=0.18.0",
+    "ftree-kg>=0.18.1",
     "memory-kg>=0.13.0",
     "pycode-kg>=0.29.0",
     "vault-kg>=0.6.0",
@@ -361,7 +361,7 @@ pycode-kg = ">=0.29.0"
 doc-kg = ">=0.29.0"
 memory-kg = ">=0.13.0"
 diary-kg = ">=0.101.0"
-ftree-kg = ">=0.18.0"
+ftree-kg = ">=0.18.1"
 connectome-kg = ">=0.9.0"
 vault-kg = ">=0.6.0"
 # No extra declares these four, so there is no floor to keep in step with;
