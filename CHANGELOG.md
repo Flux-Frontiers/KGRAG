@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.1] - 2026-11-02
+
+### Security
+
+- **The `filetree` and `all` extras floor ftree-kg at 0.18.1**, which
+  floors Pillow at 13.0.0, so neither can resolve Pillow 12.3.0 and its 41
+  advisories. The other fleet floors stay where they are: their new
+  releases changed only extras kg-rag does not install.
+- **The lock moves to the 2026-11-02 fleet releases**: kgmodule-utils
+  0.29.2, pycode-kg 0.29.3, connectome-kg 0.10.1, ftree-kg 0.18.1, vault-kg
+  0.6.1, and in the dev group genealogy-kg 0.6.0, swift-kg 0.5.1 and
+  tscode-kg 0.8.1. The earlier lock refresh (#67) moved Pillow, Streamlit,
+  certifi, filelock, msgpack, setuptools and virtualenv to patched
+  releases, clearing the 57 open Dependabot alerts.
+
 ## [0.18.0] - 2026-10-26
 
 ### Changed
