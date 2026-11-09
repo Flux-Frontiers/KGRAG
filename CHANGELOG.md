@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.2] - 2026-11-09
+
 ### Changed
 
 - Fleet floors raised to the current releases: `kgmodule-utils` 0.30.0 (core

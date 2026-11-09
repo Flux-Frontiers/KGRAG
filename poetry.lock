@@ -1920,8 +1920,8 @@ firecrawl-anydoc = {version = ">=0.1.9", optional = true, markers = "extra == \"
 mcp = {version = ">=1.23.0,<2", optional = true, markers = "extra == \"mcp\""}
 numpy = {version = ">=1.24.0", optional = true, markers = "extra == \"semantic\" or extra == \"viz3d\""}
 pymupdf = [
-    {version = ">=2.0", optional = true, markers = "extra == \"ingest\""},
     {version = ">=2.0", optional = true, markers = "extra == \"pdf\""},
+    {version = ">=2.0", optional = true, markers = "extra == \"ingest\""},
 ]
 rich = {version = ">=13.0.0,<15.0.0", optional = true, markers = "extra == \"semantic\""}
 sentence-transformers = {version = ">=5.4.1", optional = true, markers = "extra == \"semantic\""}
