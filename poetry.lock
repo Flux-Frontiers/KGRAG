@@ -1025,7 +1025,6 @@ nvidia-cuda-cupti = {version = "==13.0.85.*", optional = true, markers = "(sys_p
 nvidia-cuda-nvrtc = {version = "==13.0.88.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and (extra == \"cublas\" or extra == \"nvrtc\")"}
 nvidia-cuda-runtime = {version = "==13.0.96.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cudart\""}
 nvidia-cufft = {version = "==12.0.0.61.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cufft\""}
-nvidia-cufile = {version = "==1.15.1.6.*", optional = true, markers = "sys_platform == \"linux\" and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cufile\""}
 nvidia-curand = {version = "==10.4.0.35.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"curand\""}
 nvidia-cusolver = {version = "==12.0.4.66.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and extra == \"cusolver\""}
 nvidia-cusparse = {version = "==12.6.3.3.*", optional = true, markers = "(sys_platform == \"linux\" or sys_platform == \"win32\") and (sys_platform == \"linux\" or platform_machine == \"x86_64\") and (platform_machine == \"aarch64\" or platform_machine == \"x86_64\") and (extra == \"cusolver\" or extra == \"cusparse\")"}
@@ -1278,14 +1277,14 @@ files = [
 
 [[package]]
 name = "doc-kg"
-version = "0.29.0"
+version = "0.30.0"
 description = "A tool to build a semantically searchable knowledge graph from markdown and text documents"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "doc_kg-0.29.0-py3-none-any.whl", hash = "sha256:f82a3309eb1f3a8fd2287f970195742d808b5df9c1496e96f927650c3b07e539"},
-    {file = "doc_kg-0.29.0.tar.gz", hash = "sha256:4155fae3276d6f7df0062f4dea7ca026f30bb2fca8e3cec43b36299815eb7753"},
+    {file = "doc_kg-0.30.0-py3-none-any.whl", hash = "sha256:6ec17b3cace5f823a6b10e2d9de26c36fecfc5d972cba8581c96de5ac128f3d1"},
+    {file = "doc_kg-0.30.0.tar.gz", hash = "sha256:7e8d5122496ba8743156f7fe3fd0ddb5d669856c1754ce934abe211143649c44"},
 ]
 markers = {main = "extra == \"kg\" or extra == \"all\" or extra == \"diary\""}
 
@@ -1905,14 +1904,14 @@ referencing = ">=0.31.0"
 
 [[package]]
 name = "kgmodule-utils"
-version = "0.29.2"
+version = "0.30.0"
 description = "Shared types, graph store, semantic index, and pipeline base for the KGModule SDK"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "kgmodule_utils-0.29.2-py3-none-any.whl", hash = "sha256:527808aafdcd0d16849dd3b2747d2c08cb99d1c1a5da340cf8f4521c383afe92"},
-    {file = "kgmodule_utils-0.29.2.tar.gz", hash = "sha256:9a3fe92ba3709556011cf7f9a32e7fb38f0fc54fd16122fa67f88fd97112a9fd"},
+    {file = "kgmodule_utils-0.30.0-py3-none-any.whl", hash = "sha256:3c691e6de21720feca3172ee0d0051157bc50e68b55a288a862857e6fdca8692"},
+    {file = "kgmodule_utils-0.30.0.tar.gz", hash = "sha256:58ba360412701e405d80e28533522ca8c13961b5cd544c18a3cd858da6259260"},
 ]
 
 [package.dependencies]
@@ -1921,8 +1920,8 @@ firecrawl-anydoc = {version = ">=0.1.9", optional = true, markers = "extra == \"
 mcp = {version = ">=1.23.0,<2", optional = true, markers = "extra == \"mcp\""}
 numpy = {version = ">=1.24.0", optional = true, markers = "extra == \"semantic\" or extra == \"viz3d\""}
 pymupdf = [
-    {version = ">=2.0", optional = true, markers = "extra == \"ingest\""},
     {version = ">=2.0", optional = true, markers = "extra == \"pdf\""},
+    {version = ">=2.0", optional = true, markers = "extra == \"ingest\""},
 ]
 rich = {version = ">=13.0.0,<15.0.0", optional = true, markers = "extra == \"semantic\""}
 sentence-transformers = {version = ">=5.4.1", optional = true, markers = "extra == \"semantic\""}
@@ -1936,8 +1935,8 @@ mcp = ["click (>=8.1.0)", "mcp (>=1.23.0,<2)"]
 pdf = ["pymupdf (>=2.0)"]
 semantic = ["numpy (>=1.24.0)", "rich (>=13.0.0,<15.0.0)", "sentence-transformers (>=5.4.1)", "sqlite-vec (==0.1.9)", "torch (>=2.5.1)", "transformers (>=5.5.0,<6)"]
 sqlite-vec = ["sqlite-vec (==0.1.9)"]
-synthesis = ["httpx (>=0.27.0)", "openai (>=1.30.0)", "pillow (>=13.0.0)"]
-synthesis-mflux = ["httpx (>=0.27.0)", "mflux (>=0.9.0)", "openai (>=1.30.0)", "pillow (>=13.0.0)"]
+synthesis = ["anthropic (>=2.0.0)", "httpx (>=0.27.0)", "openai (>=1.30.0)", "pillow (>=13.0.0)"]
+synthesis-mflux = ["anthropic (>=2.0.0)", "httpx (>=0.27.0)", "mflux (>=0.9.0)", "openai (>=1.30.0)", "pillow (>=13.0.0)"]
 viz = ["pyvis (>=0.3.2)"]
 viz3d = ["numpy (>=1.24.0)"]
 viz3d-qt = ["PyQt5 (>=5.15.0)", "numpy (>=1.24.0)", "pyvista (>=0.44.0)", "quiltwright (>=0.17.0)"]
@@ -2890,19 +2889,6 @@ files = [
 
 [package.dependencies]
 nvidia-nvjitlink = "*"
-
-[[package]]
-name = "nvidia-cufile"
-version = "1.15.1.6"
-description = "cuFile GPUDirect libraries"
-optional = false
-python-versions = ">=3"
-groups = ["main", "dev"]
-markers = "<empty>"
-files = [
-    {file = "nvidia_cufile-1.15.1.6-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:08a3ecefae5a01c7f5117351c64f17c7c62efa5fffdbe24fc7d298da19cd0b44"},
-    {file = "nvidia_cufile-1.15.1.6-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:bdc0deedc61f548bddf7733bdc216456c2fdb101d020e1ab4b88d232d5e2f6d1"},
-]
 
 [[package]]
 name = "nvidia-curand"
@@ -6717,4 +6703,4 @@ viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "709509c18afc7300e2c685c7cb8e3269b38f01b02d860c9f64f6d45b0a9e10fc"
+content-hash = "3f369c1c7d7827919c743ec7febe2c8cfa7e5a5997400a5f7b2f2f83652b90fb"
