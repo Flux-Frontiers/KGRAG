@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Fleet floors raised to the current releases: `kgmodule-utils` 0.30.0 (core
+  and `[ingest]`), `doc-kg` 0.30.0, `pycode-kg` 0.29.3, `vault-kg` 0.6.1 and
+  `connectome-kg` 0.10.1 in the extras, `all` and the dev group, and in the
+  dev group alone `genealogy-kg` 0.6.0, `swift-kg` 0.5.1 and `tscode-kg`
+  0.8.1. Lock refreshed.
+
 ## [0.18.1] - 2026-11-02
 
 ### Security
