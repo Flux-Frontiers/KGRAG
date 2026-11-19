@@ -53,6 +53,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   writes `src/logo.png`, which the pdoc task passes as `--logo`, and
   `assets/logo-md-256x256.png`, which `scripts/generate_wiki.py` reads. Both
   had been missing, so neither showed a logo.
+- **README images show on PyPI.** The README's images used repository-relative
+  paths, which PyPI cannot resolve, so its project page showed broken images.
+  They now use absolute `raw.githubusercontent.com` URLs pinned to `main`.
 
 ## [0.18.2] - 2026-11-09
 
