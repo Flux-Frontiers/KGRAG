@@ -31,6 +31,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **The line under the name is a tagline.** The mark and banner read
   "ONE QUERY, MANY GRAPHS" instead of the organization and repository name.
 
+### Removed
+
+- **`scripts/process_logo.py`**, the raster pipeline for the old brain
+  logo. `scripts/build_logo.py` draws the Art Techno logo and writes every
+  size, so nothing uses it, and it would overwrite the new files.
+
 ## [0.18.2] - 2026-11-09
 
 ### Changed
