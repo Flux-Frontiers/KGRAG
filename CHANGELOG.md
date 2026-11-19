@@ -28,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   sizes and the small badges now come from the icon. The README header shows
   the banner.
 
+- **The line under the name is a tagline.** The mark and banner read
+  "ONE QUERY, MANY GRAPHS" instead of the organization and repository name.
+
 ## [0.18.2] - 2026-11-09
 
 ### Changed
