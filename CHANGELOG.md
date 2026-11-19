@@ -18,6 +18,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `owl_svg()` returns the bare SVG for other front ends. The sweep stops under
   `prefers-reduced-motion`.
 
+### Changed
+
+- **The logo is redrawn in Art Techno.** The brain is replaced by the
+  federation fan: five member graphs, each a small chip, feed thin traces
+  into the pins of one large chip, and three spokes fan the answer out.
+  `scripts/build_logo.py` draws the square mark, a 64 px icon and a banner as
+  SVG and writes every PNG size under `assets/`; the 64 px and smaller logo
+  sizes and the small badges now come from the icon. The README header shows
+  the banner.
+
 ## [0.18.2] - 2026-11-09
 
 ### Changed
