@@ -28,6 +28,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   sizes and the small badges now come from the icon. The README header shows
   the banner.
 
+- **The README covers the current release.** It now lists every
+  implemented backend in the overview and adds `kgrag timeline`,
+  `synthesize`, `init`, `scan`, `health`, `export`/`import`, `viz2d` and the
+  dashboard's five tabs. MemoryKG is no longer "coming soon", and Related
+  projects gains GenealogyKG, ConnectomeKG, SwiftKG, TypeScriptKG, VaultKG
+  and kgmodule-utils. The text is plain ASCII. `docs/FLEET_VERSIONS.md` is
+  regenerated.
+
 - **The line under the name is a tagline.** The mark and banner read
   "ONE QUERY, MANY GRAPHS" instead of the organization and repository name.
 
