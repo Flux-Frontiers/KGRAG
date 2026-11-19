@@ -6,7 +6,9 @@ Cross-KG registry manager and federated query explorer with:
   • Sidebar: configure registry path, select KGs, set query parameters
   • Registry tab: view all registered KG instances with live stats
   • Query tab: federated semantic query across selected KGs
+  • Analysis tab: architecture analysis of a registered code KG
   • Snippets tab: cross-KG source snippet pack viewer
+  • Synthesize tab: an answer from a local model, grounded in KG context
 
 Run with:
     poetry run kgrag viz
@@ -294,7 +296,8 @@ def _tab_registry(cfg: dict) -> None:
     if not entries:
         st.info(
             "No KGs registered yet.\n\n"
-            "Run `kgrag init` in a project directory to register CodeKG, DocKG, or MetaKG instances."
+            "Run `kgrag init` in a repository to build and register its code and doc KGs, "
+            "`kgrag scan` to register KGs already built, or `kgrag register` for any other kind."
         )
         return
 

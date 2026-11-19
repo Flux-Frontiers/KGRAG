@@ -15,5 +15,9 @@ import click
 @click.group()
 @click.version_option(version=importlib.metadata.version("kg-rag"))
 def cli():
-    """KGRAG — cross-KG registry and federated query layer for CodeKG, DocKG, and MetaKG."""
+    """KGRAG -- cross-KG registry and federated query layer for every registered KG.
+
+    Code, documents, vaults, diaries, memory, metabolic pathways, genealogies,
+    connectomes and more, queried together.
+    """
     pass
