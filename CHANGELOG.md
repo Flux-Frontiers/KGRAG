@@ -44,6 +44,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`scripts/process_logo.py`**, the raster pipeline for the old brain
   logo. `scripts/build_logo.py` draws the Art Techno logo and writes every
   size, so nothing uses it, and it would overwrite the new files.
+- **`assets/gutenbergkg_logo.png`**, a copy of the old GutenbergKG brain
+  logo that nothing referenced.
+
+### Fixed
+
+- **The pdoc and wiki logos are written.** `scripts/build_logo.py` also
+  writes `src/logo.png`, which the pdoc task passes as `--logo`, and
+  `assets/logo-md-256x256.png`, which `scripts/generate_wiki.py` reads. Both
+  had been missing, so neither showed a logo.
 
 ## [0.18.2] - 2026-11-09
 

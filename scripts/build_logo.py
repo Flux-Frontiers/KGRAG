@@ -24,6 +24,9 @@ Writes, under ``assets/``:
   from the icon
 - ``badges/badge_200.png`` from the mark and ``badges/badge_{80,40,20}.png``
   from the icon
+- ``src/logo.png`` (read by the pdoc task) and
+  ``assets/logo-md-256x256.png`` (read by ``scripts/generate_wiki.py``)
+  from the mark
 """
 
 import importlib.util
@@ -260,6 +263,8 @@ def main() -> None:
         resized(mark_png, badges / "badge_200.png", 200)
         for px in (80, 40, 20):
             resized(icon_png, badges / f"badge_{px}.png", px)
+    resized(mark_png, ROOT / "src" / "logo.png", 512)
+    resized(mark_png, assets / "logo-md-256x256.png", 256)
 
 
 if __name__ == "__main__":
