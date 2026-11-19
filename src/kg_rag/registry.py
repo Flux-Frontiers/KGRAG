@@ -35,7 +35,7 @@ def default_registry_path() -> Path:
 
 
 class KGRegistry:
-    """System-wide registry of all KG instances (CodeKG, DocKG, MetaKG).
+    """System-wide registry of all KG instances, of every kind.
 
     Backed by a single SQLite file, typically at ``~/.kgrag/registry.sqlite``.
     Each sub-project can register its KG here so that KGRAG can orchestrate

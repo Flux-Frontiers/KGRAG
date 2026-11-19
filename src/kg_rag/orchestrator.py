@@ -4,7 +4,7 @@ orchestrator.py
 KGRAG — cross-KG query orchestrator.
 
 Loads adapters from the registry and executes federated queries across
-multiple KG instances (PyCodeKG, DocKG, MetaKG) simultaneously.
+every registered KG instance, of any kind, simultaneously.
 
 Author: Eric G. Suchanek, PhD
 License: Elastic 2.0

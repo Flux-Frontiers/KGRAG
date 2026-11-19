@@ -18,7 +18,7 @@ from kg_rag.viz import DisplayMode, Viewport
 
 
 class KGAdapter(ABC):
-    """Abstract base for KG adapters (CodeKG, DocKG, MetaKG).
+    """Abstract base for KG adapters, one subclass per KG kind.
 
     Each adapter wraps the specific KG library and exposes a uniform
     interface for querying, packing, and introspecting a single KG instance.
