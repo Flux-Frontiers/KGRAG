@@ -197,6 +197,25 @@ vault = [
 ingest = [
     "kgmodule-utils[ingest]>=0.30.0",
 ]
+# Image generation: `kgrag imagine` and the kg_imagine MCP tool. imagewright
+# is the image client (a server over HTTP, or OpenAI); kgmodule-utils'
+# [synthesis] brings the text-model client that rewrites retrieved passages
+# into an image prompt. 0.31.0 is the floor because the command passes
+# rewrite_for_image(system=...) and reads IMAGE_REWRITE_TECHNICAL_SYSTEM,
+# both new there.
+imagine = [
+    "imagewright>=0.1.0",
+    "kgmodule-utils[synthesis]>=0.31.0",
+]
+# FLUX.2 Klein in the calling process, with no image server (Apple Silicon).
+# mflux is named directly: listing imagewright[flux] here beside the plain
+# imagewright in [imagine] makes poetry's solver fail ("<empty>" constraint).
+# Keep in step with imagewright's own [flux] extra. Kept out of `all` because
+# it pulls a model stack only some machines can run.
+imagine-local = [
+    "imagewright>=0.1.0",
+    "mflux>=0.24.0",
+]
 viz = [
     "plotly>=5.14.0",
     "pyvis>=0.3.2",
@@ -221,7 +240,8 @@ viz3d = [
     "pyvistaqt>=0.11.0",
     "trame-vtk>=2.0.0",
 ]
-# `all` is every extra above, so `--all-extras` and `--extras all` agree.
+# `all` is every extra above except `imagine-local`, so `--extras all` is
+# `--all-extras` without the in-process FLUX stack.
 #
 # There is deliberately no extra for llama-cpp-python. `embed_backend = "llama"`
 # still works and LlamaCppEmbedder says how to install it, but the wheel does not
@@ -252,6 +272,13 @@ all = [
     # pymupdf4llm module, and pymupdf4llm 2.0 alone is an empty placeholder.
     "firecrawl-anydoc>=0.1.9",
     "pymupdf>=2.0",
+    # [imagine], with kgmodule-utils[synthesis]'s packages named directly for
+    # the same reason. Keep in step with kgmodule-utils' own [synthesis] extra.
+    "imagewright>=0.1.0",
+    "anthropic>=2.0.0",
+    "httpx>=0.27.0",
+    "openai>=1.30.0",
+    "pillow>=13.0.0",
     "plotly>=5.14.0",
     "pyvis>=0.3.2",
     "streamlit>=1.35.0",
