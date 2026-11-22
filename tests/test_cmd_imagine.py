@@ -15,15 +15,14 @@ answering ``/runsync``), in-process FLUX, and the desktop viewer.
 from __future__ import annotations
 
 import sys
-from importlib.machinery import ModuleSpec
-from types import ModuleType, SimpleNamespace
+from types import SimpleNamespace
 from typing import Any
 from unittest.mock import MagicMock
 
 import imagewright.discovery
 import pytest
 from click.testing import CliRunner, Result
-from conftest import _REWRITTEN, _closed_port_url
+from conftest import _REWRITTEN, _closed_port_url, _install_module
 from kg_utils.synthesis import IMAGE_REWRITE_SYSTEM, IMAGE_REWRITE_TECHNICAL_SYSTEM
 from PIL import Image
 
@@ -277,17 +276,6 @@ def test_discovered_server_is_used(image_server, monkeypatch, tmp_path):
     result = _invoke("a lighthouse", "--no-open")
     assert result.exit_code == 0, result.output
     assert image_server.posts[0]["prompt"] == "a lighthouse"
-
-
-def _install_module(monkeypatch: pytest.MonkeyPatch, dotted: str) -> ModuleType:
-    """Put a fake module and each of its parent packages into ``sys.modules``."""
-    parts = dotted.split(".")
-    for i in range(1, len(parts) + 1):
-        name = ".".join(parts[:i])
-        module = ModuleType(name)
-        module.__spec__ = ModuleSpec(name, None)
-        monkeypatch.setitem(sys.modules, name, module)
-    return module
 
 
 def test_in_process_flux_warns_on_stderr(monkeypatch, tmp_path):

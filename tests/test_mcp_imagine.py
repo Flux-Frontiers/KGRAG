@@ -19,12 +19,13 @@ import subprocess
 import sys
 from io import BytesIO
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import anyio
 import imagewright
 import pytest
-from conftest import _REWRITTEN
+from conftest import _REWRITTEN, _install_module
 from kg_utils.synthesis import IMAGE_REWRITE_SYSTEM, IMAGE_REWRITE_TECHNICAL_SYSTEM
 from mcp.shared.memory import create_connected_server_and_client_session
 from PIL import Image
@@ -160,6 +161,36 @@ def test_large_image_comes_back_under_the_limit(tmp_path, endpoint):
     content, _ = _image(tmp_path / "r.sqlite", {"prompt": "static"})
     assert len(base64.b64decode(content.data)) <= imagewright.MCP_IMAGE_MAX_BYTES
     assert content.mimeType == "image/jpeg"
+
+
+def test_in_process_model_loads_once_per_config(tmp_path, monkeypatch):
+    loads: list[str] = []
+
+    class Flux2Klein:
+        def __init__(self, model_path: str) -> None:
+            loads.append(model_path)
+
+        def generate_image(self, **kwargs: Any) -> Any:
+            return SimpleNamespace(image=Image.new("RGB", (kwargs["width"], kwargs["height"])))
+
+    klein = _install_module(monkeypatch, "mflux.models.flux2.variants.txt2img.flux2_klein")
+    klein.Flux2Klein = Flux2Klein  # type: ignore[attr-defined]
+    monkeypatch.setenv("IMAGE_BACKEND", "mflux-local")
+
+    async def main() -> list[Any]:
+        async with create_connected_server_and_client_session(
+            build_server(tmp_path / "r.sqlite")
+        ) as client:
+            first = await client.call_tool("kg_imagine", {"prompt": "a", "size": "8x6"})
+            second = await client.call_tool("kg_imagine", {"prompt": "b", "size": "8x6"})
+            monkeypatch.setenv("IMAGE_MODEL", "another-model")
+            third = await client.call_tool("kg_imagine", {"prompt": "c", "size": "8x6"})
+            return [first, second, third]
+
+    results = anyio.run(main)
+    assert [r.isError for r in results] == [False, False, False]
+    assert _png(results[0].content[0]).size == (8, 6)
+    assert len(loads) == 2 and loads[1] == "another-model"
 
 
 # ---------------------------------------------------------------------------

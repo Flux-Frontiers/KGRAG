@@ -14,9 +14,10 @@ import threading
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from importlib.machinery import ModuleSpec
 from io import BytesIO
 from pathlib import Path
-from types import SimpleNamespace
+from types import ModuleType, SimpleNamespace
 from typing import Any
 from unittest.mock import MagicMock, patch
 
@@ -314,3 +315,14 @@ def text_model() -> Iterator[MagicMock]:
             choices=[SimpleNamespace(message=SimpleNamespace(content=_REWRITTEN))]
         )
         yield create
+
+
+def _install_module(monkeypatch: pytest.MonkeyPatch, dotted: str) -> ModuleType:
+    """Put a fake module and each of its parent packages into ``sys.modules``."""
+    parts = dotted.split(".")
+    for i in range(1, len(parts) + 1):
+        name = ".".join(parts[:i])
+        module = ModuleType(name)
+        module.__spec__ = ModuleSpec(name, None)
+        monkeypatch.setitem(sys.modules, name, module)
+    return module

@@ -65,20 +65,11 @@ class Imagined:
     :param prompt: The final prompt: sent to the image model, or with
         ``render=False``, the one that would have been.
     :param image: The PIL image, or None with ``render=False``.
-    :param passages: The joined retrieved passages, or None without a query.
-    :param snippets: The retrieved snippets, best first.
-    :param kgs_queried: How many KGs retrieval queried.
-    :param backend: The image backend that rendered, ``"worker"`` for a LAN
-        worker, or None when nothing rendered.
     :param warnings: Warnings raised along the way, in order.
     """
 
     prompt: str
     image: Any = None
-    passages: str | None = None
-    snippets: list[CrossSnippet] = field(default_factory=list)
-    kgs_queried: int = 0
-    backend: str | None = None
     warnings: list[str] = field(default_factory=list)
 
 
@@ -193,7 +184,9 @@ def imagine(
 
     config = None
     if render and not client:
-        with warnings.catch_warnings(record=True) as caught:
+        # Under the lock: catch_warnings swaps process-wide state, and the
+        # MCP tool may run two calls on two threads.
+        with _render_lock, warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
             try:
                 config = imagewright.resolve_image_config(backend=backend, endpoint=endpoint)
@@ -209,13 +202,11 @@ def imagine(
         snippets, kgs_queried = retrieve(query)
         if not snippets:
             raise ImagineError(f"No passages found for {query!r} in the registered KGs.")
-        result.snippets, result.kgs_queried = snippets, kgs_queried
         say(f"Found {len(snippets)} passage(s) from {kgs_queried} KG(s).")
 
         text = passages_text(snippets)
         if prompt:
             text = f"{text}\n\nAdditional style/scene notes: {prompt}"
-        result.passages = text
         if not render:
             say(text)
 
@@ -245,7 +236,6 @@ def imagine(
         from PIL import Image
 
         result.image = Image.open(BytesIO(base64.b64decode(b64)))
-        result.backend = "worker"
         return result
 
     assert config is not None  # resolved above whenever there is no worker
@@ -259,5 +249,4 @@ def imagine(
         raise ImagineError(f"{exc}\n{KG_RAG_HINT}") from exc
     except Exception as exc:
         raise ImagineError(f"Image generation failed: {exc}") from exc
-    result.backend = config.backend.value
     return result
