@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`kgrag imagine`** generates an image from a prompt, or from passages
+  retrieved across the registered KGs, with no `gutenberg_kg` installed.
+  With `--query`, the passages (`-k`, `--kind`, `--corpus`) are rewritten
+  into an image prompt by the text model; a top hit from a `doc`,
+  `gutenberg` or `diary` KG uses the historical-prose prompt and any other
+  kind the technical one. A failed rewrite warns and falls back to the raw
+  passages; `--no-rewrite` skips it and `--context-only` prints the
+  passages and the rewritten prompt without rendering. The image renders on
+  an image server (`--endpoint`, `IMAGE_ENDPOINT`, or one found on
+  localhost:8090/8091), in process with FLUX (after a warning), with
+  OpenAI (`--backend openai`), or on a LAN worker (`--worker`, secret from
+  `HANDLER_SECRET`). The image client is `imagewright`; the extras
+  `kg-rag[imagine]` and `kg-rag[imagine-local]` arrive with this release.
+
 - **The KGRAG owl**, the system's voice in the Streamlit Synthesize tab
   (`kg_rag.owl`). An Art Techno owl avatar in a chip-package frame that shows
   what the pipeline is doing: idle (mint) while waiting, retrieving (copper,

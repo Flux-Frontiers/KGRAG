@@ -78,6 +78,7 @@ RAG embeds text chunks and retrieves by approximate similarity: no structure, no
 - **Multi-domain federation** -- Query code, docs, metabolic pathways, diary entries, and conversation history simultaneously
 - **Timeline queries** -- `kgrag timeline` orders federated hits by date instead of relevance, with `--from`/`--to` at any ISO precision; undated hits are counted, not dropped
 - **Answer synthesis** -- `kgrag synthesize` retrieves KG context and answers through a local Ollama server or any OpenAI-compatible one (omlx, LM Studio, vLLM)
+- **Image generation** -- `kgrag imagine` renders an image from a prompt, or from passages retrieved across the registered KGs and rewritten into a scene by a text model; it renders on an image server, in process with FLUX, on a LAN worker or with OpenAI
 - **Five-method adapter protocol** -- `is_available`, `query`, `pack`, `stats`, `analyze`; add a new domain by implementing five methods
 - **Unified registry** -- Persistent SQLite-backed storage of KG locations, metadata, corpora, and person records
 - **Corpus abstraction** -- Group KGs into named corpora for scoped federated queries
@@ -119,6 +120,10 @@ pip install 'kg-rag[vault]'
 # With multi-format document ingestion (PDF, Word, PowerPoint, Excel, EPUB, ...)
 pip install 'kg-rag[ingest]'
 
+# With image generation (kgrag imagine), and in-process FLUX on Apple Silicon
+pip install 'kg-rag[imagine]'
+pip install 'kg-rag[imagine-local]'
+
 # Every extra
 pip install 'kg-rag[all]'
 ```
@@ -145,6 +150,9 @@ kgrag pack "database connection setup" --out context.md
 # Answer a question from KG context with a local model (Ollama by default)
 kgrag synthesize "How does the registry store corpora?"
 
+# Picture what the KGs say about a topic
+kgrag imagine --query "the great fire of London"
+
 # Check every registered KG and corpus
 kgrag health
 
@@ -153,6 +161,64 @@ kgrag viz
 ```
 
 -> [Full installation guide](docs/INSTALLATION.md) | [Usage guide](docs/USAGE.md) | [CLI reference](docs/CLI_REFERENCE.md)
+
+---
+
+## Image generation
+
+`kgrag imagine` generates a PNG from a prompt, or from passages retrieved
+across the registered KGs. It needs no `gutenberg_kg`; the image client is
+the fleet's `imagewright` package.
+
+```bash
+# Render a prompt as given
+kgrag imagine "a lighthouse in a storm, oil painting"
+
+# Retrieve passages, rewrite them into a scene, render
+kgrag imagine --query "the great fire of London" -o fire.png
+
+# The same, scoped to a corpus, with PROMPT added as style notes
+kgrag imagine "woodcut" --query "the great fire" --corpus diaries
+
+# Show the passages and the rewritten prompt without rendering
+kgrag imagine --query "registry schema" --kind code --context-only
+```
+
+With `--query`, the top passages (`-k`, `--kind`, `--corpus`, as in
+`kgrag synthesize`) are joined, capped at 800 characters, and rewritten
+into an image prompt by the text model that `SYNTH_BACKEND`,
+`SYNTH_ENDPOINT` and `SYNTH_MODEL` configure. When the top passage comes
+from a `doc`, `gutenberg` or `diary` KG, the rewrite uses the prompt for
+historical prose; any other kind uses a prompt for code and technical
+records. If the rewrite fails, the command warns and renders the raw
+passages. `--no-rewrite` skips the text model, and `--context-only` prints
+the passages and the rewritten prompt and exits.
+
+The image renders in one of four ways. Without `--backend`, `--endpoint` or
+`--worker`, the command takes the first that applies, in this order:
+`IMAGE_BACKEND` and `IMAGE_ENDPOINT`, a server answering on
+`localhost:8090` or `localhost:8091`, then in-process FLUX (with a warning)
+if it is installed. If none applies, it prints the ways to fix that.
+
+| Way | How to choose it | Needs |
+|---|---|---|
+| An image server | `--endpoint URL`, `IMAGE_ENDPOINT`, or found on `localhost:8090`/`8091` | A server such as `imagewright serve` |
+| In-process FLUX | `--backend mflux-local`, or no server found | `kg-rag[imagine-local]`, Apple Silicon; the first run downloads the weights |
+| A LAN worker | `--worker URL` | A worker that serves `op: imagine`; its secret in `HANDLER_SECRET` |
+| OpenAI | `--backend openai` | `OPENAI_API_KEY`; the prompt leaves the machine and the call is billed |
+
+`--worker` sends both the rewrite and the render to the worker and cannot
+be combined with `--backend` or `--endpoint`. `--size WxH` (default
+`1536x1024`), `--seed` and `--steps` set the render; OpenAI ignores
+`--size`, and the worker takes no seed, so `--seed` is ignored there with a
+warning. The image is written to `-o PATH`, or to
+`imagine_YYYYMMDD_HHMMSS.png` in the current directory, and opened in the
+default viewer unless `--no-open` is given.
+
+Two extras arrive with this release: `kg-rag[imagine]` installs
+`imagewright` and the text-model client, and `kg-rag[imagine-local]` adds
+in-process FLUX. Without `imagewright`, `kgrag imagine` stops with a line
+naming `pip install "kg-rag[imagine]"`; the rest of `kgrag` is unaffected.
 
 ---
 

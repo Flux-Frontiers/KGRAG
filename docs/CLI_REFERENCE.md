@@ -243,6 +243,17 @@ kgrag pack "KGRAG architecture" --fmt md
 kgrag analyze
 ```
 
+**Image generation** (needs `kg-rag[imagine]`):
+```bash
+kgrag imagine "a lighthouse in a storm"           # render a prompt as given
+kgrag imagine --query "great fire" -o fire.png    # retrieve, rewrite, render
+kgrag imagine --query "great fire" --corpus diaries --context-only
+kgrag imagine --query "registry schema" --kind code --no-rewrite
+kgrag imagine --query "great fire" --worker http://HOST:PORT   # HANDLER_SECRET
+# Other options: -k N, --size WxH, --seed N, --steps N,
+#   --backend mflux-serve|mflux-local|openai, --endpoint URL, --open/--no-open
+```
+
 **Corpus management:**
 ```bash
 kgrag corpus list
