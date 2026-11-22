@@ -87,6 +87,7 @@
 | `kgrag query <text>` | Cross-KG semantic search |
 | `kgrag pack <text>` | Extract source snippets to file or stdout |
 | `kgrag analyze` | Cross-KG statistics and coverage metrics |
+| `kgrag imagine` | Image from a prompt or from retrieved passages (`kg-rag[imagine]`) |
 
 ### Corpus Management
 | Command | Description |
