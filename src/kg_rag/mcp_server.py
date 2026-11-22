@@ -18,6 +18,7 @@ same names and meanings as on a single KG's server (see
     person_list / person_info / person_create / person_delete
     person_add / person_remove / person_update
     person_query / person_pack          — the same for person corpora
+    kg_imagine(prompt, query, ...)      — an image from a prompt or retrieved passages
 
 The tool list is generated from the tools: ``kgrag mcp --manifest`` prints it
 as JSON without opening the registry. ``kgrag-mcp`` is the same command.
@@ -31,14 +32,19 @@ Usage::
 
 from __future__ import annotations
 
+import asyncio
+import re
 from pathlib import Path
 from typing import Any
 
 from kg_utils.mcp import Context, KGServer, kg_from, make_server
+from kg_utils.validation import MAX_K, bounded_int, require_query
+from mcp.server.fastmcp import Image
 
 from kg_rag import __version__
 from kg_rag.federation import Federation
-from kg_rag.primitives import CorpusEntry, KGKind, PersonCorpusEntry
+from kg_rag.imagine import CONTEXT_LINES, imagine
+from kg_rag.primitives import CorpusEntry, CrossSnippet, KGKind, PersonCorpusEntry
 
 PREAMBLE = (
     "KGRAG federates every knowledge graph in a registry: code, documents, diaries, "
@@ -51,7 +57,8 @@ PREAMBLE = (
     "kinds=['code'] or ['doc', 'diary']\n"
     "- **Search one group**: corpus_query / person_query\n"
     "- **Walk from a result**: neighbors(id) inside its own KG; hop=1 on query brings "
-    "each hit's neighbourhood along"
+    "each hit's neighbourhood along\n"
+    "- **Picture it**: kg_imagine(query=...) renders an image from the passages found"
 )
 
 _KINDS = [k.value for k in KGKind]
@@ -570,6 +577,109 @@ def person_pack(person: str, q: str, k: int = 8, context: int = 5, *, ctx: Conte
         raise ValueError(str(exc).strip("'\"")) from None
 
 
+# ---------------------------------------------------------------------------
+# Images
+# ---------------------------------------------------------------------------
+
+#: Bounds on kg_imagine's arguments, as on imagewright's own ``generate`` tool.
+MAX_PROMPT_CHARS = 4000
+MAX_STEPS = 50
+
+
+async def kg_imagine(
+    prompt: str | None = None,
+    query: str | None = None,
+    corpus: str | None = None,
+    kinds: list[str] | None = None,
+    k: int = 8,
+    size: str = "1536x1024",
+    seed: int | None = None,
+    steps: int | None = None,
+    *,
+    ctx: Context,
+) -> Image:
+    """
+    Generate an image from a prompt, or from passages retrieved across the registered KGs.
+
+    With only a prompt, the prompt is rendered as given. With a query, the
+    top passages (from every KG, the kinds named, or one corpus) are
+    rewritten into a scene description by the text model (SYNTH_* settings)
+    and rendered; a prompt given with a query is added as style and scene
+    notes. A top passage from a doc, gutenberg or diary KG is rewritten as
+    historical prose, any other kind as a technical subject. The backend is
+    IMAGE_BACKEND / IMAGE_ENDPOINT, else an image server on localhost:8090 or
+    8091, else FLUX in process. Needs kg-rag[imagine].
+
+    :param prompt: Description of the image, or with query, style and scene notes
+        (at most 4000 characters).
+    :param query: Retrieve passages for this query and picture them (at most 2000
+        characters).
+    :param corpus: Retrieve from this corpus only (name or UUID).
+    :param kinds: Retrieve from KGs of these kinds only, e.g. ["doc", "diary"].
+    :param k: Passages per KG, and most passages used (1-100, default 8).
+    :param size: Output size "WIDTHxHEIGHT" (default 1536x1024); OpenAI picks its
+        nearest size.
+    :param seed: Integer seed for a reproducible image; random when omitted.
+    :param steps: Inference steps, 1-50: 4 is fast, 25 is higher quality. Default:
+        IMAGE_STEPS, else 4.
+    """
+    if prompt is None and query is None:
+        raise ValueError("give a prompt, a query, or both")
+    if prompt is not None and not prompt.strip():
+        raise ValueError("prompt is empty")
+    if prompt is not None and len(prompt) > MAX_PROMPT_CHARS:
+        raise ValueError(f"prompt is longer than {MAX_PROMPT_CHARS} characters")
+    if query is None and (corpus or kinds):
+        raise ValueError("corpus and kinds need a query")
+    k = bounded_int("k", k, 1, MAX_K)
+    if not re.fullmatch(r"[1-9]\d*x[1-9]\d*", size.lower()):
+        raise ValueError(f"size {size!r} is not WIDTHxHEIGHT, e.g. 1536x1024")
+    if steps is not None:
+        steps = bounded_int("steps", steps, 1, MAX_STEPS)
+    try:
+        import imagewright  # noqa: F401  # pylint: disable=import-outside-toplevel,unused-import
+        import kg_utils.synthesis  # noqa: F401  # pylint: disable=import-outside-toplevel,unused-import
+    except ImportError:
+        raise ValueError(
+            'kg_imagine needs the imagine extra: pip install "kg-rag[imagine]"'
+        ) from None
+
+    # Retrieval stays on this thread, like the other tools; only the model
+    # work (backend probe, rewrite, render) goes to a worker thread.
+    retrieved: tuple[list[CrossSnippet], int] = ([], 0)
+    if query is not None:
+        query = require_query(query)
+        kgrag = kg_from(ctx).kgrag
+        kind_list = [KGKind.from_str(kd) for kd in kinds] if kinds else None
+        if corpus:
+            try:
+                found = kgrag.pack_corpus(corpus, query, k=k, context=CONTEXT_LINES)
+            except KeyError as exc:
+                raise ValueError(str(exc).strip("'\"")) from None
+            snippets = [s for s in found.snippets if not kind_list or s.kg_kind in kind_list]
+        else:
+            found = kgrag.pack(query, k=k, context=CONTEXT_LINES, kinds=kind_list)
+            snippets = found.snippets
+        retrieved = (snippets[:k], found.kgs_queried)
+
+    result = await asyncio.to_thread(
+        imagine,
+        prompt,
+        query=query,
+        retrieve=lambda _query: retrieved,
+        size=size,
+        seed=seed,
+        steps=steps,
+    )
+    for message in result.warnings:
+        await ctx.warning(message)
+    await ctx.info(f"Prompt: {result.prompt}")
+
+    from imagewright import as_mcp_image  # pylint: disable=import-outside-toplevel
+
+    return await asyncio.to_thread(as_mcp_image, result.image)
+
+
 EXTRA_TOOLS = (
     list_kgs,
     kg_info,
@@ -590,6 +700,7 @@ EXTRA_TOOLS = (
     person_update,
     person_query,
     person_pack,
+    kg_imagine,
 )
 
 

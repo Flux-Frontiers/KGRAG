@@ -72,6 +72,7 @@ _EXTRAS = [
     "person_update",
     "person_query",
     "person_pack",
+    "kg_imagine",
 ]
 
 

@@ -28,6 +28,7 @@ _GROUPS = (
     ("Registry", lambda n, _c: n in ("list_kgs", "kg_info")),
     ("Corpora", lambda n, _c: n.startswith("corpus_")),
     ("Person corpora", lambda n, _c: n.startswith("person_")),
+    ("Images", lambda n, _c: n == "kg_imagine"),
 )
 
 

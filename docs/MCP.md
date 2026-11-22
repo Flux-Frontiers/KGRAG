@@ -223,7 +223,7 @@ All tools that accept a `kind` filter or `kinds` array support:
 
 <!-- BEGIN GENERATED TOOL REFERENCE (scripts/gen_mcp_reference.py) -->
 
-The server registers **24 tools**. Required parameters are shown in **bold**; the rest show their defaults. Generated from `kgrag mcp --manifest`.
+The server registers **25 tools**. Required parameters are shown in **bold**; the rest show their defaults. Generated from `kgrag mcp --manifest`.
 
 ### Canonical tools -- the same five on every fleet server
 
@@ -424,6 +424,30 @@ Federated snippet pack within one person corpus, as Markdown.
 - `q` -- Natural-language query.
 - `k` -- Snippets per KG (default 8).
 - `context` -- Lines of context around code snippets (default 5).
+
+### Images
+
+#### `kg_imagine`(prompt, query, corpus, kinds, k=8, size='1536x1024', seed, steps)
+
+Generate an image from a prompt, or from passages retrieved across the registered KGs.
+
+With only a prompt, the prompt is rendered as given. With a query, the
+top passages (from every KG, the kinds named, or one corpus) are
+rewritten into a scene description by the text model (SYNTH_* settings)
+and rendered; a prompt given with a query is added as style and scene
+notes. A top passage from a doc, gutenberg or diary KG is rewritten as
+historical prose, any other kind as a technical subject. The backend is
+IMAGE_BACKEND / IMAGE_ENDPOINT, else an image server on localhost:8090 or
+8091, else FLUX in process. Needs kg-rag[imagine].
+
+- `prompt` -- Description of the image, or with query, style and scene notes (at most 4000 characters).
+- `query` -- Retrieve passages for this query and picture them (at most 2000 characters).
+- `corpus` -- Retrieve from this corpus only (name or UUID).
+- `kinds` -- Retrieve from KGs of these kinds only, e.g. ["doc", "diary"].
+- `k` -- Passages per KG, and most passages used (1-100, default 8).
+- `size` -- Output size "WIDTHxHEIGHT" (default 1536x1024); OpenAI picks its nearest size.
+- `seed` -- Integer seed for a reproducible image; random when omitted.
+- `steps` -- Inference steps, 1-50: 4 is fast, 25 is higher quality. Default: IMAGE_STEPS, else 4.
 
 <!-- END GENERATED TOOL REFERENCE -->
 
