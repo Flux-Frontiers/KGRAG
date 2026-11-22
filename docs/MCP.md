@@ -13,9 +13,11 @@ KGRAG ships a built-in MCP server (`kgrag mcp`) that exposes a **federated cross
 Once configured, the agent gains the fleet's five canonical tools -- `stats`,
 `query`, `pack`, `get_node`, `neighbors`, the same names as on every KG server --
 answered across every registered KG, plus the federation's own: `list_kgs` and
-`kg_info` for the registry, and the `corpus_*` and `person_*` tools for named
-groups of KGs. The full, generated list is in the [Tool Reference](#tool-reference)
-below; `kgrag mcp --manifest` prints it live.
+`kg_info` for the registry, the `corpus_*` and `person_*` tools for named
+groups of KGs, and `kg_imagine`, which renders an image from a prompt or from
+retrieved passages (it needs `kg-rag[imagine]`). The full, generated list is in
+the [Tool Reference](#tool-reference) below; `kgrag mcp --manifest` prints it
+live.
 
 **Federated node ids.** A node id is unique within its KG, not across KGs, so
 `query` returns each hit with an `id` of the form `<kg>::<node id>`. Pass it to
@@ -556,7 +558,7 @@ kg_info(name="myrepo-code")   → full paths and timestamps
 
 | Concern | Answer |
 |---|---|
-| What does the MCP server expose? | 24 tools: the five canonical (`stats`, `query`, `pack`, `get_node`, `neighbors`) across every registered KG, `list_kgs` and `kg_info`, 8 corpus tools and 9 person-corpus tools. `kgrag mcp --manifest` lists them. |
+| What does the MCP server expose? | 25 tools: the five canonical (`stats`, `query`, `pack`, `get_node`, `neighbors`) across every registered KG, `list_kgs` and `kg_info`, 8 corpus tools, 9 person-corpus tools and `kg_imagine`. `kgrag mcp --manifest` lists them. |
 | What must exist before starting? | At least one KG registered via `kgrag register`; KG must be built |
 | How do I start the server? | `kgrag mcp` — spawned automatically by the MCP client |
 | Which tool should I call first? | `stats()` for orientation |

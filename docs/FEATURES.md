@@ -128,6 +128,9 @@ Exposes **30+ tools** to AI agents via Model Context Protocol (stdio transport):
 `person_delete`, `person_add`, `person_remove`,
 `person_update`, `person_query`, `person_pack`
 
+**Image tool:** `kg_imagine`, an image from a prompt or from retrieved
+passages (needs `kg-rag[imagine]`)
+
 Compatible with **Claude Code**, **Claude Desktop**, **Cursor**, **GitHub Copilot (Kilo Code / Cline)**.
 
 ---

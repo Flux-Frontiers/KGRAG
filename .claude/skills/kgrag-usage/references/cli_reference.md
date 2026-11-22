@@ -15,6 +15,7 @@
 | `kgrag analyze` | Cross-KG statistics |
 | `kgrag info` | Detailed info about a KG |
 | `kgrag mcp` | Launch MCP server |
+| `kgrag imagine` | Image from a prompt or retrieved passages (`kg-rag[imagine]`) |
 
 ## Detailed Command Options
 
