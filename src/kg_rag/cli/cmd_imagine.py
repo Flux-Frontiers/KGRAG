@@ -19,12 +19,9 @@ Usage::
 
 from __future__ import annotations
 
-import base64
 import os
 import re
 import time
-import warnings
-from io import BytesIO
 from pathlib import Path
 
 import click
@@ -32,21 +29,10 @@ import click
 from kg_rag.cli.group import cli
 from kg_rag.cli.options import k_option, kind_option, registry_option
 from kg_rag.cli.retrieval import retrieve_snippets
+from kg_rag.imagine import CONTEXT_LINES, ImagineError
+from kg_rag.imagine import imagine as run_imagine
 from kg_rag.orchestrator import KGRAG
 from kg_rag.primitives import CrossSnippet, KGKind
-
-#: KG kinds whose passages are prose; a top hit from one of these is rewritten
-#: with the historical-prose prompt, any other kind with the technical one.
-PROSE_KINDS = frozenset({KGKind.DOC, KGKind.GUTENBERG, KGKind.DIARY})
-
-#: Lines of surrounding context per retrieved snippet.
-_CONTEXT_LINES = 5
-
-#: Most characters of joined passages sent to the rewrite, or to the image
-#: model when the rewrite is skipped or fails.
-_MAX_PASSAGE_CHARS = 800
-
-_INSTALL_HINT = 'kgrag imagine needs the imagine extra: pip install "kg-rag[imagine]"'
 
 
 def _check_size(ctx: click.Context, param: click.Parameter, value: str | None) -> str | None:
@@ -61,28 +47,6 @@ def _check_size(ctx: click.Context, param: click.Parameter, value: str | None) -
     if value is not None and not re.fullmatch(r"[1-9]\d*x[1-9]\d*", value.lower()):
         raise click.BadParameter(f"expected WIDTHxHEIGHT, e.g. 1536x1024; got {value!r}")
     return value
-
-
-def passages_text(snippets: list[CrossSnippet]) -> str:
-    """Join retrieved passages into one text, capped at ``_MAX_PASSAGE_CHARS``.
-
-    :param snippets: Retrieved snippets, best first.
-    :return: The passages, separated by blank lines.
-    """
-    joined = "\n\n".join(s.content.strip() for s in snippets if s.content.strip())
-    return joined[:_MAX_PASSAGE_CHARS]
-
-
-def rewrite_system(snippets: list[CrossSnippet]) -> str | None:
-    """Choose the rewrite system prompt from the top-ranked hit's KG kind.
-
-    :param snippets: Retrieved snippets, best first (non-empty).
-    :return: None (the default historical-prose prompt) when the top hit is
-        from a kind in :data:`PROSE_KINDS`, else ``IMAGE_REWRITE_TECHNICAL_SYSTEM``.
-    """
-    from kg_utils.synthesis import IMAGE_REWRITE_TECHNICAL_SYSTEM
-
-    return None if snippets[0].kg_kind in PROSE_KINDS else IMAGE_REWRITE_TECHNICAL_SYSTEM
 
 
 @cli.command("imagine")
@@ -205,93 +169,53 @@ def imagine(
         raise click.UsageError("--worker cannot be combined with --backend or --endpoint.")
     if (context_only or no_rewrite) and query is None:
         raise click.UsageError("--context-only and --no-rewrite need --query.")
-
-    try:
-        import imagewright
-        from kg_utils.synthesis import text_synthesizer_from_env
-        from kg_utils.worker import WorkerClient
-    except ImportError as exc:
-        raise click.ClickException(_INSTALL_HINT) from exc
-
-    client = WorkerClient(worker, os.environ.get("HANDLER_SECRET", "")) if worker else None
-    if client and seed is not None:
+    if worker and seed is not None:
         click.echo("Warning: --seed is ignored with --worker.", err=True)
 
-    # Resolve the backend before retrieval, so "nothing available" fails fast.
-    config = None
-    if not (client or context_only):
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter("always")
-            try:
-                config = imagewright.resolve_image_config(backend=backend, endpoint=endpoint)
-            except (imagewright.NoImageBackendError, ValueError) as exc:
-                raise click.ClickException(str(exc)) from exc
-        for w in caught:
-            click.echo(f"Warning: {w.message}", err=True)
+    reg_path = Path(registry).resolve() if registry else None
 
-    final_prompt = prompt
-    if query is not None:
-        reg_path = Path(registry).resolve() if registry else None
+    def retrieve(query_text: str) -> tuple[list[CrossSnippet], int]:
         with KGRAG(registry_path=reg_path) as kg:
-            snippets, kgs_queried = retrieve_snippets(
-                kg,
-                query,
-                k=k,
-                kinds=[KGKind.from_str(kind)] if kind else None,
-                corpus=corpus,
-                reg_path=reg_path,
-                context_lines=_CONTEXT_LINES,
-                max_context=k,
-            )
-        if not snippets:
-            raise click.ClickException(f"No passages found for {query!r} in the registered KGs.")
-        click.echo(f"Found {len(snippets)} passage(s) from {kgs_queried} KG(s).")
-
-        text = passages_text(snippets)
-        if prompt:
-            text = f"{text}\n\nAdditional style/scene notes: {prompt}"
-        if context_only:
-            click.echo(text)
-
-        final_prompt = text
-        if not no_rewrite:
-            system = rewrite_system(snippets)
-            if client:
-                final_prompt, error = client.rewrite(text, system=system or "")
-            else:
-                final_prompt, error = text_synthesizer_from_env().rewrite_for_image(
-                    text, system=system
+            try:
+                return retrieve_snippets(
+                    kg,
+                    query_text,
+                    k=k,
+                    kinds=[KGKind.from_str(kind)] if kind else None,
+                    corpus=corpus,
+                    reg_path=reg_path,
+                    context_lines=CONTEXT_LINES,
+                    max_context=k,
                 )
-            if error:
-                click.echo(f"Warning: rewrite failed ({error}); using the raw passages.", err=True)
-                final_prompt = text
-            elif context_only:
-                click.echo(f"\nRewritten prompt:\n{final_prompt}")
-        if context_only:
-            return
+            except SystemExit:
+                # An empty corpus: retrieve_snippets has said so and exits 0,
+                # which suits synthesize; an image command with no image fails.
+                return [], 0
 
-    click.echo(f"Prompt: {final_prompt}")
-    if client:
-        b64, _, _, error = client.imagine(final_prompt, steps=steps, size=size)
-        if error or not b64:
-            raise click.ClickException(f"Worker {worker} failed: {error or 'no image returned'}")
-        from PIL import Image
-
-        image = Image.open(BytesIO(base64.b64decode(b64)))
-    else:
-        assert config is not None  # resolved above whenever there is no worker
-        click.echo(f"Rendering with {config.backend.value}...")
-        try:
-            image = imagewright.ImageSynthesizer(config).generate(
-                final_prompt, seed=seed, steps=steps, size=size
-            )
-        except imagewright.MissingExtraError as exc:
-            raise click.ClickException(str(exc)) from exc
-        except Exception as exc:
-            raise click.ClickException(f"Image generation failed: {exc}") from exc
+    try:
+        result = run_imagine(
+            prompt,
+            query=query,
+            retrieve=retrieve,
+            rewrite=not no_rewrite,
+            render=not context_only,
+            size=size,
+            seed=seed,
+            steps=steps,
+            backend=backend,
+            endpoint=endpoint,
+            worker=worker,
+            worker_secret=os.environ.get("HANDLER_SECRET", ""),
+            notify=click.echo,
+            warn=lambda message: click.echo(f"Warning: {message}", err=True),
+        )
+    except ImagineError as exc:
+        raise click.ClickException(str(exc)) from exc
+    if context_only:
+        return
 
     out_path = output or Path(time.strftime("imagine_%Y%m%d_%H%M%S.png"))
-    image.save(out_path, format="PNG")
+    result.image.save(out_path, format="PNG")
     click.echo(f"Saved {out_path}")
     if open_image:
         click.launch(str(out_path))
