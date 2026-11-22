@@ -32,6 +32,7 @@ from rich.rule import Rule
 
 from kg_rag.cli.group import cli
 from kg_rag.cli.options import k_option, kind_option, registry_option
+from kg_rag.cli.retrieval import retrieve_snippets
 from kg_rag.orchestrator import KGRAG
 from kg_rag.primitives import KGKind
 
@@ -326,48 +327,16 @@ def synthesize(
     console.print(f"[dim]Retrieving context for:[/dim] [bold]{query_text}[/bold]")
 
     with KGRAG(registry_path=reg_path) as kg:
-        if corpus:
-            # Scoped corpus query — use the corpus registry
-            from kg_rag.corpus_registry import (  # pylint: disable=import-outside-toplevel
-                CorpusRegistry,
-            )
-            from kg_rag.registry import (  # pylint: disable=import-outside-toplevel
-                KGRegistry,
-            )
-
-            with KGRegistry(db_path=reg_path) as kreg, CorpusRegistry(db_path=reg_path) as creg:
-                corpus_entry = creg.get(corpus)
-                if corpus_entry is None:
-                    raise click.ClickException(f"Corpus not found: {corpus!r}")
-                kg_ids = corpus_entry.kg_ids
-                entries = [kreg.get(gid) for gid in kg_ids]
-                entries = [e for e in entries if e is not None]
-
-            if not entries:
-                console.print(f"[yellow]Corpus {corpus!r} has no registered KGs.[/yellow]")
-                sys.exit(0)
-
-            from kg_rag.adapters import (  # pylint: disable=import-outside-toplevel
-                make_adapter,
-            )
-            from kg_rag.primitives import (  # pylint: disable=import-outside-toplevel
-                CrossSnippet,
-            )
-
-            snippets: list[CrossSnippet] = []
-            for entry in entries:
-                if kinds and entry.kind not in kinds:
-                    continue
-                adapter = make_adapter(entry)
-                if adapter.is_available():
-                    snippets.extend(adapter.pack(query_text, k=k, context=context_lines))
-            snippets.sort(key=lambda s: s.score, reverse=True)
-            snippets = snippets[:max_context]
-            kgs_queried = len(entries)
-        else:
-            pack_result = kg.pack(query_text, k=k, context=context_lines, kinds=kinds)
-            snippets = pack_result.snippets[:max_context]
-            kgs_queried = pack_result.kgs_queried
+        snippets, kgs_queried = retrieve_snippets(
+            kg,
+            query_text,
+            k=k,
+            kinds=kinds,
+            corpus=corpus,
+            reg_path=reg_path,
+            context_lines=context_lines,
+            max_context=max_context,
+        )
 
     if not snippets:
         console.print("[yellow]No relevant content found in registered KGs.[/yellow]")

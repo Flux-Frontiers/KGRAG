@@ -20,6 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`kgrag synthesize` retrieval is a shared helper.** The registry, corpus,
+  `--kind` and `-k` retrieval moves from `cmd_synthesize.py` into
+  `kg_rag.cli.retrieval.retrieve_snippets`, so other commands can reuse it.
+  `synthesize` behaves as before.
+
 - **The logo is redrawn in Art Techno.** The brain is replaced by the
   federation fan: five member graphs, each a small chip, feed thin traces
   into the pins of one large chip, and three spokes fan the answer out.
