@@ -1,6 +1,6 @@
 [![Python](https://img.shields.io/badge/python-3.12%20%7C%203.13-blue.svg)](https://www.python.org/)
 [![License: Elastic-2.0](https://img.shields.io/badge/License-Elastic%202.0-blue.svg)](https://www.elastic.co/licensing/elastic-license)
-[![Version](https://img.shields.io/badge/version-0.18.2-blue.svg)](https://github.com/Flux-Frontiers/KGRAG/releases)
+[![Version](https://img.shields.io/badge/version-0.19.0-blue.svg)](https://github.com/Flux-Frontiers/KGRAG/releases)
 [![CI](https://github.com/Flux-Frontiers/KGRAG/actions/workflows/ci.yml/badge.svg)](https://github.com/Flux-Frontiers/KGRAG/actions/workflows/ci.yml)
 [![Poetry](https://img.shields.io/endpoint?url=https://python-poetry.org/badge/v0.json)](https://python-poetry.org/)
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.20018524-blue.svg)](https://doi.org/10.5281/zenodo.20018524)
@@ -29,6 +29,30 @@ KGRAG treats **derived structure as ground truth** and uses **semantic embedding
 RAG embeds text chunks and retrieves by approximate similarity: no structure, no provenance. KG-RAG (GraphRAG, LlamaIndex KG) uses an LLM to extract entities and edges from text: the graph is inferred, inheriting the extractor's hallucinations. KGRAG derives its graphs from **formal source structure** -- ASTs for code, parse trees for prose, reaction schemas for biochemistry -- with no language model in the pipeline. The graph is correct by construction. Embeddings are disposable; the graph is not. The retrieval layer **cannot** hallucinate.
 
 -> [Technical paper](articles/kgrag.pdf) | [Manifesto](docs/MANIFESTO.md)
+
+---
+
+## What's new
+
+**0.19.0 (2026-11-22)**
+
+- **Images from your knowledge graphs.** `kgrag imagine` renders an image
+  from a prompt, or from passages retrieved across the registered KGs and
+  rewritten into a scene by a text model. Prose hits (documents, books,
+  diaries) and non-prose hits (code, memory, connectomes) get different
+  rewrite prompts. See [Image generation](#image-generation).
+- **Four ways to render**, through
+  [imagewright](https://github.com/Flux-Frontiers/imagewright): an image
+  server, FLUX.2 Klein in process with no server at all, a LAN worker, or
+  OpenAI. `pip install "kg-rag[imagine]"`; add `imagine-local` for in-process
+  FLUX on Apple Silicon.
+- **`kg_imagine` MCP tool.** The same flow for an agent: it returns the image
+  to the MCP client. `kgrag-mcp` now serves 25 tools.
+- **The KGRAG owl** shows what the pipeline is doing in the dashboard's
+  Synthesize tab: waiting, retrieving, answering, done.
+- **A new logo**, the federation fan, in the fleet's Art Techno style.
+
+Earlier releases: [CHANGELOG.md](https://github.com/Flux-Frontiers/KGRAG/blob/main/CHANGELOG.md).
 
 ---
 
@@ -327,13 +351,13 @@ If you use KGRAG in your research or project, please cite it:
 
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.20018524-blue.svg)](https://doi.org/10.5281/zenodo.20018524)
 
-> Suchanek, E. G. (2026). *KGRAG: Knowledge Compiler and Federated Retrieval Layer* (Version 0.18.2) [Software]. Flux-Frontiers. https://doi.org/10.5281/zenodo.20018524
+> Suchanek, E. G. (2026). *KGRAG: Knowledge Compiler and Federated Retrieval Layer* (Version 0.19.0) [Software]. Flux-Frontiers. https://doi.org/10.5281/zenodo.20018524
 
 ```bibtex
 @software{suchanek_kgrag,
   author    = {Suchanek, Eric G.},
   title     = {{KGRAG}: Knowledge Compiler and Federated Retrieval Layer},
-  version   = {0.18.2},
+  version   = {0.19.0},
   year      = {2026},
   publisher = {Flux-Frontiers},
   url       = {https://github.com/Flux-Frontiers/KGRAG},

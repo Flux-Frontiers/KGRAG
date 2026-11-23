@@ -2,19 +2,19 @@
 
 [[package]]
 name = "agent-kg"
-version = "0.14.0"
+version = "0.14.1"
 description = "Conversational memory as a knowledge graph"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["dev"]
 files = [
-    {file = "agent_kg-0.14.0-py3-none-any.whl", hash = "sha256:22652eb4e64a913e77345e5d9b9db9dbe098a9a328e0533e59a83d8174fb04fb"},
-    {file = "agent_kg-0.14.0.tar.gz", hash = "sha256:dd9a4c2fc2528c9d13697cdb209c38ba09e085450dab6a708076b242252e0e73"},
+    {file = "agent_kg-0.14.1-py3-none-any.whl", hash = "sha256:75ec9db9aee77974bdfbc96793fa5964b03f5219b5d414f16c9c744c1252a214"},
+    {file = "agent_kg-0.14.1.tar.gz", hash = "sha256:5d3444b5c3920fc79a11c305735bc7a2a1c417eee82bd8e8adf8f7fdfa87a84b"},
 ]
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = {version = ">=0.29.0", extras = ["mcp", "semantic", "sqlite-vec"]}
+kgmodule-utils = {version = ">=0.30.2", extras = ["mcp", "semantic", "sqlite-vec"]}
 numpy = ">=1.24.0"
 rich = ">=14.0.0"
 safetensors = ">=0.5.0"
@@ -2659,14 +2659,14 @@ files = [
 
 [[package]]
 name = "memory-kg"
-version = "0.13.0"
+version = "0.13.1"
 description = "A tool to build a semantically searchable knowledge graph from memories"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "memory_kg-0.13.0-py3-none-any.whl", hash = "sha256:40ab12b892f150eede52b28f9653abbdb42b2199f1b1483a1be0362de602434b"},
-    {file = "memory_kg-0.13.0.tar.gz", hash = "sha256:76b1dee29d31bc7b0ec4746697f1d96c6a2d048eef44604255850c5573d9d982"},
+    {file = "memory_kg-0.13.1-py3-none-any.whl", hash = "sha256:2bcaaea512bbf5ad83f098f7550e00b91d0d73289b9c7449a7ebba54fdc741a9"},
+    {file = "memory_kg-0.13.1.tar.gz", hash = "sha256:10425e4a33a6c91ee3afd84260328e8cfb8ad98c9d2e0bed720bda0b55dd9672"},
 ]
 markers = {main = "extra == \"kg\" or extra == \"all\""}
 
@@ -6842,14 +6842,14 @@ files = [
 
 [[package]]
 name = "tscode-kg"
-version = "0.8.1"
+version = "0.8.2"
 description = "Knowledge graph for TypeScript/JavaScript codebases — AST extraction, hybrid semantic+structural search"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["dev"]
 files = [
-    {file = "tscode_kg-0.8.1-py3-none-any.whl", hash = "sha256:de5da54f0c3f78eecd1c49d809774501a04d82fed16ffdc3d4392c08134c8e74"},
-    {file = "tscode_kg-0.8.1.tar.gz", hash = "sha256:d3de1651e0e40c1e9ac8904622e173545100d0e1716198aafb6cc5fddb58055a"},
+    {file = "tscode_kg-0.8.2-py3-none-any.whl", hash = "sha256:0dc44395d5b857762ab17e51eba442b25d4d8fbe1e31e010cbf6e15474ab7c39"},
+    {file = "tscode_kg-0.8.2.tar.gz", hash = "sha256:7a395d299ced993641cab03b146168a1f42234e9e0210095e162dcb75572c8de"},
 ]
 
 [package.dependencies]

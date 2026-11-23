@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-11-22
+
 ### Added
 
 - **`kgrag imagine`** generates an image from a prompt, or from passages
@@ -24,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   empty corpus, is an error. Where an `imagewright` install message names
   `imagewright[flux]` or `imagewright[openai]`, a line naming
   `kg-rag[imagine-local]` follows it. The image client is `imagewright`.
+  Hits with no source text, and repeats of one node, are dropped before the
+  best `-k` are kept, so the rewrite never works from an empty passage.
   Two extras arrive with this release: `kg-rag[imagine]` (`imagewright` and
   `kgmodule-utils[synthesis]`, part of `all`) and `kg-rag[imagine-local]`
   (`imagewright` and `mflux`, for in-process FLUX; not part of `all`).
@@ -70,6 +74,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   projects gains GenealogyKG, ConnectomeKG, SwiftKG, TypeScriptKG, VaultKG
   and kgmodule-utils. The text is plain ASCII. `docs/FLEET_VERSIONS.md` is
   regenerated.
+
+- **The lock tracks the latest fleet releases.** kgmodule-utils 0.31.0,
+  memory-kg 0.13.1, agent-kg 0.14.1 and tscode-kg 0.8.2; imagewright 0.1.0
+  is new. Only the `imagine` extra's floor moved (kgmodule-utils 0.31.0,
+  for the second rewrite prompt).
+
+- **CI installs the `imagine` extra for the test job**, so the image tests
+  run there instead of failing on a missing import.
+
+- **A What's new section in the README.**
 
 - **The line under the name is a tagline.** The mark and banner read
   "ONE QUERY, MANY GRAPHS" instead of the organization and repository name.
