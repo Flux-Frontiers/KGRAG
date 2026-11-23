@@ -1857,15 +1857,15 @@ all = ["mypy (>=1.11.2)", "pytest (>=8.3.2)", "ruff (>=0.6.2)"]
 
 [[package]]
 name = "imagewright"
-version = "0.1.0"
+version = "0.2.0"
 description = "Image generation over one HTTP contract: a client, local FLUX and SDXL servers, and an MCP tool"
 optional = true
 python-versions = "<3.14,>=3.12"
 groups = ["main"]
 markers = "extra == \"imagine\" or extra == \"imagine-local\" or extra == \"all\""
 files = [
-    {file = "imagewright-0.1.0-py3-none-any.whl", hash = "sha256:f4ee311a53f1cea14e77c68a1e0d818961de471292b352313763a2bcb110a9c5"},
-    {file = "imagewright-0.1.0.tar.gz", hash = "sha256:6bb70e48c2655220f53d96b212309dd1f121f2456affbc7374c293648e3bba6d"},
+    {file = "imagewright-0.2.0-py3-none-any.whl", hash = "sha256:47d092fe205c6b5f0aa9df082131a8637cea9ff1e02064a3db3c1441a54b1e48"},
+    {file = "imagewright-0.2.0.tar.gz", hash = "sha256:819aa8855ab2464f6757072d5d264537c2ef669b5d599312e80f0e57576b9d07"},
 ]
 
 [package.dependencies]
@@ -7421,4 +7421,4 @@ viz3d = ["PyQt5", "markdown", "param", "pyvista", "pyvistaqt", "trame-vtk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "599717f1b6d05d5a4641710258d5471bdf610f5eac94c38aba680c3bd04d1de3"
+content-hash = "5145530737c1ea83253bda8f31d30fe61d19d367b8b0484ec3d07626e5ff77e5"

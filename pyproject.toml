@@ -204,7 +204,7 @@ ingest = [
 # rewrite_for_image(system=...) and reads IMAGE_REWRITE_TECHNICAL_SYSTEM,
 # both new there.
 imagine = [
-    "imagewright>=0.1.0",
+    "imagewright>=0.2.0",
     "kgmodule-utils[synthesis]>=0.31.0",
 ]
 # FLUX.2 Klein in the calling process, with no image server (Apple Silicon).
@@ -213,7 +213,7 @@ imagine = [
 # Keep in step with imagewright's own [flux] extra. Kept out of `all` because
 # it pulls a model stack only some machines can run.
 imagine-local = [
-    "imagewright>=0.1.0",
+    "imagewright>=0.2.0",
     "mflux>=0.24.0",
 ]
 viz = [
@@ -274,7 +274,7 @@ all = [
     "pymupdf>=2.0",
     # [imagine], with kgmodule-utils[synthesis]'s packages named directly for
     # the same reason. Keep in step with kgmodule-utils' own [synthesis] extra.
-    "imagewright>=0.1.0",
+    "imagewright>=0.2.0",
     "anthropic>=2.0.0",
     "httpx>=0.27.0",
     "openai>=1.30.0",

@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **imagewright 0.2.0 is the floor** in `[imagine]`, `[imagine-local]` and
+  `[all]`. In imagewright 0.1.0 the `ImageConfig` repr includes `api_key`,
+  so printing or logging a resolved config exposes the OpenAI key. 0.2.0
+  keeps the key out of the repr.
+
 ### Changed
 
 - **`docs/FLEET_VERSIONS.md` is regenerated** for kg-rag 0.19.0,
