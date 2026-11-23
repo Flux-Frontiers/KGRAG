@@ -36,6 +36,10 @@ PROSE_KINDS = frozenset({KGKind.DOC, KGKind.GUTENBERG, KGKind.DIARY})
 #: Lines of surrounding context per retrieved snippet.
 CONTEXT_LINES = 5
 
+#: A caller fetches this many times the passages it wants, so that dropping
+#: hits with no text still leaves enough.
+FETCH_FACTOR = 4
+
 #: Most characters of joined passages sent to the rewrite, or to the image
 #: model when the rewrite is skipped or fails.
 MAX_PASSAGE_CHARS = 800
@@ -71,6 +75,28 @@ class Imagined:
     prompt: str
     image: Any = None
     warnings: list[str] = field(default_factory=list)
+
+
+def usable_passages(snippets: list[CrossSnippet], limit: int | None = None) -> list[CrossSnippet]:
+    """Keep the hits a rewrite can use: those with text, each node once.
+
+    A retrieval can rank a hit with no source text first, or return one node
+    several times. A rewrite given no text invents a scene, so those hits are
+    dropped before the best *limit* are kept.
+
+    :param snippets: Retrieved snippets, best first.
+    :param limit: Most snippets to keep; None keeps all.
+    :return: The usable snippets, best first.
+    """
+    seen: set[tuple[str, str]] = set()
+    kept: list[CrossSnippet] = []
+    for snip in snippets:
+        key = (snip.kg_name, snip.node_id)
+        if not (snip.content or "").strip() or key in seen:
+            continue
+        seen.add(key)
+        kept.append(snip)
+    return kept if limit is None else kept[:limit]
 
 
 def passages_text(snippets: list[CrossSnippet]) -> str:
@@ -110,6 +136,7 @@ def imagine(
     *,
     query: str | None = None,
     retrieve: Callable[[str], tuple[list[CrossSnippet], int]] | None = None,
+    max_passages: int | None = None,
     rewrite: bool = True,
     render: bool = True,
     size: str | None = None,
@@ -139,6 +166,8 @@ def imagine(
     :param query: Retrieve passages for this query and picture them.
     :param retrieve: Called with *query*; returns ``(snippets, kgs_queried)``,
         snippets best first. Required with *query*.
+    :param max_passages: Most passages to use, after hits with no text and
+        repeats of one node are dropped. None uses all that *retrieve* returns.
     :param rewrite: Rewrite the passages with the text model; False sends them as they are.
     :param render: Render the image; False stops after the rewrite and
         reports the passages and the rewritten prompt through *notify*.
@@ -200,6 +229,7 @@ def imagine(
     if query is not None:
         assert retrieve is not None  # checked above
         snippets, kgs_queried = retrieve(query)
+        snippets = usable_passages(snippets, max_passages)
         if not snippets:
             raise ImagineError(f"No passages found for {query!r} in the registered KGs.")
         say(f"Found {len(snippets)} passage(s) from {kgs_queried} KG(s).")

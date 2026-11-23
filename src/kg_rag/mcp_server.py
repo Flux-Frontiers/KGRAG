@@ -660,13 +660,14 @@ async def kg_imagine(
         else:
             found = kgrag.pack(query, k=k, context=CONTEXT_LINES, kinds=kind_list)
             snippets = found.snippets
-        retrieved = (snippets[:k], found.kgs_queried)
+        retrieved = (snippets, found.kgs_queried)
 
     result = await asyncio.to_thread(
         imagine,
         prompt,
         query=query,
         retrieve=lambda _query: retrieved,
+        max_passages=k,
         size=size,
         seed=seed,
         steps=steps,

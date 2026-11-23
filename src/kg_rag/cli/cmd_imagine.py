@@ -29,7 +29,7 @@ import click
 from kg_rag.cli.group import cli
 from kg_rag.cli.options import k_option, kind_option, registry_option
 from kg_rag.cli.retrieval import retrieve_snippets
-from kg_rag.imagine import CONTEXT_LINES, ImagineError
+from kg_rag.imagine import CONTEXT_LINES, FETCH_FACTOR, ImagineError
 from kg_rag.imagine import imagine as run_imagine
 from kg_rag.orchestrator import KGRAG
 from kg_rag.primitives import CrossSnippet, KGKind
@@ -185,7 +185,8 @@ def imagine(
                     corpus=corpus,
                     reg_path=reg_path,
                     context_lines=CONTEXT_LINES,
-                    max_context=k,
+                    # Wider than k: hits with no text are dropped before the cut.
+                    max_context=k * FETCH_FACTOR,
                 )
             except SystemExit:
                 # An empty corpus: retrieve_snippets has said so and exits 0,
@@ -197,6 +198,7 @@ def imagine(
             prompt,
             query=query,
             retrieve=retrieve,
+            max_passages=k,
             rewrite=not no_rewrite,
             render=not context_only,
             size=size,
