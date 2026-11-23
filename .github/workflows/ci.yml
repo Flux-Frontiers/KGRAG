@@ -93,8 +93,12 @@ jobs:
           path: .venv
           key: test-${{ runner.os }}-${{ hashFiles('poetry.lock') }}
 
+      # The imagine extra, so the `kgrag imagine` and kg_imagine tests run:
+      # they import imagewright and kgmodule-utils' synthesis client directly
+      # (no importorskip, so a missing extra fails here instead of skipping).
+      # Not imagine-local: no test loads a model.
       - name: Install dependencies
-        run: poetry install --no-interaction --with dev
+        run: poetry install --no-interaction --with dev --extras imagine
 
       - name: Run tests
         run: poetry run pytest

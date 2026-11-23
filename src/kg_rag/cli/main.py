@@ -16,6 +16,7 @@ import kg_rag.cli.cmd_corpus  # noqa: F401
 import kg_rag.cli.cmd_corpus_io  # noqa: F401 — export / import
 import kg_rag.cli.cmd_health  # noqa: F401
 import kg_rag.cli.cmd_hooks  # noqa: F401
+import kg_rag.cli.cmd_imagine  # noqa: F401
 import kg_rag.cli.cmd_ingest  # noqa: F401 — document ingestion pipeline
 import kg_rag.cli.cmd_init  # noqa: F401
 import kg_rag.cli.cmd_mcp  # noqa: F401

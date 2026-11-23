@@ -32,6 +32,17 @@ kgrag pack "authentication middleware" --kind code --context 3
 
 **Use when:** You need actual source code with context from multiple KGs for analysis or refactoring.
 
+### Generate an Image
+Render a prompt, or retrieve passages and rewrite them into a scene first (needs `kg-rag[imagine]`):
+
+```bash
+kgrag imagine "a lighthouse in a storm, oil painting"
+kgrag imagine --query "the great fire of London" -o fire.png
+kgrag imagine --query "registry schema" --kind code --context-only
+```
+
+From an agent, `kg_imagine` on the `kgrag` MCP server does the same and returns the image.
+
 ### Initialize a Repo with KGRAG
 Detect, build, and register all KG layers (code and doc) in a single command:
 

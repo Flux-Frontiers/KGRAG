@@ -78,6 +78,7 @@ RAG embeds text chunks and retrieves by approximate similarity: no structure, no
 - **Multi-domain federation** -- Query code, docs, metabolic pathways, diary entries, and conversation history simultaneously
 - **Timeline queries** -- `kgrag timeline` orders federated hits by date instead of relevance, with `--from`/`--to` at any ISO precision; undated hits are counted, not dropped
 - **Answer synthesis** -- `kgrag synthesize` retrieves KG context and answers through a local Ollama server or any OpenAI-compatible one (omlx, LM Studio, vLLM)
+- **Image generation** -- `kgrag imagine` renders an image from a prompt, or from passages retrieved across the registered KGs and rewritten into a scene by a text model; it renders on an image server, in process with FLUX, on a LAN worker or with OpenAI. The `kg_imagine` MCP tool does the same for an agent
 - **Five-method adapter protocol** -- `is_available`, `query`, `pack`, `stats`, `analyze`; add a new domain by implementing five methods
 - **Unified registry** -- Persistent SQLite-backed storage of KG locations, metadata, corpora, and person records
 - **Corpus abstraction** -- Group KGs into named corpora for scoped federated queries
@@ -86,7 +87,7 @@ RAG embeds text chunks and retrieves by approximate similarity: no structure, no
 - **Context packing** -- Extract source-grounded snippets with line numbers for direct LLM ingestion
 - **Portable KGs** -- `kgrag export` writes a registered KG to a `.kgrag.tar.gz` archive; `kgrag import` registers one on another machine
 - **Health checks** -- `kgrag health` inspects every registered KG and corpus for common problems and suggests a fix command for each; `--fix` repairs the ones it can
-- **MCP server** -- the fleet's five canonical tools across every registered KG, plus registry, corpus and person tools (24 in all), for any MCP-compatible agent
+- **MCP server** -- the fleet's five canonical tools across every registered KG, plus registry, corpus and person tools and `kg_imagine` (25 in all), for any MCP-compatible agent
 - **CLI tooling** -- Full CRUD for KGs, corpora, and person corpora; query, pack, analyze, synthesize
 - **Streamlit dashboard** -- `kgrag viz` opens Registry, Federated Query, Analysis, Snippet Pack and Synthesize tabs. In Synthesize, the KGRAG owl shows each stage as it runs: waiting, retrieving, answering, and done with the snippet and KG counts behind the answer
 - **Qt viewer** -- `kgrag viz2d` draws one tile per registered KG in a split-viewport window
@@ -119,7 +120,12 @@ pip install 'kg-rag[vault]'
 # With multi-format document ingestion (PDF, Word, PowerPoint, Excel, EPUB, ...)
 pip install 'kg-rag[ingest]'
 
-# Every extra
+# With image generation (kgrag imagine, kg_imagine), and with in-process
+# FLUX on Apple Silicon as well
+pip install 'kg-rag[imagine]'
+pip install 'kg-rag[imagine,imagine-local]'
+
+# Every extra except imagine-local
 pip install 'kg-rag[all]'
 ```
 
@@ -145,6 +151,9 @@ kgrag pack "database connection setup" --out context.md
 # Answer a question from KG context with a local model (Ollama by default)
 kgrag synthesize "How does the registry store corpora?"
 
+# Picture what the KGs say about a topic
+kgrag imagine --query "the great fire of London"
+
 # Check every registered KG and corpus
 kgrag health
 
@@ -153,6 +162,88 @@ kgrag viz
 ```
 
 -> [Full installation guide](docs/INSTALLATION.md) | [Usage guide](docs/USAGE.md) | [CLI reference](docs/CLI_REFERENCE.md)
+
+---
+
+## Image generation
+
+`kgrag imagine` generates a PNG from a prompt, or from passages retrieved
+across the registered KGs. It needs no `gutenberg_kg`; the image client is
+the fleet's `imagewright` package.
+
+```bash
+# Render a prompt as given
+kgrag imagine "a lighthouse in a storm, oil painting"
+
+# Retrieve passages, rewrite them into a scene, render
+kgrag imagine --query "the great fire of London" -o fire.png
+
+# The same, scoped to a corpus, with PROMPT added as style notes
+kgrag imagine "woodcut" --query "the great fire" --corpus diaries
+
+# Show the passages and the rewritten prompt without rendering
+kgrag imagine --query "registry schema" --kind code --context-only
+```
+
+With `--query`, the top passages (`-k`, `--kind`, `--corpus`, as in
+`kgrag synthesize`) are joined, capped at 800 characters, and rewritten
+into an image prompt by the text model that `SYNTH_BACKEND`,
+`SYNTH_ENDPOINT` and `SYNTH_MODEL` configure. When the top passage comes
+from a `doc`, `gutenberg` or `diary` KG, the rewrite uses the prompt for
+historical prose; any other kind uses a prompt for code and technical
+records. If the rewrite fails, the command warns and renders the raw
+passages. `--no-rewrite` skips the text model, and `--context-only` prints
+the passages and the rewritten prompt and exits.
+
+The image renders in one of four ways. Without `--backend`, `--endpoint` or
+`--worker`, the command takes the first that applies, in this order:
+`IMAGE_BACKEND` and `IMAGE_ENDPOINT`, a server answering on
+`localhost:8090` or `localhost:8091`, then in-process FLUX (with a warning)
+if it is installed. If none applies, it prints the ways to fix that.
+
+| Way | How to choose it | Needs |
+|---|---|---|
+| An image server | `--endpoint URL`, `IMAGE_ENDPOINT`, or found on `localhost:8090`/`8091` | A server such as `imagewright serve` |
+| In-process FLUX | `--backend mflux-local`, or no server found | `kg-rag[imagine-local]`, Apple Silicon; the first run downloads the weights |
+| A LAN worker | `--worker URL` | A worker that serves `op: imagine`; its secret in `HANDLER_SECRET` |
+| OpenAI | `--backend openai` | `OPENAI_API_KEY`; the prompt leaves the machine and the call is billed |
+
+`--worker` sends both the rewrite and the render to the worker and cannot
+be combined with `--backend` or `--endpoint`. `--size WxH` (default
+`1536x1024`), `--seed` and `--steps` set the render; OpenAI ignores
+`--size`, and the worker takes no seed, so `--seed` is ignored there with a
+warning. The image is written to `-o PATH`, or to
+`imagine_YYYYMMDD_HHMMSS.png` in the current directory, and opened in the
+default viewer unless `--no-open` is given.
+
+Two extras arrive with this release. `kg-rag[imagine]` installs
+`imagewright` and the text-model client (`kgmodule-utils[synthesis]`), and
+is part of `kg-rag[all]`. `kg-rag[imagine-local]` installs `imagewright`
+and `mflux` for in-process FLUX on Apple Silicon. It is not part of `all`,
+so install it with the first: `pip install 'kg-rag[imagine,imagine-local]'`.
+Without `imagewright`, `kgrag imagine` stops with a line naming
+`pip install "kg-rag[imagine]"`; the rest of `kgrag` is unaffected. Where
+an `imagewright` message names `imagewright[flux]` or `imagewright[openai]`,
+the command adds a line naming `kg-rag[imagine-local]`.
+
+### From an agent: `kg_imagine`
+
+The MCP server's `kg_imagine` tool runs the same flow and returns the image
+to the agent, encoded to fit the client's 5 MB image limit: PNG when it
+fits, else JPEG, else a smaller JPEG. It takes `prompt`, `query`, `corpus`,
+`kinds`, `k` (1-100, default 8), `size` (default `1536x1024`), `seed` and
+`steps` (1-50). A prompt is at most 4000 characters and a query at most
+2000; out-of-range arguments are rejected, not clamped.
+
+The tool has no backend, endpoint or worker arguments. The server's
+environment chooses, in the same order as the command: `IMAGE_BACKEND` and
+`IMAGE_ENDPOINT`, a server on `localhost:8090` or `localhost:8091`, then
+in-process FLUX. The rewrite uses the `SYNTH_*` text model from the same
+environment. The server keeps one image client, so in-process FLUX loads
+once per server process. Warnings, such as a failed rewrite, and the final
+prompt reach the client as log messages. `kgrag-mcp` starts without the
+`imagine` extra; only `kg_imagine` then fails, naming
+`pip install "kg-rag[imagine]"`.
 
 ---
 
@@ -175,7 +266,7 @@ kgrag mcp
 }
 ```
 
-It answers the fleet's five canonical tools (`stats`, `query`, `pack`, `get_node`, `neighbors`) across every registered KG, with node ids of the form `<kg>::<node id>`, plus `list_kgs` and `kg_info`, 8 corpus tools and 9 person-corpus tools: 24 in all. `kgrag mcp --manifest` prints them.
+It answers the fleet's five canonical tools (`stats`, `query`, `pack`, `get_node`, `neighbors`) across every registered KG, with node ids of the form `<kg>::<node id>`, plus `list_kgs` and `kg_info`, 8 corpus tools, 9 person-corpus tools and `kg_imagine`: 25 in all. `kgrag mcp --manifest` prints them.
 
 -> [Full MCP reference](docs/MCP.md)
 

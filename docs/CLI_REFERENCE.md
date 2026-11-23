@@ -243,6 +243,20 @@ kgrag pack "KGRAG architecture" --fmt md
 kgrag analyze
 ```
 
+**Image generation** (needs `kg-rag[imagine]`):
+```bash
+kgrag imagine "a lighthouse in a storm"           # render a prompt as given
+kgrag imagine --query "great fire" -o fire.png    # retrieve, rewrite, render
+kgrag imagine --query "great fire" --corpus diaries --context-only
+kgrag imagine --query "registry schema" --kind code --no-rewrite
+kgrag imagine --query "great fire" --worker http://HOST:PORT   # HANDLER_SECRET
+# Other options: -k N, --size WxH, --seed N, --steps N,
+#   --backend mflux-serve|mflux-local|openai, --endpoint URL, --open/--no-open
+```
+In-process FLUX needs `kg-rag[imagine,imagine-local]`. From an agent, the
+MCP server's `kg_imagine` tool runs the same flow and returns the image; see
+[MCP.md](MCP.md).
+
 **Corpus management:**
 ```bash
 kgrag corpus list
@@ -307,14 +321,15 @@ silently omitted. Every file examined is accounted for in the staging manifest:
 cat ~/corpora/specs/.ingest/manifest.json    # source, sha256, converter, status, reason
 ```
 
-**MCP tools exposed (19):**
-`query`, `pack`, `stats`, `list_kgs`, `kg_info`,
+**MCP tools exposed (25):**
+`query`, `pack`, `stats`, `get_node`, `neighbors`, `list_kgs`, `kg_info`,
 `corpus_query`, `corpus_pack`, `corpus_create`,
 `corpus_add`, `corpus_remove`, `corpus_delete`,
 `corpus_info`, `corpus_list`,
 `person_create`, `person_add`, `person_remove`,
 `person_delete`, `person_info`, `person_list`,
-`person_query`, `person_pack`, `person_update`
+`person_query`, `person_pack`, `person_update`,
+`kg_imagine`
 
 ---
 

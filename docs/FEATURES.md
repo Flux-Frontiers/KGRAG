@@ -87,6 +87,7 @@
 | `kgrag query <text>` | Cross-KG semantic search |
 | `kgrag pack <text>` | Extract source snippets to file or stdout |
 | `kgrag analyze` | Cross-KG statistics and coverage metrics |
+| `kgrag imagine` | Image from a prompt or from retrieved passages (`kg-rag[imagine]`) |
 
 ### Corpus Management
 | Command | Description |
@@ -127,6 +128,9 @@ Exposes **30+ tools** to AI agents via Model Context Protocol (stdio transport):
 **Person tools:** `person_list`, `person_info`, `person_create`,
 `person_delete`, `person_add`, `person_remove`,
 `person_update`, `person_query`, `person_pack`
+
+**Image tool:** `kg_imagine`, an image from a prompt or from retrieved
+passages (needs `kg-rag[imagine]`)
 
 Compatible with **Claude Code**, **Claude Desktop**, **Cursor**, **GitHub Copilot (Kilo Code / Cline)**.
 

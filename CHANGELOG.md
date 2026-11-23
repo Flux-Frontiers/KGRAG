@@ -9,6 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`kgrag imagine`** generates an image from a prompt, or from passages
+  retrieved across the registered KGs, with no `gutenberg_kg` installed.
+  With `--query`, the passages (`-k`, `--kind`, `--corpus`) are rewritten
+  into an image prompt by the text model; a top hit from a `doc`,
+  `gutenberg` or `diary` KG uses the historical-prose prompt and any other
+  kind the technical one. A failed rewrite warns and falls back to the raw
+  passages; `--no-rewrite` skips it and `--context-only` prints the
+  passages and the rewritten prompt without rendering. The image renders on
+  an image server (`--endpoint`, `IMAGE_ENDPOINT`, or one found on
+  localhost:8090/8091), in process with FLUX (after a warning), with
+  OpenAI (`--backend openai`), or on a LAN worker (`--worker`, secret from
+  `HANDLER_SECRET`). A query that finds no passages, including one over an
+  empty corpus, is an error. Where an `imagewright` install message names
+  `imagewright[flux]` or `imagewright[openai]`, a line naming
+  `kg-rag[imagine-local]` follows it. The image client is `imagewright`.
+  Two extras arrive with this release: `kg-rag[imagine]` (`imagewright` and
+  `kgmodule-utils[synthesis]`, part of `all`) and `kg-rag[imagine-local]`
+  (`imagewright` and `mflux`, for in-process FLUX; not part of `all`).
+
+- **`kg_imagine` MCP tool** on the `kgrag` server: the same flow for an
+  agent, returning the image under the client's size limit (through
+  `imagewright.as_mcp_image`). It takes `prompt`, `query`, `corpus`,
+  `kinds`, `k`, `size`, `seed` and `steps`, rejects out-of-range arguments,
+  retrieves through the session's federation, and does the model work off
+  the event loop. The server keeps one image client, so in-process FLUX
+  loads once per server process. `kgrag-mcp` still starts without the
+  `imagine` extra; only `kg_imagine` then fails, naming
+  `pip install "kg-rag[imagine]"`. The CLI and the tool share one function,
+  `kg_rag.imagine.imagine()`.
+
 - **The KGRAG owl**, the system's voice in the Streamlit Synthesize tab
   (`kg_rag.owl`). An Art Techno owl avatar in a chip-package frame that shows
   what the pipeline is doing: idle (mint) while waiting, retrieving (copper,
@@ -19,6 +49,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `prefers-reduced-motion`.
 
 ### Changed
+
+- **`kgrag synthesize` retrieval is a shared helper.** The registry, corpus,
+  `--kind` and `-k` retrieval moves from `cmd_synthesize.py` into
+  `kg_rag.cli.retrieval.retrieve_snippets`, so other commands can reuse it.
+  `synthesize` behaves as before.
 
 - **The logo is redrawn in Art Techno.** The brain is replaced by the
   federation fan: five member graphs, each a small chip, feed thin traces

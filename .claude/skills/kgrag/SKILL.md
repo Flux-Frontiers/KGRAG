@@ -522,6 +522,7 @@ query(q)                             ← all registered KGs
 pack(q)                              ← code + doc snippets
 corpus_query(corpus, q)             ← named corpus
 stats() / list_kgs() / kg_info(name)
+kg_imagine(prompt=None, query=None)  <- an image (needs kg-rag[imagine])
 ```
 
 **Corpus management:**
@@ -541,6 +542,8 @@ kgrag corpus list
 kgrag corpus create <name>
 kgrag corpus add <name> <kg-name>
 kgrag corpus query <name> "query"
+kgrag imagine "a lighthouse"                # render a prompt
+kgrag imagine --query "great fire"          # retrieve, rewrite, render
 ```
 
 ---
