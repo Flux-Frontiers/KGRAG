@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`docs/FLEET_VERSIONS.md` is regenerated** for kg-rag 0.19.0,
+  kgmodule-utils 0.31.0 and the fleet's new image package, imagewright 0.1.0.
+
 ## [0.19.0] - 2026-11-22
 
 ### Added
