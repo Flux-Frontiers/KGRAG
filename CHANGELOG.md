@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.19.2] - 2026-11-23
+
 ### Security
 
 - **kgmodule-utils 0.30.2 is the floor** for the base install and

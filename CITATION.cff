@@ -15,7 +15,7 @@ authors:
     orcid: "https://orcid.org/0009-0009-0891-1507"
     email: suchanek@flux-frontiers.com
     affiliation: "Flux-Frontiers"
-version: "0.19.1"
+version: "0.19.2"
 date-released: "2026-11-23"
 doi: "10.5281/zenodo.20018524"
 license-url: "https://www.elastic.co/licensing/elastic-license"
