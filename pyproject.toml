@@ -94,7 +94,7 @@ packages = [{ include = "kg_rag", from = "src" }]
 # ---------------------------------------------------------------------------
 [project]
 name = "kg-rag"
-version = "0.19.1"
+version = "0.19.2"
 description = "Orchestration layer for the KGRAG(tm) components."
 readme = "README.md"
 license = "Elastic-2.0"
@@ -126,7 +126,9 @@ dependencies = [
     # relock, not because kg_rag needs anything newer than 0.18.0.
     # 0.29.0: the server is built on kg_utils.mcp ([mcp] brings mcp itself),
     # and the adapters read every module's stats() in the fleet stats shape.
-    "kgmodule-utils[mcp]>=0.30.0",
+    # 0.30.2: before it, the omlx synthesis backend sent OPENAI_API_KEY to
+    # the oMLX server whenever VLLM_API_KEY was unset.
+    "kgmodule-utils[mcp]>=0.30.2",
     "numpy>=1.24.0",
     "pandas>=2.0.0",
     "rich>=14.3.3,<15",
@@ -195,7 +197,7 @@ vault = [
 # the floor because 0.27.0's [ingest] declared pymupdf4llm>=1.28.2, which
 # now resolves to the empty pymupdf4llm 2.0 placeholder (no PDF code).
 ingest = [
-    "kgmodule-utils[ingest]>=0.30.0",
+    "kgmodule-utils[ingest]>=0.30.2",
 ]
 # Image generation: `kgrag imagine` and the kg_imagine MCP tool. imagewright
 # is the image client (a server over HTTP, or OpenAI); kgmodule-utils'
