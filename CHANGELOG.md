@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **kgmodule-utils 0.30.2 is the floor** for the base install and
+  `[ingest]` (was 0.30.0). In kgmodule-utils 0.30.0 and 0.30.1 the default
+  `omlx` synthesis backend sent `OPENAI_API_KEY` to the oMLX server
+  whenever `VLLM_API_KEY` was unset, so `kgrag synthesize` could pass the
+  OpenAI key to it. 0.30.2 sends each backend only its own key.
+
 ## [0.19.1] - 2026-11-23
 
 ### Security
