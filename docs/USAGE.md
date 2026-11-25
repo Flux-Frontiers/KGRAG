@@ -209,6 +209,7 @@ kgrag analyze
 | `kgrag unregister NAME_OR_ID` | Remove a KG from the registry |
 | `kgrag scan [ROOT_PATH]` | Discover existing KG databases in a directory tree |
 | `kgrag init [REPO_PATH]` | Detect, build, and register KG layers for a repo; optionally add to a corpus |
+| `kgrag rebuild-indices` | Rebuild every registered KG with its own builder |
 
 #### `kgrag register`
 
@@ -251,6 +252,42 @@ Pass `--corpus NAME` to automatically add every successfully registered KG into 
 ```bash
 kgrag init ~/repos/FTreeKG --corpus KGRAG_repos
 ```
+
+#### `kgrag rebuild-indices`
+
+```bash
+kgrag rebuild-indices [--corpus NAME] [--kind KIND]... [--name NAME]... [--dry-run]
+```
+
+Rebuilds each registered KG with its kind's builder, run in the folder that
+holds its store. Use it after an SDK change alters what a store records, such
+as kgmodule-utils 0.32.0's source hashes. Run `--dry-run` first: it prints
+each command or skip reason and builds nothing.
+
+| Kind | Builder |
+|------|---------|
+| `code` | `pycodekg build --repo ROOT` |
+| `doc` | `dockg build --repo ROOT` |
+| `filetree` | `ftreekg build --repo ROOT` |
+| `typescript` | `tscodekg build --repo ROOT` |
+| `swift` | `swiftkg build --repo ROOT` |
+| `memory` | `memorykg build --repo ROOT` |
+| `genealogy` | `genkg build --repo ROOT` |
+| `vault` | `vaultkg build --vault ROOT` |
+| `diary` | `diarykg build ROOT` |
+
+`ROOT` is the parent of the store folder, so a store at `docs/.dockg/` builds
+in `docs/`. Each builder is found on `PATH` first, then in the nearest
+`.venv` at or above the KG. These kinds are skipped, with the reason in the
+report:
+
+- `agent`: conversation memory; the store is its own source.
+- `gutenberg` and `ia`: static corpora; rebuild them with `gutenkg`.
+- `connectome`: needs the Codex data folder; rebuild with `connkg build`.
+
+A KG whose folder no longer exists is skipped too. After a build, the
+registry's builder version is re-read from the store. The command exits 1
+when any build fails; the others still run.
 
 ---
 

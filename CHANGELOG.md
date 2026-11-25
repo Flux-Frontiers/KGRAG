@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`kgrag rebuild-indices`** rebuilds every registered KG, or one corpus
+  (`--corpus`), kind (`--kind`) or KG (`--name`), with its kind's own
+  builder, run in the folder that holds its store. Builders are found on
+  `PATH` first, then in the nearest `.venv` at or above the KG. Agent,
+  Gutenberg, Internet Archive and connectome KGs are skipped with a reason,
+  as is any KG whose folder is gone. The builder version is re-read after
+  each build; `--dry-run` prints the plan. Exits 1 if any build fails.
+
 ## [0.19.2] - 2026-11-23
 
 ### Security
