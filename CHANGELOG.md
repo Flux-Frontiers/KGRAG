@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-11-24
+
 ### Added
 
 - **`kgrag rebuild-indices`** rebuilds every registered KG, or one corpus
@@ -16,6 +18,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Gutenberg, Internet Archive and connectome KGs are skipped with a reason,
   as is any KG whose folder is gone. The builder version is re-read after
   each build; `--dry-run` prints the plan. Exits 1 if any build fails.
+
+### Dependencies
+
+- Lock refreshed to kgmodule-utils 0.32.0, pycode-kg 0.30.0 and
+  genealogy-kg 0.7.0. kgmodule-utils 0.32.0 omits a node's snippet when its
+  source file changed since the build, and kgrag's adapters already drop
+  nodes with no snippet, so stale text never reaches a federated answer.
+  Floors are unchanged.
 
 ## [0.19.2] - 2026-11-23
 
