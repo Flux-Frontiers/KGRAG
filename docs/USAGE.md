@@ -256,7 +256,7 @@ kgrag init ~/repos/FTreeKG --corpus KGRAG_repos
 #### `kgrag rebuild-indices`
 
 ```bash
-kgrag rebuild-indices [--corpus NAME] [--kind KIND]... [--name NAME]... [--dry-run]
+kgrag rebuild-indices [--corpus NAME] [--kind KIND]... [--name NAME]... [--exclude NAME]... [--dry-run]
 ```
 
 Rebuilds each registered KG with its kind's builder, run in the folder that
@@ -285,7 +285,9 @@ report:
 - `gutenberg` and `ia`: static corpora; rebuild them with `gutenkg`.
 - `connectome`: needs the Codex data folder; rebuild with `connkg build`.
 
-A KG whose folder no longer exists is skipped too. After a build, the
+A KG whose folder no longer exists is skipped too, and so is every KG named
+with `--exclude`, such as a file tree over a large folder. Each build's
+header shows its place in the run (`3 of 151`). After a build, the
 registry's builder version is re-read from the store. The command exits 1
 when any build fails; the others still run.
 

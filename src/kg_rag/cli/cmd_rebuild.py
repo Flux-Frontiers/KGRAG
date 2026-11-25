@@ -154,17 +154,24 @@ def _select(
 @click.option(
     "--name", "names", multiple=True, metavar="NAME", help="Rebuild only this KG (repeatable)."
 )
+@click.option(
+    "--exclude",
+    "excluded",
+    multiple=True,
+    metavar="NAME",
+    help="Skip this KG (repeatable), such as a large file tree.",
+)
 @click.option("--dry-run", is_flag=True, help="Print each command or skip reason; build nothing.")
 @registry_option
-def rebuild_indices(corpus, kinds, names, dry_run, registry):
+def rebuild_indices(corpus, kinds, names, excluded, dry_run, registry):
     """Rebuild every registered KG with its own builder.
 
     Each KG is rebuilt by its kind's CLI (pycodekg, dockg, ftreekg, tscodekg,
     swiftkg, memorykg, genkg, vaultkg, diarykg), found on PATH first and then
     in the nearest .venv at or above the KG, and run in the folder that holds
-    its store. Agent,
-    Gutenberg, Internet Archive and connectome KGs are skipped. After a build,
-    the registry's builder version is re-read from the store.
+    its store. Agent, Gutenberg, Internet Archive and connectome KGs are
+    skipped, as is every KG named with --exclude. After a build, the
+    registry's builder version is re-read from the store.
 
     Exits 1 when any build fails.
 
@@ -173,13 +180,20 @@ def rebuild_indices(corpus, kinds, names, dry_run, registry):
         kgrag rebuild-indices --dry-run
         kgrag rebuild-indices --kind code --kind doc
         kgrag rebuild-indices --corpus KGRAG_repos
+        kgrag rebuild-indices --exclude fleet-filetree
     """
     db = Path(registry).resolve() if registry else None
     rows: list[tuple[str, str, str, str]] = []
     with KGRegistry(db_path=db) as reg:
         entries = _select(reg, corpus, kinds, names, db)
-        for entry in entries:
-            argv, reason = plan(entry)
+        skip = set(excluded)
+        plans = [
+            (e, *((None, "excluded with --exclude") if e.name in skip else plan(e)))
+            for e in entries
+        ]
+        total = sum(1 for _, argv, _ in plans if argv is not None)
+        done = 0
+        for entry, argv, reason in plans:
             if argv is None:
                 rows.append((entry.name, entry.kind.value, "skipped", reason))
                 continue
@@ -187,7 +201,8 @@ def rebuild_indices(corpus, kinds, names, dry_run, registry):
             if dry_run:
                 rows.append((entry.name, entry.kind.value, "would build", command))
                 continue
-            console.rule(f"[bold]{entry.name}[/bold]")
+            done += 1
+            console.rule(f"[bold]{entry.name}[/bold] [dim]({done} of {total})[/dim]")
             console.print(f"Running: {command}")
             result = subprocess.run(argv, cwd=build_root(entry), check=False)
             if result.returncode != 0:
