@@ -232,3 +232,18 @@ class TestRebuildCommand:
         )
         assert result.exit_code != 0
         assert "Corpus not found" in result.output
+
+    def test_exclude_skips_the_named_kg_with_a_reason(self, env):
+        _script(env["bin"], "pycodekg", _OK, log=env["log"], marker=".pycodekg")
+        _script(env["bin"], "dockg", _OK, log=env["log"], marker=".dockg")
+        result = _run(env, "--exclude", "alpha-code")
+        assert result.exit_code == 0
+        calls = _calls(env)
+        assert len(calls) == 1 and "dockg" in calls[0]
+        assert "excluded with --exclude" in result.output
+
+    def test_each_build_is_numbered(self, env):
+        _script(env["bin"], "pycodekg", _OK, log=env["log"], marker=".pycodekg")
+        _script(env["bin"], "dockg", _OK, log=env["log"], marker=".dockg")
+        result = _run(env)
+        assert "(1 of 2)" in result.output and "(2 of 2)" in result.output

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`kgrag rebuild-indices --exclude NAME`** skips a KG by name
+  (repeatable), such as a file tree over all of `~/repos`. Each build's
+  header now shows its place in the run (`3 of 151`).
+
 ## [0.20.0] - 2026-11-24
 
 ### Added
