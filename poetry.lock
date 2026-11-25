@@ -1566,20 +1566,20 @@ dev = ["coverage", "mypy", "pytest", "ruff"]
 
 [[package]]
 name = "genealogy-kg"
-version = "0.6.0"
+version = "0.7.0"
 description = "KGModule for genealogical knowledge graphs built from GEDCOM files"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["dev"]
 files = [
-    {file = "genealogy_kg-0.6.0-py3-none-any.whl", hash = "sha256:4a5d57d36d64cb486c5ebbb04d6b7346a6523d771272ae18467833b096a99dde"},
-    {file = "genealogy_kg-0.6.0.tar.gz", hash = "sha256:17ea71fdfc2393cc832e36dc8a89cba150704c6503822b3cef84578261011791"},
+    {file = "genealogy_kg-0.7.0-py3-none-any.whl", hash = "sha256:5687f27be22c4d21cbef48247b3a6b2d0739d70639daea67e0d10b23d4eb76b8"},
+    {file = "genealogy_kg-0.7.0.tar.gz", hash = "sha256:14f25ce6ff5116c0bcaff3ee0447ea743eafe2b4a6558844e69c3a132489352e"},
 ]
 
 [package.dependencies]
 click = ">=8.1.0,<9"
 ged4py = ">=0.5.2"
-kgmodule-utils = {version = ">=0.29.0", extras = ["mcp", "semantic", "sqlite-vec"]}
+kgmodule-utils = {version = ">=0.32.0", extras = ["mcp", "semantic", "sqlite-vec"]}
 
 [package.extras]
 adapter = ["kg-rag (>=0.17.0)"]
@@ -2179,14 +2179,14 @@ referencing = ">=0.31.0"
 
 [[package]]
 name = "kgmodule-utils"
-version = "0.31.0"
+version = "0.32.0"
 description = "Shared types, graph store, semantic index, and pipeline base for the KGModule SDK"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "kgmodule_utils-0.31.0-py3-none-any.whl", hash = "sha256:81011c2ea5b9f5821753ce1198ce265e195dfb1fc9e6fc09b22d8e8625c3e3ff"},
-    {file = "kgmodule_utils-0.31.0.tar.gz", hash = "sha256:c398733ec30631f2ce711094e9f367dda43f797b679701d10d01df447996b903"},
+    {file = "kgmodule_utils-0.32.0-py3-none-any.whl", hash = "sha256:bfdf44b3d381f34da7252886ad491bb09917ce0f1d9d42b655b97ad05d954c7d"},
+    {file = "kgmodule_utils-0.32.0.tar.gz", hash = "sha256:df18c0b974c5471efea5cf28c0271c9059e0d4bd9d58fcde94197ceb9a0df032"},
 ]
 
 [package.dependencies]
@@ -2215,7 +2215,6 @@ pdf = ["pymupdf (>=2.0)"]
 semantic = ["numpy (>=1.24.0)", "rich (>=13.0.0,<15.0.0)", "sentence-transformers (>=5.4.1)", "sqlite-vec (==0.1.9)", "torch (>=2.5.1)", "transformers (>=5.5.0,<6)"]
 sqlite-vec = ["sqlite-vec (==0.1.9)"]
 synthesis = ["anthropic (>=2.0.0)", "httpx (>=0.27.0)", "openai (>=1.30.0)", "pillow (>=13.0.0)"]
-synthesis-mflux = ["anthropic (>=2.0.0)", "httpx (>=0.27.0)", "mflux (>=0.9.0)", "openai (>=1.30.0)", "pillow (>=13.0.0)"]
 viz = ["pyvis (>=0.3.2)"]
 viz3d = ["numpy (>=1.24.0)"]
 viz3d-qt = ["PyQt5 (>=5.15.0)", "numpy (>=1.24.0)", "pyvista (>=0.44.0)", "quiltwright (>=0.17.0)"]
@@ -4406,20 +4405,20 @@ markers = {main = "extra == \"connectome\" or extra == \"all\" or extra == \"viz
 
 [[package]]
 name = "pycode-kg"
-version = "0.29.3"
+version = "0.30.0"
 description = "A tool to build a searchable knowledge graph from Python repositories"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "pycode_kg-0.29.3-py3-none-any.whl", hash = "sha256:6e7fd68ce8db83bf83fbce0141aa1a02879b79b312360c124647343d5b92f4d9"},
-    {file = "pycode_kg-0.29.3.tar.gz", hash = "sha256:02e3f97b1864fbe158af76293fc113b2177da83efa3d29332bb13966942d7b81"},
+    {file = "pycode_kg-0.30.0-py3-none-any.whl", hash = "sha256:f0e6f1eb7cc2ace5b0bfd3d5ce3fc3947c851efad7ca0c9938c95aad8d55ed23"},
+    {file = "pycode_kg-0.30.0.tar.gz", hash = "sha256:d03dd7bc62e19d3201903743367249fe16434f0ae25e809cac298dab935566a0"},
 ]
 markers = {main = "extra == \"kg\" or extra == \"all\""}
 
 [package.dependencies]
 click = ">=8.1.0,<9"
-kgmodule-utils = {version = ">=0.29.1", extras = ["mcp", "semantic", "viz3d"]}
+kgmodule-utils = {version = ">=0.32.0", extras = ["mcp", "semantic", "viz3d"]}
 networkx = ">=3.0"
 numpy = ">=1.24.0"
 pandas = ">=2.0.0"
