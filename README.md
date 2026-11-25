@@ -110,7 +110,7 @@ Earlier releases: [CHANGELOG.md](https://github.com/Flux-Frontiers/KGRAG/blob/ma
 ## Features
 
 - **Document ingestion** -- `kgrag ingest` turns loose PDFs, Word documents, EPUBs, spreadsheets, slide decks and Markdown into a staged corpus, builds a KG over it, and registers the result in one command
-- **Repo setup** -- `kgrag init` detects the code and doc layers a repository needs, builds them, and registers them; `kgrag scan` finds KGs already built under a directory tree
+- **Repo setup** -- `kgrag init` detects the code and doc layers a repository needs, builds them, and registers them; `kgrag scan` finds KGs already built under a directory tree; `kgrag rebuild-indices` rebuilds every registered KG with its own builder
 - **Multi-domain federation** -- Query code, docs, metabolic pathways, diary entries, and conversation history simultaneously
 - **Timeline queries** -- `kgrag timeline` orders federated hits by date instead of relevance, with `--from`/`--to` at any ISO precision; undated hits are counted, not dropped
 - **Answer synthesis** -- `kgrag synthesize` retrieves KG context and answers through a local Ollama server or any OpenAI-compatible one (omlx, LM Studio, vLLM)

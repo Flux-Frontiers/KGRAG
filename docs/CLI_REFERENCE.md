@@ -228,6 +228,7 @@ kgrag info <name>                       # detail on one KG
 kgrag register <name> <kind> <path>     # kinds: code,doc,meta,diary,verse,memory,agent
 kgrag unregister <name>
 kgrag scan <directory>                  # auto-discover KG databases
+kgrag rebuild-indices --dry-run          # rebuild every registered KG (preview)
 
 # kgrag-register shorthand:
 kgrag-register my_docs doc /path/to/repo \
