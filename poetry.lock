@@ -1525,14 +1525,14 @@ tqdm = ["tqdm"]
 
 [[package]]
 name = "ftree-kg"
-version = "0.18.1"
+version = "0.19.0"
 description = "KGModule for file tree knowledge graphs"
 optional = false
 python-versions = "<3.14,>=3.12"
 groups = ["main", "dev"]
 files = [
-    {file = "ftree_kg-0.18.1-py3-none-any.whl", hash = "sha256:86276904b7730f0710e0f8a303353e823dc9d8ed2546beb9ad87521c37ef8949"},
-    {file = "ftree_kg-0.18.1.tar.gz", hash = "sha256:a6afbe6dc6eef64ef25fb747d58e400adc643de66ed9d4e6e5980bbd9fc36247"},
+    {file = "ftree_kg-0.19.0-py3-none-any.whl", hash = "sha256:9d4ff14b7993cc967bd5597320049f18033f4264537f62221d0f3b7b5ff405bf"},
+    {file = "ftree_kg-0.19.0.tar.gz", hash = "sha256:100c0c9a01e523ffde5c8907a728376d05d8ed1fc38c63d3e5583362b62e49b7"},
 ]
 markers = {main = "extra == \"filetree\" or extra == \"all\""}
 

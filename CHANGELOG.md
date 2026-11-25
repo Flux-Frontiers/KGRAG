@@ -7,11 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.21.0] - 2026-11-25
+
 ### Added
 
 - **`kgrag rebuild-indices --exclude NAME`** skips a KG by name
   (repeatable), such as a file tree over all of `~/repos`. Each build's
   header now shows its place in the run (`3 of 151`).
+
+### Changed
+
+- The lock now carries ftree-kg 0.19.0.
 
 ## [0.20.0] - 2026-11-24
 

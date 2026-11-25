@@ -1,0 +1,180 @@
+{
+  "key": "0.21.0",
+  "branch": "release/0.21.0",
+  "timestamp": "2026-11-25T13:56:13.874703+00:00",
+  "version": "0.21.0",
+  "subject": "",
+  "tool": "pycode-kg",
+  "tool_version": "0.30.0",
+  "tree_hash": "5eb9355dc775755643a2e790d1d3b2b0247f5088",
+  "metrics": {
+    "db_path": ".pycodekg/graph.sqlite",
+    "total_nodes": 6970,
+    "meaningful_nodes": 572,
+    "total_edges": 6079,
+    "node_counts": {
+      "class": 54,
+      "function": 166,
+      "method": 289,
+      "module": 63,
+      "symbol": 6398
+    },
+    "edge_counts": {
+      "ATTR_ACCESS": 2263,
+      "CALLS": 2488,
+      "CONTAINS": 509,
+      "IMPORTS": 649,
+      "INHERITS": 31,
+      "RESOLVES_TO": 139
+    },
+    "module_count": 63,
+    "class_count": 54,
+    "function_count": 166,
+    "method_count": 289,
+    "docstring_coverage": 0.82,
+    "snapshot_count": 1,
+    "module_node_counts": {
+      "src/kg_rag/__init__.py": 3,
+      "src/kg_rag/_embedders.py": 53,
+      "src/kg_rag/adapters/__init__.py": 48,
+      "src/kg_rag/adapters/_code_module_adapter.py": 78,
+      "src/kg_rag/adapters/_stub_adapter.py": 84,
+      "src/kg_rag/adapters/agent_adapter.py": 90,
+      "src/kg_rag/adapters/base.py": 178,
+      "src/kg_rag/adapters/connectome_adapter.py": 70,
+      "src/kg_rag/adapters/diary_adapter.py": 62,
+      "src/kg_rag/adapters/disulfide_adapter.py": 7,
+      "src/kg_rag/adapters/dockg_adapter.py": 88,
+      "src/kg_rag/adapters/ftree_adapter.py": 63,
+      "src/kg_rag/adapters/genealogy_adapter.py": 70,
+      "src/kg_rag/adapters/gutenberg_adapter.py": 137,
+      "src/kg_rag/adapters/ia_adapter.py": 7,
+      "src/kg_rag/adapters/legal_adapter.py": 7,
+      "src/kg_rag/adapters/memory_adapter.py": 85,
+      "src/kg_rag/adapters/metakg_adapter.py": 83,
+      "src/kg_rag/adapters/pdbfile_adapter.py": 7,
+      "src/kg_rag/adapters/person_adapter.py": 7,
+      "src/kg_rag/adapters/pycodekg_adaptor.py": 73,
+      "src/kg_rag/adapters/swift_adapter.py": 9,
+      "src/kg_rag/adapters/typescript_adapter.py": 9,
+      "src/kg_rag/adapters/vault_adapter.py": 18,
+      "src/kg_rag/adapters/verse_adapter.py": 7,
+      "src/kg_rag/app.py": 430,
+      "src/kg_rag/cli/__init__.py": 2,
+      "src/kg_rag/cli/cmd_analyze.py": 40,
+      "src/kg_rag/cli/cmd_corpus.py": 403,
+      "src/kg_rag/cli/cmd_corpus_io.py": 103,
+      "src/kg_rag/cli/cmd_health.py": 157,
+      "src/kg_rag/cli/cmd_hooks.py": 22,
+      "src/kg_rag/cli/cmd_imagine.py": 51,
+      "src/kg_rag/cli/cmd_ingest.py": 117,
+      "src/kg_rag/cli/cmd_init.py": 85,
+      "src/kg_rag/cli/cmd_mcp.py": 20,
+      "src/kg_rag/cli/cmd_models.py": 111,
+      "src/kg_rag/cli/cmd_query.py": 115,
+      "src/kg_rag/cli/cmd_rebuild.py": 126,
+      "src/kg_rag/cli/cmd_registry.py": 250,
+      "src/kg_rag/cli/cmd_synthesize.py": 117,
+      "src/kg_rag/cli/cmd_timeline.py": 66,
+      "src/kg_rag/cli/cmd_viz.py": 25,
+      "src/kg_rag/cli/cmd_viz2d.py": 20,
+      "src/kg_rag/cli/group.py": 2,
+      "src/kg_rag/cli/main.py": 1,
+      "src/kg_rag/cli/options.py": 12,
+      "src/kg_rag/cli/retrieval.py": 40,
+      "src/kg_rag/config.py": 39,
+      "src/kg_rag/corpus_registry.py": 135,
+      "src/kg_rag/embed.py": 20,
+      "src/kg_rag/federation.py": 164,
+      "src/kg_rag/imagine.py": 93,
+      "src/kg_rag/mcp_server.py": 344,
+      "src/kg_rag/model_coordinator.py": 226,
+      "src/kg_rag/orchestrator.py": 227,
+      "src/kg_rag/owl.py": 95,
+      "src/kg_rag/person_registry.py": 140,
+      "src/kg_rag/primitives.py": 136,
+      "src/kg_rag/registry.py": 151,
+      "src/kg_rag/snapshots.py": 2,
+      "src/kg_rag/viz.py": 58,
+      "src/kg_rag/viz_qt.py": 548
+    },
+    "coverage_documented": 469,
+    "coverage_total": 572,
+    "critical_issues": 3,
+    "complexity_median": 5
+  },
+  "hotspots": [
+    {
+      "name": "m:src/kg_rag/primitives.py:KGKind.from_str",
+      "callers": 15,
+      "callees": 0,
+      "risk_level": "low"
+    },
+    {
+      "name": "cls:src/kg_rag/model_coordinator.py:ModelCoordinator",
+      "callers": 9,
+      "callees": 0,
+      "risk_level": "low"
+    },
+    {
+      "name": "m:src/kg_rag/adapters/agent_adapter.py:AgentKGAdapter._load",
+      "callers": 8,
+      "callees": 0,
+      "risk_level": "low"
+    },
+    {
+      "name": "m:src/kg_rag/adapters/base.py:KGAdapter.fleet_stats",
+      "callers": 8,
+      "callees": 3,
+      "risk_level": "low"
+    },
+    {
+      "name": "m:src/kg_rag/model_coordinator.py:ModelCoordinator._resolve_alias",
+      "callers": 7,
+      "callees": 0,
+      "risk_level": "low"
+    },
+    {
+      "name": "m:src/kg_rag/adapters/diary_adapter.py:DiaryKGAdapter._load",
+      "callers": 5,
+      "callees": 0,
+      "risk_level": "low"
+    },
+    {
+      "name": "m:src/kg_rag/adapters/gutenberg_adapter.py:GutenbergKGAdapter._corpus_lib",
+      "callers": 5,
+      "callees": 0,
+      "risk_level": "low"
+    },
+    {
+      "name": "m:src/kg_rag/adapters/base.py:KGAdapter._graph_stats",
+      "callers": 5,
+      "callees": 1,
+      "risk_level": "low"
+    },
+    {
+      "name": "fn:src/kg_rag/federation.py:join_id",
+      "callers": 4,
+      "callees": 0,
+      "risk_level": "low"
+    },
+    {
+      "name": "m:src/kg_rag/adapters/ftree_adapter.py:FTreeKGAdapter._load",
+      "callers": 4,
+      "callees": 0,
+      "risk_level": "low"
+    }
+  ],
+  "issues": [
+    "[WARN] 8 dead-code candidates found (`viz.py:DisplayMode`, `viz.py:RenderBackend`, `viz.py:qt2d_ontological`, `viz.py:qt2d_semantic`, `viz.py:streamlit_ontological`, `viz.py:streamlit_semantic`, `orchestrator.py:stats_corpus`, `orchestrator.py:stats_person`) -- no callers in code or tests; verify against downstream consumers, then remove or archive",
+    "[INFO] 35 definitions are unused in production code but exercised by tests -- likely public API for downstream packages; not counted against the quality grade",
+    "[WARN] `viz_qt.py` has 32 functions/methods/classes -- consider splitting into focused submodules"
+  ],
+  "vs_previous": null,
+  "vs_baseline": {
+    "nodes": 8,
+    "edges": 2,
+    "coverage_delta": 0.0,
+    "critical_issues_delta": 0
+  }
+}
